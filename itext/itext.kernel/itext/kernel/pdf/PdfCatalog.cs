@@ -640,6 +640,8 @@ namespace iText.Kernel.Pdf {
                 next = current.GetAsDictionary(PdfName.Next);
                 parent = current.GetAsDictionary(PdfName.Parent);
                 parentOutline = parentOutlineMap.Get(parent);
+                 if (parentOutline == null)
+                    parentOutline = outlines;
                 PdfOutline currentOutline = new PdfOutline(current.GetAsString(PdfName.Title).ToUnicodeString(), current, 
                     parentOutline);
                 AddOutlineToPage(currentOutline, current, names);
