@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,9 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
 using iText.IO.Util;
 
 namespace iText.IO.Font.Cmap {
@@ -124,7 +126,6 @@ namespace iText.IO.Font.Cmap {
             return result;
         }
 
-        /// <exception cref="System.IO.IOException"/>
         public virtual IDictionary<int, int?> CreateReverseMapping() {
             IDictionary<int, int?> result = new Dictionary<int, int?>();
             foreach (KeyValuePair<int, char[]> entry in byteMappings) {
@@ -160,8 +161,8 @@ namespace iText.IO.Font.Cmap {
                     byteMappings.Put((mark[0] << 8) + mark[1], dest);
                 }
                 else {
-                    ILog logger = LogManager.GetLogger(typeof(iText.IO.Font.Cmap.CMapToUnicode));
-                    logger.Warn(iText.IO.LogMessageConstant.TOUNICODE_CMAP_MORE_THAN_2_BYTES_NOT_SUPPORTED);
+                    ILogger logger = ITextLogManager.GetLogger(typeof(iText.IO.Font.Cmap.CMapToUnicode));
+                    logger.LogWarning(iText.IO.Logs.IoLogMessageConstant.TOUNICODE_CMAP_MORE_THAN_2_BYTES_NOT_SUPPORTED);
                 }
             }
         }

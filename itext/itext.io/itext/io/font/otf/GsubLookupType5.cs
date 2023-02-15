@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -48,13 +48,12 @@ using iText.IO.Font.Otf.Lookuptype5;
 namespace iText.IO.Font.Otf {
     /// <summary>LookupType 5: Contextual Substitution Subtable</summary>
     public class GsubLookupType5 : OpenTableLookup {
-        protected internal IList<ContextualSubTable> subTables;
+        protected internal IList<ContextualTable<ContextualSubstRule>> subTables;
 
-        /// <exception cref="System.IO.IOException"/>
         protected internal GsubLookupType5(OpenTypeFontTableReader openReader, int lookupFlag, int[] subTableLocations
             )
             : base(openReader, lookupFlag, subTableLocations) {
-            subTables = new List<ContextualSubTable>();
+            subTables = new List<ContextualTable<ContextualSubstRule>>();
             ReadSubTables();
         }
 
@@ -63,7 +62,7 @@ namespace iText.IO.Font.Otf {
             int oldLineStart = line.start;
             int oldLineEnd = line.end;
             int initialLineIndex = line.idx;
-            foreach (ContextualSubTable subTable in subTables) {
+            foreach (ContextualTable<ContextualSubstRule> subTable in subTables) {
                 ContextualSubstRule contextRule = subTable.GetMatchingContextRule(line);
                 if (contextRule == null) {
                     continue;
@@ -93,7 +92,6 @@ namespace iText.IO.Font.Otf {
             return changed;
         }
 
-        /// <exception cref="System.IO.IOException"/>
         protected internal override void ReadSubTable(int subTableLocation) {
             openReader.rf.Seek(subTableLocation);
             int substFormat = openReader.rf.ReadShort();
@@ -115,7 +113,6 @@ namespace iText.IO.Font.Otf {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         protected internal virtual void ReadSubTableFormat1(int subTableLocation) {
             IDictionary<int, IList<ContextualSubstRule>> substMap = new Dictionary<int, IList<ContextualSubstRule>>();
             int coverageOffset = openReader.rf.ReadUnsignedShort();
@@ -140,7 +137,6 @@ namespace iText.IO.Font.Otf {
             subTables.Add(new SubTableLookup5Format1(openReader, lookupFlag, substMap));
         }
 
-        /// <exception cref="System.IO.IOException"/>
         protected internal virtual void ReadSubTableFormat2(int subTableLocation) {
             int coverageOffset = openReader.rf.ReadUnsignedShort();
             int classDefOffset = openReader.rf.ReadUnsignedShort();
@@ -176,7 +172,6 @@ namespace iText.IO.Font.Otf {
             subTables.Add(t);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         protected internal virtual void ReadSubTableFormat3(int subTableLocation) {
             int glyphCount = openReader.rf.ReadUnsignedShort();
             int substCount = openReader.rf.ReadUnsignedShort();

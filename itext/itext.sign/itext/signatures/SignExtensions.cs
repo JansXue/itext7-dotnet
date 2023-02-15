@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-    Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,12 +45,6 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using iText.Kernel;
-using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Utilities.Date;
-using System.Net;
 
 namespace iText.Signatures {
     internal static class SignExtensions {
@@ -147,57 +141,8 @@ namespace iText.Signatures {
             return date.CompareTo(when) > 0;
         }
 
-        public static bool After(this DateTime date, DateTimeObject when) {
-            return date.CompareTo(when.Value) > 0;
+        public static bool Before(this DateTime date, DateTime when) {
+            return date.CompareTo(when) < 0;
         }
-
-        public static bool Before(this DateTime date, DateTimeObject when) {
-            return date.CompareTo(when.Value) < 0;
-        }
-
-        public static void InitSign(this ISigner signer, ICipherParameters pk) {
-            signer.Init(true, pk);
-        }
-
-        public static void InitVerify(this ISigner signer, AsymmetricKeyParameter publicKey) {
-            signer.Init(false, publicKey);
-        }
-
-        public static void Update(this ISigner signer, byte[] data) {
-            signer.BlockUpdate(data, 0, data.Length);
-        }
-
-        public static void Update(this ISigner signer, byte[] data, int offset, int count) {
-            signer.BlockUpdate(data, offset, count);
-        }
-
-        public static void Update(this IDigest dgst, byte[] input) {
-            dgst.Update(input, 0, input.Length);
-        }
-
-        public static void Update(this IDigest dgst, byte[] input, int offset, int len) {
-            dgst.BlockUpdate(input, offset, len);
-        }
-
-        public static byte[] Digest(this IDigest dgst) {
-            byte[] output = new byte[dgst.GetDigestSize()];
-            dgst.DoFinal(output, 0);
-            return output;
-        }
-
-        public static byte[] Digest(this IDigest dgst, byte[] input) {
-            dgst.Update(input);
-            return dgst.Digest();
-        }
-
-#if NETSTANDARD1_6
-        public static WebResponse GetResponse(this WebRequest request) {
-            return request.GetResponseAsync().Result;
-        }
-
-        public static Stream GetRequestStream(this HttpWebRequest request) {
-            return request.GetRequestStreamAsync().Result;
-        }
-#endif
     }
 }

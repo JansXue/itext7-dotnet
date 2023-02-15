@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,8 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Tagging;
 
@@ -184,9 +185,9 @@ namespace iText.Kernel.Pdf.Tagutils {
             else {
                 mappingRole += "not standard role";
             }
-            ILog logger = LogManager.GetLogger(typeof(iText.Kernel.Pdf.Tagutils.RootTagNormalizer));
-            logger.Warn(String.Format(iText.IO.LogMessageConstant.CREATED_ROOT_TAG_HAS_MAPPING, origRootTagNs, mappingRole
-                ));
+            ILogger logger = ITextLogManager.GetLogger(typeof(iText.Kernel.Pdf.Tagutils.RootTagNormalizer));
+            logger.LogWarning(String.Format(iText.IO.Logs.IoLogMessageConstant.CREATED_ROOT_TAG_HAS_MAPPING, origRootTagNs
+                , mappingRole));
         }
     }
 }

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -74,8 +74,7 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Listener {
 
         /// <summary>
         /// As an resultant text we use the concatenation of all the resultant text of all the delegates that implement
-        /// <see cref="ITextExtractionStrategy"/>
-        /// .
+        /// <see cref="ITextExtractionStrategy"/>.
         /// </summary>
         /// <returns>the resulting concatenation of the text extracted from the delegates</returns>
         public virtual String GetResultantText() {

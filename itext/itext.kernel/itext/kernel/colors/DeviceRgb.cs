@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,8 +42,9 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-using Common.Logging;
-using iText.IO.Util;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
 using iText.Kernel.Pdf.Colorspace;
 
 namespace iText.Kernel.Colors {
@@ -92,8 +93,8 @@ namespace iText.Kernel.Colors {
             : base(new PdfDeviceCs.Rgb(), new float[] { r > 1 ? 1 : (r > 0 ? r : 0), g > 1 ? 1 : (g > 0 ? g : 0), b > 
                 1 ? 1 : (b > 0 ? b : 0) }) {
             if (r > 1 || r < 0 || g > 1 || g < 0 || b > 1 || b < 0) {
-                ILog LOGGER = LogManager.GetLogger(typeof(iText.Kernel.Colors.DeviceRgb));
-                LOGGER.Warn(iText.IO.LogMessageConstant.COLORANT_INTENSITIES_INVALID);
+                ILogger LOGGER = ITextLogManager.GetLogger(typeof(iText.Kernel.Colors.DeviceRgb));
+                LOGGER.LogWarning(iText.IO.Logs.IoLogMessageConstant.COLORANT_INTENSITIES_INVALID);
             }
         }
 
@@ -102,7 +103,6 @@ namespace iText.Kernel.Colors {
             : this(0f, 0f, 0f) {
         }
 
-#if !NETSTANDARD1_6
         /// <summary>
         /// Create DeviceRGB color from R, G, B values of System.Drawing.Color
         /// <br/>
@@ -113,12 +113,10 @@ namespace iText.Kernel.Colors {
         public DeviceRgb(System.Drawing.Color color)
             : this(color.R, color.G, color.B) {
             if (color.A != 255) {
-                ILog LOGGER = LogManager.GetLogger(typeof(iText.Kernel.Colors.DeviceRgb));
-                LOGGER.Warn(MessageFormatUtil.Format(iText.IO.LogMessageConstant.COLOR_ALPHA_CHANNEL_IS_IGNORED, color.A));
+                ILogger LOGGER = ITextLogManager.GetLogger(typeof(iText.Kernel.Colors.DeviceRgb));
+                LOGGER.LogWarning(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.COLOR_ALPHA_CHANNEL_IS_IGNORED, color.A));
             }
         }
-#endif
-
 
         /// <summary>
         /// Returns

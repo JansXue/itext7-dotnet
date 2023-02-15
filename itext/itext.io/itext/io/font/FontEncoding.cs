@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,6 +42,7 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
+using iText.Commons.Utils;
 using iText.IO.Util;
 
 namespace iText.IO.Font {
@@ -58,11 +59,15 @@ namespace iText.IO.Font {
 
         /// <summary>
         /// <see langword="true"/>
+        /// if the font must use its built in encoding.
+        /// </summary>
+        /// <remarks>
+        /// <see langword="true"/>
         /// if the font must use its built in encoding. In that case
         /// the
         /// <c>encoding</c>
         /// is only used to map a char to the position inside the font, not to the expected char name.
-        /// </summary>
+        /// </remarks>
         protected internal bool fontSpecific;
 
         /// <summary>Mapping map from unicode to simple code according to the encoding.</summary>
@@ -107,6 +112,7 @@ namespace iText.IO.Font {
         }
 
         /// <summary>This encoding will base on font encoding (FontSpecific encoding in Type 1 terminology)</summary>
+        /// <returns>created font specific encoding</returns>
         public static iText.IO.Font.FontEncoding CreateFontSpecificEncoding() {
             iText.IO.Font.FontEncoding encoding = new iText.IO.Font.FontEncoding();
             encoding.fontSpecific = true;
@@ -162,14 +168,35 @@ namespace iText.IO.Font {
             return differences != null ? differences[index] : null;
         }
 
+        /// <summary>Sets a new value in the differences array.</summary>
+        /// <remarks>
+        /// Sets a new value in the differences array.
+        /// See
+        /// <see cref="differences"/>.
+        /// </remarks>
+        /// <param name="index">position to replace</param>
+        /// <param name="difference">new difference value</param>
+        public virtual void SetDifference(int index, String difference) {
+            if (index >= 0 && differences != null && index < differences.Length) {
+                differences[index] = difference;
+            }
+        }
+
         /// <summary>
         /// Converts a
         /// <c>String</c>
         /// to a
         /// <c>byte</c>
         /// array according to the encoding.
-        /// String could contain a unicode symbols or font specific codes.
         /// </summary>
+        /// <remarks>
+        /// Converts a
+        /// <c>String</c>
+        /// to a
+        /// <c>byte</c>
+        /// array according to the encoding.
+        /// String could contain a unicode symbols or font specific codes.
+        /// </remarks>
         /// <param name="text">
         /// the
         /// <c>String</c>
@@ -272,7 +299,7 @@ namespace iText.IO.Font {
                         orderK = order[1];
                     }
                     else {
-                        orderK = Convert.ToInt32(order);
+                        orderK = Convert.ToInt32(order, System.Globalization.CultureInfo.InvariantCulture);
                     }
                     orderK %= 256;
                     unicodeToCode.Put(uni, orderK);
@@ -284,7 +311,7 @@ namespace iText.IO.Font {
             else {
                 int k = 0;
                 if (tok.HasMoreTokens()) {
-                    k = Convert.ToInt32(tok.NextToken());
+                    k = Convert.ToInt32(tok.NextToken(), System.Globalization.CultureInfo.InvariantCulture);
                 }
                 while (tok.HasMoreTokens() && k < 256) {
                     String hex = tok.NextToken();
@@ -308,8 +335,8 @@ namespace iText.IO.Font {
         }
 
         protected internal virtual void FillNamedEncoding() {
-            PdfEncodings.ConvertToBytes(" ", baseEncoding);
             // check if the encoding exists
+            PdfEncodings.ConvertToBytes(" ", baseEncoding);
             bool stdEncoding = PdfEncodings.WINANSI.Equals(baseEncoding) || PdfEncodings.MACROMAN.Equals(baseEncoding);
             if (!stdEncoding && differences == null) {
                 differences = new String[256];

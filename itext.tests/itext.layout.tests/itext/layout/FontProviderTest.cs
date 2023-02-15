@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,16 +45,17 @@ using System.Collections.Generic;
 using System.IO;
 using iText.IO.Font;
 using iText.IO.Font.Constants;
-using iText.Kernel;
 using iText.Kernel.Font;
 using iText.Kernel.Pdf;
 using iText.Kernel.Utils;
 using iText.Layout.Element;
+using iText.Layout.Exceptions;
 using iText.Layout.Font;
 using iText.Layout.Properties;
 using iText.Test;
 
 namespace iText.Layout {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class FontProviderTest : ExtendedITextTest {
         private class PdfFontProvider : FontProvider {
             private IList<FontInfo> pdfFontInfos = new List<FontInfo>();
@@ -89,7 +90,6 @@ namespace iText.Layout {
             CreateDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void StandardAndType3Fonts() {
             String fileName = "taggedDocumentWithType3Font";
@@ -118,15 +118,14 @@ namespace iText.Layout {
                 , "diff" + fileName));
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CustomFontProvider() {
             String fileName = "customFontProvider.pdf";
             String outFileName = destinationFolder + fileName + ".pdf";
             String cmpFileName = sourceFolder + "cmp_" + fileName + ".pdf";
             FontProvider fontProvider = new FontProvider();
-            fontProvider.GetFontSet().AddFont(StandardFonts.TIMES_ROMAN, null, "times");
             // TODO DEVSIX-2119 Update if necessary
+            fontProvider.GetFontSet().AddFont(StandardFonts.TIMES_ROMAN, null, "times");
             fontProvider.GetFontSet().AddFont(StandardFonts.HELVETICA);
             PdfDocument pdfDoc = new PdfDocument(new PdfWriter(new FileStream(outFileName, FileMode.Create)));
             Document doc = new Document(pdfDoc);
@@ -141,7 +140,6 @@ namespace iText.Layout {
                 , "diff" + fileName));
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CustomFontProvider2() {
             String fileName = "customFontProvider2.pdf";
@@ -149,13 +147,13 @@ namespace iText.Layout {
             String cmpFileName = sourceFolder + "cmp_" + fileName + ".pdf";
             FontProvider fontProvider = new FontProvider();
             // bold font. shouldn't be selected
-            fontProvider.GetFontSet().AddFont(StandardFonts.TIMES_BOLD, null, "times");
             // TODO DEVSIX-2119 Update if necessary
+            fontProvider.GetFontSet().AddFont(StandardFonts.TIMES_BOLD, null, "times");
             // monospace font. shouldn't be selected
             fontProvider.GetFontSet().AddFont(StandardFonts.COURIER);
             fontProvider.GetFontSet().AddFont(sourceFolder + "../fonts/FreeSans.ttf", PdfEncodings.IDENTITY_H);
-            fontProvider.GetFontSet().AddFont(StandardFonts.TIMES_ROMAN, null, "times");
             // TODO DEVSIX-2119 Update if necessary
+            fontProvider.GetFontSet().AddFont(StandardFonts.TIMES_ROMAN, null, "times");
             PdfDocument pdfDoc = new PdfDocument(new PdfWriter(new FileStream(outFileName, FileMode.Create)));
             Document doc = new Document(pdfDoc);
             doc.SetFontProvider(fontProvider);
@@ -167,20 +165,17 @@ namespace iText.Layout {
                 , "diff" + fileName));
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void FontProviderNotSetExceptionTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                String fileName = "fontProviderNotSetExceptionTest.pdf";
-                String outFileName = destinationFolder + fileName + ".pdf";
-                PdfDocument pdfDoc = new PdfDocument(new PdfWriter(new FileStream(outFileName, FileMode.Create)));
+            String fileName = "fontProviderNotSetExceptionTest.pdf";
+            String outFileName = destinationFolder + fileName + ".pdf";
+            using (PdfDocument pdfDoc = new PdfDocument(new PdfWriter(new FileStream(outFileName, FileMode.Create)))) {
                 Document doc = new Document(pdfDoc);
                 Paragraph paragraph = new Paragraph("Hello world!").SetFontFamily("ABRACADABRA_NO_FONT_PROVIDER_ANYWAY");
-                doc.Add(paragraph);
-                doc.Close();
+                Exception e = NUnit.Framework.Assert.Catch(typeof(InvalidOperationException), () => doc.Add(paragraph));
+                NUnit.Framework.Assert.AreEqual(LayoutExceptionMessageConstant.FONT_PROVIDER_NOT_SET_FONT_FAMILY_NOT_RESOLVED
+                    , e.Message);
             }
-            , NUnit.Framework.Throws.InstanceOf<InvalidOperationException>().With.Message.EqualTo(PdfException.FontProviderNotSetFontFamilyNotResolved))
-;
         }
     }
 }

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,8 +43,9 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Text;
-using iText.Kernel;
+using iText.Barcodes.Exceptions;
 using iText.Kernel.Colors;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Font;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
@@ -82,8 +83,7 @@ namespace iText.Barcodes {
         /// <see cref="iText.Kernel.Pdf.PdfDocument.GetDefaultFont()"/>
         /// will be implicitly called.
         /// If you want to use this barcode in PDF/A documents, please consider using
-        /// <see cref="BarcodeInter25(iText.Kernel.Pdf.PdfDocument, iText.Kernel.Font.PdfFont)"/>
-        /// .
+        /// <see cref="BarcodeInter25(iText.Kernel.Pdf.PdfDocument, iText.Kernel.Font.PdfFont)"/>.
         /// </remarks>
         /// <param name="document">The document to which the barcode will be added</param>
         public BarcodeInter25(PdfDocument document)
@@ -106,9 +106,9 @@ namespace iText.Barcodes {
             this.checksumText = false;
         }
 
-        /// <summary>Deletes all the non numeric characters from <CODE>text</CODE>.</summary>
+        /// <summary>Deletes all the non numeric characters from <c>text</c>.</summary>
         /// <param name="text">the text</param>
-        /// <returns>a <CODE>String</CODE> with only numeric characters</returns>
+        /// <returns>a <c>String</c> with only numeric characters</returns>
         public static String KeepNumbers(String text) {
             StringBuilder sb = new StringBuilder();
             for (int k = 0; k < text.Length; ++k) {
@@ -140,7 +140,7 @@ namespace iText.Barcodes {
         public static byte[] GetBarsInter25(String text) {
             text = KeepNumbers(text);
             if ((text.Length & 1) != 0) {
-                throw new PdfException(PdfException.TextMustBeEven);
+                throw new PdfException(BarcodeExceptionMessageConstant.TEXT_MUST_BE_EVEN);
             }
             byte[] bars = new byte[text.Length * 5 + 7];
             int pb = 0;
@@ -201,44 +201,44 @@ namespace iText.Barcodes {
             return new Rectangle(fullWidth, fullHeight);
         }
 
-        /// <summary>Places the barcode in a <CODE>PdfCanvas</CODE>.</summary>
+        /// <summary>Places the barcode in a <c>PdfCanvas</c>.</summary>
         /// <remarks>
-        /// Places the barcode in a <CODE>PdfCanvas</CODE>. The
+        /// Places the barcode in a <c>PdfCanvas</c>. The
         /// barcode is always placed at coordinates (0, 0). Use the
-        /// translation matrix to move it elsewhere.<p>
+        /// translation matrix to move it elsewhere.<para />
         /// The bars and text are written in the following colors:
         /// <br />
-        /// <TABLE BORDER=1 SUMMARY="barcode properties">
-        /// <TR>
-        /// <TH><P><CODE>barColor</CODE></TH>
-        /// <TH><P><CODE>textColor</CODE></TH>
-        /// <TH><P>Result</TH>
-        /// </TR>
-        /// <TR>
-        /// <TD><P><CODE>null</CODE></TD>
-        /// <TD><P><CODE>null</CODE></TD>
-        /// <TD><P>bars and text painted with current fill color</TD>
-        /// </TR>
-        /// <TR>
-        /// <TD><P><CODE>barColor</CODE></TD>
-        /// <TD><P><CODE>null</CODE></TD>
-        /// <TD><P>bars and text painted with <CODE>barColor</CODE></TD>
-        /// </TR>
-        /// <TR>
-        /// <TD><P><CODE>null</CODE></TD>
-        /// <TD><P><CODE>textColor</CODE></TD>
-        /// <TD><P>bars painted with current color<br />text painted with <CODE>textColor</CODE></TD>
-        /// </TR>
-        /// <TR>
-        /// <TD><P><CODE>barColor</CODE></TD>
-        /// <TD><P><CODE>textColor</CODE></TD>
-        /// <TD><P>bars painted with <CODE>barColor</CODE><br />text painted with <CODE>textColor</CODE></TD>
-        /// </TR>
-        /// </TABLE>
+        /// <table border="1" summary="barcode properties">
+        /// <tr>
+        /// <th><c>barColor</c></th>
+        /// <th><c>textColor</c></th>
+        /// <th>Result</th>
+        /// </tr>
+        /// <tr>
+        /// <td><c>null</c></td>
+        /// <td><c>null</c></td>
+        /// <td>bars and text painted with current fill color</td>
+        /// </tr>
+        /// <tr>
+        /// <td><c>barColor</c></td>
+        /// <td><c>null</c></td>
+        /// <td>bars and text painted with <c>barColor</c></td>
+        /// </tr>
+        /// <tr>
+        /// <td><c>null</c></td>
+        /// <td><c>textColor</c></td>
+        /// <td>bars painted with current color<br />text painted with <c>textColor</c></td>
+        /// </tr>
+        /// <tr>
+        /// <td><c>barColor</c></td>
+        /// <td><c>textColor</c></td>
+        /// <td>bars painted with <c>barColor</c><br />text painted with <c>textColor</c></td>
+        /// </tr>
+        /// </table>
         /// </remarks>
-        /// <param name="canvas">the <CODE>PdfCanvas</CODE> where the barcode will be placed</param>
-        /// <param name="barColor">the color of the bars. It can be <CODE>null</CODE></param>
-        /// <param name="textColor">the color of the text. It can be <CODE>null</CODE></param>
+        /// <param name="canvas">the <c>PdfCanvas</c> where the barcode will be placed</param>
+        /// <param name="barColor">the color of the bars. It can be <c>null</c></param>
+        /// <param name="textColor">the color of the text. It can be <c>null</c></param>
         /// <returns>the dimensions the barcode occupies</returns>
         public override Rectangle PlaceBarcode(PdfCanvas canvas, Color barColor, Color textColor) {
             String fullCode = code;

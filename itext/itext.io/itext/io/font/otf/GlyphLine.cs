@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -200,6 +200,11 @@ namespace iText.IO.Font.Otf {
                 actualText.AddAll(other.actualText.SubList(other.start, other.end));
             }
             glyphs.AddAll(other.glyphs.SubList(other.start, other.end));
+            if (null != actualText) {
+                while (actualText.Count < glyphs.Count) {
+                    actualText.Add(null);
+                }
+            }
         }
 
         /// <summary>Replaces the current content with the other line's content.</summary>
@@ -283,8 +288,9 @@ namespace iText.IO.Font.Otf {
         }
 
         public virtual void SubstituteOneToMany(OpenTypeFontTableReader tableReader, int[] substGlyphIds) {
-            int substCode = substGlyphIds[0];
             //sequence length shall be at least 1
+            int substCode = substGlyphIds[0];
+            Glyph oldGlyph = glyphs[idx];
             Glyph glyph = tableReader.GetGlyph(substCode);
             glyphs[idx] = glyph;
             if (substGlyphIds.Length > 1) {
@@ -295,6 +301,14 @@ namespace iText.IO.Font.Otf {
                     additionalGlyphs.Add(glyph);
                 }
                 AddAllGlyphs(idx + 1, additionalGlyphs);
+                if (null != actualText) {
+                    if (null == actualText[idx]) {
+                        actualText[idx] = new GlyphLine.ActualText(oldGlyph.GetUnicodeString());
+                    }
+                    for (int i = 0; i < additionalGlyphs.Count; i++) {
+                        this.actualText[idx + 1 + i] = actualText[idx];
+                    }
+                }
                 idx += substGlyphIds.Length - 1;
                 end += substGlyphIds.Length - 1;
             }
@@ -414,6 +428,7 @@ namespace iText.IO.Font.Otf {
 
             public int end;
 
+            // Might be null if it's not necessary
             public String actualText;
 
             public bool reversed;
@@ -423,7 +438,6 @@ namespace iText.IO.Font.Otf {
             }
 
             public GlyphLinePart(int start, int end, String actualText) {
-                // Might be null if it's not necessary
                 this.start = start;
                 this.end = end;
                 this.actualText = actualText;

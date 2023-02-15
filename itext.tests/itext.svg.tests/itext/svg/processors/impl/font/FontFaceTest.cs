@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,11 +42,11 @@ address: sales@itextpdf.com
 */
 using System;
 using System.IO;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.Kernel.Pdf;
 using iText.StyledXmlParser.Css.Media;
 using iText.StyledXmlParser.Resolver.Font;
-using iText.Svg.Exceptions;
+using iText.Svg.Logs;
 using iText.Svg.Processors;
 using iText.Svg.Processors.Impl;
 using iText.Svg.Renderers;
@@ -54,6 +54,7 @@ using iText.Test;
 using iText.Test.Attributes;
 
 namespace iText.Svg.Processors.Impl.Font {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class FontFaceTest : SvgIntegrationTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/svg/processors/impl/font/FontFaceTest/";
@@ -66,71 +67,64 @@ namespace iText.Svg.Processors.Impl.Font {
             ITextTest.CreateDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
+        [NUnit.Framework.Test]
+        public virtual void UnicodeRangeTest() {
+            // TODO fix cmp file after DEVSIX-2256 is finished. Right now unicode range is not processed correctly
+            ConvertAndCompare(sourceFolder, destinationFolder, "unicodeRangeTest");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void DroidSerifSingleQuotesTest() {
+            // TODO fix cmp file after DEVSIX-2534 is finished. Right now droid fonts are not applied if
+            //  their aliases are inside single quotes and contain spaces
+            ConvertAndCompare(sourceFolder, destinationFolder, "droidSerifSingleQuotesTest");
+        }
+
         [NUnit.Framework.Test]
         public virtual void DroidSerifWebFontTest() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "droidSerifWebFontTest");
+            ConvertAndCompare(sourceFolder, destinationFolder, "droidSerifWebFontTest");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void DroidSerifLocalFontTest() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "droidSerifLocalFontTest");
+            ConvertAndCompare(sourceFolder, destinationFolder, "droidSerifLocalFontTest");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void DroidSerifLocalLocalFontTest() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "droidSerifLocalLocalFontTest");
+            ConvertAndCompare(sourceFolder, destinationFolder, "droidSerifLocalLocalFontTest");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void DroidSerifLocalWithMediaFontTest() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "droidSerifLocalWithMediaFontTest");
+            ConvertAndCompare(sourceFolder, destinationFolder, "droidSerifLocalWithMediaFontTest");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void DroidSerifLocalWithMediaRuleFontTest() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "droidSerifLocalWithMediaRuleFontTest");
+            ConvertAndCompare(sourceFolder, destinationFolder, "droidSerifLocalWithMediaRuleFontTest");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void FontSelectorTest01() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "fontSelectorTest01");
+            ConvertAndCompare(sourceFolder, destinationFolder, "fontSelectorTest01");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void FontFaceGrammarTest() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "fontFaceGrammarTest");
+            ConvertAndCompare(sourceFolder, destinationFolder, "fontFaceGrammarTest");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void FontFaceWoffTest01() {
             RunTest("fontFaceWoffTest01");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void FontFaceWoffTest02() {
             RunTest("fontFaceWoffTest02");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         [LogMessage(SvgLogMessageConstant.UNABLE_TO_RETRIEVE_FONT)]
         public virtual void FontFaceTtcTest() {
@@ -138,15 +132,11 @@ namespace iText.Svg.Processors.Impl.Font {
             RunTest("fontFaceTtcTest");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void FontFaceWoff2SimpleTest() {
             RunTest("fontFaceWoff2SimpleTest");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         [LogMessage(SvgLogMessageConstant.UNABLE_TO_RETRIEVE_FONT)]
         public virtual void FontFaceWoff2TtcTest() {
@@ -154,82 +144,72 @@ namespace iText.Svg.Processors.Impl.Font {
             RunTest("fontFaceWoff2TtcTest");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void W3cProblemTest01() {
-            //TODO: In w3c test suite this font is labeled as invalid though it correctly parsers both in browser and iText
+            //TODO(DEVSIX-5755): In w3c test suite this font is labeled as invalid though it correctly parsers both in browser and iText
             //See BlocksMetadataPadding001Test in io for decompression details
             RunTest("w3cProblemTest01");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [NUnit.Framework.Ignore("DEVSIX-1612")]
         public virtual void W3cProblemTest02() {
-            //TODO: In w3c test suite this font is labeled as invalid though and its loading failed in browser, though iText parses its as correct one and LOADS!
-            //See DirectoryTableOrder002Test in io for decompression details
-            RunTest("w3cProblemTest02");
+            try {
+                RunTest("w3cProblemTest02");
+            }
+            catch (OverflowException) {
+                return;
+            }
+            NUnit.Framework.Assert.Fail("In w3c test suite this font is labeled as invalid, " + "so the invalid negative value is expected while creating a glyph."
+                );
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void W3cProblemTest03() {
-            //TODO: silently omitted, decompression should fail.
+            //TODO(DEVSIX-5756): silently omitted, decompression should fail.
             //See HeaderFlavor001Test in io for decompression details
             RunTest("w3cProblemTest03");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.FONT_SUBSET_ISSUE)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.FONT_SUBSET_ISSUE)]
         public virtual void W3cProblemTest04() {
-            //TODO: silently omitted, decompression should fail. Browser loads font but don't draw glyph.
+            //TODO(DEVSIX-5756): silently omitted, decompression should fail. Browser loads font but don't draw glyph.
             //See HeaderFlavor002Test in io for decompression details
             //NOTE, iText fails on subsetting as expected.
             RunTest("w3cProblemTest04");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void W3cProblemTest05() {
-            //TODO: In w3c test suite this font is labeled as invalid though it correctly parsers both in browser and iText
+            //TODO(DEVSIX-5755): In w3c test suite this font is labeled as invalid though it correctly parsers both in browser and iText
             //See HeaderReserved001Test in io for decompression details
             RunTest("w3cProblemTest05");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void W3cProblemTest06() {
-            //TODO: In w3c test suite this font is labeled as invalid though it correctly parsers both in browser and iText
+            //TODO(DEVSIX-5755): In w3c test suite this font is labeled as invalid though it correctly parsers both in browser and iText
             //See TabledataHmtxTransform003Test in io for decompression details
             RunTest("w3cProblemTest06");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [NUnit.Framework.Ignore("DEVSIX-1612")]
         public virtual void W3cProblemTest07() {
-            //TODO: In w3c test suite this font is labeled as invalid though and its loading failed in browser, though iText parses its as correct one and LOADS!
-            //See ValidationOff012Test in io for decompression details
-            RunTest("w3cProblemTest07");
+            try {
+                RunTest("w3cProblemTest07");
+            }
+            catch (OverflowException) {
+                return;
+            }
+            NUnit.Framework.Assert.Fail("In w3c test suite this font is labeled as invalid, " + "so the invalid negative value is expected while creating a glyph."
+                );
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void IncorrectFontNameTest01() {
             RunTest("incorrectFontNameTest01");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void IncorrectFontNameTest02() {
             // The result of te test is FAIL. However we consider it to be correct.
@@ -238,31 +218,23 @@ namespace iText.Svg.Processors.Impl.Font {
             RunTest("incorrectFontNameTest02");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void IncorrectFontNameTest03() {
             //Checks that font used in previous two files is correct
             RunTest("incorrectFontNameTest03");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void IncorrectFontNameTest04() {
             RunTest("incorrectFontNameTest04");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         [NUnit.Framework.Ignore("DEVSIX-1759 - unicode in font family and different result in dotnet")]
         public virtual void FontFamilyTest01() {
             RunTest("fontFamilyTest01");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ResolveFontsWithoutWriterProperties() {
             String fileName = "fontSelectorTest";
@@ -273,8 +245,6 @@ namespace iText.Svg.Processors.Impl.Font {
             Compare(fileName, sourceFolder, destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ResolveFontsWithoutConverterPropertiesAndWriterProperties() {
             String fileName = "resolveFonts_WithoutConverterPropertiesAndWriterProperties";
@@ -284,14 +254,12 @@ namespace iText.Svg.Processors.Impl.Font {
             Compare(fileName, sourceFolder, destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ResolveFontsWithAllProperties() {
             String fileName = "resolveFonts_WithAllProperties";
             String svgFile = "fontSelectorTest";
             WriterProperties writerprops = new WriterProperties().SetCompressionLevel(0);
-            String baseUri = FileUtil.GetParentDirectory(new FileInfo(sourceFolder + svgFile + ".svg"));
+            String baseUri = FileUtil.GetParentDirectoryUri(new FileInfo(sourceFolder + svgFile + ".svg"));
             ISvgConverterProperties properties = new SvgConverterProperties().SetBaseUri(baseUri).SetFontProvider(new 
                 BasicFontProvider()).SetMediaDeviceDescription(new MediaDeviceDescription(MediaType.ALL));
             ConvertToSinglePage(new FileInfo(sourceFolder + svgFile + ".svg"), new FileInfo(destinationFolder + fileName
@@ -299,8 +267,6 @@ namespace iText.Svg.Processors.Impl.Font {
             Compare(fileName, sourceFolder, destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ResolveFontsWithWriterProperties() {
             String fileName = "resolveFonts_WithWriterProperties";
@@ -311,14 +277,12 @@ namespace iText.Svg.Processors.Impl.Font {
             Compare(fileName, sourceFolder, destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ResolveFontsWithConverterPropsAndWriterProps() {
             String fileName = "resolveFonts_WithConverterPropsAndWriterProps";
             String svgFile = "fontSelectorTest";
             WriterProperties writerprops = new WriterProperties().SetCompressionLevel(0);
-            String baseUri = FileUtil.GetParentDirectory(new FileInfo(sourceFolder + svgFile + ".svg"));
+            String baseUri = FileUtil.GetParentDirectoryUri(new FileInfo(sourceFolder + svgFile + ".svg"));
             ISvgConverterProperties properties = new SvgConverterProperties().SetBaseUri(baseUri).SetFontProvider(new 
                 BasicFontProvider()).SetMediaDeviceDescription(new MediaDeviceDescription(MediaType.ALL));
             ConvertToSinglePage(new FileStream(sourceFolder + svgFile + ".svg", FileMode.Open, FileAccess.Read), new FileStream
@@ -326,8 +290,6 @@ namespace iText.Svg.Processors.Impl.Font {
             Compare(fileName, sourceFolder, destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ResolveFontsWithConverterPropertiesAndEmptyUri() {
             String fileName = "resolveFonts_WithConverterPropertiesAndEmptyUri";
@@ -339,8 +301,6 @@ namespace iText.Svg.Processors.Impl.Font {
             Compare(fileName, sourceFolder, destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ResolveFontsWithConverterPropertiesAndNullUri() {
             String fileName = "resolveFonts_WithConverterPropertiesAndNullUri";
@@ -352,23 +312,14 @@ namespace iText.Svg.Processors.Impl.Font {
             Compare(fileName, sourceFolder, destinationFolder);
         }
 
-        // TODO DEVSIX-2113
-        // This test passes correctly when baseUri is set manually. Remove SvgConverterProperties and use convertToSinglePage(File, File) method instead.
-        // It must produce the same pdf as the one with a pre-defined baseUri does
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ResolveFontsDefaultUri() {
-            SvgConverterProperties properties = new SvgConverterProperties();
-            properties.SetBaseUri(sourceFolder);
             String fileName = "fontSelectorTest02";
             ConvertToSinglePage(new FileInfo(sourceFolder + fileName + ".svg"), new FileInfo(destinationFolder + fileName
-                 + ".pdf"), properties);
+                 + ".pdf"));
             Compare(fileName, sourceFolder, destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         private void RunTest(String fileName) {
             Convert(sourceFolder + fileName + ".svg", destinationFolder + fileName + ".pdf");
             Compare(fileName, sourceFolder, destinationFolder);

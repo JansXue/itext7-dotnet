@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -68,12 +68,11 @@ namespace iText.Svg.Utils {
         /// <param name="startAng">starting angle in degrees</param>
         /// <param name="extent">extent of the arc</param>
         /// <param name="cv">canvas to paint on</param>
-        public static void Arc(float x1, float y1, float x2, float y2, float startAng, float extent, PdfCanvas cv) {
+        public static void Arc(double x1, double y1, double x2, double y2, double startAng, double extent, PdfCanvas
+             cv) {
             IList<double[]> ar = PdfCanvas.BezierArc(x1, y1, x2, y2, startAng, extent);
             if (!ar.IsEmpty()) {
-                double[] pt;
-                for (int k = 0; k < ar.Count; ++k) {
-                    pt = ar[k];
+                foreach (double[] pt in ar) {
                     cv.CurveTo(pt[2], pt[3], pt[4], pt[5], pt[6], pt[7]);
                 }
             }

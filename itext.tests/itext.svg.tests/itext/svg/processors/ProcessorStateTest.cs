@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,9 +44,11 @@ using System;
 using iText.Svg.Dummy.Renderers.Impl;
 using iText.Svg.Processors.Impl;
 using iText.Svg.Renderers;
+using iText.Test;
 
 namespace iText.Svg.Processors {
-    public class ProcessorStateTest {
+    [NUnit.Framework.Category("UnitTest")]
+    public class ProcessorStateTest : ExtendedITextTest {
         /// <summary>Push test</summary>
         [NUnit.Framework.Test]
         public virtual void ProcessorStateTestPush() {
@@ -92,12 +94,8 @@ namespace iText.Svg.Processors {
 
         [NUnit.Framework.Test]
         public virtual void ProcessorStateTestPopEmpty() {
-            NUnit.Framework.Assert.That(() =>  {
-                ProcessorState testProcessorState = new ProcessorState();
-                testProcessorState.Pop();
-            }
-            , NUnit.Framework.Throws.InstanceOf<InvalidOperationException>())
-;
+            ProcessorState testProcessorState = new ProcessorState();
+            NUnit.Framework.Assert.Catch(typeof(InvalidOperationException), () => testProcessorState.Pop());
         }
 
         [NUnit.Framework.Test]
@@ -114,12 +112,8 @@ namespace iText.Svg.Processors {
 
         [NUnit.Framework.Test]
         public virtual void ProcessorStateTestPeekEmpty() {
-            NUnit.Framework.Assert.That(() =>  {
-                ProcessorState testProcessorState = new ProcessorState();
-                testProcessorState.Pop();
-            }
-            , NUnit.Framework.Throws.InstanceOf<InvalidOperationException>())
-;
+            ProcessorState testProcessorState = new ProcessorState();
+            NUnit.Framework.Assert.Catch(typeof(InvalidOperationException), () => testProcessorState.Pop());
         }
     }
 }

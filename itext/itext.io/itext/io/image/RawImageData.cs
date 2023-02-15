@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -83,6 +83,7 @@ namespace iText.IO.Image {
         /// </remarks>
         public const int CCITT_ENDOFBLOCK = 8;
 
+        //NOTE in itext5 instead of typeCcitt bpc property was using for both bpc and type CCITT.
         protected internal int typeCcitt;
 
         protected internal RawImageData(Uri url, ImageType type)
@@ -93,7 +94,6 @@ namespace iText.IO.Image {
             : base(bytes, type) {
         }
 
-        //NOTE in itext5 instead of typeCcitt bpc property was using for both bpc and type CCITT.
         public override bool IsRawImage() {
             return true;
         }

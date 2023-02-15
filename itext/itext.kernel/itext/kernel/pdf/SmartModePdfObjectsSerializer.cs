@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,22 +42,20 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.Security;
+using iText.Commons.Bouncycastle.Crypto;
 using iText.IO.Source;
-using iText.Kernel;
+using iText.Kernel.Exceptions;
 
 namespace iText.Kernel.Pdf {
     internal class SmartModePdfObjectsSerializer {
-        [System.NonSerialized]
-        private IDigest md5;
+        private IIDigest md5;
 
         private Dictionary<SerializedObjectContent, PdfIndirectReference> serializedContentToObj = new Dictionary<
             SerializedObjectContent, PdfIndirectReference>();
 
         internal SmartModePdfObjectsSerializer() {
             try {
-                md5 = DigestUtilities.GetDigest("MD5");
+                md5 = iText.Bouncycastleconnector.BouncyCastleFactoryCreator.GetFactory().CreateIDigest("MD5");
             }
             catch (Exception e) {
                 throw new PdfException(e);
@@ -98,7 +96,6 @@ namespace iText.Kernel.Pdf {
             return new SerializedObjectContent(content);
         }
 
-        /// <exception cref="iText.Kernel.Pdf.SmartModePdfObjectsSerializer.SelfReferenceException"/>
         private void SerObject(PdfObject obj, ByteBuffer bb, int level, IDictionary<PdfIndirectReference, byte[]> 
             serializedCache) {
             if (level <= 0) {
@@ -145,28 +142,27 @@ namespace iText.Kernel.Pdf {
                     }
                     else {
                         if (obj.IsString()) {
+                            // TODO specify length for strings, streams, may be names?
                             bb.Append("$S").Append(obj.ToString());
                         }
                         else {
-                            // TODO specify length for strings, streams, may be names?
                             if (obj.IsName()) {
                                 bb.Append("$N").Append(obj.ToString());
                             }
                             else {
+                                // PdfNull case is also here
                                 bb.Append("$L").Append(obj.ToString());
                             }
                         }
                     }
                 }
             }
-            // PdfNull case is also here
             if (savedBb != null) {
                 serializedCache.Put(reference, bb.ToByteArray());
                 savedBb.Append(bb.GetInternalBuffer(), 0, bb.Size());
             }
         }
 
-        /// <exception cref="iText.Kernel.Pdf.SmartModePdfObjectsSerializer.SelfReferenceException"/>
         private void SerDic(PdfDictionary dic, ByteBuffer bb, int level, IDictionary<PdfIndirectReference, byte[]>
              serializedCache) {
             bb.Append("$D");
@@ -183,7 +179,6 @@ namespace iText.Kernel.Pdf {
             bb.Append("$\\D");
         }
 
-        /// <exception cref="iText.Kernel.Pdf.SmartModePdfObjectsSerializer.SelfReferenceException"/>
         private void SerArray(PdfArray array, ByteBuffer bb, int level, IDictionary<PdfIndirectReference, byte[]> 
             serializedCache) {
             bb.Append("$A");

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,11 +44,14 @@ address: sales@itextpdf.com
 using iText.Kernel.Geom;
 
 namespace iText.Layout.Layout {
+    /// <summary>Represents the root layout area.</summary>
     public class RootLayoutArea : LayoutArea {
         /// <summary>Indicates whether the area already has some placed content or not.</summary>
         protected internal bool emptyArea = true;
 
-        /// <summary><inheritDoc/></summary>
+        /// <summary>Creates the root layout area.</summary>
+        /// <param name="pageNumber">the value number of page</param>
+        /// <param name="bBox">the bounding box</param>
         public RootLayoutArea(int pageNumber, Rectangle bBox)
             : base(pageNumber, bBox) {
         }
@@ -60,14 +63,27 @@ namespace iText.Layout.Layout {
         }
 
         /// <summary>Defines whether the area already has some placed content or not.</summary>
-        /// <param name="emptyArea"/>
+        /// <param name="emptyArea">indicates whether the area already has some placed content or not.</param>
         public virtual void SetEmptyArea(bool emptyArea) {
             this.emptyArea = emptyArea;
         }
 
-        /// <summary><inheritDoc/></summary>
+        /// <summary>
+        /// Creates a "deep copy" of this RootLayoutArea, meaning the object returned by this method will be independent
+        /// of the object being cloned.
+        /// </summary>
+        /// <remarks>
+        /// Creates a "deep copy" of this RootLayoutArea, meaning the object returned by this method will be independent
+        /// of the object being cloned.
+        /// Note that although the return type of this method is
+        /// <see cref="LayoutArea"/>
+        /// ,
+        /// the actual type of the returned object is
+        /// <see cref="RootLayoutArea"/>.
+        /// </remarks>
+        /// <returns>the copied RootLayoutArea.</returns>
         public override LayoutArea Clone() {
-            iText.Layout.Layout.RootLayoutArea area = new iText.Layout.Layout.RootLayoutArea(pageNumber, bBox.Clone());
+            iText.Layout.Layout.RootLayoutArea area = (iText.Layout.Layout.RootLayoutArea)base.Clone();
             area.SetEmptyArea(emptyArea);
             return area;
         }

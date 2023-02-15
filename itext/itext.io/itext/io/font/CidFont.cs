@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,6 +43,7 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
+using iText.Commons.Utils;
 using iText.IO.Font.Cmap;
 using iText.IO.Font.Otf;
 using iText.IO.Util;
@@ -62,7 +63,8 @@ namespace iText.IO.Font {
             InitializeCidFontNameAndStyle(fontName);
             IDictionary<String, Object> fontDesc = CidFontProperties.GetAllFonts().Get(fontNames.GetFontName());
             if (fontDesc == null) {
-                throw new iText.IO.IOException("There is no such predefined font: {0}").SetMessageParams(fontName);
+                throw new iText.IO.Exceptions.IOException("There is no such predefined font: {0}").SetMessageParams(fontName
+                    );
             }
             InitializeCidFontProperties(fontDesc);
         }
@@ -112,18 +114,24 @@ namespace iText.IO.Font {
 
         private void InitializeCidFontProperties(IDictionary<String, Object> fontDesc) {
             fontIdentification.SetPanose((String)fontDesc.Get("Panose"));
-            fontMetrics.SetItalicAngle(Convert.ToInt32((String)fontDesc.Get("ItalicAngle")));
-            fontMetrics.SetCapHeight(Convert.ToInt32((String)fontDesc.Get("CapHeight")));
-            fontMetrics.SetTypoAscender(Convert.ToInt32((String)fontDesc.Get("Ascent")));
-            fontMetrics.SetTypoDescender(Convert.ToInt32((String)fontDesc.Get("Descent")));
-            fontMetrics.SetStemV(Convert.ToInt32((String)fontDesc.Get("StemV")));
-            pdfFontFlags = Convert.ToInt32((String)fontDesc.Get("Flags"));
+            fontMetrics.SetItalicAngle(Convert.ToInt32((String)fontDesc.Get("ItalicAngle"), System.Globalization.CultureInfo.InvariantCulture
+                ));
+            fontMetrics.SetCapHeight(Convert.ToInt32((String)fontDesc.Get("CapHeight"), System.Globalization.CultureInfo.InvariantCulture
+                ));
+            fontMetrics.SetTypoAscender(Convert.ToInt32((String)fontDesc.Get("Ascent"), System.Globalization.CultureInfo.InvariantCulture
+                ));
+            fontMetrics.SetTypoDescender(Convert.ToInt32((String)fontDesc.Get("Descent"), System.Globalization.CultureInfo.InvariantCulture
+                ));
+            fontMetrics.SetStemV(Convert.ToInt32((String)fontDesc.Get("StemV"), System.Globalization.CultureInfo.InvariantCulture
+                ));
+            pdfFontFlags = Convert.ToInt32((String)fontDesc.Get("Flags"), System.Globalization.CultureInfo.InvariantCulture
+                );
             String fontBBox = (String)fontDesc.Get("FontBBox");
             StringTokenizer tk = new StringTokenizer(fontBBox, " []\r\n\t\f");
-            int llx = Convert.ToInt32(tk.NextToken());
-            int lly = Convert.ToInt32(tk.NextToken());
-            int urx = Convert.ToInt32(tk.NextToken());
-            int ury = Convert.ToInt32(tk.NextToken());
+            int llx = Convert.ToInt32(tk.NextToken(), System.Globalization.CultureInfo.InvariantCulture);
+            int lly = Convert.ToInt32(tk.NextToken(), System.Globalization.CultureInfo.InvariantCulture);
+            int urx = Convert.ToInt32(tk.NextToken(), System.Globalization.CultureInfo.InvariantCulture);
+            int ury = Convert.ToInt32(tk.NextToken(), System.Globalization.CultureInfo.InvariantCulture);
             fontMetrics.UpdateBbox(llx, lly, urx, ury);
             registry = (String)fontDesc.Get("Registry");
             String uniMap = GetCompatibleUniMap(registry);

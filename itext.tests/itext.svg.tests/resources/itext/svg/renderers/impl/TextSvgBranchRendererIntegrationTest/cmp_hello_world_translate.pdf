@@ -1,9 +1,8 @@
 %PDF-1.7
 %‚„œ”
 5 0 obj
-<</Length 27>>stream
+<</Length 12>>stream
 q
-1 0 0 1 0 0 cm
 /Fm1 Do
 Q
 
@@ -16,7 +15,7 @@ endobj
 <</Pages 2 0 R/Type/Catalog>>
 endobj
 3 0 obj
-<</CreationDate(D:20190531072543-03'00')/ModDate(D:20190531072543-03'00')/Producer(iTextÆ 7.1.7-SNAPSHOT ©2000-2019 iText Group NV \(AGPL-version\))>>
+<</CreationDate(D:20211108175100+03'00')/ModDate(D:20211108175100+03'00')/Producer(iTextÆ Core 7.2.1-SNAPSHOT \(AGPL version\) ©2000-2021 iText Group NV)>>
 endobj
 6 0 obj
 <</BaseFont/Times-Roman/Encoding/WinAnsiEncoding/Subtype/Type1/Type/Font>>
@@ -36,15 +35,20 @@ Q
 endstream
 endobj
 8 0 obj
-<</BBox[0 0 375 300]/Length 601/Resources<</Font<</F1 6 0 R>>>>/Subtype/Form/Type/XObject>>stream
+<</BBox[0 0 375 300]/Length 651/Resources<</Font<</F1 6 0 R>>>>/Subtype/Form/Type/XObject>>stream
+0 0 375 300 re
+W
+n
 q
 0 0 0 RG
+0.75 w
 % rect
 0 0 375 300 re
 S
 Q
 q
 0 0 0 RG
+0.75 w
 % line
 0 0 m
 15 101.25 l
@@ -52,6 +56,7 @@ S
 Q
 q
 0 0 0 RG
+0.75 w
 % ellipse
 18.75 101.25 m
 18.75 103.32 17.07 105 15 105 c
@@ -62,6 +67,7 @@ S
 Q
 q
 0 0 0 RG
+0.75 w
 % line
 0 0 m
 52.5 138.75 l
@@ -69,6 +75,7 @@ S
 Q
 q
 0 0 0 RG
+0.75 w
 % ellipse
 56.25 138.75 m
 56.25 140.82 54.57 142.5 52.5 142.5 c
@@ -80,17 +87,15 @@ Q
 q
 1 0 0 1 37.5 37.5 cm
 0 0 0 rg
+q
 BT
 1 0 0 -1 15 101.25 Tm
 0 Tr
 /F1 26.25 Tf
-q
 0 0 Td
 (Hello world)Tj
-n
-Q
 ET
-f
+Q
 Q
 
 endstream
@@ -98,17 +103,17 @@ endobj
 xref
 0 9
 0000000000 65535 f 
-0000000226 00000 n 
-0000000527 00000 n 
-0000000271 00000 n 
-0000000089 00000 n 
+0000000211 00000 n 
+0000000517 00000 n 
+0000000256 00000 n 
+0000000074 00000 n 
 0000000015 00000 n 
-0000000437 00000 n 
-0000000578 00000 n 
-0000000761 00000 n 
+0000000427 00000 n 
+0000000568 00000 n 
+0000000751 00000 n 
 trailer
-<</ID [<f8a815a70e34b4a16fef7785fce0c5fb><f8a815a70e34b4a16fef7785fce0c5fb>]/Info 3 0 R/Root 1 0 R/Size 9>>
-%iText-7.1.7-SNAPSHOT
+<</ID [<fb089507073ce2a809d5500365b47693><fb089507073ce2a809d5500365b47693>]/Info 3 0 R/Root 1 0 R/Size 9>>
+%iText-Core-7.2.1-SNAPSHOT
 startxref
-1486
+1526
 %%EOF

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -48,8 +48,7 @@ using iText.Layout.Renderer;
 namespace iText.Layout.Layout {
     /// <summary>
     /// Represents the result of content
-    /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)">layouting</see>
-    /// .
+    /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)">layouting</see>.
     /// </summary>
     public class LayoutResult {
         /// <summary>
@@ -83,36 +82,49 @@ namespace iText.Layout.Layout {
 
         /// <summary>
         /// The area occupied by the content during its
-        /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)">layouting</see>
-        /// .
-        /// which indicates whether the content was added or not and, if yes, was it added fully or partially.
+        /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)">layouting</see>.
         /// </summary>
+        /// <remarks>
+        /// The area occupied by the content during its
+        /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)">layouting</see>.
+        /// which indicates whether the content was added or not and, if yes, was it added fully or partially.
+        /// </remarks>
         protected internal LayoutArea occupiedArea;
 
         /// <summary>
         /// The split renderer created during
-        /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)">layouting</see>
-        /// .
-        /// This renderer will be used to draw the splitted part of content.
+        /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)">layouting</see>.
         /// </summary>
+        /// <remarks>
+        /// The split renderer created during
+        /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)">layouting</see>.
+        /// This renderer will be used to draw the splitted part of content.
+        /// </remarks>
         protected internal IRenderer splitRenderer;
 
         /// <summary>
         /// The overflow renderer created during
-        /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)">layouting</see>
-        /// .
-        /// This renderer will be used to draw the overflowed part of content.
+        /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)">layouting</see>.
         /// </summary>
+        /// <remarks>
+        /// The overflow renderer created during
+        /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)">layouting</see>.
+        /// This renderer will be used to draw the overflowed part of content.
+        /// </remarks>
         protected internal IRenderer overflowRenderer;
 
+        /// <summary>
+        /// The
+        /// <see cref="iText.Layout.Element.AreaBreak"/>
+        /// that will be rendered by this object.
+        /// </summary>
         protected internal AreaBreak areaBreak;
 
         /// <summary>
         /// The first renderer to produce
         /// <see cref="NOTHING"/>
         /// during
-        /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)"/>
-        /// .
+        /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)"/>.
         /// </summary>
         protected internal IRenderer causeOfNothing;
 
@@ -122,10 +134,17 @@ namespace iText.Layout.Layout {
         /// result of
         /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)">layouting</see>
         /// }.
+        /// </summary>
+        /// <remarks>
+        /// Creates the
+        /// <see cref="LayoutResult"/>
+        /// result of
+        /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)">layouting</see>
+        /// }.
         /// The
         /// <see cref="causeOfNothing"/>
         /// will be set as null.
-        /// </summary>
+        /// </remarks>
         /// <param name="status">
         /// the status of
         /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)"/>
@@ -167,8 +186,7 @@ namespace iText.Layout.Layout {
 
         /// <summary>
         /// Gets the status of
-        /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)"/>
-        /// .
+        /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)"/>.
         /// </summary>
         /// <returns>the status</returns>
         public virtual int GetStatus() {
@@ -177,10 +195,12 @@ namespace iText.Layout.Layout {
 
         /// <summary>
         /// Sets the status of
-        /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)"/>
-        /// .
+        /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)"/>.
         /// </summary>
-        /// <param name="status"/>
+        /// <param name="status">
+        /// the status of
+        /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)"/>
+        /// </param>
         public virtual void SetStatus(int status) {
             this.status = status;
         }
@@ -189,8 +209,7 @@ namespace iText.Layout.Layout {
         /// Gets the
         /// <see cref="LayoutArea">layout area</see>
         /// occupied by the content during
-        /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)">layouting</see>
-        /// .
+        /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)">layouting</see>.
         /// </summary>
         /// <returns>
         /// the
@@ -205,8 +224,7 @@ namespace iText.Layout.Layout {
         /// Gets the split
         /// <see cref="iText.Layout.Renderer.IRenderer">renderer</see>
         /// created during
-        /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)">layouting</see>
-        /// .
+        /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)">layouting</see>.
         /// </summary>
         /// <returns>
         /// the
@@ -218,18 +236,16 @@ namespace iText.Layout.Layout {
 
         /// <summary>
         /// Sets the split
-        /// <see cref="iText.Layout.Renderer.IRenderer">renderer</see>
-        /// .
+        /// <see cref="iText.Layout.Renderer.IRenderer">renderer</see>.
         /// </summary>
-        /// <param name="splitRenderer"/>
+        /// <param name="splitRenderer">the renderer to draw the splitted part of the content</param>
         public virtual void SetSplitRenderer(IRenderer splitRenderer) {
             this.splitRenderer = splitRenderer;
         }
 
         /// <summary>
         /// Gets the overflow renderer created during
-        /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)">layouting</see>
-        /// .
+        /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)">layouting</see>.
         /// </summary>
         /// <returns>
         /// the
@@ -241,18 +257,22 @@ namespace iText.Layout.Layout {
 
         /// <summary>
         /// Sets the overflow
-        /// <see cref="iText.Layout.Renderer.IRenderer">renderer</see>
-        /// .
+        /// <see cref="iText.Layout.Renderer.IRenderer">renderer</see>.
         /// </summary>
-        /// <param name="overflowRenderer"/>
+        /// <param name="overflowRenderer">the renderer to draw the overflowed part of the content</param>
         public virtual void SetOverflowRenderer(IRenderer overflowRenderer) {
             this.overflowRenderer = overflowRenderer;
         }
 
+        /// <summary>Gets areaBreak value.</summary>
+        /// <returns>the areaBreak value</returns>
         public virtual AreaBreak GetAreaBreak() {
             return areaBreak;
         }
 
+        /// <summary>Sets areaBreak value.</summary>
+        /// <param name="areaBreak">the areaBreak value</param>
+        /// <returns>the areaBreak value</returns>
         public virtual iText.Layout.Layout.LayoutResult SetAreaBreak(AreaBreak areaBreak) {
             this.areaBreak = areaBreak;
             return this;

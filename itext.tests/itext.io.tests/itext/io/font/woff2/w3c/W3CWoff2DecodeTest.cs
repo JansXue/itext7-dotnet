@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -65,7 +65,6 @@ namespace iText.IO.Font.Woff2.W3c {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void RunTest() {
             System.Console.Out.Write("\n" + GetTestInfo() + "\n");
@@ -74,12 +73,13 @@ namespace iText.IO.Font.Woff2.W3c {
 
         private String GetDestinationFolder() {
             String localPackage = GetLocalPackage().ToLowerInvariant();
-            return baseDestinationFolder + localPackage + Path.DirectorySeparatorChar + GetTestClassName() + Path.DirectorySeparatorChar;
+            return baseDestinationFolder + localPackage + System.IO.Path.DirectorySeparatorChar + GetTestClassName() +
+                 System.IO.Path.DirectorySeparatorChar;
         }
 
         private String GetSourceFolder() {
             String localPackage = GetLocalPackage().ToLowerInvariant();
-            return baseSourceFolder + localPackage + Path.DirectorySeparatorChar;
+            return baseSourceFolder + localPackage + System.IO.Path.DirectorySeparatorChar;
         }
 
         private String GetTestClassName() {
@@ -89,7 +89,7 @@ namespace iText.IO.Font.Woff2.W3c {
         private String GetLocalPackage() {
             String packageName = GetType().Namespace.ToString();
             String basePackageName = typeof(W3CWoff2DecodeTest).Namespace.ToString();
-            return packageName.Substring(basePackageName.Length).Replace('.', Path.DirectorySeparatorChar);
+            return packageName.Substring(basePackageName.Length).Replace('.', System.IO.Path.DirectorySeparatorChar);
         }
     }
 }

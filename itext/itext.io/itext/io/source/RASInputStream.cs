@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-    Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -66,6 +66,11 @@ namespace iText.IO.Source {
 			this.source = source;
 		}
 
+        public IRandomAccessSource GetSource()
+        {
+            return source;
+        }
+
 	    public override void Flush()
 	    {
 	    }
@@ -93,7 +98,6 @@ namespace iText.IO.Source {
 	    }
 
 	    /// <summary><inheritDoc/></summary>
-		/// <exception cref="System.IO.IOException"/>
 		public override int Read(byte[] b, int off, int len)
 		{
 			int count = source.Get(position, b, off, len);
@@ -104,7 +108,6 @@ namespace iText.IO.Source {
 		}
 
 		/// <summary><inheritDoc/></summary>
-		/// <exception cref="System.IO.IOException"/>
 		public override int ReadByte()
 		{
             int c = source.Get(position);

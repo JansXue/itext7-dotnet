@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,12 +42,12 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using System.Text;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.Test;
 using iText.Test.Attributes;
 
 namespace iText.Kernel.Pdf {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class FreeReferencesTest : ExtendedITextTest {
         public static readonly String destinationFolder = NUnit.Framework.TestContext.CurrentContext.TestDirectory
              + "/test/itext/kernel/pdf/FreeReferencesTest/";
@@ -60,7 +60,6 @@ namespace iText.Kernel.Pdf {
             CreateOrClearDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void FreeReferencesTest01() {
             String src = "freeRefsGapsAndMaxGen.pdf";
@@ -77,7 +76,6 @@ namespace iText.Kernel.Pdf {
             CompareXrefTables(xrefString, expected);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void FreeReferencesTest02() {
             String src = "freeRefsGapsAndMaxGen.pdf";
@@ -88,13 +86,13 @@ namespace iText.Kernel.Pdf {
             String[] xrefString = ExtractXrefTableAsStrings(@out);
             String[] expected = new String[] { "xref\n" + "0 5\n" + "0000000010 65535 f \n" + "0000000269 00000 n \n" 
                 + "0000000569 00000 n \n" + "0000000314 00000 n \n" + "0000000000 65535 f \n" + "10 5\n" + "0000000011 00000 f \n"
-                 + "0000000000 00001 f \n" + "0000000133 00000 n \n" + "0000000015 00000 n \n" + "0000000480 00000 n \n"
-                , "xref\n" + "3 1\n" + "0000000995 00000 n \n" };
-            // Append mode, no possibility to fix subsections in first xref
+                 + 
+                        // Append mode, no possibility to fix subsections in first xref
+                        "0000000000 00001 f \n" + "0000000133 00000 n \n" + "0000000015 00000 n \n" + "0000000480 00000 n \n", "xref\n"
+                 + "3 1\n" + "0000000995 00000 n \n" };
             CompareXrefTables(xrefString, expected);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void FreeReferencesTest03() {
             String src = "freeRefsDeletedObj.pdf";
@@ -104,7 +102,7 @@ namespace iText.Kernel.Pdf {
             pdfDocument.AddNewPage();
             // fix page content
             PdfStream firstPageContentStream = pdfDocument.GetPage(1).GetContentStream(0);
-            String firstPageData = iText.IO.Util.JavaUtil.GetStringForBytes(firstPageContentStream.GetBytes());
+            String firstPageData = iText.Commons.Utils.JavaUtil.GetStringForBytes(firstPageContentStream.GetBytes());
             firstPageContentStream.SetData((firstPageData.JSubstring(0, firstPageData.LastIndexOf("BT")) + "ET").GetBytes
                 ());
             firstPageContentStream.SetModified();
@@ -119,7 +117,6 @@ namespace iText.Kernel.Pdf {
             CompareXrefTables(xrefString, expected);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void FreeReferencesTest04() {
             String src = "simpleDoc.pdf";
@@ -140,7 +137,6 @@ namespace iText.Kernel.Pdf {
             CompareXrefTables(xrefString, expected);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void FreeReferencesTest05() {
             String src = "simpleDocWithSubsections.pdf";
@@ -157,7 +153,6 @@ namespace iText.Kernel.Pdf {
             CompareXrefTables(xrefString, expected);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void FreeReferencesTest06() {
             String src = "simpleDocWithSubsections.pdf";
@@ -167,13 +162,12 @@ namespace iText.Kernel.Pdf {
             pdfDocument.Close();
             String[] xrefString = ExtractXrefTableAsStrings(@out);
             String[] expected = new String[] { "xref\n" + "0 4\n" + "0000000000 65535 f \n" + "0000000269 00000 n \n" 
-                + "0000000569 00000 n \n" + "0000000314 00000 n \n" + "11 3\n" + "0000000133 00000 n \n" + "0000000015 00000 n \n"
-                 + "0000000480 00000 n \n", "xref\n" + "3 1\n" + "0000000935 00000 n \n" };
-            // Append mode, no possibility to fix subsections in first xref
+                + "0000000569 00000 n \n" + "0000000314 00000 n \n" + "11 3\n" + "0000000133 00000 n \n" + 
+                        // Append mode, no possibility to fix subsections in first xref
+                        "0000000015 00000 n \n" + "0000000480 00000 n \n", "xref\n" + "3 1\n" + "0000000935 00000 n \n" };
             CompareXrefTables(xrefString, expected);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void FreeReferencesTest07() {
             String @out = "freeReferencesTest07.pdf";
@@ -188,7 +182,6 @@ namespace iText.Kernel.Pdf {
             CompareXrefTables(xrefString, expected);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void FreeReferencesTest08() {
             String src = "simpleDoc.pdf";
@@ -211,9 +204,8 @@ namespace iText.Kernel.Pdf {
             CompareXrefTables(xrefString, expected);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.ALREADY_FLUSHED_INDIRECT_OBJECT_MADE_FREE)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.ALREADY_FLUSHED_INDIRECT_OBJECT_MADE_FREE)]
         public virtual void FreeARefInWrongWayTest01() {
             String @out = "freeARefInWrongWayTest01.pdf";
             PdfDocument pdfDocument = new PdfDocument(new PdfWriter(destinationFolder + @out));
@@ -240,9 +232,8 @@ namespace iText.Kernel.Pdf {
             CompareXrefTables(xrefString, expected);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.FLUSHED_OBJECT_CONTAINS_FREE_REFERENCE, Count = 2)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.FLUSHED_OBJECT_CONTAINS_FREE_REFERENCE, Count = 2)]
         public virtual void FreeARefInWrongWayTest02() {
             String @out = "freeARefInWrongWayTest02.pdf";
             PdfDocument pdfDocument = new PdfDocument(new PdfWriter(destinationFolder + @out));
@@ -274,9 +265,8 @@ namespace iText.Kernel.Pdf {
             CompareXrefTables(xrefString, expected);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.INDIRECT_REFERENCE_USED_IN_FLUSHED_OBJECT_MADE_FREE)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.INDIRECT_REFERENCE_USED_IN_FLUSHED_OBJECT_MADE_FREE)]
         public virtual void FreeARefInWrongWayTest03() {
             String @out = "freeARefInWrongWayTest03.pdf";
             PdfDocument pdfDocument = new PdfDocument(new PdfWriter(destinationFolder + @out));
@@ -307,9 +297,8 @@ namespace iText.Kernel.Pdf {
             CompareXrefTables(xrefString, expected);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.ALREADY_FLUSHED_INDIRECT_OBJECT_MADE_FREE)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.ALREADY_FLUSHED_INDIRECT_OBJECT_MADE_FREE)]
         public virtual void FreeARefInWrongWayTest04() {
             String @out = "freeARefInWrongWayTest04.pdf";
             PdfDocument pdfDocument = new PdfDocument(new PdfWriter(destinationFolder + @out));
@@ -341,7 +330,6 @@ namespace iText.Kernel.Pdf {
             CompareXrefTables(xrefString, expected);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void FreeRefsAtEndOfXref01() {
             String @out = "freeRefsAtEndOfXref01.pdf";
@@ -368,7 +356,6 @@ namespace iText.Kernel.Pdf {
             CompareXrefTables(xrefString, expected);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void FreeRefsAtEndOfXref02() {
             String src = "lastXrefEntryFree.pdf";
@@ -383,7 +370,6 @@ namespace iText.Kernel.Pdf {
             CompareXrefTables(xrefString, expected);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void FreeRefsAtEndOfXref03() {
             String src = "lastXrefEntryFree.pdf";
@@ -403,7 +389,6 @@ namespace iText.Kernel.Pdf {
             CompareXrefTables(xrefString, expected);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void FreeRefsAtEndOfXref04() {
             String src = "lastXrefEntryFree.pdf";
@@ -419,7 +404,6 @@ namespace iText.Kernel.Pdf {
             CompareXrefTables(xrefString, expected);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void FreeRefsAtEndOfXref05() {
             String src = "lastXrefEntryFree.pdf";
@@ -436,7 +420,6 @@ namespace iText.Kernel.Pdf {
             CompareXrefTables(xrefString, expected);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void FreeRefsAtEndOfXref06() {
             String src = "lastXrefEntryFree.pdf";
@@ -456,7 +439,6 @@ namespace iText.Kernel.Pdf {
             CompareXrefTables(xrefString, expected);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void NotUsedIndRef01() {
             String src = "freeRefsDeletedObj.pdf";
@@ -478,7 +460,6 @@ namespace iText.Kernel.Pdf {
             CompareXrefTables(xrefString, expected);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void NotUsedIndRef02() {
             String src = "freeRefsDeletedObj.pdf";
@@ -500,7 +481,6 @@ namespace iText.Kernel.Pdf {
             CompareXrefTables(xrefString, expected);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void NotUsedIndRef03() {
             String src = "freeRefsDeletedObj.pdf";
@@ -523,9 +503,8 @@ namespace iText.Kernel.Pdf {
             CompareXrefTables(xrefString, expected);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.INVALID_INDIRECT_REFERENCE)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.INVALID_INDIRECT_REFERENCE)]
         public virtual void CorruptedDocIndRefToFree01() {
             String src = "corruptedDocIndRefToFree.pdf";
             String @out = "corruptedDocIndRefToFree01.pdf";
@@ -543,7 +522,6 @@ namespace iText.Kernel.Pdf {
             CompareXrefTables(xrefString, expected);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void InvalidFreeRefsListHandling01() {
             String src = "invalidFreeRefsList01.pdf";
@@ -560,7 +538,6 @@ namespace iText.Kernel.Pdf {
             CompareXrefTables(xrefString, expected);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void InvalidFreeRefsListHandling02() {
             String src = "invalidFreeRefsList02.pdf";
@@ -579,7 +556,6 @@ namespace iText.Kernel.Pdf {
             CompareXrefTables(xrefString, expected);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void InvalidFreeRefsListHandling03() {
             String src = "invalidFreeRefsList03.pdf";
@@ -598,7 +574,6 @@ namespace iText.Kernel.Pdf {
             CompareXrefTables(xrefString, expected);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void InvalidFreeRefsListHandling04() {
             String src = "invalidFreeRefsList04.pdf";
@@ -617,7 +592,6 @@ namespace iText.Kernel.Pdf {
             CompareXrefTables(xrefString, expected);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void InvalidFreeRefsListHandling05() {
             String src = "invalidFreeRefsList05.pdf";
@@ -636,7 +610,6 @@ namespace iText.Kernel.Pdf {
             CompareXrefTables(xrefString, expected);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void InvalidFreeRefsListHandling06() {
             String src = "invalidFreeRefsList06.pdf";
@@ -655,7 +628,6 @@ namespace iText.Kernel.Pdf {
             CompareXrefTables(xrefString, expected);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void InvalidFreeRefsListHandling07() {
             String src = "invalidFreeRefsList07.pdf";
@@ -674,7 +646,6 @@ namespace iText.Kernel.Pdf {
             CompareXrefTables(xrefString, expected);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void InvalidFreeRefsListHandling08() {
             String src = "invalidFreeRefsList08.pdf";
@@ -692,7 +663,6 @@ namespace iText.Kernel.Pdf {
             CompareXrefTables(xrefString, expected);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void InvalidFreeRefsListHandling09() {
             String src = "invalidFreeRefsList09.pdf";
@@ -711,7 +681,6 @@ namespace iText.Kernel.Pdf {
             CompareXrefTables(xrefString, expected);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void InvalidFreeRefsListHandling10() {
             String src = "invalidFreeRefsList10.pdf";
@@ -730,7 +699,6 @@ namespace iText.Kernel.Pdf {
             CompareXrefTables(xrefString, expected);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void FreeRefsXrefStream01() {
             String src = "freeRefsGapsAndListSpecificOrder.pdf";
@@ -755,7 +723,6 @@ namespace iText.Kernel.Pdf {
         /// Free refs reusing is disabled at the moment, however it might be valuable to keep an eye on such case,
         /// in case something will change.
         /// </summary>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void FreeRefsReusingTest01() {
             String src = "simpleDoc.pdf";
@@ -778,7 +745,6 @@ namespace iText.Kernel.Pdf {
         /// Free refs reusing is disabled at the moment, however it might be valuable to keep an eye on such case,
         /// in case something will change.
         /// </summary>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void FreeRefsReusingTest02() {
             String src = "simpleDocWithSubsections.pdf";
@@ -803,7 +769,6 @@ namespace iText.Kernel.Pdf {
         /// Free refs reusing is disabled at the moment, however it might be valuable to keep an eye on such case,
         /// in case something will change.
         /// </summary>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void FreeRefsReusingTest03() {
             String src = "simpleDocWithFreeList.pdf";
@@ -828,7 +793,6 @@ namespace iText.Kernel.Pdf {
         /// Free refs reusing is disabled at the moment, however it might be valuable to keep an eye on such cases,
         /// if something will change in future.
         /// </summary>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void FreeRefsReusingTest04() {
             String src = "freeRefsMaxGenOnly.pdf";
@@ -851,7 +815,6 @@ namespace iText.Kernel.Pdf {
         /// Free refs reusing is disabled at the moment, however it might be valuable to keep an eye on such case,
         /// in case something will change.
         /// </summary>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void FreeRefsReusingTest05() {
             String src = "simpleDocWithFreeList.pdf";
@@ -872,7 +835,6 @@ namespace iText.Kernel.Pdf {
             CompareXrefTables(xrefString, expected);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void FreeRefsReusingTest06() {
             String src = "simpleDoc.pdf";
@@ -895,6 +857,26 @@ namespace iText.Kernel.Pdf {
             CompareXrefTables(xrefString, expected);
         }
 
+        [NUnit.Framework.Test]
+        public virtual void ReadingXrefWithLotsOfFreeObjTest() {
+            String input = sourceFolder + "readingXrefWithLotsOfFreeObj.pdf";
+            String output = destinationFolder + "result_readingXrefWithLotsOfFreeObj.pdf";
+            //Test for array out of bounds when a pdf contains multiple free references
+            PdfDocument doc = new PdfDocument(new PdfReader(input), new PdfWriter(output));
+            int actualNumberOfObj = doc.GetNumberOfPdfObjects();
+            NUnit.Framework.Assert.AreEqual(68, actualNumberOfObj);
+            NUnit.Framework.Assert.IsNull(doc.GetPdfObject(7));
+            PdfXrefTable xref = doc.GetXref();
+            int freeRefsCount = 0;
+            for (int i = 0; i < xref.Size(); i++) {
+                if (xref.Get(i).IsFree()) {
+                    freeRefsCount = freeRefsCount + 1;
+                }
+            }
+            NUnit.Framework.Assert.AreEqual(31, freeRefsCount);
+            doc.Close();
+        }
+
         private void CompareXrefTables(String[] xrefString, String[] expected) {
             NUnit.Framework.Assert.AreEqual(expected.Length, xrefString.Length);
             for (int i = 0; i < xrefString.Length; ++i) {
@@ -906,8 +888,8 @@ namespace iText.Kernel.Pdf {
         }
 
         private bool CompareXrefSection(String xrefSection, String expectedSection) {
-            String[] xrefEntries = iText.IO.Util.StringUtil.Split(xrefSection, "\n");
-            String[] expectedEntries = iText.IO.Util.StringUtil.Split(expectedSection, "\n");
+            String[] xrefEntries = iText.Commons.Utils.StringUtil.Split(xrefSection, "\n");
+            String[] expectedEntries = iText.Commons.Utils.StringUtil.Split(expectedSection, "\n");
             if (xrefEntries.Length != expectedEntries.Length) {
                 return false;
             }
@@ -925,10 +907,10 @@ namespace iText.Kernel.Pdf {
             return true;
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private String[] ExtractXrefTableAsStrings(String @out) {
             byte[] outPdfBytes = ReadFile(destinationFolder + @out);
-            String outPdfContent = iText.IO.Util.JavaUtil.GetStringForBytes(outPdfBytes, Encoding.ASCII);
+            String outPdfContent = iText.Commons.Utils.JavaUtil.GetStringForBytes(outPdfBytes, System.Text.Encoding.ASCII
+                );
             String xrefStr = "\nxref";
             String trailerStr = "trailer";
             int xrefInd = outPdfContent.IndexOf(xrefStr, StringComparison.Ordinal);

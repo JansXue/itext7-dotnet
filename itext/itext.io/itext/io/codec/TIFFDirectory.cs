@@ -58,18 +58,18 @@ namespace iText.IO.Codec {
     /// stream.  The TIFF file format is described in more detail in the
     /// comments for the TIFFDescriptor class.
     /// <br />
-    /// <p> A TIFF IFD consists of a set of TIFFField tags.  Methods are
+    /// <para /> A TIFF IFD consists of a set of TIFFField tags.  Methods are
     /// provided to query the set of tags and to obtain the raw field
     /// array.  In addition, convenience methods are provided for acquiring
     /// the values of tags that contain a single value that fits into a
     /// byte, int, long, float, or double.
     /// <br />
-    /// <p> Every TIFF file is made up of one or more public IFDs that are
+    /// <para /> Every TIFF file is made up of one or more public IFDs that are
     /// joined in a linked list, rooted in the file header.  A file may
     /// also contain so-called private IFDs that are referenced from
     /// tag data and do not appear in the main list.
     /// <br />
-    /// <p><b> This class is not a committed part of the JAI API.  It may
+    /// <para /><b> This class is not a committed part of the JAI API.  It may
     /// be removed or changed in future releases of JAI.</b>
     /// </remarks>
     /// <seealso cref="TIFFField"/>
@@ -110,7 +110,6 @@ namespace iText.IO.Codec {
         /// </remarks>
         /// <param name="stream">a SeekableStream to read from.</param>
         /// <param name="directory">the index of the directory to read.</param>
-        /// <exception cref="System.IO.IOException"/>
         public TIFFDirectory(RandomAccessFileOrArray stream, int directory) {
             long global_save_offset = stream.GetPosition();
             long ifd_offset;
@@ -118,18 +117,18 @@ namespace iText.IO.Codec {
             stream.Seek(0L);
             int endian = stream.ReadUnsignedShort();
             if (!IsValidEndianTag(endian)) {
-                throw new iText.IO.IOException(iText.IO.IOException.BadEndiannessTag0x4949Or0x4d4d);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.BadEndiannessTag0x4949Or0x4d4d);
             }
             isBigEndian = endian == 0x4d4d;
             int magic = ReadUnsignedShort(stream);
             if (magic != 42) {
-                throw new iText.IO.IOException(iText.IO.IOException.BadMagicNumberShouldBe42);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.BadMagicNumberShouldBe42);
             }
             // Get the initial ifd offset as an unsigned int (using a long)
             ifd_offset = ReadUnsignedInt(stream);
             for (int i = 0; i < directory; i++) {
                 if (ifd_offset == 0L) {
-                    throw new iText.IO.IOException(iText.IO.IOException.DirectoryNumberIsTooLarge);
+                    throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.DirectoryNumberIsTooLarge);
                 }
                 stream.Seek(ifd_offset);
                 int entries = ReadUnsignedShort(stream);
@@ -156,13 +155,12 @@ namespace iText.IO.Codec {
         /// one at the current stream offset; zero indicates the IFD
         /// at the current offset.
         /// </param>
-        /// <exception cref="System.IO.IOException"/>
         public TIFFDirectory(RandomAccessFileOrArray stream, long ifd_offset, int directory) {
             long global_save_offset = stream.GetPosition();
             stream.Seek(0L);
             int endian = stream.ReadUnsignedShort();
             if (!IsValidEndianTag(endian)) {
-                throw new iText.IO.IOException(iText.IO.IOException.BadEndiannessTag0x4949Or0x4d4d);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.BadEndiannessTag0x4949Or0x4d4d);
             }
             isBigEndian = endian == 0x4d4d;
             // Seek to the first IFD.
@@ -185,22 +183,34 @@ namespace iText.IO.Codec {
             stream.Seek(global_save_offset);
         }
 
-        private static readonly int[] sizeOfType = new int[] { 0, 1, 1, 2, 4, 8, 1, 1, 2, 4, 8, 4, 8 };
+        private static readonly int[] sizeOfType = new int[] { 
+                //  0 = n/a
+                0, 
+                //  1 = byte
+                1, 
+                //  2 = ascii
+                1, 
+                //  3 = short
+                2, 
+                //  4 = long
+                4, 
+                //  5 = rational
+                8, 
+                //  6 = sbyte
+                1, 
+                //  7 = undefined
+                1, 
+                //  8 = sshort
+                2, 
+                //  9 = slong
+                4, 
+                // 10 = srational
+                8, 
+                // 11 = float
+                4, 
+                // 12 = double
+                8 };
 
-        //  0 = n/a
-        //  1 = byte
-        //  2 = ascii
-        //  3 = short
-        //  4 = long
-        //  5 = rational
-        //  6 = sbyte
-        //  7 = undefined
-        //  8 = sshort
-        //  9 = slong
-        // 10 = srational
-        // 11 = float
-        // 12 = double
-        /// <exception cref="System.IO.IOException"/>
         private void Initialize(RandomAccessFileOrArray stream) {
             long nextTagOffset = 0L;
             long maxOffset = stream.Length();
@@ -254,7 +264,7 @@ namespace iText.IO.Codec {
                                     while (index < count && bvalues[index++] != 0) {
                                     }
                                     // When we encountered zero, means one string has ended
-                                    v.Add(iText.IO.Util.JavaUtil.GetStringForBytes(bvalues, prevIndex, (index - prevIndex)));
+                                    v.Add(iText.Commons.Utils.JavaUtil.GetStringForBytes(bvalues, prevIndex, (index - prevIndex)));
                                     prevIndex = index;
                                 }
                                 count = v.Count;
@@ -546,7 +556,6 @@ namespace iText.IO.Codec {
         }
 
         // Methods to read primitive data types from the stream
-        /// <exception cref="System.IO.IOException"/>
         private short ReadShort(RandomAccessFileOrArray stream) {
             if (isBigEndian) {
                 return stream.ReadShort();
@@ -556,7 +565,6 @@ namespace iText.IO.Codec {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private int ReadUnsignedShort(RandomAccessFileOrArray stream) {
             if (isBigEndian) {
                 return stream.ReadUnsignedShort();
@@ -566,7 +574,6 @@ namespace iText.IO.Codec {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private int ReadInt(RandomAccessFileOrArray stream) {
             if (isBigEndian) {
                 return stream.ReadInt();
@@ -576,7 +583,6 @@ namespace iText.IO.Codec {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private long ReadUnsignedInt(RandomAccessFileOrArray stream) {
             if (isBigEndian) {
                 return stream.ReadUnsignedInt();
@@ -586,7 +592,6 @@ namespace iText.IO.Codec {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private long ReadLong(RandomAccessFileOrArray stream) {
             if (isBigEndian) {
                 return stream.ReadLong();
@@ -596,7 +601,6 @@ namespace iText.IO.Codec {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private float ReadFloat(RandomAccessFileOrArray stream) {
             if (isBigEndian) {
                 return stream.ReadFloat();
@@ -606,7 +610,6 @@ namespace iText.IO.Codec {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private double ReadDouble(RandomAccessFileOrArray stream) {
             if (isBigEndian) {
                 return stream.ReadDouble();
@@ -616,7 +619,6 @@ namespace iText.IO.Codec {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private static int ReadUnsignedShort(RandomAccessFileOrArray stream, bool isBigEndian) {
             if (isBigEndian) {
                 return stream.ReadUnsignedShort();
@@ -626,7 +628,6 @@ namespace iText.IO.Codec {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private static long ReadUnsignedInt(RandomAccessFileOrArray stream, bool isBigEndian) {
             if (isBigEndian) {
                 return stream.ReadUnsignedInt();
@@ -639,26 +640,25 @@ namespace iText.IO.Codec {
         // Utilities
         /// <summary>
         /// Returns the number of image directories (subimages) stored in a
-        /// given TIFF file, represented by a <code>SeekableStream</code>.
+        /// given TIFF file, represented by a <c>SeekableStream</c>.
         /// </summary>
         /// <param name="stream">RandomAccessFileOrArray</param>
         /// <returns>
         /// The number of image directories (subimages) stored
         /// in a given TIFF file
         /// </returns>
-        /// <exception cref="System.IO.IOException"/>
         public static int GetNumDirectories(RandomAccessFileOrArray stream) {
-            long pointer = stream.GetPosition();
             // Save stream pointer
+            long pointer = stream.GetPosition();
             stream.Seek(0L);
             int endian = stream.ReadUnsignedShort();
             if (!IsValidEndianTag(endian)) {
-                throw new iText.IO.IOException(iText.IO.IOException.BadEndiannessTag0x4949Or0x4d4d);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.BadEndiannessTag0x4949Or0x4d4d);
             }
             bool isBigEndian = endian == 0x4d4d;
             int magic = ReadUnsignedShort(stream, isBigEndian);
             if (magic != 42) {
-                throw new iText.IO.IOException(iText.IO.IOException.BadMagicNumberShouldBe42);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.BadMagicNumberShouldBe42);
             }
             stream.Seek(4L);
             long offset = ReadUnsignedInt(stream, isBigEndian);
@@ -677,36 +677,39 @@ namespace iText.IO.Codec {
                     break;
                 }
             }
-            stream.Seek(pointer);
             // Reset stream pointer
+            stream.Seek(pointer);
             return numDirectories;
         }
 
         /// <summary>
         /// Returns a boolean indicating whether the byte order used in the
-        /// the TIFF file is big-endian (i.e.
-        /// </summary>
-        /// <remarks>
-        /// Returns a boolean indicating whether the byte order used in the
-        /// the TIFF file is big-endian (i.e. whether the byte order is from
+        /// TIFF file is big-endian (i.e. whether the byte order is from
         /// the most significant to the least significant)
-        /// </remarks>
+        /// </summary>
+        /// <returns>
+        /// 
+        /// <see langword="true"/>
+        /// if the byte order used in the TIFF file is big-endian
+        /// </returns>
         public virtual bool IsBigEndian() {
             return isBigEndian;
         }
 
-        /// <summary>
-        /// Returns the offset of the IFD corresponding to this
-        /// <code>TIFFDirectory</code>.
-        /// </summary>
+        /// <summary>Returns the offset of the IFD corresponding to this <c>TIFFDirectory</c>.</summary>
+        /// <returns>the offset of the IFD corresponding to this <c>TIFFDirectory</c>.</returns>
         public virtual long GetIFDOffset() {
             return IFDOffset;
         }
 
         /// <summary>
         /// Returns the offset of the next IFD after the IFD corresponding to this
-        /// <code>TIFFDirectory</code>.
+        /// <c>TIFFDirectory</c>.
         /// </summary>
+        /// <returns>
+        /// the offset of the next IFD after the IFD corresponding to this
+        /// <c>TIFFDirectory</c>.
+        /// </returns>
         public virtual long GetNextIFDOffset() {
             return nextIFDOffset;
         }

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,13 +43,22 @@ address: sales@itextpdf.com
 */
 using System;
 using System.IO;
-using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.Security;
-using iText.Kernel;
+using Microsoft.Extensions.Logging;
+using iText.Bouncycastleconnector;
+using iText.Commons;
+using iText.Commons.Bouncycastle;
+using iText.Commons.Bouncycastle.Crypto;
 using iText.Kernel.Crypto;
+using iText.Kernel.Exceptions;
+using iText.Kernel.Logs;
 
 namespace iText.Kernel.Crypto.Securityhandler {
     public abstract class SecurityHandler {
+        private static readonly IBouncyCastleFactory FACTORY = BouncyCastleFactoryCreator.GetFactory();
+
+        private static readonly ILogger LOGGER = ITextLogManager.GetLogger(typeof(iText.Kernel.Crypto.Securityhandler.SecurityHandler
+            ));
+
         /// <summary>The global encryption key</summary>
         protected internal byte[] mkey = new byte[0];
 
@@ -58,7 +67,8 @@ namespace iText.Kernel.Crypto.Securityhandler {
         /// The encryption key for a particular object/generation.
         /// It is recalculated with
         /// <see cref="SetHashKeyForNextObject(int, int)"/>
-        /// for every object individually based in its object/generation.
+        /// for every object individually based in its
+        /// object/generation.
         /// </remarks>
         protected internal byte[] nextObjectKey;
 
@@ -66,12 +76,12 @@ namespace iText.Kernel.Crypto.Securityhandler {
         /// The encryption key length for a particular object/generation
         /// It is recalculated with
         /// <see cref="SetHashKeyForNextObject(int, int)"/>
-        /// for every object individually based in its object/generation.
+        /// for every object individually based in its
+        /// object/generation.
         /// </summary>
         protected internal int nextObjectKeySize;
 
-        [System.NonSerialized]
-        protected internal IDigest md5;
+        protected internal IIDigest md5;
 
         /// <summary>Work area to prepare the object/generation bytes</summary>
         protected internal byte[] extra = new byte[5];
@@ -84,11 +94,11 @@ namespace iText.Kernel.Crypto.Securityhandler {
         /// Note: For most of the supported security handlers algorithm to calculate encryption key for particular object
         /// is the same.
         /// </summary>
-        /// <param name="objNumber"/>
-        /// <param name="objGeneration"/>
+        /// <param name="objNumber">number of particular object for encryption</param>
+        /// <param name="objGeneration">generation of particular object for encryption</param>
         public virtual void SetHashKeyForNextObject(int objNumber, int objGeneration) {
-            md5.Reset();
             // added by ujihara
+            md5.Reset();
             extra[0] = (byte)objNumber;
             extra[1] = (byte)(objNumber >> 8);
             extra[2] = (byte)(objNumber >> 16);
@@ -109,10 +119,13 @@ namespace iText.Kernel.Crypto.Securityhandler {
 
         private void SafeInitMessageDigest() {
             try {
-                md5 = DigestUtilities.GetDigest("MD5");
+                md5 = iText.Bouncycastleconnector.BouncyCastleFactoryCreator.GetFactory().CreateIDigest("MD5");
+                if (FACTORY.IsInApprovedOnlyMode()) {
+                    LOGGER.LogWarning(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT);
+                }
             }
             catch (Exception e) {
-                throw new PdfException(PdfException.PdfEncryption, e);
+                throw new PdfException(KernelExceptionMessageConstant.PDF_ENCRYPTION, e);
             }
         }
     }

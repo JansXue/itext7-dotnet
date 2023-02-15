@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,8 +43,9 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Common.Logging;
-using iText.Kernel;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Annot;
 using iText.Kernel.Pdf.Filespec;
@@ -108,9 +109,14 @@ namespace iText.Kernel.Pdf.Action {
         /// <summary>
         /// Constructs a
         /// <see cref="PdfAction"/>
+        /// instance with a given dictionary.
+        /// </summary>
+        /// <remarks>
+        /// Constructs a
+        /// <see cref="PdfAction"/>
         /// instance with a given dictionary. It can be used for handy
         /// property reading in reading mode or modifying in stamping mode.
-        /// </summary>
+        /// </remarks>
         /// <param name="pdfObject">the dictionary to construct the wrapper around</param>
         public PdfAction(PdfDictionary pdfObject)
             : base(pdfObject) {
@@ -240,8 +246,8 @@ namespace iText.Kernel.Pdf.Action {
                 action.Put(PdfName.D, destination.GetPdfObject());
             }
             else {
-                LogManager.GetLogger(typeof(iText.Kernel.Pdf.Action.PdfAction)).Warn(iText.IO.LogMessageConstant.EMBEDDED_GO_TO_DESTINATION_NOT_SPECIFIED
-                    );
+                ITextLogManager.GetLogger(typeof(iText.Kernel.Pdf.Action.PdfAction)).LogWarning(iText.IO.Logs.IoLogMessageConstant
+                    .EMBEDDED_GO_TO_DESTINATION_NOT_SPECIFIED);
             }
             if (targetDictionary != null) {
                 action.Put(PdfName.T, targetDictionary.GetPdfObject());
@@ -339,13 +345,13 @@ namespace iText.Kernel.Pdf.Action {
         /// <param name="volume">the volume at which to play the sound, in the range -1.0 to 1.0. Default value: 1.0</param>
         /// <param name="synchronous">
         /// a flag specifying whether to play the sound synchronously or asynchronously.
-        /// If this flag is <code>true</code>, the conforming reader retains control, allowing no further user
+        /// If this flag is <c>true</c>, the conforming reader retains control, allowing no further user
         /// interaction other than canceling the sound, until the sound has been completely played.
-        /// Default value: <code>false</code>
+        /// Default value: <c>false</c>
         /// </param>
         /// <param name="repeat">
         /// a flag specifying whether to repeat the sound indefinitely
-        /// If this entry is present, the Synchronous entry shall be ignored. Default value: <code>false</code>
+        /// If this entry is present, the Synchronous entry shall be ignored. Default value: <c>false</c>
         /// </param>
         /// <param name="mix">a flag specifying whether to mix this sound with any other sound already playing</param>
         /// <returns>created action</returns>
@@ -386,7 +392,7 @@ namespace iText.Kernel.Pdf.Action {
 
         /// <summary>Creates a Hide action (section 12.6.4.10 of ISO 32000-1).</summary>
         /// <param name="annotation">the annotation to be hidden or shown</param>
-        /// <param name="hidden">a flag indicating whether to hide the annotation (<code>true</code>) or show it (<code>false</code>)
+        /// <param name="hidden">a flag indicating whether to hide the annotation (<c>true</c>) or show it (<c>false</c>)
         ///     </param>
         /// <returns>created action</returns>
         public static iText.Kernel.Pdf.Action.PdfAction CreateHide(PdfAnnotation annotation, bool hidden) {
@@ -396,7 +402,7 @@ namespace iText.Kernel.Pdf.Action {
 
         /// <summary>Creates a Hide action (section 12.6.4.10 of ISO 32000-1).</summary>
         /// <param name="annotations">the annotations to be hidden or shown</param>
-        /// <param name="hidden">a flag indicating whether to hide the annotation (<code>true</code>) or show it (<code>false</code>)
+        /// <param name="hidden">a flag indicating whether to hide the annotation (<c>true</c>) or show it (<c>false</c>)
         ///     </param>
         /// <returns>created action</returns>
         public static iText.Kernel.Pdf.Action.PdfAction CreateHide(PdfAnnotation[] annotations, bool hidden) {
@@ -409,7 +415,7 @@ namespace iText.Kernel.Pdf.Action {
         /// a text string giving the fully qualified field name of an interactive form field whose
         /// associated widget annotation or annotations are to be affected
         /// </param>
-        /// <param name="hidden">a flag indicating whether to hide the annotation (<code>true</code>) or show it (<code>false</code>)
+        /// <param name="hidden">a flag indicating whether to hide the annotation (<c>true</c>) or show it (<c>false</c>)
         ///     </param>
         /// <returns>created action</returns>
         public static iText.Kernel.Pdf.Action.PdfAction CreateHide(String text, bool hidden) {
@@ -422,7 +428,7 @@ namespace iText.Kernel.Pdf.Action {
         /// a text string array giving the fully qualified field names of interactive form fields whose
         /// associated widget annotation or annotations are to be affected
         /// </param>
-        /// <param name="hidden">a flag indicating whether to hide the annotation (<code>true</code>) or show it (<code>false</code>)
+        /// <param name="hidden">a flag indicating whether to hide the annotation (<c>true</c>) or show it (<c>false</c>)
         ///     </param>
         /// <returns>created action</returns>
         public static iText.Kernel.Pdf.Action.PdfAction CreateHide(String[] text, bool hidden) {
@@ -504,7 +510,7 @@ namespace iText.Kernel.Pdf.Action {
         /// <param name="names">
         /// an array identifying which fields to include in the submission or which to exclude,
         /// depending on the setting of the Include/Exclude flag in the Flags entry.
-        /// This is an optional parameter and can be <code>null</code>
+        /// This is an optional parameter and can be <c>null</c>
         /// </param>
         /// <param name="flags">
         /// a set of flags specifying various characteristics of the action (see Table 237 of ISO 32000-1).
@@ -606,10 +612,15 @@ namespace iText.Kernel.Pdf.Action {
         /// Inserts the value into the underlying object of this
         /// <see cref="PdfAction"/>
         /// and associates it with the specified key.
+        /// </summary>
+        /// <remarks>
+        /// Inserts the value into the underlying object of this
+        /// <see cref="PdfAction"/>
+        /// and associates it with the specified key.
         /// If the key is already present in this
         /// <see cref="PdfAction"/>
         /// , this method will override the old value with the specified one.
-        /// </summary>
+        /// </remarks>
         /// <param name="key">key to insert or to override</param>
         /// <param name="value">the value to associate with the specified key</param>
         /// <returns>
@@ -628,12 +639,17 @@ namespace iText.Kernel.Pdf.Action {
         /// <c>PdfObject</c>
         /// behind this wrapper, you have to ensure
         /// that this object is added to the document, i.e. it has an indirect reference.
+        /// </summary>
+        /// <remarks>
+        /// To manually flush a
+        /// <c>PdfObject</c>
+        /// behind this wrapper, you have to ensure
+        /// that this object is added to the document, i.e. it has an indirect reference.
         /// Basically this means that before flushing you need to explicitly call
-        /// <see cref="iText.Kernel.Pdf.PdfObjectWrapper{T}.MakeIndirect(iText.Kernel.Pdf.PdfDocument)"/>
-        /// .
+        /// <see cref="iText.Kernel.Pdf.PdfObjectWrapper{T}.MakeIndirect(iText.Kernel.Pdf.PdfDocument)"/>.
         /// For example: wrapperInstance.makeIndirect(document).flush();
         /// Note that not every wrapper require this, only those that have such warning in documentation.
-        /// </summary>
+        /// </remarks>
         public override void Flush() {
             base.Flush();
         }
@@ -704,8 +720,8 @@ namespace iText.Kernel.Pdf.Action {
                                 );
                         }
                         else {
-                            LogManager.GetLogger(typeof(iText.Kernel.Pdf.Action.PdfAction)).Warn(iText.IO.LogMessageConstant.STRUCTURE_ELEMENT_REPLACED_BY_ITS_ID_IN_STRUCTURE_DESTINATION
-                                );
+                            ITextLogManager.GetLogger(typeof(iText.Kernel.Pdf.Action.PdfAction)).LogWarning(iText.IO.Logs.IoLogMessageConstant
+                                .STRUCTURE_ELEMENT_REPLACED_BY_ITS_ID_IN_STRUCTURE_DESTINATION);
                             ((PdfArray)destination.GetPdfObject()).Set(0, id);
                             destination.GetPdfObject().SetModified();
                         }
@@ -714,10 +730,21 @@ namespace iText.Kernel.Pdf.Action {
             }
         }
 
-        public static void ValidateNotRemoteDestination(PdfDestination destination) {
+        /// <summary>Validates not remote destination against the PDF specification and in case of invalidity logs a warning.
+        ///     </summary>
+        /// <remarks>
+        /// Validates not remote destination against the PDF specification and in case of invalidity logs a warning.
+        /// See section 12.3.2.2 of ISO 32000-1.
+        /// </remarks>
+        /// <param name="destination">
+        /// the
+        /// <see cref="iText.Kernel.Pdf.Navigation.PdfDestination">destination</see>
+        /// to be validated
+        /// </param>
+        private static void ValidateNotRemoteDestination(PdfDestination destination) {
             if (destination is PdfExplicitRemoteGoToDestination) {
-                LogManager.GetLogger(typeof(iText.Kernel.Pdf.Action.PdfAction)).Warn(iText.IO.LogMessageConstant.INVALID_DESTINATION_TYPE
-                    );
+                ITextLogManager.GetLogger(typeof(iText.Kernel.Pdf.Action.PdfAction)).LogWarning(iText.IO.Logs.IoLogMessageConstant
+                    .INVALID_DESTINATION_TYPE);
             }
             else {
                 if (destination is PdfExplicitDestination) {
@@ -725,8 +752,8 @@ namespace iText.Kernel.Pdf.Action {
                     // destination page is in a current PDF document. See section 12.3.2.2 of ISO 32000-1.
                     PdfObject firstObj = ((PdfArray)destination.GetPdfObject()).Get(0);
                     if (firstObj.IsNumber()) {
-                        LogManager.GetLogger(typeof(iText.Kernel.Pdf.Action.PdfAction)).Warn(iText.IO.LogMessageConstant.INVALID_DESTINATION_TYPE
-                            );
+                        ITextLogManager.GetLogger(typeof(iText.Kernel.Pdf.Action.PdfAction)).LogWarning(iText.IO.Logs.IoLogMessageConstant
+                            .INVALID_DESTINATION_TYPE);
                     }
                 }
             }

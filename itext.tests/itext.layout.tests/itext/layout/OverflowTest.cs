@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -56,6 +56,7 @@ using iText.Test;
 using iText.Test.Attributes;
 
 namespace iText.Layout {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class OverflowTest : ExtendedITextTest {
         public static readonly String destinationFolder = NUnit.Framework.TestContext.CurrentContext.TestDirectory
              + "/test/itext/layout/OverflowTest/";
@@ -68,8 +69,6 @@ namespace iText.Layout {
             CreateDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TextOverflowTest01() {
             String outFileName = destinationFolder + "textOverflowTest01.pdf";
@@ -87,8 +86,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TextOverflowTest02() {
             String outFileName = destinationFolder + "textOverflowTest02.pdf";
@@ -105,8 +102,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TextOverflowTest03() {
             String outFileName = destinationFolder + "textOverflowTest03.pdf";
@@ -123,8 +118,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TextOverflowTest04() {
             String outFileName = destinationFolder + "textOverflowTest04.pdf";
@@ -138,8 +131,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void AlignedInlineContentOverflowHiddenTest01() {
             String outFileName = destinationFolder + "alignedInlineContentOverflowHiddenTest01.pdf";
@@ -162,8 +153,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void AlignedInlineContentOverflowHiddenTest02() {
             String outFileName = destinationFolder + "alignedInlineContentOverflowHiddenTest02.pdf";
@@ -184,16 +173,14 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void OverflowHiddenOnCanvasTest01() {
             String outFileName = destinationFolder + "overflowHiddenOnCanvasTest01.pdf";
             String cmpFileName = sourceFolder + "cmp_overflowHiddenOnCanvasTest01.pdf";
             PdfDocument pdfDocument = new PdfDocument(new PdfWriter(outFileName));
             PdfPage page = pdfDocument.AddNewPage();
-            iText.Layout.Canvas canvas = new Canvas(new PdfCanvas(page), pdfDocument, page.GetPageSize().Clone().ApplyMargins
-                (36, 36, 36, 36, false));
+            iText.Layout.Canvas canvas = new Canvas(new PdfCanvas(page), page.GetPageSize().Clone().ApplyMargins(36, 36
+                , 36, 36, false));
             AddParaWithImgSetOverflowX(canvas, OverflowPropertyValue.HIDDEN);
             canvas.Close();
             pdfDocument.Close();
@@ -201,8 +188,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void OverflowHiddenOnCanvasTest02() {
             String outFileName = destinationFolder + "overflowHiddenOnCanvasTest02.pdf";
@@ -218,16 +203,14 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void OverflowVisibleOnCanvasTest01() {
             String outFileName = destinationFolder + "overflowVisibleOnCanvasTest01.pdf";
             String cmpFileName = sourceFolder + "cmp_overflowVisibleOnCanvasTest01.pdf";
             PdfDocument pdfDocument = new PdfDocument(new PdfWriter(outFileName));
             PdfPage page = pdfDocument.AddNewPage();
-            iText.Layout.Canvas canvas = new iText.Layout.Canvas(new PdfCanvas(page), pdfDocument, page.GetPageSize().
-                Clone().ApplyMargins(36, 36, 36, 36, false));
+            iText.Layout.Canvas canvas = new iText.Layout.Canvas(new PdfCanvas(page), page.GetPageSize().Clone().ApplyMargins
+                (36, 36, 36, 36, false));
             AddParaWithImgSetOverflowX(canvas, OverflowPropertyValue.VISIBLE);
             canvas.Close();
             pdfDocument.Close();
@@ -235,8 +218,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void OverflowVisibleOnCanvasTest02() {
             String outFileName = destinationFolder + "overflowVisibleOnCanvasTest02.pdf";
@@ -252,7 +233,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.UriFormatException"/>
         private static void AddParaWithImgSetOverflowX(iText.Layout.Canvas canvas, OverflowPropertyValue? overflowX
             ) {
             String imgPath = sourceFolder + "itis.jpg";
@@ -266,8 +246,6 @@ namespace iText.Layout {
             canvas.Add(p.Add(img));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ForcedPlacementTest01() {
             String outFileName = destinationFolder + "forcedPlacementTest01.pdf";
@@ -286,17 +264,15 @@ namespace iText.Layout {
             div.SetProperty(Property.FORCED_PLACEMENT, true);
             document.Add(div);
             document.Close();
-            // TODO DEVSIX-1001: text might be lost later in the element if previously forced placement was applied.
+            // TODO DEVSIX-1655: text might be lost later in the element if previously forced placement was applied.
             // This test is really artificial in fact, since FORCED_PLACEMENT is set explicitly. Even though at the moment
             // of test creation such situation in fact really happens during elements layout.
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.OCCUPIED_AREA_HAS_NOT_BEEN_INITIALIZED)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.OCCUPIED_AREA_HAS_NOT_BEEN_INITIALIZED)]
         public virtual void ForcedPlacementTest02() {
             String outFileName = destinationFolder + "forcedPlacementTest02.pdf";
             String cmpFileName = sourceFolder + "cmp_forcedPlacementTest02.pdf";
@@ -314,7 +290,7 @@ namespace iText.Layout {
             div.SetProperty(Property.FORCED_PLACEMENT, true);
             document.Add(div);
             document.Close();
-            // TODO DEVSIX-1001: text might be lost later in the element if previously forced placement was applied.
+            // TODO DEVSIX-1655: text might be lost later in the element if previously forced placement was applied.
             // This test is really artificial in fact, since FORCED_PLACEMENT is set explicitly. Even though at the moment
             // of test creation such situation in fact really happens during elements layout
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder

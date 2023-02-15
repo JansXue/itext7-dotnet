@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,6 +45,7 @@ using iText.Svg.Renderers;
 using iText.Test;
 
 namespace iText.Svg.Renderers.Impl {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class ViewBoxSvgTagSvgNodeRendererIntegrationTest : SvgIntegrationTest {
         private static readonly String SOURCE_FOLDER = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/svg/renderers/impl/RootSvgNodeRendererTest/viewbox/";
@@ -57,32 +58,78 @@ namespace iText.Svg.Renderers.Impl {
             ITextTest.CreateDestinationFolder(DESTINATION_FOLDER);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
+        //Uniform viewboxes
         [NUnit.Framework.Test]
-        public virtual void ViewBox50() {
-            ConvertAndCompareVisually(SOURCE_FOLDER, DESTINATION_FOLDER, "viewbox_50");
+        public virtual void ViewBox100x100() {
+            ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "viewbox_100x100");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        public virtual void ViewBox100() {
-            ConvertAndCompareVisually(SOURCE_FOLDER, DESTINATION_FOLDER, "viewbox_100");
+        public virtual void ViewBox200x200() {
+            ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "viewbox_200x200");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        public virtual void ViewBox200() {
-            ConvertAndCompareVisually(SOURCE_FOLDER, DESTINATION_FOLDER, "viewbox_200");
+        public virtual void ViewBox400x400() {
+            ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "viewbox_400x400");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
+        //Non-uniform viewboxes
         [NUnit.Framework.Test]
-        public virtual void ViewBox400() {
-            ConvertAndCompareVisually(SOURCE_FOLDER, DESTINATION_FOLDER, "viewbox_400");
+        public virtual void ViewBox100x200() {
+            ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "viewbox_100x200");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ViewBox100x400() {
+            ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "viewbox_100x400");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ViewBox200x100() {
+            ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "viewbox_200x100");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ViewBox200x400() {
+            ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "viewbox_200x400");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ViewBox400x100() {
+            ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "viewbox_400x100");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ViewBox400x200() {
+            ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "viewbox_400x200");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ViewBoxXYValuesPreserveAspectRatioNoneValues() {
+            //TODO (DEVSIX-3493) change cmp files after fix
+            ConvertAndCompareSinglePage(SOURCE_FOLDER, DESTINATION_FOLDER, "viewBoxXYValuesPreserveAspectRatioNoneValues"
+                );
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ViewBoxXYValuesPreserveAspectRatioXMaxYMaxMeetValues() {
+            //TODO (DEVSIX-3493) change cmp files after fix
+            ConvertAndCompareSinglePage(SOURCE_FOLDER, DESTINATION_FOLDER, "viewBoxXYValuesPreserveAspectRatioXMaxYMaxMeetValues"
+                );
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ViewBoxXYValuesPreserveAspectRatioXMaxYMaxSliceValues() {
+            //TODO (DEVSIX-3493) change cmp files after fix
+            ConvertAndCompareSinglePage(SOURCE_FOLDER, DESTINATION_FOLDER, "viewBoxXYValuesPreserveAspectRatioXMaxYMaxSliceValues"
+                );
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void PreserveAspectRationAllOptionsTest() {
+            //TODO DEVSIX-4861 change cmp after fix
+            ConvertAndCompareSinglePage(SOURCE_FOLDER, DESTINATION_FOLDER, "preserveAspectRationAllOptions");
         }
     }
 }

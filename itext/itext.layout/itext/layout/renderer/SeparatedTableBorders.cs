@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,8 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf.Canvas;
 using iText.Layout.Borders;
@@ -61,13 +62,13 @@ namespace iText.Layout.Renderer {
             : base(rows, numberOfColumns, tableBoundingBorders, largeTableIndexOffset) {
         }
 
-        protected internal override TableBorders DrawHorizontalBorder(int i, float startX, float y1, PdfCanvas canvas
-            , float[] countedColumnWidth) {
+        protected internal override TableBorders DrawHorizontalBorder(PdfCanvas canvas, TableBorderDescriptor borderDescriptor
+            ) {
             return this;
         }
 
-        protected internal override TableBorders DrawVerticalBorder(int i, float startY, float x1, PdfCanvas canvas
-            , IList<float> heights) {
+        protected internal override TableBorders DrawVerticalBorder(PdfCanvas canvas, TableBorderDescriptor borderDescriptor
+            ) {
             return this;
         }
 
@@ -173,14 +174,7 @@ namespace iText.Layout.Renderer {
         }
 
         public override float[] GetCellBorderIndents(int row, int col, int rowspan, int colspan) {
-            float[] indents = new float[4];
-            Border[] borders = rows[row + startRow - largeTableIndexOffset][col].GetBorders();
-            for (int i = 0; i < 4; i++) {
-                if (null != borders[i]) {
-                    indents[i] = borders[i].GetWidth();
-                }
-            }
-            return indents;
+            return new float[] { 0, 0, 0, 0 };
         }
 
         protected internal override void BuildBordersArrays(CellRenderer cell, int row, int col, int[] rowspansToDeduct
@@ -213,35 +207,14 @@ namespace iText.Layout.Renderer {
 
         protected internal virtual bool CheckAndReplaceBorderInArray(IList<IList<Border>> borderArray, int i, int 
             j, Border borderToAdd, bool hasPriority) {
-            //        if (borderArray.size() <= i) {
-            //            for (int count = borderArray.size(); count <= i; count++) {
-            //                borderArray.add(new ArrayList<Border>());
-            //            }
-            //        }
             IList<Border> borders = borderArray[i];
-            //        if (borders.isEmpty()) {
-            //            for (int count = 0; count < j; count++) {
-            //                borders.add(null);
-            //            }
-            //            borders.add(borderToAdd);
-            //            return true;
-            //        }
-            //        if (borders.size() == j) {
-            //            borders.add(borderToAdd);
-            //            return true;
-            //        }
-            //        if (borders.size() < j) {
-            //            for (int count = borders.size(); count <= j; count++) {
-            //                borders.add(count, null);
-            //            }
-            //        }
             Border neighbour = borders[j];
             if (neighbour == null) {
                 borders[j] = borderToAdd;
             }
             else {
-                ILog logger = LogManager.GetLogger(typeof(TableRenderer));
-                logger.Warn(iText.IO.LogMessageConstant.UNEXPECTED_BEHAVIOUR_DURING_TABLE_ROW_COLLAPSING);
+                ILogger logger = ITextLogManager.GetLogger(typeof(TableRenderer));
+                logger.LogWarning(iText.IO.Logs.IoLogMessageConstant.UNEXPECTED_BEHAVIOUR_DURING_TABLE_ROW_COLLAPSING);
             }
             return true;
         }

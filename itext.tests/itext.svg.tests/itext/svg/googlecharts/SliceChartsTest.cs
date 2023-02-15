@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,32 +45,27 @@ using iText.Svg.Renderers;
 using iText.Test;
 
 namespace iText.Svg.Googlecharts {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class SliceChartsTest : SvgIntegrationTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
-            .CurrentContext.TestDirectory) + "/resources/itext/svg/googlecharts/slice_charts/";
+            .CurrentContext.TestDirectory) + "/resources/itext/svg/googlecharts/SliceChartsTest/";
 
         public static readonly String destinationFolder = NUnit.Framework.TestContext.CurrentContext.TestDirectory
-             + "/test/itext/svg/googlecharts/slice_charts/";
+             + "/test/itext/svg/googlecharts/SliceChartsTest/";
 
         [NUnit.Framework.OneTimeSetUp]
         public static void BeforeClass() {
             ITextTest.CreateDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        public virtual void Exploding_slice_chart() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "exploding_slice_chart");
+        public virtual void ExplodingSliceChart() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "explodingSliceChart");
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        public virtual void Removing_slice_chart() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "removing_slice_chart");
+        public virtual void RemovingSliceChart() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "removingSliceChart");
         }
     }
 }

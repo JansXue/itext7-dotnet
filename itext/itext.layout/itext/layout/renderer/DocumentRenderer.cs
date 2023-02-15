@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,12 +43,13 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using iText.Kernel;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas;
 using iText.Layout;
 using iText.Layout.Element;
+using iText.Layout.Exceptions;
 using iText.Layout.Layout;
 using iText.Layout.Properties;
 using iText.Layout.Tagging;
@@ -59,6 +60,8 @@ namespace iText.Layout.Renderer {
 
         protected internal IList<int> wrappedContentPage = new List<int>();
 
+        protected internal TargetCounterHandler targetCounterHandler = new TargetCounterHandler();
+
         public DocumentRenderer(Document document)
             : this(document, true) {
         }
@@ -67,6 +70,22 @@ namespace iText.Layout.Renderer {
             this.document = document;
             this.immediateFlush = immediateFlush;
             this.modelElement = document;
+        }
+
+        /// <summary>Get handler for target-counters.</summary>
+        /// <returns>
+        /// the
+        /// <see cref="TargetCounterHandler"/>
+        /// instance
+        /// </returns>
+        public virtual TargetCounterHandler GetTargetCounterHandler() {
+            return targetCounterHandler;
+        }
+
+        /// <summary>Indicates if relayout is required for targetCounterHandler.</summary>
+        /// <returns>true if relayout is required, false otherwise</returns>
+        public virtual bool IsRelayoutRequired() {
+            return targetCounterHandler.IsRelayoutRequired();
         }
 
         public override LayoutArea GetOccupiedArea() {
@@ -80,24 +99,30 @@ namespace iText.Layout.Renderer {
         /// </summary>
         /// <returns>relayout renderer.</returns>
         public override IRenderer GetNextRenderer() {
-            return new iText.Layout.Renderer.DocumentRenderer(document, immediateFlush);
+            iText.Layout.Renderer.DocumentRenderer renderer = new iText.Layout.Renderer.DocumentRenderer(document, immediateFlush
+                );
+            renderer.targetCounterHandler = new TargetCounterHandler(targetCounterHandler);
+            return renderer;
         }
 
         protected internal override LayoutArea UpdateCurrentArea(LayoutResult overflowResult) {
-            FlushWaitingDrawingElements();
+            FlushWaitingDrawingElements(false);
             LayoutTaggingHelper taggingHelper = this.GetProperty<LayoutTaggingHelper>(Property.TAGGING_HELPER);
             if (taggingHelper != null) {
                 taggingHelper.ReleaseFinishedHints();
             }
             AreaBreak areaBreak = overflowResult != null && overflowResult.GetAreaBreak() != null ? overflowResult.GetAreaBreak
                 () : null;
+            int currentPageNumber = currentArea == null ? 0 : currentArea.GetPageNumber();
             if (areaBreak != null && areaBreak.GetAreaType() == AreaBreakType.LAST_PAGE) {
                 while (currentPageNumber < document.GetPdfDocument().GetNumberOfPages()) {
-                    MoveToNextPage();
+                    PossiblyFlushPreviousPage(currentPageNumber);
+                    currentPageNumber++;
                 }
             }
             else {
-                MoveToNextPage();
+                PossiblyFlushPreviousPage(currentPageNumber);
+                currentPageNumber++;
             }
             PageSize customPageSize = areaBreak != null ? areaBreak.GetPageSize() : null;
             while (document.GetPdfDocument().GetNumberOfPages() >= currentPageNumber && document.GetPdfDocument().GetPage
@@ -112,6 +137,7 @@ namespace iText.Layout.Renderer {
         }
 
         protected internal override void FlushSingleRenderer(IRenderer resultRenderer) {
+            LinkRenderToDocument(resultRenderer, document.GetPdfDocument());
             Transform transformProp = resultRenderer.GetProperty<Transform>(Property.TRANSFORM);
             if (!waitingDrawingElements.Contains(resultRenderer)) {
                 ProcessWaitingDrawing(resultRenderer, transformProp, waitingDrawingElements);
@@ -119,14 +145,14 @@ namespace iText.Layout.Renderer {
                     return;
                 }
             }
+            // TODO Remove checking occupied area to be not null when DEVSIX-1655 is resolved.
             if (!resultRenderer.IsFlushed() && null != resultRenderer.GetOccupiedArea()) {
-                // TODO Remove checking occupied area to be not null when DEVSIX-1001 is resolved.
                 int pageNum = resultRenderer.GetOccupiedArea().GetPageNumber();
                 PdfDocument pdfDocument = document.GetPdfDocument();
                 EnsureDocumentHasNPages(pageNum, null);
                 PdfPage correspondingPage = pdfDocument.GetPage(pageNum);
                 if (correspondingPage.IsFlushed()) {
-                    throw new PdfException(PdfException.CannotDrawElementsOnAlreadyFlushedPages);
+                    throw new PdfException(LayoutExceptionMessageConstant.CANNOT_DRAW_ELEMENTS_ON_ALREADY_FLUSHED_PAGES);
                 }
                 bool wrapOldContent = pdfDocument.GetReader() != null && pdfDocument.GetWriter() != null && correspondingPage
                     .GetContentStreamCount() > 0 && correspondingPage.GetLastContentStream().GetLength() > 0 && !wrappedContentPage
@@ -140,6 +166,9 @@ namespace iText.Layout.Renderer {
             }
         }
 
+        /// <summary>Adds new page with defined page size to PDF document.</summary>
+        /// <param name="customPageSize">the size of new page, can be null</param>
+        /// <returns>the page size of created page</returns>
         protected internal virtual PageSize AddNewPage(PageSize customPageSize) {
             if (customPageSize != null) {
                 document.GetPdfDocument().AddNewPage(customPageSize);
@@ -150,12 +179,17 @@ namespace iText.Layout.Renderer {
             return customPageSize != null ? customPageSize : document.GetPdfDocument().GetDefaultPageSize();
         }
 
-        /// <summary>Adds some pages so that the overall number is at least n.</summary>
+        /// <summary>Ensures that PDF document has n pages.</summary>
         /// <remarks>
-        /// Adds some pages so that the overall number is at least n.
-        /// Returns the page size of the n'th page.
+        /// Ensures that PDF document has n pages. If document has fewer pages,
+        /// adds new pages by calling
+        /// <see cref="AddNewPage(iText.Kernel.Geom.PageSize)"/>
+        /// method.
         /// </remarks>
-        private PageSize EnsureDocumentHasNPages(int n, PageSize customPageSize) {
+        /// <param name="n">the expected number of pages if document</param>
+        /// <param name="customPageSize">the size of created pages, can be null</param>
+        /// <returns>the page size of the last created page, or null if no page was created</returns>
+        protected internal virtual PageSize EnsureDocumentHasNPages(int n, PageSize customPageSize) {
             PageSize lastPageSize = null;
             while (document.GetPdfDocument().GetNumberOfPages() < n) {
                 lastPageSize = AddNewPage(customPageSize);
@@ -172,13 +206,12 @@ namespace iText.Layout.Renderer {
                 () - leftMargin - rightMargin, pageSize.GetHeight() - bottomMargin - topMargin);
         }
 
-        private void MoveToNextPage() {
-            // We don't flush this page immediately, but only flush previous one because of manipulations with areas in case
-            // of keepTogether property.
+        private void PossiblyFlushPreviousPage(int currentPageNumber) {
             if (immediateFlush && currentPageNumber > 1) {
+                // We don't flush current page immediately, but only flush previous one
+                // because of manipulations with areas in case of keepTogether property
                 document.GetPdfDocument().GetPage(currentPageNumber - 1).Flush();
             }
-            currentPageNumber++;
         }
     }
 }

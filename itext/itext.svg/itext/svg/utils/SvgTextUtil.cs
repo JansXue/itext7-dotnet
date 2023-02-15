@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -133,7 +133,7 @@ namespace iText.Svg.Utils {
                     TextLeafSvgNodeRenderer leafRend = (TextLeafSvgNodeRenderer)child;
                     //Process text
                     String toProcess = leafRend.GetAttribute(SvgConstants.Attributes.TEXT_CONTENT);
-                    toProcess = iText.IO.Util.StringUtil.ReplaceAll(toProcess, "\\s+", " ");
+                    toProcess = iText.Commons.Utils.StringUtil.ReplaceAll(toProcess, "\\s+", " ");
                     toProcess = WhiteSpaceUtil.CollapseConsecutiveSpaces(toProcess);
                     if (performLeadingTrim) {
                         //Trim leading white spaces
@@ -154,12 +154,12 @@ namespace iText.Svg.Utils {
         /// <param name="s">string to check</param>
         /// <returns>true if the string only contains whitespace characters, false otherwise</returns>
         public static bool IsOnlyWhiteSpace(String s) {
-            String trimmedText = iText.IO.Util.StringUtil.ReplaceAll(s, "\\s+", " ");
+            String trimmedText = iText.Commons.Utils.StringUtil.ReplaceAll(s, "\\s+", " ");
             //Trim leading whitespace
             trimmedText = iText.Svg.Utils.SvgTextUtil.TrimLeadingWhitespace(trimmedText);
             //Trim trailing whitespace
             trimmedText = iText.Svg.Utils.SvgTextUtil.TrimTrailingWhitespace(trimmedText);
-            return trimmedText.Equals("");
+            return "".Equals(trimmedText);
         }
 
         /// <summary>Resolve the font size stored inside the passed renderer</summary>
@@ -173,19 +173,26 @@ namespace iText.Svg.Utils {
             float fontSize = float.NaN;
             String elementFontSize = renderer.GetAttribute(SvgConstants.Attributes.FONT_SIZE);
             if (null != elementFontSize && !String.IsNullOrEmpty(elementFontSize)) {
-                if (CssUtils.IsRelativeValue(elementFontSize) || CommonCssConstants.LARGER.Equals(elementFontSize) || CommonCssConstants
-                    .SMALLER.Equals(elementFontSize)) {
-                    // TODO DEVSIX-2866 Support rem value for svgs
-                    fontSize = CssUtils.ParseRelativeFontSize(elementFontSize, parentFontSize);
+                if (CssTypesValidationUtils.IsRelativeValue(elementFontSize) || CommonCssConstants.LARGER.Equals(elementFontSize
+                    ) || CommonCssConstants.SMALLER.Equals(elementFontSize)) {
+                    fontSize = CssDimensionParsingUtils.ParseRelativeFontSize(elementFontSize, parentFontSize);
                 }
                 else {
-                    fontSize = CssUtils.ParseAbsoluteFontSize(elementFontSize, CommonCssConstants.PX);
+                    fontSize = CssDimensionParsingUtils.ParseAbsoluteFontSize(elementFontSize, CommonCssConstants.PX);
                 }
             }
             if ((float.IsNaN(fontSize)) || fontSize < 0f) {
                 fontSize = parentFontSize;
             }
             return fontSize;
+        }
+
+        /// <summary>The reference value may contain a hashtag character or 'url' designation and this method will filter them.
+        ///     </summary>
+        /// <param name="name">value to be filtered</param>
+        /// <returns>filtered value</returns>
+        public static String FilterReferenceValue(String name) {
+            return name.Replace("#", "").Replace("url(", "").Replace(")", "").Trim();
         }
     }
 }

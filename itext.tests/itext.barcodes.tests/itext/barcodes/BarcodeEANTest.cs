@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -48,6 +48,7 @@ using iText.Kernel.Utils;
 using iText.Test;
 
 namespace iText.Barcodes {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class BarcodeEANTest : ExtendedITextTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/barcodes/";
@@ -60,9 +61,6 @@ namespace iText.Barcodes {
             CreateDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.PdfException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void Barcode01Test() {
             String filename = "barcodeEAN_01.pdf";
@@ -80,9 +78,6 @@ namespace iText.Barcodes {
                  + "cmp_" + filename, destinationFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.PdfException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void Barcode02Test() {
             String filename = "barcodeEAN_02.pdf";
@@ -100,9 +95,6 @@ namespace iText.Barcodes {
                  + "cmp_" + filename, destinationFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.PdfException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void Barcode03Test() {
             String filename = "barcodeEANSUP.pdf";
@@ -119,6 +111,70 @@ namespace iText.Barcodes {
             codeSUPP.SetBaseline(-2);
             BarcodeEANSUPP eanSupp = new BarcodeEANSUPP(codeEAN, codeSUPP);
             eanSupp.PlaceBarcode(canvas, null, ColorConstants.BLUE);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destinationFolder + filename, sourceFolder
+                 + "cmp_" + filename, destinationFolder, "diff_"));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void PlaceBarcodeUPCATest() {
+            String filename = "placeBarcodeUPCATest.pdf";
+            PdfWriter writer = new PdfWriter(destinationFolder + filename);
+            PdfDocument document = new PdfDocument(writer);
+            PdfPage page = document.AddNewPage();
+            PdfCanvas canvas = new PdfCanvas(page);
+            Barcode1D barcode = new BarcodeEAN(document);
+            barcode.SetCodeType(BarcodeEAN.UPCA);
+            barcode.SetCode("012340000006");
+            barcode.PlaceBarcode(canvas, ColorConstants.BLACK, ColorConstants.BLACK);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destinationFolder + filename, sourceFolder
+                 + "cmp_" + filename, destinationFolder, "diff_"));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void PlaceBarcodeUPCETest() {
+            String filename = "placeBarcodeUPCETest.pdf";
+            PdfWriter writer = new PdfWriter(destinationFolder + filename);
+            PdfDocument document = new PdfDocument(writer);
+            PdfPage page = document.AddNewPage();
+            PdfCanvas canvas = new PdfCanvas(page);
+            Barcode1D barcode = new BarcodeEAN(document);
+            barcode.SetCodeType(BarcodeEAN.UPCE);
+            barcode.SetCode("03456781");
+            barcode.PlaceBarcode(canvas, ColorConstants.BLACK, ColorConstants.BLACK);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destinationFolder + filename, sourceFolder
+                 + "cmp_" + filename, destinationFolder, "diff_"));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void PlaceBarcodeSUPP2Test() {
+            String filename = "placeBarcodeSUPP2Test.pdf";
+            PdfWriter writer = new PdfWriter(destinationFolder + filename);
+            PdfDocument document = new PdfDocument(writer);
+            PdfPage page = document.AddNewPage();
+            PdfCanvas canvas = new PdfCanvas(page);
+            Barcode1D barcode = new BarcodeEAN(document);
+            barcode.SetCodeType(BarcodeEAN.SUPP2);
+            barcode.SetCode("03456781");
+            barcode.PlaceBarcode(canvas, ColorConstants.BLACK, ColorConstants.BLACK);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destinationFolder + filename, sourceFolder
+                 + "cmp_" + filename, destinationFolder, "diff_"));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void PlaceBarcodeSUPP5Test() {
+            String filename = "placeBarcodeSUPP5Test.pdf";
+            PdfWriter writer = new PdfWriter(destinationFolder + filename);
+            PdfDocument document = new PdfDocument(writer);
+            PdfPage page = document.AddNewPage();
+            PdfCanvas canvas = new PdfCanvas(page);
+            Barcode1D barcode = new BarcodeEAN(document);
+            barcode.SetCodeType(BarcodeEAN.SUPP5);
+            barcode.SetCode("55999");
+            barcode.PlaceBarcode(canvas, ColorConstants.BLACK, ColorConstants.BLACK);
             document.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destinationFolder + filename, sourceFolder
                  + "cmp_" + filename, destinationFolder, "diff_"));

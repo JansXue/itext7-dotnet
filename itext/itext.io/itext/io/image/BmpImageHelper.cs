@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -61,6 +61,7 @@ namespace iText.IO.Image {
 
             internal IDictionary<String, Object> additional;
 
+            // BMP variables
             internal Stream inputStream;
 
             internal long bitmapFileSize;
@@ -94,9 +95,9 @@ namespace iText.IO.Image {
             internal long xPelsPerMeter;
 
             internal long yPelsPerMeter;
-            // BMP variables
         }
 
+        // BMP Image types
         private const int VERSION_2_1_BIT = 0;
 
         private const int VERSION_2_4_BIT = 1;
@@ -129,12 +130,14 @@ namespace iText.IO.Image {
 
         private const int VERSION_4_32_BIT = 15;
 
+        // Color space types
         private const int LCS_CALIBRATED_RGB = 0;
 
         private const int LCS_SRGB = 1;
 
         private const int LCS_CMYK = 2;
 
+        // Compression Types
         private const int BI_RGB = 0;
 
         private const int BI_RLE8 = 1;
@@ -143,9 +146,6 @@ namespace iText.IO.Image {
 
         private const int BI_BITFIELDS = 3;
 
-        // BMP Image types
-        // Color space types
-        // Compression Types
         /// <summary>Process the passed Image data as a BMP image.</summary>
         /// <remarks>
         /// Process the passed Image data as a BMP image.
@@ -173,18 +173,18 @@ namespace iText.IO.Image {
                 }
             }
             catch (System.IO.IOException e) {
-                throw new iText.IO.IOException(iText.IO.IOException.BmpImageException, e);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.BmpImageException, e);
             }
             RawImageHelper.UpdateImageAttributes(bmp.image, bmp.additional);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private static void Process(BmpImageHelper.BmpParameters bmp, Stream stream) {
             bmp.inputStream = stream;
             if (!bmp.image.IsNoHeader()) {
                 // Start File Header
                 if (!(ReadUnsignedByte(bmp.inputStream) == 'B' && ReadUnsignedByte(bmp.inputStream) == 'M')) {
-                    throw new iText.IO.IOException(iText.IO.IOException.InvalidMagicValueForBmpFileMustBeBM);
+                    throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.InvalidMagicValueForBmpFileMustBeBM
+                        );
                 }
                 // Read file size
                 bmp.bitmapFileSize = ReadDWord(bmp.inputStream);
@@ -300,13 +300,13 @@ namespace iText.IO.Image {
                 bmp.properties.Put("colors_important", colorsImportant);
                 if (size == 40 || size == 52 || size == 56) {
                     int sizeOfPalette;
+                    // Windows 3.x and Windows NT
                     switch ((int)bmp.compression) {
                         case BI_RGB:
+                        // No compression
                         case BI_RLE8:
+                        // 8-bit RLE compression
                         case BI_RLE4: {
-                            // Windows 3.x and Windows NT
-                            // No compression
-                            // 8-bit RLE compression
                             // 4-bit RLE compression
                             if (bmp.bitsPerPixel == 1) {
                                 bmp.imageType = VERSION_3_1_BIT;
@@ -425,7 +425,7 @@ namespace iText.IO.Image {
                         }
 
                         default: {
-                            throw new iText.IO.IOException(iText.IO.IOException.InvalidBmpFileCompression);
+                            throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.InvalidBmpFileCompression);
                         }
                     }
                 }
@@ -644,19 +644,18 @@ namespace iText.IO.Image {
             return np;
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private static bool GetImage(BmpImageHelper.BmpParameters bmp) {
+            // buffer for byte data
             byte[] bdata;
+            //	if (sampleModel.getDataType() == DataBuffer.TYPE_BYTE)
+            //	    bdata = (byte[])((DataBufferByte)tile.getDataBuffer()).getData();
+            //	else if (sampleModel.getDataType() == DataBuffer.TYPE_USHORT)
+            //	    sdata = (short[])((DataBufferUShort)tile.getDataBuffer()).getData();
+            //	else if (sampleModel.getDataType() == DataBuffer.TYPE_INT)
+            //	    idata = (int[])((DataBufferInt)tile.getDataBuffer()).getData();
+            // There should only be one tile.
             switch (bmp.imageType) {
                 case VERSION_2_1_BIT: {
-                    // buffer for byte data
-                    //	if (sampleModel.getDataType() == DataBuffer.TYPE_BYTE)
-                    //	    bdata = (byte[])((DataBufferByte)tile.getDataBuffer()).getData();
-                    //	else if (sampleModel.getDataType() == DataBuffer.TYPE_USHORT)
-                    //	    sdata = (short[])((DataBufferUShort)tile.getDataBuffer()).getData();
-                    //	else if (sampleModel.getDataType() == DataBuffer.TYPE_INT)
-                    //	    idata = (int[])((DataBufferInt)tile.getDataBuffer()).getData();
-                    // There should only be one tile.
                     // no compression
                     Read1Bit(3, bmp);
                     return true;
@@ -701,7 +700,7 @@ namespace iText.IO.Image {
                         }
 
                         default: {
-                            throw new iText.IO.IOException(iText.IO.IOException.InvalidBmpFileCompression);
+                            throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.InvalidBmpFileCompression);
                         }
                     }
                     return true;
@@ -720,7 +719,7 @@ namespace iText.IO.Image {
                         }
 
                         default: {
-                            throw new iText.IO.IOException(iText.IO.IOException.InvalidBmpFileCompression);
+                            throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.InvalidBmpFileCompression);
                         }
                     }
                     return true;
@@ -762,7 +761,7 @@ namespace iText.IO.Image {
                         }
 
                         default: {
-                            throw new iText.IO.IOException(iText.IO.IOException.InvalidBmpFileCompression);
+                            throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.InvalidBmpFileCompression);
                         }
                     }
                     return true;
@@ -781,7 +780,7 @@ namespace iText.IO.Image {
                         }
 
                         default: {
-                            throw new iText.IO.IOException(iText.IO.IOException.InvalidBmpFileCompression);
+                            throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.InvalidBmpFileCompression);
                         }
                     }
                     return true;
@@ -821,7 +820,6 @@ namespace iText.IO.Image {
             bmp.additional.Put("ColorSpace", colorSpace);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private static void ReadPalette(int sizeOfPalette, BmpImageHelper.BmpParameters bmp) {
             if (sizeOfPalette == 0) {
                 return;
@@ -831,7 +829,7 @@ namespace iText.IO.Image {
             while (bytesRead < sizeOfPalette) {
                 int r = bmp.inputStream.JRead(bmp.palette, bytesRead, sizeOfPalette - bytesRead);
                 if (r < 0) {
-                    throw new iText.IO.IOException(iText.IO.IOException.IncompletePalette);
+                    throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.IncompletePalette);
                 }
                 bytesRead += r;
             }
@@ -839,7 +837,6 @@ namespace iText.IO.Image {
         }
 
         // Deal with 1 Bit images using IndexColorModels
-        /// <exception cref="System.IO.IOException"/>
         private static void Read1Bit(int paletteEntries, BmpImageHelper.BmpParameters bmp) {
             byte[] bdata = new byte[(bmp.width + 7) / 8 * bmp.height];
             int padding = 0;
@@ -872,7 +869,6 @@ namespace iText.IO.Image {
         }
 
         // Method to read a 4 bit BMP image data
-        /// <exception cref="System.IO.IOException"/>
         private static void Read4Bit(int paletteEntries, BmpImageHelper.BmpParameters bmp) {
             byte[] bdata = new byte[(bmp.width + 1) / 2 * bmp.height];
             // Padding bytes at the end of each scanline
@@ -906,7 +902,6 @@ namespace iText.IO.Image {
         }
 
         // Method to read 8 bit BMP image data
-        /// <exception cref="System.IO.IOException"/>
         private static void Read8Bit(int paletteEntries, BmpImageHelper.BmpParameters bmp) {
             byte[] bdata = new byte[bmp.width * bmp.height];
             // Padding bytes at the end of each scanline
@@ -940,7 +935,6 @@ namespace iText.IO.Image {
         }
 
         // Method to read 24 bit BMP image data
-        /// <exception cref="System.IO.IOException"/>
         private static void Read24Bit(byte[] bdata, BmpImageHelper.BmpParameters bmp) {
             // Padding bytes at the end of each scanline
             int padding = 0;
@@ -1013,7 +1007,6 @@ namespace iText.IO.Image {
             return k;
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private static void Read1632Bit(bool is32, BmpImageHelper.BmpParameters bmp) {
             int red_mask = FindMask(bmp.redMask);
             int red_shift = FindShift(bmp.redMask);
@@ -1081,7 +1074,6 @@ namespace iText.IO.Image {
             RawImageHelper.UpdateRawImageParameters(bmp.image, bmp.width, bmp.height, 3, 8, bdata);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private static void ReadRLE8(BmpImageHelper.BmpParameters bmp) {
             // If imageSize field is not provided, calculate it.
             int imSize = (int)bmp.imageSize;
@@ -1112,7 +1104,6 @@ namespace iText.IO.Image {
             IndexedModel(val, 8, 4, bmp);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private static void ReadRLE4(BmpImageHelper.BmpParameters bmp) {
             // If imageSize field is not specified, calculate it.
             int imSize = (int)bmp.imageSize;
@@ -1247,13 +1238,11 @@ namespace iText.IO.Image {
 
         // Windows defined data type reading methods - everything is little endian
         // Unsigned 8 bits
-        /// <exception cref="System.IO.IOException"/>
         private static int ReadUnsignedByte(Stream stream) {
             return stream.Read() & 0xff;
         }
 
         // Unsigned 2 bytes
-        /// <exception cref="System.IO.IOException"/>
         private static int ReadUnsignedShort(Stream stream) {
             int b1 = ReadUnsignedByte(stream);
             int b2 = ReadUnsignedByte(stream);
@@ -1261,7 +1250,6 @@ namespace iText.IO.Image {
         }
 
         // Signed 16 bits
-        /// <exception cref="System.IO.IOException"/>
         private static int ReadShort(Stream stream) {
             int b1 = ReadUnsignedByte(stream);
             int b2 = ReadUnsignedByte(stream);
@@ -1269,13 +1257,11 @@ namespace iText.IO.Image {
         }
 
         // Unsigned 16 bits
-        /// <exception cref="System.IO.IOException"/>
         private static int ReadWord(Stream stream) {
             return ReadUnsignedShort(stream);
         }
 
         // Unsigned 4 bytes
-        /// <exception cref="System.IO.IOException"/>
         private static long ReadUnsignedInt(Stream stream) {
             int b1 = ReadUnsignedByte(stream);
             int b2 = ReadUnsignedByte(stream);
@@ -1286,7 +1272,6 @@ namespace iText.IO.Image {
         }
 
         // Signed 4 bytes
-        /// <exception cref="System.IO.IOException"/>
         private static int ReadInt(Stream stream) {
             int b1 = ReadUnsignedByte(stream);
             int b2 = ReadUnsignedByte(stream);
@@ -1296,13 +1281,11 @@ namespace iText.IO.Image {
         }
 
         // Unsigned 4 bytes
-        /// <exception cref="System.IO.IOException"/>
         private static long ReadDWord(Stream stream) {
             return ReadUnsignedInt(stream);
         }
 
         // 32 bit signed value
-        /// <exception cref="System.IO.IOException"/>
         private static int ReadLong(Stream stream) {
             return ReadInt(stream);
         }

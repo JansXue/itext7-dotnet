@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,6 @@ address: sales@itextpdf.com
 */
 using System;
 using System.IO;
-using System.Text;
 using iText.StyledXmlParser;
 using iText.StyledXmlParser.Css;
 using iText.StyledXmlParser.Css.Parse.Syntax;
@@ -52,17 +51,14 @@ namespace iText.StyledXmlParser.Css.Parse {
     public sealed class CssStyleSheetParser {
         /// <summary>
         /// Creates a new
-        /// <see cref="CssStyleSheetParser"/>
-        /// .
+        /// <see cref="CssStyleSheetParser"/>.
         /// </summary>
         private CssStyleSheetParser() {
         }
 
-        // TODO refactor into interface
         /// <summary>
         /// Parses a stream into a
-        /// <see cref="CssRuleSetParser"/>
-        /// .
+        /// <see cref="CssRuleSetParser"/>.
         /// </summary>
         /// <param name="stream">the stream</param>
         /// <param name="baseUrl">the base url</param>
@@ -70,11 +66,10 @@ namespace iText.StyledXmlParser.Css.Parse {
         /// the resulting
         /// <see cref="iText.StyledXmlParser.Css.CssStyleSheet"/>
         /// </returns>
-        /// <exception cref="System.IO.IOException">Signals that an I/O exception has occurred.</exception>
         public static CssStyleSheet Parse(Stream stream, String baseUrl) {
             CssParserStateController controller = new CssParserStateController(baseUrl);
-            TextReader br = PortUtil.WrapInBufferedReader(new StreamReader(stream, Encoding.UTF8));
             // TODO determine charset correctly DEVSIX-1458
+            TextReader br = PortUtil.WrapInBufferedReader(new StreamReader(stream, System.Text.Encoding.UTF8));
             char[] buffer = new char[8192];
             int length;
             while ((length = br.Read(buffer, 0, buffer.Length)) > 0) {
@@ -87,23 +82,20 @@ namespace iText.StyledXmlParser.Css.Parse {
 
         /// <summary>
         /// Parses a stream into a
-        /// <see cref="iText.StyledXmlParser.Css.CssStyleSheet"/>
-        /// .
+        /// <see cref="iText.StyledXmlParser.Css.CssStyleSheet"/>.
         /// </summary>
         /// <param name="stream">the stream</param>
         /// <returns>
         /// the resulting
         /// <see cref="iText.StyledXmlParser.Css.CssStyleSheet"/>
         /// </returns>
-        /// <exception cref="System.IO.IOException">Signals that an I/O exception has occurred.</exception>
         public static CssStyleSheet Parse(Stream stream) {
             return Parse(stream, null);
         }
 
         /// <summary>
         /// Parses a string into a
-        /// <see cref="iText.StyledXmlParser.Css.CssStyleSheet"/>
-        /// .
+        /// <see cref="iText.StyledXmlParser.Css.CssStyleSheet"/>.
         /// </summary>
         /// <param name="data">the style sheet data</param>
         /// <param name="baseUrl">the base url</param>
@@ -112,8 +104,7 @@ namespace iText.StyledXmlParser.Css.Parse {
         /// <see cref="iText.StyledXmlParser.Css.CssStyleSheet"/>
         /// </returns>
         public static CssStyleSheet Parse(String data, String baseUrl) {
-            // TODO charset? better to create parse logic based on string completely
-            MemoryStream stream = new MemoryStream(data.GetBytes(Encoding.UTF8));
+            MemoryStream stream = new MemoryStream(data.GetBytes(System.Text.Encoding.UTF8));
             try {
                 return Parse(stream, baseUrl);
             }
@@ -124,8 +115,7 @@ namespace iText.StyledXmlParser.Css.Parse {
 
         /// <summary>
         /// Parses a string into a
-        /// <see cref="iText.StyledXmlParser.Css.CssStyleSheet"/>
-        /// .
+        /// <see cref="iText.StyledXmlParser.Css.CssStyleSheet"/>.
         /// </summary>
         /// <param name="data">the data</param>
         /// <returns>

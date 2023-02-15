@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,7 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-using iText.IO.Util;
+using iText.Commons.Utils;
 
 namespace iText.Kernel.Crypto {
     /// <summary>An initialization vector generator for a CBC block encryption.</summary>
@@ -57,7 +57,7 @@ namespace iText.Kernel.Crypto {
             long time = SystemUtil.GetTimeBasedSeed();
             long mem = SystemUtil.GetFreeMemory();
             String s = time + "+" + mem;
-            arcfour.PrepareARCFOURKey(s.GetBytes(iText.IO.Util.EncodingUtil.ISO_8859_1));
+            arcfour.PrepareARCFOURKey(s.GetBytes(iText.Commons.Utils.EncodingUtil.ISO_8859_1));
         }
 
         /// <summary>Creates a new instance of IVGenerator</summary>

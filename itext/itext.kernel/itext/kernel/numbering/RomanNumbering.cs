@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -59,23 +59,26 @@ namespace iText.Kernel.Numbering {
             ), new RomanNumbering.RomanDigit('v', 5, false), new RomanNumbering.RomanDigit('i', 1, true) };
 
         /// <summary>Returns a lower case roman representation of an integer.</summary>
-        /// <param name="number">a number to be converted to roman notation.</param>
+        /// <param name="number">a number to be converted to roman notation</param>
+        /// <returns>a lower case roman representation of an integer</returns>
         public static String ToRomanLowerCase(int number) {
             return Convert(number);
         }
 
         /// <summary>Returns an upper case roman representation of an integer.</summary>
-        /// <param name="number">a number to be converted to roman notation.</param>
+        /// <param name="number">a number to be converted to roman notation</param>
+        /// <returns>an upper case roman representation of an integer</returns>
         public static String ToRomanUpperCase(int number) {
             return Convert(number).ToUpperInvariant();
         }
 
         /// <summary>Returns a roman representation of an integer.</summary>
-        /// <param name="number">a number to be converted to roman notation.</param>
+        /// <param name="number">a number to be converted to roman notation</param>
         /// <param name="upperCase">
-        /// <code>true</code> for upper case representation,
-        /// <code>false</code> for lower case one.
+        /// <c>true</c> for upper case representation,
+        /// <c>false</c> for lower case one
         /// </param>
+        /// <returns>a roman representation of an integer</returns>
         public static String ToRoman(int number, bool upperCase) {
             return upperCase ? ToRomanUpperCase(number) : ToRomanLowerCase(number);
         }

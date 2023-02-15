@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -53,6 +53,7 @@ using iText.Layout.Element;
 using iText.Test;
 
 namespace iText.Layout {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class XMPWriterTest : ExtendedITextTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/layout/XMPWriterTest/";
@@ -74,8 +75,6 @@ namespace iText.Layout {
             CreateDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
         [NUnit.Framework.Test]
         public virtual void CreatePdfTest() {
             String fileName = "xmp_metadata.pdf";
@@ -101,7 +100,6 @@ namespace iText.Layout {
                 , true));
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void AddUAXMPMetaDataNotTaggedTest() {
             String fileName = "addUAXMPMetaDataNotTaggedTest.pdf";
@@ -112,8 +110,6 @@ namespace iText.Layout {
                  + fileName, true));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void AddUAXMPMetaDataTaggedTest() {
             String fileName = "addUAXMPMetaDataTaggedTest.pdf";
@@ -124,7 +120,6 @@ namespace iText.Layout {
                  + fileName, true));
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void DoNotAddUAXMPMetaDataTaggedTest() {
             String fileName = "doNotAddUAXMPMetaDataTaggedTest.pdf";
@@ -135,7 +130,6 @@ namespace iText.Layout {
                  + fileName, true));
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private void ManipulatePdf(PdfDocument pdfDocument, bool setTagged) {
             Document document = new Document(pdfDocument);
             if (setTagged) {
@@ -145,7 +139,8 @@ namespace iText.Layout {
             pdfDocument.GetCatalog().SetViewerPreferences(new PdfViewerPreferences().SetDisplayDocTitle(true));
             PdfDocumentInfo info = pdfDocument.GetDocumentInfo();
             info.SetTitle("iText7 PDF/UA test");
-            PdfFont font = PdfFontFactory.CreateFont(FONT, PdfEncodings.WINANSI, true);
+            PdfFont font = PdfFontFactory.CreateFont(FONT, PdfEncodings.WINANSI, PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED
+                );
             Paragraph p = new Paragraph();
             p.SetFont(font);
             p.Add(new Text("The quick brown "));

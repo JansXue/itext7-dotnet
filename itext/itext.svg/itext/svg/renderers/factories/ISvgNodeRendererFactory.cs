@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -46,12 +46,14 @@ using iText.Svg.Renderers;
 namespace iText.Svg.Renderers.Factories {
     /// <summary>
     /// Interface for the factory used by
-    /// <see cref="iText.Svg.Processors.Impl.DefaultSvgProcessor"/>
-    /// .
-    /// Pass along using
-    /// <see cref="iText.Svg.Processors.ISvgConverterProperties"/>
-    /// .
+    /// <see cref="iText.Svg.Processors.Impl.DefaultSvgProcessor"/>.
     /// </summary>
+    /// <remarks>
+    /// Interface for the factory used by
+    /// <see cref="iText.Svg.Processors.Impl.DefaultSvgProcessor"/>.
+    /// Pass along using
+    /// <see cref="iText.Svg.Processors.ISvgConverterProperties"/>.
+    /// </remarks>
     public interface ISvgNodeRendererFactory {
         /// <summary>Create a configured renderer based on the passed Svg tag and set its parent.</summary>
         /// <param name="tag">Representation of the Svg tag, with all style attributes set</param>

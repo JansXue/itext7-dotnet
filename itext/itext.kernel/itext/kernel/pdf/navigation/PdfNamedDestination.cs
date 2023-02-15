@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,6 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-using System.Collections.Generic;
 using iText.Kernel.Pdf;
 
 namespace iText.Kernel.Pdf.Navigation {
@@ -55,8 +54,9 @@ namespace iText.Kernel.Pdf.Navigation {
             : base(pdfObject) {
         }
 
-        public override PdfObject GetDestinationPage(IDictionary<String, PdfObject> names) {
-            PdfArray array = (PdfArray)names.Get(((PdfName)GetPdfObject()).GetValue());
+        public override PdfObject GetDestinationPage(IPdfNameTreeAccess names) {
+            PdfName name = (PdfName)GetPdfObject();
+            PdfArray array = (PdfArray)names.GetEntry(name.GetValue());
             return array != null ? array.Get(0) : null;
         }
 

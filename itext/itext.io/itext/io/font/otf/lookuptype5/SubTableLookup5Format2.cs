@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,12 +42,12 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System.Collections.Generic;
+using iText.Commons.Utils;
 using iText.IO.Font.Otf;
-using iText.IO.Util;
 
 namespace iText.IO.Font.Otf.Lookuptype5 {
     /// <summary>Contextual Substitution Subtable: Class-based context glyph substitution</summary>
-    public class SubTableLookup5Format2 : ContextualSubTable {
+    public class SubTableLookup5Format2 : ContextualTable<ContextualSubstRule> {
         private ICollection<int> substCoverageGlyphIds;
 
         private IList<IList<ContextualSubstRule>> subClassSets;
@@ -74,6 +74,8 @@ namespace iText.IO.Font.Otf.Lookuptype5 {
         }
 
         public class SubstRuleFormat2 : ContextualSubstRule {
+            // inputClassIds array omits the first class in the sequence,
+            // the first class is defined by corresponding index of subClassSet array
             private int[] inputClassIds;
 
             private SubstLookupRecord[] substLookupRecords;
@@ -82,8 +84,6 @@ namespace iText.IO.Font.Otf.Lookuptype5 {
 
             public SubstRuleFormat2(SubTableLookup5Format2 subTable, int[] inputClassIds, SubstLookupRecord[] substLookupRecords
                 ) {
-                // inputClassIds array omits the first class in the sequence,
-                // the first class is defined by corresponding index of subClassSet array
                 this.inputClassIds = inputClassIds;
                 this.substLookupRecords = substLookupRecords;
                 this.classDefinition = subTable.classDefinition;

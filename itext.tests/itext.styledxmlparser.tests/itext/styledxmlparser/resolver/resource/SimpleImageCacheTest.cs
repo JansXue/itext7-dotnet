@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -46,6 +46,7 @@ using iText.Kernel.Pdf.Xobject;
 using iText.Test;
 
 namespace iText.StyledXmlParser.Resolver.Resource {
+    [NUnit.Framework.Category("UnitTest")]
     public class SimpleImageCacheTest : ExtendedITextTest {
         [NUnit.Framework.SetUp]
         public virtual void Before() {
@@ -120,6 +121,18 @@ namespace iText.StyledXmlParser.Resolver.Resource {
             NUnit.Framework.Assert.AreEqual(imgData[2], cache.GetImage(imgSrc[2]));
             NUnit.Framework.Assert.IsNull(cache.GetImage(imgSrc[0]));
             NUnit.Framework.Assert.IsNull(cache.GetImage(imgSrc[4]));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void OrderRemovingFromCacheTest() {
+            SimpleImageCache cache = new SimpleImageCache(10);
+            for (int j = 0; j <= 9; j++) {
+                cache.PutImage("src" + j + ".jpg", new SimpleImageCacheTest.ImageXObjectStub());
+            }
+            for (int i = 0; i <= 9; i++) {
+                cache.PutImage("src" + i + 10 + ".jpg", new SimpleImageCacheTest.ImageXObjectStub());
+                NUnit.Framework.Assert.IsNull(cache.GetImage("src" + i + ".jpg"));
+            }
         }
 
         private class ImageXObjectStub : PdfImageXObject {

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,40 +45,32 @@ using iText.Svg.Renderers;
 using iText.Test;
 
 namespace iText.Svg.Googlecharts {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class GaugeChartsTest : SvgIntegrationTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
-            .CurrentContext.TestDirectory) + "/resources/itext/svg/googlecharts/gauge_charts/";
+            .CurrentContext.TestDirectory) + "/resources/itext/svg/googlecharts/GaugeChartsTest/";
 
         public static readonly String destinationFolder = NUnit.Framework.TestContext.CurrentContext.TestDirectory
-             + "/test/itext/svg/googlecharts/gauge_charts/";
+             + "/test/itext/svg/googlecharts/GaugeChartsTest/";
 
         [NUnit.Framework.OneTimeSetUp]
         public static void BeforeClass() {
             ITextTest.CreateDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        public virtual void Gauge_charts() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "gauge_chart");
+        public virtual void GaugeCharts() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "gaugeChart");
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        public virtual void Gauge2_charts() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "gauge2_chart");
+        public virtual void Gauge2Charts() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "gauge2Chart");
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        public virtual void Gauge3_charts() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "gauge3_chart");
+        public virtual void Gauge3Charts() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "gauge3Chart");
         }
     }
 }

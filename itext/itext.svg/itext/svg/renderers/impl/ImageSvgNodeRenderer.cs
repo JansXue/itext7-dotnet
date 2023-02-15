@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,6 +41,7 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
+using iText.Kernel.Geom;
 using iText.Kernel.Pdf.Canvas;
 using iText.Kernel.Pdf.Xobject;
 using iText.StyledXmlParser.Css.Util;
@@ -52,7 +53,7 @@ namespace iText.Svg.Renderers.Impl {
     /// <summary>Responsible for drawing Images to the canvas.</summary>
     /// <remarks>
     /// Responsible for drawing Images to the canvas.
-    /// Referenced SVG images aren't supported yet. TODO RND-984
+    /// Referenced SVG images aren't supported yet. TODO DEVSIX-2277
     /// </remarks>
     public class ImageSvgNodeRenderer : AbstractSvgNodeRenderer {
         public override ISvgNodeRenderer CreateDeepCopy() {
@@ -61,38 +62,117 @@ namespace iText.Svg.Renderers.Impl {
             return copy;
         }
 
+        public override Rectangle GetObjectBoundingBox(SvgDrawContext context) {
+            return null;
+        }
+
         protected internal override void DoDraw(SvgDrawContext context) {
             ResourceResolver resourceResolver = context.GetResourceResolver();
             if (resourceResolver == null || this.attributesAndStyles == null) {
                 return;
             }
             String uri = this.attributesAndStyles.Get(SvgConstants.Attributes.XLINK_HREF);
-            PdfXObject xObject = resourceResolver.RetrieveImageExtended(uri);
+            PdfXObject xObject = resourceResolver.RetrieveImage(uri);
             if (xObject == null) {
                 return;
             }
             PdfCanvas currentCanvas = context.GetCurrentCanvas();
             float x = 0;
             if (attributesAndStyles.ContainsKey(SvgConstants.Attributes.X)) {
-                x = CssUtils.ParseAbsoluteLength(attributesAndStyles.Get(SvgConstants.Attributes.X));
+                x = CssDimensionParsingUtils.ParseAbsoluteLength(attributesAndStyles.Get(SvgConstants.Attributes.X));
             }
             float y = 0;
             if (attributesAndStyles.ContainsKey(SvgConstants.Attributes.Y)) {
-                y = CssUtils.ParseAbsoluteLength(attributesAndStyles.Get(SvgConstants.Attributes.Y));
+                y = CssDimensionParsingUtils.ParseAbsoluteLength(attributesAndStyles.Get(SvgConstants.Attributes.Y));
             }
             float width = 0;
             if (attributesAndStyles.ContainsKey(SvgConstants.Attributes.WIDTH)) {
-                width = CssUtils.ParseAbsoluteLength(attributesAndStyles.Get(SvgConstants.Attributes.WIDTH));
+                width = CssDimensionParsingUtils.ParseAbsoluteLength(attributesAndStyles.Get(SvgConstants.Attributes.WIDTH
+                    ));
             }
             float height = 0;
             if (attributesAndStyles.ContainsKey(SvgConstants.Attributes.HEIGHT)) {
-                height = CssUtils.ParseAbsoluteLength(attributesAndStyles.Get(SvgConstants.Attributes.HEIGHT));
+                height = CssDimensionParsingUtils.ParseAbsoluteLength(attributesAndStyles.Get(SvgConstants.Attributes.HEIGHT
+                    ));
             }
+            String preserveAspectRatio = "";
             if (attributesAndStyles.ContainsKey(SvgConstants.Attributes.PRESERVE_ASPECT_RATIO)) {
+                preserveAspectRatio = attributesAndStyles.Get(SvgConstants.Attributes.PRESERVE_ASPECT_RATIO);
             }
-            // TODO RND-876
+            else {
+                if (attributesAndStyles.ContainsKey(SvgConstants.Attributes.PRESERVE_ASPECT_RATIO.ToLowerInvariant())) {
+                    // TODO: DEVSIX-3923 remove normalization (.toLowerCase)
+                    preserveAspectRatio = attributesAndStyles.Get(SvgConstants.Attributes.PRESERVE_ASPECT_RATIO.ToLowerInvariant
+                        ());
+                }
+            }
+            preserveAspectRatio = preserveAspectRatio.ToLowerInvariant();
+            if (!SvgConstants.Values.NONE.Equals(preserveAspectRatio) && !(width == 0 || height == 0)) {
+                float normalizedWidth;
+                float normalizedHeight;
+                if (xObject.GetWidth() / width > xObject.GetHeight() / height) {
+                    normalizedWidth = width;
+                    normalizedHeight = xObject.GetHeight() / xObject.GetWidth() * width;
+                }
+                else {
+                    normalizedWidth = xObject.GetWidth() / xObject.GetHeight() * height;
+                    normalizedHeight = height;
+                }
+                switch (preserveAspectRatio.ToLowerInvariant()) {
+                    case SvgConstants.Values.XMIN_YMIN: {
+                        break;
+                    }
+
+                    case SvgConstants.Values.XMIN_YMID: {
+                        y += Math.Abs(normalizedHeight - height) / 2;
+                        break;
+                    }
+
+                    case SvgConstants.Values.XMIN_YMAX: {
+                        y += Math.Abs(normalizedHeight - height);
+                        break;
+                    }
+
+                    case SvgConstants.Values.XMID_YMIN: {
+                        x += Math.Abs(normalizedWidth - width) / 2;
+                        break;
+                    }
+
+                    case SvgConstants.Values.XMID_YMAX: {
+                        x += Math.Abs(normalizedWidth - width) / 2;
+                        y += Math.Abs(normalizedHeight - height);
+                        break;
+                    }
+
+                    case SvgConstants.Values.XMAX_YMIN: {
+                        x += Math.Abs(normalizedWidth - width);
+                        break;
+                    }
+
+                    case SvgConstants.Values.XMAX_YMID: {
+                        x += Math.Abs(normalizedWidth - width);
+                        y += Math.Abs(normalizedHeight - height) / 2;
+                        break;
+                    }
+
+                    case SvgConstants.Values.XMAX_YMAX: {
+                        x += Math.Abs(normalizedWidth - width);
+                        y += Math.Abs(normalizedHeight - height);
+                        break;
+                    }
+
+                    case SvgConstants.Values.DEFAULT_ASPECT_RATIO:
+                    default: {
+                        x += Math.Abs(normalizedWidth - width) / 2;
+                        y += Math.Abs(normalizedHeight - height) / 2;
+                        break;
+                    }
+                }
+                width = normalizedWidth;
+                height = normalizedHeight;
+            }
             float v = y + height;
-            currentCanvas.AddXObject(xObject, width, 0, 0, -height, x, v);
+            currentCanvas.AddXObjectWithTransformationMatrix(xObject, width, 0, 0, -height, x, v);
         }
     }
 }

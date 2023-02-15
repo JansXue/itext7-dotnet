@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,11 +41,14 @@ source product.
 For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
+using System;
 using System.Collections.Generic;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Colorspace;
 
 namespace iText.Kernel.Pdf.Function {
+    /// <summary>The class that represents the Pdf Function.</summary>
+    [System.ObsoleteAttribute(@"Will be removed is future releases, use AbstractPdfFunction{T} instead")]
     public class PdfFunction : PdfObjectWrapper<PdfObject> {
         public PdfFunction(PdfObject pdfObject)
             : base(pdfObject) {
@@ -65,28 +68,15 @@ namespace iText.Kernel.Pdf.Function {
 
         public virtual int GetOutputSize() {
             PdfArray range = ((PdfDictionary)GetPdfObject()).GetAsArray(PdfName.Range);
-            return range == null ? 0 : range.Size() / 2;
-        }
-
-        /// <summary>
-        /// To manually flush a
-        /// <c>PdfObject</c>
-        /// behind this wrapper, you have to ensure
-        /// that this object is added to the document, i.e. it has an indirect reference.
-        /// Basically this means that before flushing you need to explicitly call
-        /// <see cref="iText.Kernel.Pdf.PdfObjectWrapper{T}.MakeIndirect(iText.Kernel.Pdf.PdfDocument)"/>
-        /// .
-        /// For example: wrapperInstance.makeIndirect(document).flush();
-        /// Note that not every wrapper require this, only those that have such warning in documentation.
-        /// </summary>
-        public override void Flush() {
-            base.Flush();
+            return range == null ? 0 : (range.Size() / 2);
         }
 
         protected internal override bool IsWrappedObjectMustBeIndirect() {
             return true;
         }
 
+        /// <summary>Represents a type 0 pdf function.</summary>
+        [System.ObsoleteAttribute(@"Will be removed is future releases, use PdfType0Function instead")]
         public class Type0 : PdfFunction {
             public Type0(PdfStream pdfObject)
                 : base(pdfObject) {
@@ -126,6 +116,8 @@ namespace iText.Kernel.Pdf.Function {
             }
         }
 
+        /// <summary>Represents a type 2 pdf function.</summary>
+        [System.ObsoleteAttribute(@"Will be removed is future releases, use PdfType2Function instead")]
         public class Type2 : PdfFunction {
             public Type2(PdfDictionary pdfObject)
                 : base(pdfObject) {
@@ -137,6 +129,11 @@ namespace iText.Kernel.Pdf.Function {
 
             public Type2(PdfArray domain, PdfArray range, PdfArray c0, PdfArray c1, PdfNumber n)
                 : this(MakeType2(domain, range, c0, c1, n)) {
+            }
+
+            public override int GetOutputSize() {
+                PdfArray range = ((PdfDictionary)GetPdfObject()).GetAsArray(PdfName.C1);
+                return range == null ? 0 : range.Size();
             }
 
             private static PdfDictionary MakeType2(PdfArray domain, PdfArray range, PdfArray c0, PdfArray c1, PdfNumber
@@ -158,6 +155,8 @@ namespace iText.Kernel.Pdf.Function {
             }
         }
 
+        /// <summary>Represents a type 3 pdf function.</summary>
+        [System.ObsoleteAttribute(@"Will be removed is future releases, use PdfType3Function instead")]
         public class Type3 : PdfFunction {
             public Type3(PdfDictionary pdfObject)
                 : base(pdfObject) {
@@ -177,7 +176,9 @@ namespace iText.Kernel.Pdf.Function {
                 PdfDictionary dictionary = new PdfDictionary();
                 dictionary.Put(PdfName.FunctionType, new PdfNumber(3));
                 dictionary.Put(PdfName.Domain, domain);
-                dictionary.Put(PdfName.Range, range);
+                if (range != null) {
+                    dictionary.Put(PdfName.Range, range);
+                }
                 dictionary.Put(PdfName.Functions, functions);
                 dictionary.Put(PdfName.Bounds, bounds);
                 dictionary.Put(PdfName.Encode, encode);
@@ -193,6 +194,8 @@ namespace iText.Kernel.Pdf.Function {
             }
         }
 
+        /// <summary>Represents a type 4 pdf function.</summary>
+        [System.ObsoleteAttribute(@"Will be removed is future releases, use PdfType4Function instead")]
         public class Type4 : PdfFunction {
             public Type4(PdfStream pdfObject)
                 : base(pdfObject) {
@@ -216,7 +219,7 @@ namespace iText.Kernel.Pdf.Function {
         }
 
         public static PdfFunction MakeFunction(PdfDictionary pdfObject) {
-            switch (pdfObject.GetObjectType()) {
+            switch (pdfObject.GetAsNumber(PdfName.FunctionType).IntValue()) {
                 case 0: {
                     return new PdfFunction.Type0((PdfStream)pdfObject);
                 }
@@ -232,8 +235,11 @@ namespace iText.Kernel.Pdf.Function {
                 case 4: {
                     return new PdfFunction.Type4((PdfStream)pdfObject);
                 }
+
+                default: {
+                    return null;
+                }
             }
-            return null;
         }
     }
 }

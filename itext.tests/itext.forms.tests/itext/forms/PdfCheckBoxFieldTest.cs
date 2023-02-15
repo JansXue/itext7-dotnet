@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,8 +41,8 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
+using iText.Commons.Utils;
 using iText.Forms.Fields;
-using iText.IO.Util;
 using iText.Kernel.Colors;
 using iText.Kernel.Font;
 using iText.Kernel.Geom;
@@ -52,6 +52,7 @@ using iText.Kernel.Utils;
 using iText.Test;
 
 namespace iText.Forms {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class PdfCheckBoxFieldTest : ExtendedITextTest {
         public static readonly String destinationFolder = NUnit.Framework.TestContext.CurrentContext.TestDirectory
              + "/test/itext/forms/PdfCheckBoxFieldTest/";
@@ -64,8 +65,6 @@ namespace iText.Forms {
             CreateOrClearDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CheckBoxFontSizeTest01() {
             String outPdf = destinationFolder + "checkBoxFontSizeTest01.pdf";
@@ -81,8 +80,6 @@ namespace iText.Forms {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CheckBoxFontSizeTest02() {
             String outPdf = destinationFolder + "checkBoxFontSizeTest02.pdf";
@@ -106,8 +103,6 @@ namespace iText.Forms {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CheckBoxFontSizeTest03() {
             String outPdf = destinationFolder + "checkBoxFontSizeTest03.pdf";
@@ -123,24 +118,22 @@ namespace iText.Forms {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CheckBoxFontSizeTest04() {
             String outPdf = destinationFolder + "checkBoxFontSizeTest04.pdf";
             String cmpPdf = sourceFolder + "cmp_checkBoxFontSizeTest04.pdf";
             PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outPdf));
             pdfDoc.AddNewPage();
-            AddCheckBox(pdfDoc, 0, 730, 10, PdfFormField.CreateCheckBox(pdfDoc, new Rectangle(50, 730, 10, 10), "cb_1"
-                , "YES", PdfFormField.TYPE_CIRCLE));
-            AddCheckBox(pdfDoc, 0, 700, 10, PdfFormField.CreateCheckBox(pdfDoc, new Rectangle(50, 700, 10, 10), "cb_2"
-                , "YES", PdfFormField.TYPE_CROSS));
-            AddCheckBox(pdfDoc, 0, 670, 10, PdfFormField.CreateCheckBox(pdfDoc, new Rectangle(50, 670, 10, 10), "cb_3"
-                , "YES", PdfFormField.TYPE_DIAMOND));
-            AddCheckBox(pdfDoc, 0, 640, 10, PdfFormField.CreateCheckBox(pdfDoc, new Rectangle(50, 640, 10, 10), "cb_4"
-                , "YES", PdfFormField.TYPE_SQUARE));
-            AddCheckBox(pdfDoc, 0, 610, 10, PdfFormField.CreateCheckBox(pdfDoc, new Rectangle(50, 610, 10, 10), "cb_5"
-                , "YES", PdfFormField.TYPE_STAR));
+            AddCheckBox(pdfDoc, 0, 730, 10, new CheckBoxFormFieldBuilder(pdfDoc, "cb_1").SetWidgetRectangle(new Rectangle
+                (50, 730, 10, 10)).CreateCheckBox().SetCheckType(PdfFormField.TYPE_CIRCLE).SetValue("YES"));
+            AddCheckBox(pdfDoc, 0, 700, 10, new CheckBoxFormFieldBuilder(pdfDoc, "cb_2").SetWidgetRectangle(new Rectangle
+                (50, 700, 10, 10)).CreateCheckBox().SetCheckType(PdfFormField.TYPE_CROSS).SetValue("YES"));
+            AddCheckBox(pdfDoc, 0, 670, 10, new CheckBoxFormFieldBuilder(pdfDoc, "cb_3").SetWidgetRectangle(new Rectangle
+                (50, 670, 10, 10)).CreateCheckBox().SetCheckType(PdfFormField.TYPE_DIAMOND).SetValue("YES"));
+            AddCheckBox(pdfDoc, 0, 640, 10, new CheckBoxFormFieldBuilder(pdfDoc, "cb_4").SetWidgetRectangle(new Rectangle
+                (50, 640, 10, 10)).CreateCheckBox().SetCheckType(PdfFormField.TYPE_SQUARE).SetValue("YES"));
+            AddCheckBox(pdfDoc, 0, 610, 10, new CheckBoxFormFieldBuilder(pdfDoc, "cb_5").SetWidgetRectangle(new Rectangle
+                (50, 610, 10, 10)).CreateCheckBox().SetCheckType(PdfFormField.TYPE_STAR).SetValue("YES"));
             pdfDoc.Close();
             CompareTool compareTool = new CompareTool();
             String errorMessage = compareTool.CompareByContent(outPdf, cmpPdf, destinationFolder, "diff_");
@@ -149,8 +142,6 @@ namespace iText.Forms {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CheckBoxFontSizeTest05() {
             String outPdf = destinationFolder + "checkBoxFontSizeTest05.pdf";
@@ -167,8 +158,6 @@ namespace iText.Forms {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CheckBoxToggleTest01() {
             String srcPdf = sourceFolder + "checkBoxToggledOn.pdf";
@@ -186,8 +175,6 @@ namespace iText.Forms {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CheckBoxToggleTest02() {
             String srcPdf = sourceFolder + "checkBoxToggledOn.pdf";
@@ -205,14 +192,13 @@ namespace iText.Forms {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private void AddCheckBox(PdfDocument pdfDoc, float fontSize, float yPos, float checkBoxW, float checkBoxH) {
             Rectangle rect = new Rectangle(50, yPos, checkBoxW, checkBoxH);
-            AddCheckBox(pdfDoc, fontSize, yPos, checkBoxW, PdfFormField.CreateCheckBox(pdfDoc, rect, MessageFormatUtil
-                .Format("cb_fs_{0}_{1}_{2}", fontSize, checkBoxW, checkBoxH), "YES", PdfFormField.TYPE_CHECK));
+            AddCheckBox(pdfDoc, fontSize, yPos, checkBoxW, new CheckBoxFormFieldBuilder(pdfDoc, MessageFormatUtil.Format
+                ("cb_fs_{0}_{1}_{2}", fontSize, checkBoxW, checkBoxH)).SetWidgetRectangle(rect).CreateCheckBox().SetCheckType
+                (PdfFormField.TYPE_CHECK).SetValue("YES"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private void AddCheckBox(PdfDocument pdfDoc, float fontSize, float yPos, float checkBoxW, PdfFormField checkBox
             ) {
             PdfPage page = pdfDoc.GetFirstPage();
@@ -220,8 +206,8 @@ namespace iText.Forms {
             if (fontSize >= 0) {
                 checkBox.SetFontSize(fontSize);
             }
-            checkBox.SetBorderWidth(1);
-            checkBox.SetBorderColor(ColorConstants.BLACK);
+            checkBox.GetFirstFormAnnotation().SetBorderWidth(1);
+            checkBox.GetFirstFormAnnotation().SetBorderColor(ColorConstants.BLACK);
             form.AddField(checkBox, page);
             PdfCanvas canvas = new PdfCanvas(page);
             canvas.SaveState().BeginText().MoveText(50 + checkBoxW + 10, yPos).SetFontAndSize(PdfFontFactory.CreateFont

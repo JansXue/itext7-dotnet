@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,6 +43,7 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using iText.Layout.Font;
+using iText.Svg.Exceptions;
 using iText.Svg.Processors;
 using iText.Svg.Renderers;
 
@@ -53,20 +54,43 @@ namespace iText.Svg.Processors.Impl {
     /// objects.
     /// </summary>
     public class SvgProcessorResult : ISvgProcessorResult {
-        private IDictionary<String, ISvgNodeRenderer> namedObjects;
+        private readonly IDictionary<String, ISvgNodeRenderer> namedObjects;
 
-        private ISvgNodeRenderer root;
+        private readonly ISvgNodeRenderer root;
 
-        private FontProvider fontProvider;
+        private readonly SvgProcessorContext context;
 
-        private FontSet tempFonts;
-
-        public SvgProcessorResult(IDictionary<String, ISvgNodeRenderer> namedObjects, ISvgNodeRenderer root, FontProvider
-             fontProvider, FontSet tempFonts) {
+        /// <summary>
+        /// Creates new
+        /// <see cref="SvgProcessorResult"/>
+        /// entity.
+        /// </summary>
+        /// <param name="namedObjects">
+        /// a map of named-objects with their id's as
+        /// <see cref="System.String"/>
+        /// keys and
+        /// the
+        /// <see cref="iText.Svg.Renderers.ISvgNodeRenderer"/>
+        /// objects as values.
+        /// </param>
+        /// <param name="root">
+        /// a wrapped
+        /// <see cref="iText.Svg.Renderers.ISvgNodeRenderer"/>
+        /// root renderer.
+        /// </param>
+        /// <param name="context">
+        /// a
+        /// <see cref="SvgProcessorContext"/>
+        /// instance.
+        /// </param>
+        public SvgProcessorResult(IDictionary<String, ISvgNodeRenderer> namedObjects, ISvgNodeRenderer root, SvgProcessorContext
+             context) {
             this.namedObjects = namedObjects;
             this.root = root;
-            this.fontProvider = fontProvider;
-            this.tempFonts = tempFonts;
+            if (context == null) {
+                throw new ArgumentException(SvgExceptionMessageConstant.PARAMETER_CANNOT_BE_NULL);
+            }
+            this.context = context;
         }
 
         public virtual IDictionary<String, ISvgNodeRenderer> GetNamedObjects() {
@@ -78,11 +102,27 @@ namespace iText.Svg.Processors.Impl {
         }
 
         public virtual FontProvider GetFontProvider() {
-            return fontProvider;
+            return context.GetFontProvider();
         }
 
         public virtual FontSet GetTempFonts() {
-            return tempFonts;
+            return context.GetTempFonts();
+        }
+
+        /// <summary>
+        /// Gets processor context, containing
+        /// <see cref="iText.Layout.Font.FontProvider"/>
+        /// and
+        /// <see cref="iText.Layout.Font.FontSet"/>
+        /// of temporary fonts inside.
+        /// </summary>
+        /// <returns>
+        /// 
+        /// <see cref="SvgProcessorContext"/>
+        /// instance
+        /// </returns>
+        public virtual SvgProcessorContext GetContext() {
+            return context;
         }
 
         public override bool Equals(Object o) {

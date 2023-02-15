@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -55,7 +55,7 @@ namespace iText.Svg.Renderers.Impl {
     /// <see cref="iText.Svg.Renderers.ISvgNodeRenderer"/>
     /// implementation for the &lt;polyline&gt; tag.
     /// </summary>
-    public class PolylineSvgNodeRenderer : AbstractSvgNodeRenderer {
+    public class PolylineSvgNodeRenderer : AbstractSvgNodeRenderer, IMarkerCapable {
         /// <summary>
         /// A List of
         /// <see cref="iText.Kernel.Geom.Point"/>
@@ -71,12 +71,17 @@ namespace iText.Svg.Renderers.Impl {
         /// Parses a string of space separated x,y pairs into individual
         /// <see cref="iText.Kernel.Geom.Point"/>
         /// objects and appends them to
-        /// <see cref="points"/>
-        /// .
+        /// <see cref="points"/>.
+        /// </summary>
+        /// <remarks>
+        /// Parses a string of space separated x,y pairs into individual
+        /// <see cref="iText.Kernel.Geom.Point"/>
+        /// objects and appends them to
+        /// <see cref="points"/>.
         /// Throws an
         /// <see cref="iText.Svg.Exceptions.SvgProcessingException"/>
         /// if pointsAttribute does not have a valid list of numerical x,y pairs.
-        /// </summary>
+        /// </remarks>
         /// <param name="pointsAttribute">A string of space separated x,y value pairs</param>
         protected internal virtual void SetPoints(String pointsAttribute) {
             if (pointsAttribute == null) {
@@ -84,15 +89,42 @@ namespace iText.Svg.Renderers.Impl {
             }
             IList<String> points = SvgCssUtils.SplitValueList(pointsAttribute);
             if (points.Count % 2 != 0) {
-                throw new SvgProcessingException(SvgLogMessageConstant.POINTS_ATTRIBUTE_INVALID_LIST).SetMessageParams(pointsAttribute
-                    );
+                throw new SvgProcessingException(SvgExceptionMessageConstant.POINTS_ATTRIBUTE_INVALID_LIST).SetMessageParams
+                    (pointsAttribute);
             }
+            this.points.Clear();
             float x;
             float y;
             for (int i = 0; i < points.Count; i = i + 2) {
-                x = CssUtils.ParseAbsoluteLength(points[i]);
-                y = CssUtils.ParseAbsoluteLength(points[i + 1]);
+                x = CssDimensionParsingUtils.ParseAbsoluteLength(points[i]);
+                y = CssDimensionParsingUtils.ParseAbsoluteLength(points[i + 1]);
                 this.points.Add(new Point(x, y));
+            }
+        }
+
+        public override Rectangle GetObjectBoundingBox(SvgDrawContext context) {
+            SetPoints(GetAttribute(SvgConstants.Attributes.POINTS));
+            if (points.Count > 1) {
+                Point firstPoint = points[0];
+                double minX = firstPoint.GetX();
+                double minY = firstPoint.GetY();
+                double maxX = minX;
+                double maxY = minY;
+                for (int i = 1; i < points.Count; ++i) {
+                    Point current = points[i];
+                    double currentX = current.GetX();
+                    minX = Math.Min(minX, currentX);
+                    maxX = Math.Max(maxX, currentX);
+                    double currentY = current.GetY();
+                    minY = Math.Min(minY, currentY);
+                    maxY = Math.Max(maxY, currentY);
+                }
+                double width = maxX - minX;
+                double height = maxY - minY;
+                return new Rectangle((float)minX, (float)minY, (float)width, (float)height);
+            }
+            else {
+                return null;
             }
         }
 
@@ -118,6 +150,47 @@ namespace iText.Svg.Renderers.Impl {
             PolylineSvgNodeRenderer copy = new PolylineSvgNodeRenderer();
             DeepCopyAttributesAndStyles(copy);
             return copy;
+        }
+
+        public virtual void DrawMarker(SvgDrawContext context, MarkerVertexType markerVertexType) {
+            Point point = null;
+            if (MarkerVertexType.MARKER_START.Equals(markerVertexType)) {
+                point = points[0];
+            }
+            else {
+                if (MarkerVertexType.MARKER_END.Equals(markerVertexType)) {
+                    point = points[points.Count - 1];
+                }
+            }
+            if (point != null) {
+                String moveX = SvgCssUtils.ConvertDoubleToString(CssUtils.ConvertPtsToPx(point.x));
+                String moveY = SvgCssUtils.ConvertDoubleToString(CssUtils.ConvertPtsToPx(point.y));
+                MarkerSvgNodeRenderer.DrawMarker(context, moveX, moveY, markerVertexType, this);
+            }
+        }
+
+        public virtual double GetAutoOrientAngle(MarkerSvgNodeRenderer marker, bool reverse) {
+            if (points.Count > 1) {
+                Vector v = new Vector(0, 0, 0);
+                if (SvgConstants.Attributes.MARKER_END.Equals(marker.attributesAndStyles.Get(SvgConstants.Tags.MARKER))) {
+                    Point lastPoint = points[points.Count - 1];
+                    Point secondToLastPoint = points[points.Count - 2];
+                    v = new Vector((float)(lastPoint.GetX() - secondToLastPoint.GetX()), (float)(lastPoint.GetY() - secondToLastPoint
+                        .GetY()), 0f);
+                }
+                else {
+                    if (SvgConstants.Attributes.MARKER_START.Equals(marker.attributesAndStyles.Get(SvgConstants.Tags.MARKER))) {
+                        Point firstPoint = points[0];
+                        Point secondPoint = points[1];
+                        v = new Vector((float)(secondPoint.GetX() - firstPoint.GetX()), (float)(secondPoint.GetY() - firstPoint.GetY
+                            ()), 0f);
+                    }
+                }
+                Vector xAxis = new Vector(1, 0, 0);
+                double rotAngle = SvgCoordinateUtils.CalculateAngleBetweenTwoVectors(xAxis, v);
+                return v.Get(1) >= 0 && !reverse ? rotAngle : rotAngle * -1f;
+            }
+            return 0;
         }
     }
 }

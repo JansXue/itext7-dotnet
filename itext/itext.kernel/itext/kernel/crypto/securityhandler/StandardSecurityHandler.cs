@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -81,7 +81,11 @@ namespace iText.Kernel.Crypto.Securityhandler {
         }
 
         /// <summary>Gets bytes of String-value without considering encoding.</summary>
-        /// <param name="string"/>
+        /// <param name="string">
+        /// a
+        /// <see cref="iText.Kernel.Pdf.PdfString"/>
+        /// to get bytes from it
+        /// </param>
         /// <returns>byte array</returns>
         protected internal virtual byte[] GetIsoBytes(PdfString @string) {
             return ByteUtils.GetIsoBytes(@string.GetValue());

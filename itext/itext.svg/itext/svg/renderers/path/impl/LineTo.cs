@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,7 +41,7 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf.Canvas;
 using iText.StyledXmlParser.Css.Util;
@@ -61,8 +61,8 @@ namespace iText.Svg.Renderers.Path.Impl {
         }
 
         public override void Draw(PdfCanvas canvas) {
-            float x = CssUtils.ParseAbsoluteLength(coordinates[0]);
-            float y = CssUtils.ParseAbsoluteLength(coordinates[1]);
+            float x = CssDimensionParsingUtils.ParseAbsoluteLength(coordinates[0]);
+            float y = CssDimensionParsingUtils.ParseAbsoluteLength(coordinates[1]);
             canvas.LineTo(x, y);
         }
 

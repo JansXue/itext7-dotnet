@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -40,6 +40,7 @@ source product.
 For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
+using iText.Kernel.Geom;
 using iText.Kernel.Pdf.Canvas;
 using iText.StyledXmlParser.Css.Util;
 using iText.Svg;
@@ -64,41 +65,52 @@ namespace iText.Svg.Renderers.Impl {
             PdfCanvas cv = context.GetCurrentCanvas();
             cv.WriteLiteral("% ellipse\n");
             if (SetParameters()) {
-                cv.MoveTo(cx + rx, cy);
-                DrawUtils.Arc(cx - rx, cy - ry, cx + rx, cy + ry, 0, 360, cv);
+                // Use double type locally to have better precision of the result after applying arithmetic operations
+                cv.MoveTo((double)cx + (double)rx, cy);
+                DrawUtils.Arc((double)cx - (double)rx, (double)cy - (double)ry, (double)cx + (double)rx, (double)cy + (double
+                    )ry, 0, 360, cv);
+            }
+        }
+
+        public override Rectangle GetObjectBoundingBox(SvgDrawContext context) {
+            if (SetParameters()) {
+                return new Rectangle(cx - rx, cy - ry, rx + rx, ry + ry);
+            }
+            else {
+                return null;
             }
         }
 
         /// <summary>
-        /// Fetches a map of String values by calling getAttribute(Strng s) method
-        /// and maps it's values to arc parmateter cx, cy , rx, ry respectively
+        /// Fetches a map of String values by calling getAttribute(String s) method
+        /// and maps it's values to arc parameter cx, cy , rx, ry respectively
         /// </summary>
         /// <returns>boolean values to indicate whether all values exit or not</returns>
         protected internal virtual bool SetParameters() {
             cx = 0;
             cy = 0;
             if (GetAttribute(SvgConstants.Attributes.CX) != null) {
-                cx = CssUtils.ParseAbsoluteLength(GetAttribute(SvgConstants.Attributes.CX));
+                cx = CssDimensionParsingUtils.ParseAbsoluteLength(GetAttribute(SvgConstants.Attributes.CX));
             }
             if (GetAttribute(SvgConstants.Attributes.CY) != null) {
-                cy = CssUtils.ParseAbsoluteLength(GetAttribute(SvgConstants.Attributes.CY));
+                cy = CssDimensionParsingUtils.ParseAbsoluteLength(GetAttribute(SvgConstants.Attributes.CY));
             }
-            if (GetAttribute(SvgConstants.Attributes.RX) != null && CssUtils.ParseAbsoluteLength(GetAttribute(SvgConstants.Attributes
-                .RX)) > 0) {
-                rx = CssUtils.ParseAbsoluteLength(GetAttribute(SvgConstants.Attributes.RX));
-            }
-            else {
-                return false;
-            }
-            //No drawing if rx is absent
-            if (GetAttribute(SvgConstants.Attributes.RY) != null && CssUtils.ParseAbsoluteLength(GetAttribute(SvgConstants.Attributes
-                .RY)) > 0) {
-                ry = CssUtils.ParseAbsoluteLength(GetAttribute(SvgConstants.Attributes.RY));
+            if (GetAttribute(SvgConstants.Attributes.RX) != null && CssDimensionParsingUtils.ParseAbsoluteLength(GetAttribute
+                (SvgConstants.Attributes.RX)) > 0) {
+                rx = CssDimensionParsingUtils.ParseAbsoluteLength(GetAttribute(SvgConstants.Attributes.RX));
             }
             else {
+                //No drawing if rx is absent
                 return false;
             }
-            //No drawing if ry is absent
+            if (GetAttribute(SvgConstants.Attributes.RY) != null && CssDimensionParsingUtils.ParseAbsoluteLength(GetAttribute
+                (SvgConstants.Attributes.RY)) > 0) {
+                ry = CssDimensionParsingUtils.ParseAbsoluteLength(GetAttribute(SvgConstants.Attributes.RY));
+            }
+            else {
+                //No drawing if ry is absent
+                return false;
+            }
             return true;
         }
 

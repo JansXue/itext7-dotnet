@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,8 +43,8 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Org.BouncyCastle.X509;
-using iText.Kernel;
+using iText.Commons.Bouncycastle.Cert;
+using iText.Kernel.Exceptions;
 
 namespace iText.Signatures {
     /// <summary>
@@ -70,9 +70,9 @@ namespace iText.Signatures {
         /// have a local cache of the Certificate Revocation List.
         /// </summary>
         /// <param name="crl">a CRL object</param>
-        public CrlClientOffline(X509Crl crl) {
+        public CrlClientOffline(IX509Crl crl) {
             try {
-                crls.Add(((X509Crl)crl).GetEncoded());
+                crls.Add(((IX509Crl)crl).GetEncoded());
             }
             catch (Exception ex) {
                 throw new PdfException(ex);
@@ -80,8 +80,8 @@ namespace iText.Signatures {
         }
 
         /// <summary>Returns the CRL bytes (the parameters are ignored).</summary>
-        /// <seealso cref="ICrlClient.GetEncoded(Org.BouncyCastle.X509.X509Certificate, System.String)"/>
-        public virtual ICollection<byte[]> GetEncoded(X509Certificate checkCert, String url) {
+        /// <seealso cref="ICrlClient.GetEncoded(iText.Commons.Bouncycastle.Cert.IX509Certificate, System.String)"/>
+        public virtual ICollection<byte[]> GetEncoded(IX509Certificate checkCert, String url) {
             return crls;
         }
     }

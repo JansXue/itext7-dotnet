@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,6 +45,7 @@ using iText.Svg.Renderers;
 using iText.Test;
 
 namespace iText.Svg.Renderers.Impl {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class NestedSvgTagSvgNodeRendererIntegrationTest : SvgIntegrationTest {
         private static readonly String SOURCE_FOLDER = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/svg/renderers/impl/RootSvgNodeRendererTest/nested/";
@@ -57,39 +58,29 @@ namespace iText.Svg.Renderers.Impl {
             ITextTest.CreateDestinationFolder(DESTINATION_FOLDER);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void SingleNestedSvgTest() {
-            ConvertAndCompareVisually(SOURCE_FOLDER, DESTINATION_FOLDER, "singleNested");
+            ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "singleNested");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void DoubleNestedSvgTest() {
-            ConvertAndCompareVisually(SOURCE_FOLDER, DESTINATION_FOLDER, "doubleNested");
+            ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "doubleNested");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TwoNestedSvgTest() {
-            ConvertAndCompareVisually(SOURCE_FOLDER, DESTINATION_FOLDER, "twoNested");
+            ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "twoNested");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void EmptySvgTest() {
-            ConvertAndCompareVisually(SOURCE_FOLDER, DESTINATION_FOLDER, "empty");
+            ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "empty");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TranslatedSvgTest() {
-            ConvertAndCompareSinglePageVisually(SOURCE_FOLDER, DESTINATION_FOLDER, "translated");
+            ConvertAndCompareSinglePage(SOURCE_FOLDER, DESTINATION_FOLDER, "translated");
         }
     }
 }

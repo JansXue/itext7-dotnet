@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -46,8 +46,7 @@ using System.Collections.Generic;
 namespace iText.StyledXmlParser.Css.Media {
     /// <summary>
     /// Class that bundles all the media types and allows you to registered valid media types in a
-    /// <see cref="Java.Util.Set{E}"/>
-    /// .
+    /// <see cref="Java.Util.Set{E}"/>.
     /// </summary>
     public sealed class MediaType {
         /// <summary>The Constant registeredMediaTypes.</summary>

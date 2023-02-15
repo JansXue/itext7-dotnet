@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,6 +42,7 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
+using iText.Kernel.Geom;
 using iText.Kernel.Pdf.Canvas;
 using iText.StyledXmlParser.Css.Util;
 using iText.Svg;
@@ -53,6 +54,22 @@ namespace iText.Svg.Renderers.Impl {
     /// implementation for the &lt;rect&gt; tag.
     /// </summary>
     public class RectangleSvgNodeRenderer : AbstractSvgNodeRenderer {
+        private float x = 0f;
+
+        private float y = 0f;
+
+        private float width;
+
+        private float height;
+
+        private bool rxPresent = false;
+
+        private bool ryPresent = false;
+
+        private float rx = 0f;
+
+        private float ry = 0f;
+
         /// <summary>Constructs a RectangleSvgNodeRenderer.</summary>
         public RectangleSvgNodeRenderer() {
             attributesAndStyles = new Dictionary<String, String>();
@@ -61,32 +78,8 @@ namespace iText.Svg.Renderers.Impl {
         protected internal override void DoDraw(SvgDrawContext context) {
             PdfCanvas cv = context.GetCurrentCanvas();
             cv.WriteLiteral("% rect\n");
-            float x = 0.0f;
-            float y = 0.0f;
-            if (GetAttribute(SvgConstants.Attributes.X) != null) {
-                x = CssUtils.ParseAbsoluteLength(GetAttribute(SvgConstants.Attributes.X));
-            }
-            if (GetAttribute(SvgConstants.Attributes.Y) != null) {
-                y = CssUtils.ParseAbsoluteLength(GetAttribute(SvgConstants.Attributes.Y));
-            }
-            float width = CssUtils.ParseAbsoluteLength(GetAttribute(SvgConstants.Attributes.WIDTH));
-            float height = CssUtils.ParseAbsoluteLength(GetAttribute(SvgConstants.Attributes.HEIGHT));
-            bool rxPresent = false;
-            bool ryPresent = false;
-            float rx = 0f;
-            float ry = 0f;
-            if (attributesAndStyles.ContainsKey(SvgConstants.Attributes.RX)) {
-                rx = CssUtils.ParseAbsoluteLength(GetAttribute(SvgConstants.Attributes.RX));
-                rxPresent = true;
-            }
-            if (attributesAndStyles.ContainsKey(SvgConstants.Attributes.RY)) {
-                ry = CssUtils.ParseAbsoluteLength(GetAttribute(SvgConstants.Attributes.RY));
-                ryPresent = true;
-            }
+            SetParameters();
             bool singleValuePresent = (rxPresent && !ryPresent) || (!rxPresent && ryPresent);
-            // these checks should happen in all cases
-            rx = CheckRadius(rx, width);
-            ry = CheckRadius(ry, height);
             if (!rxPresent && !ryPresent) {
                 cv.Rectangle(x, y, width, height);
             }
@@ -131,6 +124,32 @@ namespace iText.Svg.Renderers.Impl {
             }
         }
 
+        public override Rectangle GetObjectBoundingBox(SvgDrawContext context) {
+            SetParameters();
+            return new Rectangle(this.x, this.y, this.width, this.height);
+        }
+
+        private void SetParameters() {
+            if (GetAttribute(SvgConstants.Attributes.X) != null) {
+                x = CssDimensionParsingUtils.ParseAbsoluteLength(GetAttribute(SvgConstants.Attributes.X));
+            }
+            if (GetAttribute(SvgConstants.Attributes.Y) != null) {
+                y = CssDimensionParsingUtils.ParseAbsoluteLength(GetAttribute(SvgConstants.Attributes.Y));
+            }
+            width = CssDimensionParsingUtils.ParseAbsoluteLength(GetAttribute(SvgConstants.Attributes.WIDTH));
+            height = CssDimensionParsingUtils.ParseAbsoluteLength(GetAttribute(SvgConstants.Attributes.HEIGHT));
+            if (attributesAndStyles.ContainsKey(SvgConstants.Attributes.RX)) {
+                rx = CheckRadius(CssDimensionParsingUtils.ParseAbsoluteLength(GetAttribute(SvgConstants.Attributes.RX)), width
+                    );
+                rxPresent = true;
+            }
+            if (attributesAndStyles.ContainsKey(SvgConstants.Attributes.RY)) {
+                ry = CheckRadius(CssDimensionParsingUtils.ParseAbsoluteLength(GetAttribute(SvgConstants.Attributes.RY)), height
+                    );
+                ryPresent = true;
+            }
+        }
+
         private void Arc(float x1, float y1, float x2, float y2, float startAng, float extent, PdfCanvas cv) {
             IList<double[]> ar = PdfCanvas.BezierArc(x1, y1, x2, y2, startAng, extent);
             if (!ar.IsEmpty()) {
@@ -166,6 +185,12 @@ namespace iText.Svg.Renderers.Impl {
         /// <see cref="CheckRadius(float, float)"/>
         /// isn't enough: the radius cannot be more than half of the <b>smallest</b>
         /// dimension.
+        /// </summary>
+        /// <remarks>
+        /// In case of a circular radius, the calculation in
+        /// <see cref="CheckRadius(float, float)"/>
+        /// isn't enough: the radius cannot be more than half of the <b>smallest</b>
+        /// dimension.
         /// This method assumes that
         /// <see cref="CheckRadius(float, float)"/>
         /// has already run, and it is
@@ -174,7 +199,7 @@ namespace iText.Svg.Renderers.Impl {
         /// or
         /// <paramref name="ry"/>
         /// is zero.
-        /// </summary>
+        /// </remarks>
         internal virtual float FindCircularRadius(float rx, float ry, float width, float height) {
             // see https://www.w3.org/TR/SVG/shapes.html#RectElementRYAttribute
             float maxRadius = Math.Min(width, height) / 2f;

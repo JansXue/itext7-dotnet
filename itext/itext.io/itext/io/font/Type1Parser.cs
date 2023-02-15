@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -65,12 +65,10 @@ namespace iText.IO.Font {
         private RandomAccessSourceFactory sourceFactory = new RandomAccessSourceFactory();
 
         /// <summary>Creates a new Type1 font file.</summary>
-        /// <param name="afm">the AFM file if the input is made with a <CODE>byte</CODE> array</param>
-        /// <param name="pfb">the PFB file if the input is made with a <CODE>byte</CODE> array</param>
+        /// <param name="afm">the AFM file if the input is made with a <c>byte</c> array</param>
+        /// <param name="pfb">the PFB file if the input is made with a <c>byte</c> array</param>
         /// <param name="metricsPath">the name of one of the 14 built-in fonts or the location of an AFM file. The file must end in '.afm'
         ///     </param>
-        /// <the>AFM file is invalid</the>
-        /// <exception cref="System.IO.IOException">the AFM file could not be read</exception>
         public Type1Parser(String metricsPath, String binaryPath, byte[] afm, byte[] pfb) {
             this.afmData = afm;
             this.pfbData = pfb;
@@ -78,7 +76,6 @@ namespace iText.IO.Font {
             this.pfbPath = binaryPath;
         }
 
-        /// <exception cref="System.IO.IOException"/>
         public virtual RandomAccessFileOrArray GetMetricsFile() {
             isBuiltInFont = false;
             if (StandardFonts.IsStandardFont(afmPath)) {
@@ -89,7 +86,7 @@ namespace iText.IO.Font {
                     String resourcePath = FontResources.AFMS + afmPath + ".afm";
                     resource = ResourceUtil.GetResourceStream(resourcePath);
                     if (resource == null) {
-                        throw new iText.IO.IOException("{0} was not found as resource.").SetMessageParams(resourcePath);
+                        throw new iText.IO.Exceptions.IOException("{0} was not found as resource.").SetMessageParams(resourcePath);
                     }
                     MemoryStream stream = new MemoryStream();
                     int read;
@@ -123,7 +120,8 @@ namespace iText.IO.Font {
                             return new RandomAccessFileOrArray(sourceFactory.CreateSource(ba.ToArray()));
                         }
                         else {
-                            throw new iText.IO.IOException(iText.IO.IOException._1IsNotAnAfmOrPfmFontFile).SetMessageParams(afmPath);
+                            throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException._1IsNotAnAfmOrPfmFontFile).SetMessageParams
+                                (afmPath);
                         }
                     }
                 }
@@ -139,7 +137,7 @@ namespace iText.IO.Font {
                                 Pfm2afm.Convert(rf, ba);
                             }
                             catch (Exception) {
-                                throw new iText.IO.IOException("Invalid afm or pfm font file.");
+                                throw new iText.IO.Exceptions.IOException("Invalid afm or pfm font file.");
                             }
                             finally {
                                 rf.Close();
@@ -148,13 +146,12 @@ namespace iText.IO.Font {
                         }
                     }
                     else {
-                        throw new iText.IO.IOException("Invalid afm or pfm font file.");
+                        throw new iText.IO.Exceptions.IOException("Invalid afm or pfm font file.");
                     }
                 }
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         public virtual RandomAccessFileOrArray GetPostscriptBinary() {
             if (pfbData != null) {
                 return new RandomAccessFileOrArray(sourceFactory.CreateSource(pfbData));
@@ -178,7 +175,6 @@ namespace iText.IO.Font {
             return afmPath;
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private bool IsAfmFile(RandomAccessFileOrArray raf) {
             StringBuilder builder = new StringBuilder(AFM_HEADER.Length);
             for (int i = 0; i < AFM_HEADER.Length; i++) {

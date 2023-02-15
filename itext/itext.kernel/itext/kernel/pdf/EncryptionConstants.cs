@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,10 +44,13 @@ address: sales@itextpdf.com
 namespace iText.Kernel.Pdf {
     /// <summary>
     /// Encryption constants for
-    /// <see cref="WriterProperties.SetStandardEncryption(byte[], byte[], int, int)"/>
-    /// .
+    /// <see cref="WriterProperties.SetStandardEncryption(byte[], byte[], int, int)"/>.
     /// </summary>
-    public class EncryptionConstants {
+    public sealed class EncryptionConstants {
+        private EncryptionConstants() {
+        }
+
+        // Empty constructor
         /// <summary>Type of encryption.</summary>
         /// <remarks>Type of encryption. RC4 encryption algorithm will be used with the key length of 40 bits.</remarks>
         public const int STANDARD_ENCRYPTION_40 = 0;

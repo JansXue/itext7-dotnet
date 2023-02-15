@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -46,48 +46,52 @@ using iText.StyledXmlParser.Node;
 using iText.Svg.Converter;
 using iText.Svg.Processors;
 using iText.Svg.Processors.Impl;
+using iText.Test;
 
 namespace iText.Svg.Renderers.Impl {
-    public class DefsSvgNodeRendererUnitTest {
+    [NUnit.Framework.Category("UnitTest")]
+    public class DefsSvgNodeRendererUnitTest : ExtendedITextTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/svg/renderers/impl/DefsSvgNodeRendererTest/";
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void ProcessDefsNoChildrenTest() {
             INode parsedSvg = SvgConverter.Parse(new FileStream(sourceFolder + "onlyDefsWithNoChildren.svg", FileMode.Open
                 , FileAccess.Read));
-            ISvgProcessorResult result = new DefaultSvgProcessor().Process(parsedSvg);
+            ISvgProcessorResult result = new DefaultSvgProcessor().Process(parsedSvg, null);
             NUnit.Framework.Assert.IsTrue(result.GetNamedObjects().IsEmpty());
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void ProcessDefsOneChildTest() {
             INode parsedSvg = SvgConverter.Parse(new FileStream(sourceFolder + "onlyDefsWithOneChild.svg", FileMode.Open
                 , FileAccess.Read));
-            ISvgProcessorResult result = new DefaultSvgProcessor().Process(parsedSvg);
+            ISvgProcessorResult result = new DefaultSvgProcessor().Process(parsedSvg, null);
             NUnit.Framework.Assert.IsTrue(result.GetNamedObjects().Get("circle1") is CircleSvgNodeRenderer);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void ProcessDefsMultipleChildrenTest() {
             INode parsedSvg = SvgConverter.Parse(new FileStream(sourceFolder + "onlyDefsWithMultipleChildren.svg", FileMode.Open
                 , FileAccess.Read));
-            ISvgProcessorResult result = new DefaultSvgProcessor().Process(parsedSvg);
+            ISvgProcessorResult result = new DefaultSvgProcessor().Process(parsedSvg, null);
             NUnit.Framework.Assert.IsTrue(result.GetNamedObjects().Get("circle1") is CircleSvgNodeRenderer);
             NUnit.Framework.Assert.IsTrue(result.GetNamedObjects().Get("line1") is LineSvgNodeRenderer);
             NUnit.Framework.Assert.IsTrue(result.GetNamedObjects().Get("rect1") is RectangleSvgNodeRenderer);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void ProcessDefsParentShouldBeNullTest() {
             INode parsedSvg = SvgConverter.Parse(new FileStream(sourceFolder + "onlyDefsWithOneChild.svg", FileMode.Open
                 , FileAccess.Read));
-            ISvgProcessorResult result = new DefaultSvgProcessor().Process(parsedSvg);
+            ISvgProcessorResult result = new DefaultSvgProcessor().Process(parsedSvg, null);
             NUnit.Framework.Assert.IsNull(result.GetNamedObjects().Get("circle1").GetParent());
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void NoObjectBoundingBoxTest() {
+            DefsSvgNodeRenderer renderer = new DefsSvgNodeRenderer();
+            NUnit.Framework.Assert.IsNull(renderer.GetObjectBoundingBox(null));
         }
     }
 }

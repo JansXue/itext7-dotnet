@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,14 +41,15 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-using System.Text;
 using iText.Svg.Processors.Impl;
+using iText.Test;
 
 namespace iText.Svg.Processors {
-    public class SvgConverterPropertiesTest {
+    [NUnit.Framework.Category("UnitTest")]
+    public class SvgConverterPropertiesTest : ExtendedITextTest {
         [NUnit.Framework.Test]
         public virtual void GetCharsetNameRegressionTest() {
-            String expected = Encoding.UTF8.Name();
+            String expected = System.Text.Encoding.UTF8.Name();
             String actual = new SvgConverterProperties().GetCharset();
             NUnit.Framework.Assert.AreEqual(expected, actual);
         }

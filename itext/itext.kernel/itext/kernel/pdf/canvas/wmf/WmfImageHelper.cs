@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,7 +45,7 @@ using System;
 using System.IO;
 using iText.IO.Image;
 using iText.IO.Util;
-using iText.Kernel;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas;
@@ -55,8 +55,7 @@ namespace iText.Kernel.Pdf.Canvas.Wmf {
     /// <summary>Helper class for the WmfImage implementation.</summary>
     /// <remarks>
     /// Helper class for the WmfImage implementation. Assists in the creation of a
-    /// <see cref="iText.Kernel.Pdf.Xobject.PdfFormXObject"/>
-    /// .
+    /// <see cref="iText.Kernel.Pdf.Xobject.PdfFormXObject"/>.
     /// </remarks>
     public class WmfImageHelper {
         /// <summary>Scales the WMF font size.</summary>
@@ -98,7 +97,7 @@ namespace iText.Kernel.Pdf.Canvas.Wmf {
                 }
                 InputMeta @in = new InputMeta(@is);
                 if (@in.ReadInt() != unchecked((int)(0x9AC6CDD7))) {
-                    throw new PdfException(PdfException._1IsNotAValidPlaceableWindowsMetafile, errorID);
+                    throw new PdfException(KernelExceptionMessageConstant.NOT_A_VALID_PLACEABLE_WINDOWS_METAFILE, errorID);
                 }
                 @in.ReadWord();
                 int left = @in.ReadShort();
@@ -111,7 +110,7 @@ namespace iText.Kernel.Pdf.Canvas.Wmf {
                 wmf.SetWidth((float)(right - left) / inch * 72f);
             }
             catch (System.IO.IOException) {
-                throw new PdfException(PdfException.WmfImageException);
+                throw new PdfException(KernelExceptionMessageConstant.WMF_IMAGE_EXCEPTION);
             }
             finally {
                 if (@is != null) {
@@ -146,7 +145,7 @@ namespace iText.Kernel.Pdf.Canvas.Wmf {
                 meta.ReadAll();
             }
             catch (System.IO.IOException e) {
-                throw new PdfException(PdfException.WmfImageException, e);
+                throw new PdfException(KernelExceptionMessageConstant.WMF_IMAGE_EXCEPTION, e);
             }
             finally {
                 if (@is != null) {

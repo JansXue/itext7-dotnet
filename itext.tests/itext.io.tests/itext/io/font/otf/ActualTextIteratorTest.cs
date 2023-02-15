@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -40,10 +40,12 @@ source product.
 For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
-using iText.IO.Util;
+using iText.Commons.Utils;
+using iText.Test;
 
 namespace iText.IO.Font.Otf {
-    public class ActualTextIteratorTest {
+    [NUnit.Framework.Category("UnitTest")]
+    public class ActualTextIteratorTest : ExtendedITextTest {
         [NUnit.Framework.Test]
         public virtual void TestActualTestParts() {
             Glyph glyph = new Glyph(200, 200, '\u002d');

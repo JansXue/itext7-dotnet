@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -47,8 +47,7 @@ using iText.Kernel.Pdf.Canvas;
 namespace iText.Forms.Util {
     /// <summary>
     /// Utility class to draw form fields
-    /// <see cref="iText.Forms.Fields.PdfFormField"/>
-    /// .
+    /// <see cref="iText.Forms.Fields.PdfFormField"/>.
     /// </summary>
     public class DrawingUtil {
         protected internal const String check = "0.8 0 0 0.8 0.3 0.5 cm 0 0 m\n" + "0.066 -0.026 l\n" + "0.137 -0.15 l\n"
@@ -79,7 +78,7 @@ namespace iText.Forms.Util {
             canvas.SaveState();
             canvas.ResetFillColorRgb();
             canvas.ConcatMatrix(width, 0, 0, height, moveX, moveY);
-            canvas.GetContentStream().GetOutputStream().WriteBytes(appearanceString.GetBytes(iText.IO.Util.EncodingUtil.ISO_8859_1
+            canvas.GetContentStream().GetOutputStream().WriteBytes(appearanceString.GetBytes(iText.Commons.Utils.EncodingUtil.ISO_8859_1
                 ));
             canvas.RestoreState();
         }

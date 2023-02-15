@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-    Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,7 +45,7 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using iText.IO.Util;
+using iText.Commons.Utils;
 
 namespace iText.Barcodes {
     internal static class BarcodesExtensions {
@@ -84,7 +84,7 @@ namespace iText.Barcodes {
         }
 
         public static Assembly GetAssembly(this Type type) {
-#if !NETSTANDARD1_6
+#if !NETSTANDARD2_0
             return type.Assembly;
 #else
             return type.GetTypeInfo().Assembly;

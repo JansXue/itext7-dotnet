@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,7 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.Kernel.Font;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf.Canvas;
@@ -63,16 +63,11 @@ namespace iText.Svg.Renderers.Impl {
         ///     </summary>
         protected internal static readonly AffineTransform TEXTFLIP = new AffineTransform(1, 0, 0, -1, 0, 0);
 
-        /// <summary>Placeholder default font-size until DEVSIX-2607 is resolved</summary>
-        private const float DEFAULT_FONT_SIZE = 12f;
-
         private readonly IList<ISvgTextNodeRenderer> children = new List<ISvgTextNodeRenderer>();
 
         protected internal bool performRootTransformations;
 
         private PdfFont font;
-
-        private float fontSize;
 
         private bool moveResolved;
 
@@ -96,20 +91,24 @@ namespace iText.Svg.Renderers.Impl {
 
         public override ISvgNodeRenderer CreateDeepCopy() {
             iText.Svg.Renderers.Impl.TextSvgBranchRenderer copy = new iText.Svg.Renderers.Impl.TextSvgBranchRenderer();
-            DeepCopyAttributesAndStyles(copy);
-            DeepCopyChildren(copy);
+            FillCopy(copy);
             return copy;
         }
 
+        internal virtual void FillCopy(iText.Svg.Renderers.Impl.TextSvgBranchRenderer copy) {
+            DeepCopyAttributesAndStyles(copy);
+            DeepCopyChildren(copy);
+        }
+
         public void AddChild(ISvgTextNodeRenderer child) {
-            // final method, in order to disallow adding null
+            // Final method, in order to disallow adding null
             if (child != null) {
                 children.Add(child);
             }
         }
 
         public IList<ISvgTextNodeRenderer> GetChildren() {
-            // final method, in order to disallow modifying the List
+            // Final method, in order to disallow modifying the List
             return JavaCollectionsUtil.UnmodifiableList(children);
         }
 
@@ -117,7 +116,7 @@ namespace iText.Svg.Renderers.Impl {
             return 0.0f;
         }
 
-        //Branch renderers do not contain any text themselves and do not contribute to the text length
+        // Branch renderers do not contain any text themselves and do not contribute to the text length
         public virtual float[] GetRelativeTranslation() {
             if (!moveResolved) {
                 ResolveTextMove();
@@ -152,6 +151,49 @@ namespace iText.Svg.Renderers.Impl {
             whiteSpaceProcessed = true;
         }
 
+        public virtual TextRectangle GetTextRectangle(SvgDrawContext context, Point basePoint) {
+            if (this.attributesAndStyles != null) {
+                ResolveFont(context);
+                double x = 0;
+                double y = 0;
+                if (GetAbsolutePositionChanges()[0] != null) {
+                    x = GetAbsolutePositionChanges()[0][0];
+                }
+                else {
+                    if (basePoint != null) {
+                        x = basePoint.GetX();
+                    }
+                }
+                if (GetAbsolutePositionChanges()[1] != null) {
+                    y = GetAbsolutePositionChanges()[1][0];
+                }
+                else {
+                    if (basePoint != null) {
+                        y = basePoint.GetY();
+                    }
+                }
+                basePoint = new Point(x, y);
+                basePoint.Translate(GetRelativeTranslation()[0], GetRelativeTranslation()[1]);
+                Rectangle commonRect = null;
+                foreach (ISvgTextNodeRenderer child in GetChildren()) {
+                    if (child != null) {
+                        TextRectangle rectangle = child.GetTextRectangle(context, basePoint);
+                        basePoint = rectangle.GetTextBaseLineRightPoint();
+                        commonRect = Rectangle.GetCommonRectangle(commonRect, rectangle);
+                    }
+                }
+                if (commonRect != null) {
+                    return new TextRectangle(commonRect.GetX(), commonRect.GetY(), commonRect.GetWidth(), commonRect.GetHeight
+                        (), (float)basePoint.GetY());
+                }
+            }
+            return null;
+        }
+
+        public override Rectangle GetObjectBoundingBox(SvgDrawContext context) {
+            return GetTextRectangle(context, null);
+        }
+
         /// <summary>
         /// Method that will set properties to be inherited by this branch renderer's
         /// children and will iterate over all children in order to draw them.
@@ -164,72 +206,73 @@ namespace iText.Svg.Renderers.Impl {
             if (GetChildren().Count > 0) {
                 // if branch has no children, don't do anything
                 PdfCanvas currentCanvas = context.GetCurrentCanvas();
-                if (performRootTransformations) {
-                    currentCanvas.BeginText();
-                    //Current transformation matrix results in the character glyphs being mirrored, correct with inverse tf
-                    AffineTransform rootTf;
-                    if (this.ContainsAbsolutePositionChange()) {
-                        rootTf = GetTextTransform(this.GetAbsolutePositionChanges(), context);
-                    }
-                    else {
-                        rootTf = new AffineTransform(TEXTFLIP);
-                    }
-                    currentCanvas.SetTextMatrix(rootTf);
-                    //Reset context of text move
-                    context.ResetTextMove();
-                    //Apply relative move
-                    if (this.ContainsRelativeMove()) {
-                        float[] rootMove = this.GetRelativeTranslation();
-                        context.AddTextMove(rootMove[0], -rootMove[1]);
-                    }
-                    //-y to account for the text-matrix transform we do in the text root to account for the coordinates
-                    //handle white-spaces
-                    if (!whiteSpaceProcessed) {
-                        SvgTextUtil.ProcessWhiteSpace(this, true);
-                    }
-                }
-                ApplyTextRenderingMode(currentCanvas);
+                context.ResetTextMove();
+                context.SetLastTextTransform(null);
                 if (this.attributesAndStyles != null) {
-                    ResolveFontSize();
-                    ResolveFont(context);
-                    currentCanvas.SetFontAndSize(font, fontSize);
                     foreach (ISvgTextNodeRenderer c in children) {
-                        float childLength = c.GetTextContentLength(fontSize, font);
+                        currentCanvas.SaveState();
+                        currentCanvas.BeginText();
+                        PerformRootTransformations(currentCanvas, context);
+                        ApplyTextRenderingMode(currentCanvas);
+                        ResolveFont(context);
+                        currentCanvas.SetFontAndSize(font, GetCurrentFontSize());
+                        float childLength = c.GetTextContentLength(GetCurrentFontSize(), font);
                         if (c.ContainsAbsolutePositionChange()) {
-                            //TODO(DEVSIX-2507) support rotate and other attributes
+                            // TODO: DEVSIX-2507 support rotate and other attributes
                             float[][] absolutePositions = c.GetAbsolutePositionChanges();
                             AffineTransform newTransform = GetTextTransform(absolutePositions, context);
-                            //overwrite the last transformation stored in the context
+                            // Overwrite the last transformation stored in the context
                             context.SetLastTextTransform(newTransform);
-                            //Apply transformation
+                            // Apply transformation
                             currentCanvas.SetTextMatrix(newTransform);
-                            //Absolute position changes requires resetting the current text move in the context
+                            // Absolute position changes requires resetting the current text move in the context
                             context.ResetTextMove();
                         }
-                        //Handle Text-Anchor declarations
+                        else {
+                            if (c is TextLeafSvgNodeRenderer && !context.GetLastTextTransform().IsIdentity()) {
+                                currentCanvas.SetTextMatrix(context.GetLastTextTransform());
+                            }
+                        }
+                        // Handle Text-Anchor declarations
                         float textAnchorCorrection = GetTextAnchorAlignmentCorrection(childLength);
                         if (!CssUtils.CompareFloats(0f, textAnchorCorrection)) {
                             context.AddTextMove(textAnchorCorrection, 0);
                         }
-                        //Move needs to happen before the saving of the state in order for it to cascade beyond
+                        // Move needs to happen before the saving of the state in order for it to cascade beyond
                         if (c.ContainsRelativeMove()) {
                             float[] childMove = c.GetRelativeTranslation();
                             context.AddTextMove(childMove[0], -childMove[1]);
                         }
                         //-y to account for the text-matrix transform we do in the text root to account for the coordinates
-                        currentCanvas.SaveState();
                         c.Draw(context);
                         context.AddTextMove(childLength, 0);
-                        currentCanvas.RestoreState();
-                        //Restore transformation matrix
-                        if (!context.GetLastTextTransform().IsIdentity()) {
-                            currentCanvas.SetTextMatrix(context.GetLastTextTransform());
-                        }
-                    }
-                    if (performRootTransformations) {
+                        context.SetPreviousElementTextMove(null);
                         currentCanvas.EndText();
+                        currentCanvas.RestoreState();
                     }
                 }
+            }
+        }
+
+        internal virtual void PerformRootTransformations(PdfCanvas currentCanvas, SvgDrawContext context) {
+            // Current transformation matrix results in the character glyphs being mirrored, correct with inverse tf
+            AffineTransform rootTf;
+            if (this.ContainsAbsolutePositionChange()) {
+                rootTf = GetTextTransform(this.GetAbsolutePositionChanges(), context);
+            }
+            else {
+                rootTf = new AffineTransform(TEXTFLIP);
+            }
+            currentCanvas.SetTextMatrix(rootTf);
+            // Apply relative move
+            if (this.ContainsRelativeMove()) {
+                float[] rootMove = this.GetRelativeTranslation();
+                //-y to account for the text-matrix transform we do in the text root to account for the coordinates
+                context.AddTextMove(rootMove[0], -rootMove[1]);
+            }
+            // Handle white-spaces
+            if (!whiteSpaceProcessed) {
+                SvgTextUtil.ProcessWhiteSpace(this, true);
             }
         }
 
@@ -242,10 +285,10 @@ namespace iText.Svg.Renderers.Impl {
                 xMove = 0f;
                 yMove = 0f;
                 if (!xValuesList.IsEmpty()) {
-                    xMove = CssUtils.ParseAbsoluteLength(xValuesList[0]);
+                    xMove = CssDimensionParsingUtils.ParseAbsoluteLength(xValuesList[0]);
                 }
                 if (!yValuesList.IsEmpty()) {
-                    yMove = CssUtils.ParseAbsoluteLength(yValuesList[0]);
+                    yMove = CssDimensionParsingUtils.ParseAbsoluteLength(yValuesList[0]);
                 }
                 moveResolved = true;
             }
@@ -253,8 +296,8 @@ namespace iText.Svg.Renderers.Impl {
 
         private FontInfo ResolveFontName(String fontFamily, String fontWeight, String fontStyle, FontProvider provider
             , FontSet tempFonts) {
-            bool isBold = fontWeight != null && fontWeight.EqualsIgnoreCase(SvgConstants.Attributes.BOLD);
-            bool isItalic = fontStyle != null && fontStyle.EqualsIgnoreCase(SvgConstants.Attributes.ITALIC);
+            bool isBold = SvgConstants.Attributes.BOLD.EqualsIgnoreCase(fontWeight);
+            bool isItalic = SvgConstants.Attributes.ITALIC.EqualsIgnoreCase(fontStyle);
             FontCharacteristics fontCharacteristics = new FontCharacteristics();
             IList<String> stringArrayList = new List<String>();
             stringArrayList.Add(fontFamily);
@@ -263,7 +306,7 @@ namespace iText.Svg.Renderers.Impl {
             return provider.GetFontSelector(stringArrayList, fontCharacteristics, tempFonts).BestMatch();
         }
 
-        private void ResolveFont(SvgDrawContext context) {
+        internal virtual void ResolveFont(SvgDrawContext context) {
             FontProvider provider = context.GetFontProvider();
             FontSet tempFonts = context.GetTempFonts();
             font = null;
@@ -277,20 +320,25 @@ namespace iText.Svg.Renderers.Impl {
             }
             if (font == null) {
                 try {
-                    // TODO (DEVSIX-2057)
-                    // TODO each call of createFont() create a new instance of PdfFont.
-                    // TODO FontProvider shall be used instead.
+                    // TODO: DEVSIX-2057 each call of createFont() create a new instance of PdfFont.
+                    // FontProvider shall be used instead.
                     font = PdfFontFactory.CreateFont();
                 }
                 catch (System.IO.IOException e) {
-                    throw new SvgProcessingException(SvgLogMessageConstant.FONT_NOT_FOUND, e);
+                    throw new SvgProcessingException(SvgExceptionMessageConstant.FONT_NOT_FOUND, e);
                 }
             }
         }
 
-        private void ResolveFontSize() {
-            //TODO (DEVSIX-2607) (re)move static variable
-            fontSize = (float)SvgTextUtil.ResolveFontSize(this, DEFAULT_FONT_SIZE);
+        /// <summary>Return the font used in this text element.</summary>
+        /// <remarks>
+        /// Return the font used in this text element.
+        /// Note that font should already be resolved with
+        /// <see cref="ResolveFont(iText.Svg.Renderers.SvgDrawContext)"/>.
+        /// </remarks>
+        /// <returns>font of the current text element</returns>
+        internal virtual PdfFont GetFont() {
+            return font;
         }
 
         private void ResolveTextPosition() {
@@ -309,19 +357,19 @@ namespace iText.Svg.Renderers.Impl {
             if (!valuesList.IsEmpty()) {
                 result = new float[valuesList.Count];
                 for (int i = 0; i < valuesList.Count; i++) {
-                    result[i] = CssUtils.ParseAbsoluteLength(valuesList[i]);
+                    result[i] = CssDimensionParsingUtils.ParseAbsoluteLength(valuesList[i]);
                 }
             }
             return result;
         }
 
-        private static AffineTransform GetTextTransform(float[][] absolutePositions, SvgDrawContext context) {
+        internal static AffineTransform GetTextTransform(float[][] absolutePositions, SvgDrawContext context) {
             AffineTransform tf = new AffineTransform();
-            //If x is not specified, but y is, we need to correct for preceding text.
+            // If x is not specified, but y is, we need to correct for preceding text.
             if (absolutePositions[0] == null && absolutePositions[1] != null) {
                 absolutePositions[0] = new float[] { context.GetTextMove()[0] };
             }
-            //If y is not present, we can replace it with a neutral transformation (0.0f)
+            // If y is not present, we can replace it with a neutral transformation (0.0f)
             if (absolutePositions[1] == null) {
                 absolutePositions[1] = new float[] { 0.0f };
             }
@@ -330,8 +378,8 @@ namespace iText.Svg.Renderers.Impl {
             return tf;
         }
 
-        private void ApplyTextRenderingMode(PdfCanvas currentCanvas) {
-            //Fill only is the default for text operation in PDF
+        internal virtual void ApplyTextRenderingMode(PdfCanvas currentCanvas) {
+            // Fill only is the default for text operation in PDF
             if (doStroke && doFill) {
                 currentCanvas.SetTextRenderingMode(PdfCanvasConstants.TextRenderingMode.FILL_STROKE);
             }
@@ -354,21 +402,21 @@ namespace iText.Svg.Renderers.Impl {
             }
         }
 
-        private float GetTextAnchorAlignmentCorrection(float childContentLength) {
+        internal virtual float GetTextAnchorAlignmentCorrection(float childContentLength) {
             // Resolve text anchor
-            //TODO DEVSIX-2631 properly resolve text-anchor by taking entire line into account, not only children of the current TextSvgBranchRenderer
+            // TODO DEVSIX-2631 properly resolve text-anchor by taking entire line into account, not only children of the current TextSvgBranchRenderer
             float textAnchorXCorrection = 0.0f;
             if (this.attributesAndStyles != null && this.attributesAndStyles.ContainsKey(SvgConstants.Attributes.TEXT_ANCHOR
                 )) {
                 String textAnchorValue = this.GetAttribute(SvgConstants.Attributes.TEXT_ANCHOR);
-                //Middle
-                if (textAnchorValue.Equals(SvgConstants.Values.TEXT_ANCHOR_MIDDLE)) {
+                // Middle
+                if (SvgConstants.Values.TEXT_ANCHOR_MIDDLE.Equals(textAnchorValue)) {
                     if (xPos != null && xPos.Length > 0) {
                         textAnchorXCorrection -= childContentLength / 2;
                     }
                 }
-                //End
-                if (textAnchorValue.Equals(SvgConstants.Values.TEXT_ANCHOR_END)) {
+                // End
+                if (SvgConstants.Values.TEXT_ANCHOR_END.Equals(textAnchorValue)) {
                     if (xPos != null && xPos.Length > 0) {
                         textAnchorXCorrection -= childContentLength;
                     }

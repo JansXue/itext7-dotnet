@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -106,14 +106,14 @@ namespace iText.IO.Image {
                     jp2.parameters.isJp2 = true;
                     box.type = Cio_read(4, jpeg2000Stream);
                     if (JP2_JP != box.type) {
-                        throw new iText.IO.IOException(iText.IO.IOException.ExpectedJpMarker);
+                        throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.ExpectedJpMarker);
                     }
                     if (0x0d0a870a != Cio_read(4, jpeg2000Stream)) {
-                        throw new iText.IO.IOException(iText.IO.IOException.ErrorWithJpMarker);
+                        throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.ErrorWithJpMarker);
                     }
                     Jp2_read_boxhdr(box, jpeg2000Stream);
                     if (JP2_FTYP != box.type) {
-                        throw new iText.IO.IOException(iText.IO.IOException.ExpectedFtypMarker);
+                        throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.ExpectedFtypMarker);
                     }
                     StreamUtil.Skip(jpeg2000Stream, 8);
                     for (int i = 4; i < box.length / 4; ++i) {
@@ -125,7 +125,7 @@ namespace iText.IO.Image {
                     do {
                         if (JP2_JP2H != box.type) {
                             if (box.type == JP2_JP2C) {
-                                throw new iText.IO.IOException(iText.IO.IOException.ExpectedJp2hMarker);
+                                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.ExpectedJp2hMarker);
                             }
                             StreamUtil.Skip(jpeg2000Stream, box.length - 8);
                             Jp2_read_boxhdr(box, jpeg2000Stream);
@@ -134,7 +134,7 @@ namespace iText.IO.Image {
                     while (JP2_JP2H != box.type);
                     Jp2_read_boxhdr(box, jpeg2000Stream);
                     if (JP2_IHDR != box.type) {
-                        throw new iText.IO.IOException(iText.IO.IOException.ExpectedIhdrMarker);
+                        throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.ExpectedIhdrMarker);
                     }
                     jp2.SetHeight(Cio_read(4, jpeg2000Stream));
                     jp2.SetWidth(Cio_read(4, jpeg2000Stream));
@@ -159,12 +159,12 @@ namespace iText.IO.Image {
                                 catch (Jpeg2000ImageHelper.ZeroBoxSizeException) {
                                 }
                             }
+                            //Probably we have reached the contiguous codestream box which is the last in jpeg2000 and has no length.
                             while (JP2_COLR == box.type);
                         }
                     }
                 }
                 else {
-                    //Probably we have reached the contiguous codestream box which is the last in jpeg2000 and has no length.
                     if (box.length == unchecked((int)(0xff4fff51))) {
                         StreamUtil.Skip(jpeg2000Stream, 4);
                         int x1 = Cio_read(4, jpeg2000Stream);
@@ -172,22 +172,21 @@ namespace iText.IO.Image {
                         int x0 = Cio_read(4, jpeg2000Stream);
                         int y0 = Cio_read(4, jpeg2000Stream);
                         StreamUtil.Skip(jpeg2000Stream, 16);
-                        jp2.SetColorSpace(Cio_read(2, jpeg2000Stream));
+                        jp2.SetColorEncodingComponentsNumber(Cio_read(2, jpeg2000Stream));
                         jp2.SetBpc(8);
                         jp2.SetHeight(y1 - y0);
                         jp2.SetWidth(x1 - x0);
                     }
                     else {
-                        throw new iText.IO.IOException(iText.IO.IOException.InvalidJpeg2000File);
+                        throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.InvalidJpeg2000File);
                     }
                 }
             }
             catch (System.IO.IOException e) {
-                throw new iText.IO.IOException(iText.IO.IOException.Jpeg2000ImageException, e);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.Jpeg2000ImageException, e);
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private static Jpeg2000ImageData.ColorSpecBox Jp2_read_colr(Jpeg2000ImageHelper.Jpeg2000Box box, Stream jpeg2000Stream
             ) {
             int readBytes = 8;
@@ -211,17 +210,17 @@ namespace iText.IO.Image {
             return colorSpecBox;
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private static void Jp2_read_boxhdr(Jpeg2000ImageHelper.Jpeg2000Box box, Stream jpeg2000Stream) {
             box.length = Cio_read(4, jpeg2000Stream);
             box.type = Cio_read(4, jpeg2000Stream);
             if (box.length == 1) {
                 if (Cio_read(4, jpeg2000Stream) != 0) {
-                    throw new iText.IO.IOException(iText.IO.IOException.CannotHandleBoxSizesHigherThan2_32);
+                    throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.CannotHandleBoxSizesHigherThan2_32
+                        );
                 }
                 box.length = Cio_read(4, jpeg2000Stream);
                 if (box.length == 0) {
-                    throw new iText.IO.IOException(iText.IO.IOException.UnsupportedBoxSizeEqEq0);
+                    throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.UnsupportedBoxSizeEqEq0);
                 }
             }
             else {
@@ -231,7 +230,6 @@ namespace iText.IO.Image {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private static int Cio_read(int n, Stream jpeg2000Stream) {
             int v = 0;
             for (int i = n - 1; i >= 0; i--) {

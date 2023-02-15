@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,6 +43,7 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
+using iText.Commons.Utils;
 using iText.IO.Source;
 using iText.IO.Util;
 
@@ -132,10 +133,18 @@ namespace iText.IO.Font {
 
         /// <summary>C'tor for CFFFontSubset</summary>
         /// <param name="cff">- The font file</param>
-        /// <param name="GlyphsUsed">- a Map that contains the glyph used in the subset</param>
+        internal CFFFontSubset(byte[] cff)
+            : this(cff, JavaCollectionsUtil.EmptySet<int>(), true) {
+        }
+
         public CFFFontSubset(byte[] cff, ICollection<int> GlyphsUsed)
-            : base(cff) {
-            // Use CFFFont c'tor in order to parse the font file.
+            : this(cff, GlyphsUsed, false) {
+        }
+
+        internal CFFFontSubset(byte[] cff, ICollection<int> GlyphsUsed, bool isCidParsingRequired)
+            : base(
+                        // Use CFFFont c'tor in order to parse the font file.
+                        cff) {
             this.GlyphsUsed = GlyphsUsed;
             //Put the glyphs into a list
             glyphsInList = new List<int>(GlyphsUsed);
@@ -148,6 +157,9 @@ namespace iText.IO.Font {
                 fonts[i].nstrings = GetCard16() + standardStrings.Length;
                 // For each font save the offset array of the charstring
                 fonts[i].charstringsOffsets = GetIndex(fonts[i].charstringsOffset);
+                if (isCidParsingRequired) {
+                    InitGlyphIdToCharacterIdArray(i, fonts[i].nglyphs, fonts[i].charsetOffset);
+                }
                 // Process the FDSelect if exist
                 if (fonts[i].fdselectOffset >= 0) {
                     // Process the FDSelect
@@ -174,9 +186,9 @@ namespace iText.IO.Font {
             Seek(Offset);
             // Read the format
             format = GetCard8();
+            // Calc according to format
             switch (format) {
                 case 0: {
-                    // Calc according to format
                     Length = 1 + 2 * NumofGlyphs;
                     break;
                 }
@@ -232,9 +244,9 @@ namespace iText.IO.Font {
             // Read the FDSelect's format
             fonts[Font].FDSelectFormat = GetCard8();
             switch (fonts[Font].FDSelectFormat) {
+                // Format==0 means each glyph has an entry that indicated
+                // its FD.
                 case 0: {
-                    // Format==0 means each glyph has an entry that indicated
-                    // its FD.
                     for (int i = 0; i < NumOfGlyphs; i++) {
                         FDSelect[i] = GetCard8();
                     }
@@ -337,7 +349,7 @@ namespace iText.IO.Font {
                 return BuildNewFile(j);
             }
             catch (System.IO.IOException e) {
-                throw new iText.IO.IOException(iText.IO.IOException.IoException, e);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.IoException, e);
             }
             finally {
                 try {
@@ -388,9 +400,8 @@ namespace iText.IO.Font {
             }
         }
 
-        /// <summary>Function uses BuildNewIndex to create the new index of the subset charstrings</summary>
+        /// <summary>Function uses BuildNewIndex to create the new index of the subset charstrings.</summary>
         /// <param name="FontIndex">the font</param>
-        /// <exception cref="System.IO.IOException"/>
         protected internal virtual void BuildNewCharString(int FontIndex) {
             NewCharStringsIndex = BuildNewIndex(fonts[FontIndex].charstringsOffsets, GlyphsUsed, ENDCHAR_OP);
         }
@@ -401,7 +412,6 @@ namespace iText.IO.Font {
         /// the FD Array lsubrs will be subsetted.
         /// </remarks>
         /// <param name="Font">the font</param>
-        /// <exception cref="System.IO.IOException"/>
         protected internal virtual void BuildNewLGSubrs(int Font) {
             // If the font is CID then the lsubrs are divided into FontDicts.
             // for each FD array the lsubrs will be subsetted.
@@ -508,8 +518,8 @@ namespace iText.IO.Font {
             // Calc the Bias for the subr index
             int LBias = CalcBias(SubrOffset, Font);
             // For each glyph used find its GID, start & end pos
-            for (int i = 0; i < glyphsInList.Count; i++) {
-                int glyph = (int)glyphsInList[i];
+            foreach (int? usedGlyph in glyphsInList) {
+                int glyph = (int)usedGlyph;
                 int Start = fonts[Font].charstringsOffsets[glyph];
                 int End = fonts[Font].charstringsOffsets[glyph + 1];
                 // IF CID:
@@ -597,9 +607,9 @@ namespace iText.IO.Font {
         /// <param name="end">the end point of the subr</param>
         /// <param name="GBias">the bias of the Global Subrs</param>
         /// <param name="LBias">the bias of the Local Subrs</param>
-        /// <param name="hSubr">the Map for the lSubrs</param>
-        /// <param name="lSubr">the list for the lSubrs</param>
-        /// <param name="LSubrsOffsets"/>
+        /// <param name="hSubr">the subroutines used as set</param>
+        /// <param name="lSubr">the subroutines used as list</param>
+        /// <param name="LSubrsOffsets">the offsets array of the subroutines</param>
         protected internal virtual void ReadASubr(int begin, int end, int GBias, int LBias, ICollection<int> hSubr
             , IList<int> lSubr, int[] LSubrsOffsets) {
             // Clear the stack for the subrs
@@ -619,10 +629,10 @@ namespace iText.IO.Font {
                 // Check the modification needed on the Argument Stack according to key;
                 HandelStack();
                 if (null != key) {
+                    // a call to a Lsubr
                     switch (key) {
+                        // a call to a Gsubr
                         case "callsubr": {
-                            // a call to a Lsubr
-                            // a call to a Gsubr
                             // Verify that arguments are passed
                             if (NumOfArgs > 0) {
                                 // Calc the index of the Subrs
@@ -638,8 +648,8 @@ namespace iText.IO.Font {
                             break;
                         }
 
+                        // A call to "stem"
                         case "callgsubr": {
-                            // A call to "stem"
                             // Verify that arguments are passed
                             if (NumOfArgs > 0) {
                                 // Calc the index of the Subrs
@@ -796,28 +806,28 @@ namespace iText.IO.Font {
                     arg_count++;
                     continue;
                 }
+                // The byte read is the byte;
                 if (b0 >= 32 && b0 <= 246) {
-                    // The byte read is the byte;
                     args[arg_count] = b0 - 139;
                     arg_count++;
                     continue;
                 }
+                // The byte read and the next byte constitute a short int
                 if (b0 >= 247 && b0 <= 250) {
-                    // The byte read and the next byte constitute a short int
                     int w = GetCard8();
                     args[arg_count] = (b0 - 247) * 256 + w + 108;
                     arg_count++;
                     continue;
                 }
+                // Same as above except negative
                 if (b0 >= 251 && b0 <= 254) {
-                    // Same as above except negative
                     int w = GetCard8();
                     args[arg_count] = -(b0 - 251) * 256 - w - 108;
                     arg_count++;
                     continue;
                 }
+                // The next for bytes represent a double.
                 if (b0 == 255) {
-                    // The next for bytes represent a double.
                     int first = GetCard8();
                     int second = GetCard8();
                     int third = GetCard8();
@@ -826,8 +836,8 @@ namespace iText.IO.Font {
                     arg_count++;
                     continue;
                 }
+                // An operator was found.. Set Key.
                 if (b0 <= 31 && b0 != 28) {
-                    // An operator was found.. Set Key.
                     gotKey = true;
                     // 12 is an escape command therefore the next byte is a part
                     // of this command
@@ -871,10 +881,10 @@ namespace iText.IO.Font {
                 int NumOfArgs = arg_count;
                 //Check the modification needed on the Argument Stack according to key;
                 HandelStack();
+                // a call to a Lsubr
                 switch (key) {
+                    // a call to a Gsubr
                     case "callsubr": {
-                        // a call to a Lsubr
-                        // a call to a Gsubr
                         if (NumOfArgs > 0) {
                             System.Diagnostics.Debug.Assert(TopElement is int?);
                             int Subr = (int)((int?)TopElement) + LBias;
@@ -884,8 +894,8 @@ namespace iText.IO.Font {
                         break;
                     }
 
+                    // A call to "stem"
                     case "callgsubr": {
-                        // A call to "stem"
                         if (NumOfArgs > 0) {
                             System.Diagnostics.Debug.Assert(TopElement is int?);
                             int Subr = (int)((int?)TopElement) + GBias;
@@ -931,7 +941,6 @@ namespace iText.IO.Font {
         /// <param name="Used">the Map of the used objects</param>
         /// <param name="OperatorForUnusedEntries">the operator inserted into the data stream for unused entries</param>
         /// <returns>the new index subset version</returns>
-        /// <exception cref="System.IO.IOException"/>
         protected internal virtual byte[] BuildNewIndex(int[] Offsets, ICollection<int> Used, byte OperatorForUnusedEntries
             ) {
             int unusedCount = 0;
@@ -985,7 +994,6 @@ namespace iText.IO.Font {
         /// <param name="Offsets">the offset array of the original index</param>
         /// <param name="OperatorForUnusedEntries">the operator inserted into the data stream for unused entries</param>
         /// <returns>the new index subset version</returns>
-        /// <exception cref="System.IO.IOException"/>
         protected internal virtual byte[] BuildNewIndexAndCopyAllGSubrs(int[] Offsets, byte OperatorForUnusedEntries
             ) {
             int unusedCount = 0;
@@ -1135,11 +1143,12 @@ namespace iText.IO.Font {
                 GetDictItem();
                 int p2 = GetPosition();
                 // The encoding key is disregarded since CID has no encoding
-                if ("Encoding".Equals(key) || "Private".Equals(key) || "FDSelect".Equals(key) || "FDArray".Equals(key) || 
-                    "charset".Equals(key) || "CharStrings".Equals(key)) {
+                if ("Encoding".Equals(key) || 
+                                // These keys will be added manually by the process.
+                                "Private".Equals(key) || "FDSelect".Equals(key) || "FDArray".Equals(key) || "charset".Equals(key) || "CharStrings"
+                    .Equals(key)) {
                 }
                 else {
-                    // These keys will be added manually by the process.
                     //OtherWise copy key "as is" to the output list
                     OutputList.AddLast(new CFFFont.RangeItem(buf, p1, p2 - p1));
                 }
@@ -1258,33 +1267,31 @@ namespace iText.IO.Font {
         protected internal virtual void BuildIndexHeader(int Count, int Offsize, int First) {
             // Add the count field
             OutputList.AddLast(new CFFFont.UInt16Item((char)Count));
-            // count
             // Add the offsize field
             OutputList.AddLast(new CFFFont.UInt8Item((char)Offsize));
+            // Add the first offset according to the offsize
             switch (Offsize) {
                 case 1: {
-                    // offSize
-                    // Add the first offset according to the offsize
-                    OutputList.AddLast(new CFFFont.UInt8Item((char)First));
                     // first offset
+                    OutputList.AddLast(new CFFFont.UInt8Item((char)First));
                     break;
                 }
 
                 case 2: {
-                    OutputList.AddLast(new CFFFont.UInt16Item((char)First));
                     // first offset
+                    OutputList.AddLast(new CFFFont.UInt16Item((char)First));
                     break;
                 }
 
                 case 3: {
-                    OutputList.AddLast(new CFFFont.UInt24Item((char)First));
                     // first offset
+                    OutputList.AddLast(new CFFFont.UInt24Item((char)First));
                     break;
                 }
 
                 case 4: {
-                    OutputList.AddLast(new CFFFont.UInt32Item((char)First));
                     // first offset
+                    OutputList.AddLast(new CFFFont.UInt32Item((char)First));
                     break;
                 }
 
@@ -1347,15 +1354,15 @@ namespace iText.IO.Font {
                     }
                 }
             }
-            OutputList.AddLast(new CFFFont.UInt16Item((char)(stringOffsets.Length - 1 + 3)));
             // count
-            OutputList.AddLast(new CFFFont.UInt8Item((char)stringsIndexOffSize));
+            OutputList.AddLast(new CFFFont.UInt16Item((char)(stringOffsets.Length - 1 + 3)));
             // offSize
+            OutputList.AddLast(new CFFFont.UInt8Item((char)stringsIndexOffSize));
             foreach (int stringOffset in stringOffsets) {
                 OutputList.AddLast(new CFFFont.IndexOffsetItem(stringsIndexOffSize, stringOffset - stringsBaseOffset));
             }
             int currentStringsOffset = stringOffsets[stringOffsets.Length - 1] - stringsBaseOffset;
-            //l.addLast(new IndexOffsetItem(stringsIndexOffSize,currentStringsOffset));
+            // l.addLast(new IndexOffsetItem(stringsIndexOffSize,currentStringsOffset));
             currentStringsOffset += "Adobe".Length;
             OutputList.AddLast(new CFFFont.IndexOffsetItem(stringsIndexOffSize, currentStringsOffset));
             currentStringsOffset += "Identity".Length;
@@ -1375,18 +1382,18 @@ namespace iText.IO.Font {
         /// <param name="nglyphs">the number of glyphs in the font</param>
         protected internal virtual void CreateFDSelect(CFFFont.OffsetItem fdselectRef, int nglyphs) {
             OutputList.AddLast(new CFFFont.MarkerItem(fdselectRef));
-            OutputList.AddLast(new CFFFont.UInt8Item((char)3));
             // format identifier
-            OutputList.AddLast(new CFFFont.UInt16Item((char)1));
+            OutputList.AddLast(new CFFFont.UInt8Item((char)3));
             // nRanges
-            OutputList.AddLast(new CFFFont.UInt16Item((char)0));
+            OutputList.AddLast(new CFFFont.UInt16Item((char)1));
             // Range[0].firstGlyph
-            OutputList.AddLast(new CFFFont.UInt8Item((char)0));
+            OutputList.AddLast(new CFFFont.UInt16Item((char)0));
             // Range[0].fd
+            OutputList.AddLast(new CFFFont.UInt8Item((char)0));
+            // sentinel
             OutputList.AddLast(new CFFFont.UInt16Item((char)nglyphs));
         }
 
-        // sentinel
         /// <summary>Function creates new CharSet for non-CID fonts.</summary>
         /// <remarks>
         /// Function creates new CharSet for non-CID fonts.
@@ -1396,14 +1403,24 @@ namespace iText.IO.Font {
         /// <param name="nglyphs">the number of glyphs in the font</param>
         protected internal virtual void CreateCharset(CFFFont.OffsetItem charsetRef, int nglyphs) {
             OutputList.AddLast(new CFFFont.MarkerItem(charsetRef));
-            OutputList.AddLast(new CFFFont.UInt8Item((char)2));
             // format identifier
-            OutputList.AddLast(new CFFFont.UInt16Item((char)1));
+            OutputList.AddLast(new CFFFont.UInt8Item((char)2));
             // first glyph in range (ignore .notdef)
-            OutputList.AddLast(new CFFFont.UInt16Item((char)(nglyphs - 1)));
+            OutputList.AddLast(new CFFFont.UInt16Item((char)1));
+            // nLeft
+            /*
+            Maintenance note: Here's the rationale for subtracting 2:
+            - The .notdef glyph is included in the nglyphs count, but
+            we excluded it by starting our range at 1 => decrement once.
+            - The CFF specification mandates that the nLeft field _exclude_
+            the first glyph => decrement once more.
+            
+            This line used to say "nglyphs - 1" for the better part of two decades,
+            so many PDFs out there contain wrong charset extents.
+            */
+            OutputList.AddLast(new CFFFont.UInt16Item((char)(nglyphs - 2)));
         }
 
-        // nLeft
         /// <summary>Function creates new FDArray for non-CID fonts.</summary>
         /// <remarks>
         /// Function creates new FDArray for non-CID fonts.
@@ -1435,8 +1452,8 @@ namespace iText.IO.Font {
             }
             OutputList.AddLast(new CFFFont.DictNumberItem(NewSize));
             OutputList.AddLast(privateRef);
-            OutputList.AddLast(new CFFFont.UInt8Item((char)18));
             // Private
+            OutputList.AddLast(new CFFFont.UInt8Item((char)18));
             OutputList.AddLast(new CFFFont.IndexMarkerItem(privateIndex1Ref, privateBase));
         }
 
@@ -1497,8 +1514,8 @@ namespace iText.IO.Font {
                         OutputList.AddLast(new CFFFont.DictNumberItem(NewSize));
                         fdPrivate[k] = new CFFFont.DictOffsetItem();
                         OutputList.AddLast(fdPrivate[k]);
-                        OutputList.AddLast(new CFFFont.UInt8Item((char)18));
                         // Private
+                        OutputList.AddLast(new CFFFont.UInt8Item((char)18));
                         // Go back to place
                         Seek(p2);
                     }
@@ -1542,10 +1559,10 @@ namespace iText.IO.Font {
                     if ("Subrs".Equals(key)) {
                         fdSubrs[i] = new CFFFont.DictOffsetItem();
                         OutputList.AddLast(fdSubrs[i]);
+                        // Subrs
                         OutputList.AddLast(new CFFFont.UInt8Item((char)19));
                     }
                     else {
-                        // Subrs
                         // Else copy the entire range
                         OutputList.AddLast(new CFFFont.RangeItem(buf, p1, p2 - p1));
                     }
@@ -1643,10 +1660,10 @@ namespace iText.IO.Font {
                 // use marker for offset and write operator number
                 if ("Subrs".Equals(key)) {
                     OutputList.AddLast(Subr);
+                    // Subrs
                     OutputList.AddLast(new CFFFont.UInt8Item((char)19));
                 }
                 else {
-                    // Subrs
                     // Else copy the entire range
                     OutputList.AddLast(new CFFFont.RangeItem(buf, p1, p2 - p1));
                 }
@@ -1668,6 +1685,66 @@ namespace iText.IO.Font {
             if (NewSubrsIndexNonCID != null) {
                 OutputList.AddLast(new CFFFont.RangeItem(new RandomAccessFileOrArray(rasFactory.CreateSource(NewSubrsIndexNonCID
                     )), 0, NewSubrsIndexNonCID.Length));
+            }
+        }
+
+        /// <summary>Returns the CID to which specified GID is mapped.</summary>
+        /// <param name="gid">glyph identifier</param>
+        /// <returns>CID value</returns>
+        internal virtual int GetCidForGlyphId(int gid) {
+            return GetCidForGlyphId(0, gid);
+        }
+
+        /// <summary>Returns the CID to which specified GID is mapped.</summary>
+        /// <param name="fontIndex">index of font for which cid-gid mapping is to be identified</param>
+        /// <param name="gid">glyph identifier</param>
+        /// <returns>CID value</returns>
+        internal virtual int GetCidForGlyphId(int fontIndex, int gid) {
+            if (fonts[fontIndex].gidToCid == null) {
+                return gid;
+            }
+            // gidToCid mapping starts with value corresponding to gid == 1, becuase .notdef is omitted
+            int index = gid - 1;
+            return index >= 0 && index < fonts[fontIndex].gidToCid.Length ? fonts[fontIndex].gidToCid[index] : gid;
+        }
+
+        /// <summary>Creates glyph-to-character id array.</summary>
+        /// <param name="fontIndex">index of font for which charsets data is to be parsed</param>
+        /// <param name="numOfGlyphs">number of glyphs in the font</param>
+        /// <param name="offset">the offset to charsets data</param>
+        private void InitGlyphIdToCharacterIdArray(int fontIndex, int numOfGlyphs, int offset) {
+            // Seek charset offset
+            Seek(offset);
+            // Read the format
+            int format = GetCard8();
+            // .notdef is omitted, therefore remaining number of elements is one less than overall number
+            int numOfElements = numOfGlyphs - 1;
+            fonts[fontIndex].gidToCid = new int[numOfElements];
+            switch (format) {
+                case 0: {
+                    for (int i = 0; i < numOfElements; i++) {
+                        int cid = GetCard16();
+                        fonts[fontIndex].gidToCid[i] = cid;
+                    }
+                    break;
+                }
+
+                case 1:
+                case 2: {
+                    int start = 0;
+                    while (start < numOfElements) {
+                        int first = GetCard16();
+                        int nLeft = format == 1 ? GetCard8() : GetCard16();
+                        for (int i = 0; i <= nLeft && start < numOfElements; i++) {
+                            fonts[fontIndex].gidToCid[start++] = first + i;
+                        }
+                    }
+                    break;
+                }
+
+                default: {
+                    break;
+                }
             }
         }
     }

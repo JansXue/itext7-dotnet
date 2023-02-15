@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,12 +43,14 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Common.Logging;
-using iText.Kernel;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf.Tagging;
 using iText.Kernel.Pdf.Tagutils;
 using iText.Layout;
 using iText.Layout.Borders;
+using iText.Layout.Exceptions;
 using iText.Layout.Properties;
 using iText.Layout.Renderer;
 
@@ -57,15 +59,21 @@ namespace iText.Layout.Element {
     /// A
     /// <see cref="Table"/>
     /// is a layout element that represents data in a two-dimensional
+    /// grid.
+    /// </summary>
+    /// <remarks>
+    /// A
+    /// <see cref="Table"/>
+    /// is a layout element that represents data in a two-dimensional
     /// grid. It is filled with
     /// <see cref="Cell">cells</see>
     /// , ordered in rows and columns.
-    /// <p>
+    /// <para />
     /// It is an implementation of
     /// <see cref="ILargeElement"/>
     /// , which means it can be flushed
     /// to the canvas, in order to reclaim memory that is locked up.
-    /// </summary>
+    /// </remarks>
     public class Table : BlockElement<iText.Layout.Element.Table>, ILargeElement {
         protected internal DefaultAccessibilityProperties tagProperties;
 
@@ -89,6 +97,8 @@ namespace iText.Layout.Element {
 
         private IList<Table.RowRange> lastAddedRowGroups;
 
+        // Start number of the row "window" (range) that this table currently contain.
+        // For large tables we might contain only a few rows, not all of them, other ones might have been flushed.
         private int rowWindowStart = 0;
 
         private Document document;
@@ -98,6 +108,11 @@ namespace iText.Layout.Element {
         private Div caption;
 
         /// <summary>
+        /// Constructs a
+        /// <c>Table</c>
+        /// with the preferable column widths.
+        /// </summary>
+        /// <remarks>
         /// Constructs a
         /// <c>Table</c>
         /// with the preferable column widths.
@@ -114,9 +129,8 @@ namespace iText.Layout.Element {
         /// For more information see
         /// <see cref="SetAutoLayout()"/>
         /// and
-        /// <see cref="SetFixedLayout()"/>
-        /// .
-        /// </summary>
+        /// <see cref="SetFixedLayout()"/>.
+        /// </remarks>
         /// <param name="columnWidths">
         /// preferable column widths in points.  Values must be greater than or equal to zero,
         /// otherwise it will be interpreted as undefined.
@@ -128,8 +142,6 @@ namespace iText.Layout.Element {
         /// <seealso cref="SetAutoLayout()"/>
         /// <seealso cref="SetFixedLayout()"/>
         public Table(float[] columnWidths, bool largeTable) {
-            // Start number of the row "window" (range) that this table currently contain.
-            // For large tables we might contain only a few rows, not all of them, other ones might have been flushed.
             if (columnWidths == null) {
                 throw new ArgumentException("The widths array in table constructor can not be null.");
             }
@@ -145,6 +157,11 @@ namespace iText.Layout.Element {
         /// Constructs a
         /// <c>Table</c>
         /// with the preferable column widths.
+        /// </summary>
+        /// <remarks>
+        /// Constructs a
+        /// <c>Table</c>
+        /// with the preferable column widths.
         /// <br />
         /// Since 7.0.2 table layout algorithms were introduced. Auto layout is default, except large tables.
         /// For large table 100% width and fixed layout set implicitly.
@@ -158,9 +175,8 @@ namespace iText.Layout.Element {
         /// For more information see
         /// <see cref="SetAutoLayout()"/>
         /// and
-        /// <see cref="SetFixedLayout()"/>
-        /// .
-        /// </summary>
+        /// <see cref="SetFixedLayout()"/>.
+        /// </remarks>
         /// <param name="columnWidths">
         /// preferable column widths, points and/or percents.  Values must be greater than or equal to zero,
         /// otherwise it will be interpreted as undefined.
@@ -187,6 +203,11 @@ namespace iText.Layout.Element {
         /// Constructs a
         /// <c>Table</c>
         /// with the preferable column widths.
+        /// </summary>
+        /// <remarks>
+        /// Constructs a
+        /// <c>Table</c>
+        /// with the preferable column widths.
         /// <br />
         /// Since 7.0.2 table layout algorithms were introduced. Auto layout is default.
         /// <br />
@@ -199,9 +220,8 @@ namespace iText.Layout.Element {
         /// For more information see
         /// <see cref="SetAutoLayout()"/>
         /// and
-        /// <see cref="SetFixedLayout()"/>
-        /// .
-        /// </summary>
+        /// <see cref="SetFixedLayout()"/>.
+        /// </remarks>
         /// <param name="columnWidths">
         /// preferable column widths, points and/or percents. Values must be greater than or equal to zero,
         /// otherwise it will be interpreted as undefined.
@@ -213,6 +233,11 @@ namespace iText.Layout.Element {
         }
 
         /// <summary>
+        /// Constructs a
+        /// <c>Table</c>
+        /// with the preferable column widths.
+        /// </summary>
+        /// <remarks>
         /// Constructs a
         /// <c>Table</c>
         /// with the preferable column widths.
@@ -228,9 +253,8 @@ namespace iText.Layout.Element {
         /// For more information see
         /// <see cref="SetAutoLayout()"/>
         /// and
-        /// <see cref="SetFixedLayout()"/>
-        /// .
-        /// </summary>
+        /// <see cref="SetFixedLayout()"/>.
+        /// </remarks>
         /// <param name="pointColumnWidths">
         /// preferable column widths in points. Values must be greater than or equal to zero,
         /// otherwise it will be interpreted as undefined.
@@ -242,6 +266,11 @@ namespace iText.Layout.Element {
         }
 
         /// <summary>
+        /// Constructs a
+        /// <c>Table</c>
+        /// with specified number of columns.
+        /// </summary>
+        /// <remarks>
         /// Constructs a
         /// <c>Table</c>
         /// with specified number of columns.
@@ -263,9 +292,8 @@ namespace iText.Layout.Element {
         /// For more information see
         /// <see cref="SetAutoLayout()"/>
         /// and
-        /// <see cref="SetFixedLayout()"/>
-        /// .
-        /// </summary>
+        /// <see cref="SetFixedLayout()"/>.
+        /// </remarks>
         /// <param name="numColumns">the number of columns, each column will have equal percent width.</param>
         /// <param name="largeTable">
         /// whether parts of the table will be written before all data is added.
@@ -286,15 +314,20 @@ namespace iText.Layout.Element {
         /// Constructs a
         /// <c>Table</c>
         /// with specified number of columns.
+        /// </summary>
+        /// <remarks>
+        /// Constructs a
+        /// <c>Table</c>
+        /// with specified number of columns.
         /// The final column widths depend on selected table layout.
         /// <br />
         /// Since 7.0.2 table layout was introduced. Auto layout is default, except large tables.
         /// For large table fixed layout set implicitly.
-        /// <p>
+        /// <para />
         /// Since 7.1 table will have undefined column widths, that will be determined during layout.
         /// In oder to set equal percent width as column width, use
         /// <see cref="iText.Layout.Properties.UnitValue.CreatePercentArray(int)"/>
-        /// <p>
+        /// <para />
         /// Note, the eventual columns width depends on selected layout, table width,
         /// cell's width, cell's min-widths, and cell's max-widths.
         /// Table layout algorithm has the same behaviour as expected for CSS table-layout property,
@@ -304,9 +337,8 @@ namespace iText.Layout.Element {
         /// For more information see
         /// <see cref="SetAutoLayout()"/>
         /// and
-        /// <see cref="SetFixedLayout()"/>
-        /// .
-        /// </summary>
+        /// <see cref="SetFixedLayout()"/>.
+        /// </remarks>
         /// <param name="numColumns">the number of columns, each column will have equal percent width.</param>
         /// <seealso cref="SetAutoLayout()"/>
         /// <seealso cref="SetFixedLayout()"/>
@@ -320,7 +352,7 @@ namespace iText.Layout.Element {
         /// <c>table-layout:fixed</c>
         /// CSS property.
         /// Note, the table must have width property, otherwise auto layout will be used.
-        /// <p>
+        /// <para />
         /// Algorithm description
         /// <br />
         /// 1. Scan columns for width property and set it. All the rest columns get undefined value.
@@ -332,8 +364,7 @@ namespace iText.Layout.Element {
         /// Cell width has lower priority in comparing with column. Cell width doesn't include borders and paddings.
         /// <br />
         /// 2.1 If cell has colspan and all columns are undefined, each column will get equal width:
-        /// <c>width/colspan</c>
-        /// .
+        /// <c>width/colspan</c>.
         /// <br />
         /// 2.2 If some columns already have width, equal remain (original width minus existed) width will be added
         /// <c>remainWidth/colspan</c>
@@ -359,7 +390,7 @@ namespace iText.Layout.Element {
         /// <c>table-layout:auto</c>
         /// CSS property. <br />
         /// Note, large table does not support auto layout.
-        /// <p>
+        /// <para />
         /// Algorithm principles.
         /// <br />
         /// 1. Column width cannot be less, than min-width of any cell in the column (calculated by layout).
@@ -413,8 +444,7 @@ namespace iText.Layout.Element {
         /// Adds a new cell to the header of the table.
         /// The header will be displayed in the top of every area of this table.
         /// See also
-        /// <see cref="SetSkipFirstHeader(bool)"/>
-        /// .
+        /// <see cref="SetSkipFirstHeader(bool)"/>.
         /// </remarks>
         /// <param name="headerCell">a header cell to be added</param>
         /// <returns>this element</returns>
@@ -429,11 +459,10 @@ namespace iText.Layout.Element {
         /// Adds a new cell with received blockElement as a content to the header of the table.
         /// The header will be displayed in the top of every area of this table.
         /// See also
-        /// <see cref="SetSkipFirstHeader(bool)"/>
-        /// .
+        /// <see cref="SetSkipFirstHeader(bool)"/>.
         /// </remarks>
         /// <param name="blockElement">an element to be added to a header cell</param>
-        /// 
+        /// <typeparam name="T">any IElement</typeparam>
         /// <returns>this element</returns>
         public virtual iText.Layout.Element.Table AddHeaderCell<T>(BlockElement<T> blockElement)
             where T : IElement {
@@ -447,8 +476,7 @@ namespace iText.Layout.Element {
         /// Adds a new cell with received image to the header of the table.
         /// The header will be displayed in the top of every area of this table.
         /// See also
-        /// <see cref="SetSkipFirstHeader(bool)"/>
-        /// .
+        /// <see cref="SetSkipFirstHeader(bool)"/>.
         /// </remarks>
         /// <param name="image">an element to be added to a header cell</param>
         /// <returns>this element</returns>
@@ -463,8 +491,7 @@ namespace iText.Layout.Element {
         /// Adds a new cell with received string as a content to the header of the table.
         /// The header will be displayed in the top of every area of this table.
         /// See also
-        /// <see cref="SetSkipFirstHeader(bool)"/>
-        /// .
+        /// <see cref="SetSkipFirstHeader(bool)"/>.
         /// </remarks>
         /// <param name="content">a string to be added to a header cell</param>
         /// <returns>this element</returns>
@@ -493,8 +520,7 @@ namespace iText.Layout.Element {
         /// Adds a new cell to the footer of the table.
         /// The footer will be displayed in the bottom of every area of this table.
         /// See also
-        /// <see cref="SetSkipLastFooter(bool)"/>
-        /// .
+        /// <see cref="SetSkipLastFooter(bool)"/>.
         /// </remarks>
         /// <param name="footerCell">a footer cell</param>
         /// <returns>this element</returns>
@@ -509,11 +535,10 @@ namespace iText.Layout.Element {
         /// Adds a new cell with received blockElement as a content to the footer of the table.
         /// The footer will be displayed in the bottom of every area of this table.
         /// See also
-        /// <see cref="SetSkipLastFooter(bool)"/>
-        /// .
+        /// <see cref="SetSkipLastFooter(bool)"/>.
         /// </remarks>
         /// <param name="blockElement">an element to be added to a footer cell</param>
-        /// 
+        /// <typeparam name="T">IElement instance</typeparam>
         /// <returns>this element</returns>
         public virtual iText.Layout.Element.Table AddFooterCell<T>(BlockElement<T> blockElement)
             where T : IElement {
@@ -527,8 +552,7 @@ namespace iText.Layout.Element {
         /// Adds a new cell with received image as a content to the footer of the table.
         /// The footer will be displayed in the bottom of every area of this table.
         /// See also
-        /// <see cref="SetSkipLastFooter(bool)"/>
-        /// .
+        /// <see cref="SetSkipLastFooter(bool)"/>.
         /// </remarks>
         /// <param name="image">an image to be added to a footer cell</param>
         /// <returns>this element</returns>
@@ -543,8 +567,7 @@ namespace iText.Layout.Element {
         /// Adds a new cell with received string as a content to the footer of the table.
         /// The footer will be displayed in the bottom of every area of this table.
         /// See also
-        /// <see cref="SetSkipLastFooter(bool)"/>
-        /// .
+        /// <see cref="SetSkipLastFooter(bool)"/>.
         /// </remarks>
         /// <param name="content">a content string to be added to a footer cell</param>
         /// <returns>this element</returns>
@@ -672,7 +695,6 @@ namespace iText.Layout.Element {
             return this;
         }
 
-        //TODO when rendering starts, make sure, that last row is not empty.
         /// <summary>Adds a new cell to the table.</summary>
         /// <remarks>
         /// Adds a new cell to the table. The implementation decides for itself which
@@ -686,7 +708,7 @@ namespace iText.Layout.Element {
         /// <returns>this element</returns>
         public virtual iText.Layout.Element.Table AddCell(Cell cell) {
             if (isComplete && null != lastAddedRow) {
-                throw new PdfException(PdfException.CannotAddCellToCompletedLargeTable);
+                throw new PdfException(LayoutExceptionMessageConstant.CANNOT_ADD_CELL_TO_COMPLETED_LARGE_TABLE);
             }
             // Try to find first empty slot in table.
             // We shall not use colspan or rowspan, 1x1 will be enough.
@@ -723,7 +745,7 @@ namespace iText.Layout.Element {
 
         /// <summary>Adds a new cell with received blockElement as a content.</summary>
         /// <param name="blockElement">a blockElement to add to the cell and then to the table</param>
-        /// 
+        /// <typeparam name="T">IElement instance</typeparam>
         /// <returns>this element</returns>
         public virtual iText.Layout.Element.Table AddCell<T>(BlockElement<T> blockElement)
             where T : IElement {
@@ -747,7 +769,7 @@ namespace iText.Layout.Element {
         /// <summary>Returns a cell as specified by its location.</summary>
         /// <remarks>
         /// Returns a cell as specified by its location. If the cell is in a col-span
-        /// or row-span and is not the top left cell, then <code>null</code> is returned.
+        /// or row-span and is not the top left cell, then <c>null</c> is returned.
         /// </remarks>
         /// <param name="row">the row of the cell. indexes are zero-based</param>
         /// <param name="column">the column of the cell. indexes are zero-based</param>
@@ -803,8 +825,8 @@ namespace iText.Layout.Element {
                     return renderer;
                 }
                 else {
-                    ILog logger = LogManager.GetLogger(typeof(iText.Layout.Element.Table));
-                    logger.Error("Invalid renderer for Table: must be inherited from TableRenderer");
+                    ILogger logger = ITextLogManager.GetLogger(typeof(iText.Layout.Element.Table));
+                    logger.LogError("Invalid renderer for Table: must be inherited from TableRenderer");
                 }
             }
             // In case of large tables, we only add to the renderer the cells from complete row groups,
@@ -930,16 +952,56 @@ namespace iText.Layout.Element {
             return horizontalBorder;
         }
 
+        /// <summary>
+        /// Defines whether the
+        /// <see cref="Table"/>
+        /// should be extended to occupy all the space left in the available area
+        /// in case it is the last element in this area.
+        /// </summary>
+        /// <param name="isExtended">
+        /// defines whether the
+        /// <see cref="Table"/>
+        /// should be extended
+        /// </param>
+        /// <returns>
+        /// this
+        /// <see cref="Table"/>
+        /// </returns>
         public virtual iText.Layout.Element.Table SetExtendBottomRow(bool isExtended) {
             SetProperty(Property.FILL_AVAILABLE_AREA, isExtended);
             return this;
         }
 
+        /// <summary>
+        /// Defines whether the
+        /// <see cref="Table"/>
+        /// should be extended to occupy all the space left in the available area
+        /// in case the area has been split and it is the last element in the split part of this area.
+        /// </summary>
+        /// <param name="isExtended">
+        /// defines whether the
+        /// <see cref="Table"/>
+        /// should be extended
+        /// </param>
+        /// <returns>
+        /// this
+        /// <see cref="Table"/>
+        /// </returns>
         public virtual iText.Layout.Element.Table SetExtendBottomRowOnSplit(bool isExtended) {
             SetProperty(Property.FILL_AVAILABLE_AREA_ON_SPLIT, isExtended);
             return this;
         }
 
+        /// <summary>Sets the type of border collapse.</summary>
+        /// <param name="collapsePropertyValue">
+        /// 
+        /// <see cref="iText.Layout.Properties.BorderCollapsePropertyValue"/>
+        /// to be set as the border collapse type
+        /// </param>
+        /// <returns>
+        /// this
+        /// <see cref="Table"/>
+        /// </returns>
         public virtual iText.Layout.Element.Table SetBorderCollapse(BorderCollapsePropertyValue collapsePropertyValue
             ) {
             SetProperty(Property.BORDER_COLLAPSE, collapsePropertyValue);
@@ -952,6 +1014,22 @@ namespace iText.Layout.Element {
             return this;
         }
 
+        /// <summary>
+        /// Sets the horizontal spacing between this
+        /// <see cref="Table">table</see>
+        /// 's
+        /// <see cref="Cell">cells</see>.
+        /// </summary>
+        /// <param name="spacing">
+        /// a horizontal spacing between this
+        /// <see cref="Table">table</see>
+        /// 's
+        /// <see cref="Cell">cells</see>
+        /// </param>
+        /// <returns>
+        /// this
+        /// <see cref="Table"/>
+        /// </returns>
         public virtual iText.Layout.Element.Table SetHorizontalBorderSpacing(float spacing) {
             SetProperty(Property.HORIZONTAL_BORDER_SPACING, spacing);
             if (null != header) {
@@ -963,6 +1041,22 @@ namespace iText.Layout.Element {
             return this;
         }
 
+        /// <summary>
+        /// Sets the vertical spacing between this
+        /// <see cref="Table">table</see>
+        /// 's
+        /// <see cref="Cell">cells</see>.
+        /// </summary>
+        /// <param name="spacing">
+        /// a vertical spacing between this
+        /// <see cref="Table">table</see>
+        /// 's
+        /// <see cref="Cell">cells</see>
+        /// </param>
+        /// <returns>
+        /// this
+        /// <see cref="Table"/>
+        /// </returns>
         public virtual iText.Layout.Element.Table SetVerticalBorderSpacing(float spacing) {
             SetProperty(Property.VERTICAL_BORDER_SPACING, spacing);
             if (null != header) {
@@ -1009,6 +1103,12 @@ namespace iText.Layout.Element {
             return normalized;
         }
 
+        /// <summary>Returns the list of all row groups.</summary>
+        /// <returns>
+        /// a list of a
+        /// <see cref="RowRange"/>
+        /// which holds the row numbers of a section of a table
+        /// </returns>
         protected internal virtual IList<Table.RowRange> GetRowGroups() {
             int lastRowWeCanFlush = currentColumn == columnWidths.Length ? currentRow : currentRow - 1;
             int[] cellBottomRows = new int[columnWidths.Length];
@@ -1110,8 +1210,10 @@ namespace iText.Layout.Element {
 
         /// <summary>A simple object which holds the row numbers of a section of a table.</summary>
         public class RowRange {
+            // The start number of the row group, inclusive
             internal int startRow;
 
+            // The finish number of the row group, inclusive
             internal int finishRow;
 
             /// <summary>
@@ -1121,8 +1223,6 @@ namespace iText.Layout.Element {
             /// <param name="startRow">the start number of the row group, inclusive</param>
             /// <param name="finishRow">the finish number of the row group, inclusive</param>
             public RowRange(int startRow, int finishRow) {
-                // The start number of the row group, inclusive
-                // The finish number of the row group, inclusive
                 this.startRow = startRow;
                 this.finishRow = finishRow;
             }

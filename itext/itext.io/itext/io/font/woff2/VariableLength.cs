@@ -13,9 +13,11 @@
 // limitations under the License.
 //
 // This is part of java port of project hosted at https://github.com/google/woff2
+using iText.IO.Exceptions;
+
 namespace iText.IO.Font.Woff2 {
+    // Helper functions for woff2 variable length types: 255UInt16 and UIntBase128
     internal class VariableLength {
-        // Helper functions for woff2 variable length types: 255UInt16 and UIntBase128
         // Based on section 6.1.1 of MicroType Express draft spec
         public static int Read255UShort(Buffer buf) {
             int kWordCode = 253;

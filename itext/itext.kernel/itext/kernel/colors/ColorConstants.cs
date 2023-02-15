@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,15 +45,19 @@ namespace iText.Kernel.Colors {
     /// Class containing predefined
     /// <see cref="DeviceRgb"/>
     /// colors.
+    /// </summary>
+    /// <remarks>
+    /// Class containing predefined
+    /// <see cref="DeviceRgb"/>
+    /// colors.
     /// Color space specific classes should be used for the advanced handling of colors.
     /// The most common ones are
     /// <see cref="DeviceGray"/>
     /// ,
     /// <see cref="DeviceCmyk"/>
     /// and
-    /// <see cref="DeviceRgb"/>
-    /// .
-    /// </summary>
+    /// <see cref="DeviceRgb"/>.
+    /// </remarks>
     public class ColorConstants {
         /// <summary>Predefined black DeviceRgb color</summary>
         public static readonly Color BLACK = DeviceRgb.BLACK;

@@ -30,6 +30,7 @@
 using System;
 using System.Collections;
 using System.Text;
+using iText.Commons.Utils;
 using iText.IO.Util;
 using iText.Kernel.XMP;
 using iText.Kernel.XMP.Options;
@@ -129,7 +130,6 @@ namespace iText.Kernel.XMP.Impl
 
 		/// <summary>Adds a node as child to this node.</summary>
 		/// <param name="node">an XMPNode</param>
-		/// <exception cref="iText.Kernel.XMP.XMPException"></exception>
 		public virtual void AddChild(iText.Kernel.XMP.Impl.XMPNode node)
 		{
 			// check for duplicate properties
@@ -145,7 +145,6 @@ namespace iText.Kernel.XMP.Impl
 		/// An index of size + 1 appends a node.
 		/// </param>
 		/// <param name="node">an XMPNode</param>
-		/// <exception cref="iText.Kernel.XMP.XMPException"></exception>
 		public virtual void AddChild(int index, iText.Kernel.XMP.Impl.XMPNode node)
 		{
 			AssertChildNotExisting(node.GetName());
@@ -234,7 +233,6 @@ namespace iText.Kernel.XMP.Impl
 
 		/// <summary>Appends a qualifier to the qualifier list and sets respective options.</summary>
 		/// <param name="qualNode">a qualifier node.</param>
-		/// <exception cref="iText.Kernel.XMP.XMPException"></exception>
 		public virtual void AddQualifier(iText.Kernel.XMP.Impl.XMPNode qualNode)
 		{
 			AssertQualifierNotExisting(qualNode.GetName());
@@ -522,21 +520,17 @@ namespace iText.Kernel.XMP.Impl
 		}
 
 		/// <summary>
-		/// Sorts the complete datamodel according to the following rules:
-		/// <ul>
-		/// <li>Nodes at one level are sorted by name, that is prefix + local name
-		/// <li>Starting at the root node the children and qualifier are sorted recursively,
-		/// which the following exceptions.
+		/// Sorts the complete datamodel according to the rules.
 		/// </summary>
 		/// <remarks>
 		/// Sorts the complete datamodel according to the following rules:
 		/// <ul>
-		/// <li>Nodes at one level are sorted by name, that is prefix + local name
+		/// <li>Nodes at one level are sorted by name, that is prefix + local name</li>
 		/// <li>Starting at the root node the children and qualifier are sorted recursively,
-		/// which the following exceptions.
-		/// <li>Sorting will not be used for arrays.
+		/// which the following exceptions.</li>
+		/// <li>Sorting will not be used for arrays.</li>
 		/// <li>Within qualifier "xml:lang" and/or "rdf:type" stay at the top in that order,
-		/// all others are sorted.
+		/// all others are sorted.</li>
 		/// </ul>
 		/// </remarks>
 		public virtual void Sort()
@@ -750,8 +744,6 @@ namespace iText.Kernel.XMP.Impl
 		/// <summary>Checks that a node name is not existing on the same level, except for array items.
 		/// 	</summary>
 		/// <param name="childName">the node name to check</param>
-		/// <exception cref="iText.Kernel.XMP.XMPException">Thrown if a node with the same name is existing.
-		/// 	</exception>
 		private void AssertChildNotExisting(String childName)
 		{
 			if (!XMPConst.ARRAY_ITEM_NAME.Equals(childName) && FindChildByName(childName) != 
@@ -764,8 +756,6 @@ namespace iText.Kernel.XMP.Impl
 
 		/// <summary>Checks that a qualifier name is not existing on the same level.</summary>
 		/// <param name="qualifierName">the new qualifier name</param>
-		/// <exception cref="iText.Kernel.XMP.XMPException">Thrown if a node with the same name is existing.
-		/// 	</exception>
 		private void AssertQualifierNotExisting(String qualifierName)
 		{
 			if (!XMPConst.ARRAY_ITEM_NAME.Equals(qualifierName) && FindQualifierByName(qualifierName

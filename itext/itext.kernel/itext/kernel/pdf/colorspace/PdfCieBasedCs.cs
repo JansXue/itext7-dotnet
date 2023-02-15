@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,7 +44,7 @@ address: sales@itextpdf.com
 using System.Collections.Generic;
 using System.IO;
 using iText.IO.Colors;
-using iText.Kernel;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf;
 
 namespace iText.Kernel.Pdf.Colorspace {
@@ -54,12 +54,17 @@ namespace iText.Kernel.Pdf.Colorspace {
         /// <c>PdfObject</c>
         /// behind this wrapper, you have to ensure
         /// that this object is added to the document, i.e. it has an indirect reference.
+        /// </summary>
+        /// <remarks>
+        /// To manually flush a
+        /// <c>PdfObject</c>
+        /// behind this wrapper, you have to ensure
+        /// that this object is added to the document, i.e. it has an indirect reference.
         /// Basically this means that before flushing you need to explicitly call
-        /// <see cref="iText.Kernel.Pdf.PdfObjectWrapper{T}.MakeIndirect(iText.Kernel.Pdf.PdfDocument)"/>
-        /// .
+        /// <see cref="iText.Kernel.Pdf.PdfObjectWrapper{T}.MakeIndirect(iText.Kernel.Pdf.PdfDocument)"/>.
         /// For example: wrapperInstance.makeIndirect(document).flush();
         /// Note that not every wrapper require this, only those that have such warning in documentation.
-        /// </summary>
+        /// </remarks>
         public override void Flush() {
             base.Flush();
         }
@@ -80,7 +85,7 @@ namespace iText.Kernel.Pdf.Colorspace {
             public CalGray(float[] whitePoint)
                 : this(GetInitialPdfArray()) {
                 if (whitePoint == null || whitePoint.Length != 3) {
-                    throw new PdfException(PdfException.WhitePointIsIncorrectlySpecified, this);
+                    throw new PdfException(KernelExceptionMessageConstant.WHITE_POINT_IS_INCORRECTLY_SPECIFIED, this);
                 }
                 PdfDictionary d = ((PdfArray)GetPdfObject()).GetAsDictionary(1);
                 d.Put(PdfName.WhitePoint, new PdfArray(whitePoint));
@@ -117,7 +122,7 @@ namespace iText.Kernel.Pdf.Colorspace {
             public CalRgb(float[] whitePoint)
                 : this(GetInitialPdfArray()) {
                 if (whitePoint == null || whitePoint.Length != 3) {
-                    throw new PdfException(PdfException.WhitePointIsIncorrectlySpecified, this);
+                    throw new PdfException(KernelExceptionMessageConstant.WHITE_POINT_IS_INCORRECTLY_SPECIFIED, this);
                 }
                 PdfDictionary d = ((PdfArray)GetPdfObject()).GetAsDictionary(1);
                 d.Put(PdfName.WhitePoint, new PdfArray(whitePoint));
@@ -157,7 +162,7 @@ namespace iText.Kernel.Pdf.Colorspace {
             public Lab(float[] whitePoint)
                 : this(GetInitialPdfArray()) {
                 if (whitePoint == null || whitePoint.Length != 3) {
-                    throw new PdfException(PdfException.WhitePointIsIncorrectlySpecified, this);
+                    throw new PdfException(KernelExceptionMessageConstant.WHITE_POINT_IS_INCORRECTLY_SPECIFIED, this);
                 }
                 PdfDictionary d = ((PdfArray)GetPdfObject()).GetAsDictionary(1);
                 d.Put(PdfName.WhitePoint, new PdfArray(whitePoint));
@@ -192,6 +197,7 @@ namespace iText.Kernel.Pdf.Colorspace {
             }
 
             public IccBased(Stream iccStream)
+                // TODO DEVSIX-4217 add parsing of the Range
                 : this(GetInitialPdfArray(iccStream, null)) {
             }
 

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -51,7 +51,8 @@ namespace iText.Kernel.Pdf.Tagutils {
     /// <remarks>
     /// A helper interface that facilitates roles mapping resolving for the tag structures that are defined for different
     /// PDF document specification versions.
-    /// <p>Be aware, that it is explicitly allowed for the document by the specification to have circular or transitive mappings.</p>
+    /// <para />
+    /// Be aware, that it is explicitly allowed for the document by the specification to have circular or transitive mappings.
     /// </remarks>
     public interface IRoleMappingResolver {
         /// <summary>Defines the current role of the resolver.</summary>

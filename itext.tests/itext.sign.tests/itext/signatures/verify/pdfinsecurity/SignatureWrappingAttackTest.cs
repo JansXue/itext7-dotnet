@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -46,6 +46,7 @@ using iText.Signatures;
 using iText.Test;
 
 namespace iText.Signatures.Verify.Pdfinsecurity {
+    [NUnit.Framework.Category("BouncyCastleIntegrationTest")]
     public class SignatureWrappingAttackTest : ExtendedITextTest {
         private static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/signatures/verify/pdfinsecurity/SignatureWrappingAttackTest/";
@@ -54,8 +55,6 @@ namespace iText.Signatures.Verify.Pdfinsecurity {
         public static void Before() {
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
         [NUnit.Framework.Test]
         public virtual void TestSWA01() {
             String filePath = sourceFolder + "siwa.pdf";

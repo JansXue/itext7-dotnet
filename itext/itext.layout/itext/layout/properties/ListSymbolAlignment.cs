@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,6 +43,22 @@ address: sales@itextpdf.com
 */
 namespace iText.Layout.Properties {
     /// <summary>A specialized enum containing alignment properties for list symbols.</summary>
+    /// <remarks>
+    /// A specialized enum containing alignment properties for list symbols.
+    /// <para />
+    /// <see cref="LEFT"/>
+    /// means that the items will be aligned as follows:
+    /// <para />
+    /// 9.  Item 9<br />
+    /// 10. Item 10
+    /// <para />
+    /// Whereas
+    /// <see cref="RIGHT"/>
+    /// means the items will be aligned as follows:
+    /// <para />
+    /// 9. Item 9<br />
+    /// 10. Item 10
+    /// </remarks>
     public enum ListSymbolAlignment {
         RIGHT,
         LEFT

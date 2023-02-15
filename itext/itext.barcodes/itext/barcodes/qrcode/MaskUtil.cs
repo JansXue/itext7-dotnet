@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -250,14 +250,14 @@ namespace iText.Barcodes.Qrcode {
                         }
                     }
                     else {
-                        numSameBitCells = 1;
                         // Include the cell itself.
+                        numSameBitCells = 1;
                         prevBit = bit;
                     }
                 }
+                // Clear at each row/column.
                 numSameBitCells = 0;
             }
-            // Clear at each row/column.
             return penalty;
         }
     }

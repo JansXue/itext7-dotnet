@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -47,6 +47,7 @@ using iText.Kernel.Pdf.Canvas;
 using iText.Layout.Font;
 using iText.StyledXmlParser.Resolver.Font;
 using iText.StyledXmlParser.Resolver.Resource;
+using iText.Svg.Css;
 using iText.Svg.Exceptions;
 
 namespace iText.Svg.Renderers {
@@ -60,37 +61,53 @@ namespace iText.Svg.Renderers {
         private readonly IDictionary<String, ISvgNodeRenderer> namedObjects = new Dictionary<String, ISvgNodeRenderer
             >();
 
-        private readonly Stack<PdfCanvas> canvases = new Stack<PdfCanvas>();
+        private readonly LinkedList<PdfCanvas> canvases = new LinkedList<PdfCanvas>();
 
-        private readonly Stack<Rectangle> viewports = new Stack<Rectangle>();
+        private readonly LinkedList<Rectangle> viewports = new LinkedList<Rectangle>();
 
         private readonly Stack<String> useIds = new Stack<String>();
 
-        private ResourceResolver resourceResolver;
+        private readonly Stack<String> patternIds = new Stack<String>();
 
-        private FontProvider fontProvider;
+        private readonly ResourceResolver resourceResolver;
+
+        private readonly FontProvider fontProvider;
 
         private FontSet tempFonts;
+
+        private SvgCssContext cssContext;
 
         private AffineTransform lastTextTransform = new AffineTransform();
 
         private float[] textMove = new float[] { 0.0f, 0.0f };
 
+        private float[] previousElementTextMove;
+
+        /// <summary>Create an instance of the context that is used to store information when converting SVG.</summary>
+        /// <param name="resourceResolver">
+        /// instance of
+        /// <see cref="iText.StyledXmlParser.Resolver.Resource.ResourceResolver"/>
+        /// </param>
+        /// <param name="fontProvider">
+        /// instance of
+        /// <see cref="iText.Layout.Font.FontProvider"/>
+        /// </param>
         public SvgDrawContext(ResourceResolver resourceResolver, FontProvider fontProvider) {
             if (resourceResolver == null) {
-                resourceResolver = new ResourceResolver("");
+                resourceResolver = new ResourceResolver(null);
             }
             this.resourceResolver = resourceResolver;
             if (fontProvider == null) {
                 fontProvider = new BasicFontProvider();
             }
             this.fontProvider = fontProvider;
+            cssContext = new SvgCssContext();
         }
 
         /// <summary>Retrieves the current top of the stack, without modifying the stack.</summary>
         /// <returns>the current canvas that can be used for drawing operations.</returns>
         public virtual PdfCanvas GetCurrentCanvas() {
-            return canvases.Peek();
+            return canvases.JGetFirst();
         }
 
         /// <summary>
@@ -99,7 +116,9 @@ namespace iText.Svg.Renderers {
         /// </summary>
         /// <returns>the current canvas that can be used for drawing operations.</returns>
         public virtual PdfCanvas PopCanvas() {
-            return canvases.Pop();
+            PdfCanvas canvas = canvases.JGetFirst();
+            canvases.RemoveFirst();
+            return canvas;
         }
 
         /// <summary>
@@ -110,7 +129,7 @@ namespace iText.Svg.Renderers {
         /// </summary>
         /// <param name="canvas">the new top of the stack</param>
         public virtual void PushCanvas(PdfCanvas canvas) {
-            canvases.Push(canvas);
+            canvases.AddFirst(canvas);
         }
 
         /// <summary>
@@ -125,19 +144,25 @@ namespace iText.Svg.Renderers {
         /// <summary>Adds a viewbox to the context.</summary>
         /// <param name="viewPort">rectangle representing the current viewbox</param>
         public virtual void AddViewPort(Rectangle viewPort) {
-            this.viewports.Push(viewPort);
+            viewports.AddFirst(viewPort);
         }
 
         /// <summary>Get the current viewbox.</summary>
         /// <returns>the viewbox as it is currently set</returns>
         public virtual Rectangle GetCurrentViewPort() {
-            return this.viewports.Peek();
+            return viewports.JGetFirst();
+        }
+
+        /// <summary>Get the viewbox which is the root viewport for the current document.</summary>
+        /// <returns>root viewbox.</returns>
+        public virtual Rectangle GetRootViewPort() {
+            return viewports.JGetLast();
         }
 
         /// <summary>Remove the currently set view box.</summary>
         public virtual void RemoveCurrentViewPort() {
             if (this.viewports.Count > 0) {
-                this.viewports.Pop();
+                viewports.RemoveFirst();
             }
         }
 
@@ -148,10 +173,10 @@ namespace iText.Svg.Renderers {
         /// <param name="namedObject">object to be referenced</param>
         public virtual void AddNamedObject(String name, ISvgNodeRenderer namedObject) {
             if (namedObject == null) {
-                throw new SvgProcessingException(SvgLogMessageConstant.NAMED_OBJECT_NULL);
+                throw new SvgProcessingException(SvgExceptionMessageConstant.NAMED_OBJECT_NULL);
             }
             if (name == null || String.IsNullOrEmpty(name)) {
-                throw new SvgProcessingException(SvgLogMessageConstant.NAMED_OBJECT_NAME_NULL_OR_EMPTY);
+                throw new SvgProcessingException(SvgExceptionMessageConstant.NAMED_OBJECT_NAME_NULL_OR_EMPTY);
             }
             if (!this.namedObjects.ContainsKey(name)) {
                 this.namedObjects.Put(name, namedObject);
@@ -253,6 +278,72 @@ namespace iText.Svg.Renderers {
         public virtual void AddTextMove(float additionalMoveX, float additionalMoveY) {
             textMove[0] += additionalMoveX;
             textMove[1] += additionalMoveY;
+        }
+
+        /// <summary>Get the current canvas transformation</summary>
+        /// <returns>
+        /// the
+        /// <see cref="iText.Kernel.Geom.AffineTransform"/>
+        /// representing the current canvas transformation
+        /// </returns>
+        public virtual AffineTransform GetCurrentCanvasTransform() {
+            Matrix currentTransform = GetCurrentCanvas().GetGraphicsState().GetCtm();
+            if (currentTransform != null) {
+                return new AffineTransform(currentTransform.Get(0), currentTransform.Get(1), currentTransform.Get(3), currentTransform
+                    .Get(4), currentTransform.Get(6), currentTransform.Get(7));
+            }
+            return new AffineTransform();
+        }
+
+        /// <summary>Gets the SVG CSS context.</summary>
+        /// <returns>the SVG CSS context</returns>
+        public virtual SvgCssContext GetCssContext() {
+            return cssContext;
+        }
+
+        /// <summary>Sets the SVG CSS context.</summary>
+        /// <param name="cssContext">the SVG CSS context</param>
+        public virtual void SetCssContext(SvgCssContext cssContext) {
+            this.cssContext = cssContext;
+        }
+
+        /// <summary>Add pattern id to stack.</summary>
+        /// <remarks>
+        /// Add pattern id to stack. Check if the id is already in the stack.
+        /// If it is, then return
+        /// <see langword="false"/>
+        /// and not add, if it is not - add and return
+        /// <see langword="true"/>.
+        /// </remarks>
+        /// <param name="patternId">pattern id</param>
+        /// <returns>
+        /// 
+        /// <see langword="true"/>
+        /// if pattern id was not on the stack and was pushed;
+        /// <see langword="false"/>
+        /// if it is on the stack
+        /// </returns>
+        public virtual bool PushPatternId(String patternId) {
+            if (this.patternIds.Contains(patternId)) {
+                return false;
+            }
+            else {
+                this.patternIds.Push(patternId);
+                return true;
+            }
+        }
+
+        /// <summary>Pops the last template id from the stack.</summary>
+        public virtual void PopPatternId() {
+            this.patternIds.Pop();
+        }
+
+        public virtual void SetPreviousElementTextMove(float[] previousElementTextMove) {
+            this.previousElementTextMove = previousElementTextMove;
+        }
+
+        public virtual float[] GetPreviousElementTextMove() {
+            return previousElementTextMove;
         }
     }
 }

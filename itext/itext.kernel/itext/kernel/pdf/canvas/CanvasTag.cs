@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -49,12 +49,12 @@ namespace iText.Kernel.Pdf.Canvas {
     /// <summary>This class represents a single tag on a single piece of marked content.</summary>
     /// <remarks>
     /// This class represents a single tag on a single piece of marked content.
-    /// <p>
+    /// <para />
     /// In Tagged PDF, a tag is the basic structure unit for marking content. The tag
     /// structure and hierarchy is largely comparable to HTML. As in HTML, every tag
-    /// type has a name, defined here in the <code>role</code> attribute. The tagging
+    /// type has a name, defined here in the <c>role</c> attribute. The tagging
     /// mechanism in Tagged PDF is extensible, so PDF creators can choose to create
-    /// custom tags.</p>
+    /// custom tags.
     /// </remarks>
     public class CanvasTag {
         /// <summary>The type of the tag.</summary>
@@ -63,21 +63,19 @@ namespace iText.Kernel.Pdf.Canvas {
         /// <summary>The properties of the tag.</summary>
         protected internal PdfDictionary properties;
 
-        /// <summary>Creates a tag that is referenced to the document's tag structure (i.e.</summary>
-        /// <remarks>
+        /// <summary>
         /// Creates a tag that is referenced to the document's tag structure (i.e.
         /// logical structure).
-        /// </remarks>
+        /// </summary>
         /// <param name="role">the type of tag</param>
         public CanvasTag(PdfName role) {
             this.role = role;
         }
 
-        /// <summary>Creates a tag that is referenced to the document's tag structure (i.e.</summary>
-        /// <remarks>
+        /// <summary>
         /// Creates a tag that is referenced to the document's tag structure (i.e.
         /// logical structure).
-        /// </remarks>
+        /// </summary>
         /// <param name="role">the type of tag</param>
         /// <param name="mcid">marked content id which serves as a reference to the document's logical structure</param>
         public CanvasTag(PdfName role, int mcid) {
@@ -85,11 +83,10 @@ namespace iText.Kernel.Pdf.Canvas {
             AddProperty(PdfName.MCID, new PdfNumber(mcid));
         }
 
-        /// <summary>Creates a tag that is referenced to the document's tag structure (i.e.</summary>
-        /// <remarks>
+        /// <summary>
         /// Creates a tag that is referenced to the document's tag structure (i.e.
         /// logical structure).
-        /// </remarks>
+        /// </summary>
         /// <param name="mcr">
         /// the
         /// <see cref="iText.Kernel.Pdf.Tagging.PdfMcr">Marked Content Reference</see>
@@ -107,7 +104,6 @@ namespace iText.Kernel.Pdf.Canvas {
 
         /// <summary>Get the marked content id of the tag.</summary>
         /// <returns>marked content id</returns>
-        /// <exception cref="System.InvalidOperationException">if there is no MCID</exception>
         public virtual int GetMcid() {
             int mcid = -1;
             if (properties != null) {
@@ -128,8 +124,13 @@ namespace iText.Kernel.Pdf.Canvas {
         /// <summary>
         /// Sets a dictionary of properties to the
         /// <see cref="CanvasTag">tag</see>
-        /// 's properties. All existing properties (if any) will be lost.
+        /// 's properties.
         /// </summary>
+        /// <remarks>
+        /// Sets a dictionary of properties to the
+        /// <see cref="CanvasTag">tag</see>
+        /// 's properties. All existing properties (if any) will be lost.
+        /// </remarks>
         /// <param name="properties">a dictionary</param>
         /// <returns>
         /// current
@@ -194,6 +195,12 @@ namespace iText.Kernel.Pdf.Canvas {
             return properties;
         }
 
+        /// <summary>Gets value of /ActualText property.</summary>
+        /// <returns>
+        /// actual text value or
+        /// <see langword="null"/>
+        /// if actual text is not defined
+        /// </returns>
         public virtual String GetActualText() {
             return GetPropertyAsString(PdfName.ActualText);
         }
@@ -203,7 +210,10 @@ namespace iText.Kernel.Pdf.Canvas {
         }
 
         private String GetPropertyAsString(PdfName name) {
-            PdfString text = properties.GetAsString(name);
+            PdfString text = null;
+            if (properties != null) {
+                text = properties.GetAsString(name);
+            }
             String result = null;
             if (text != null) {
                 result = text.ToUnicodeString();

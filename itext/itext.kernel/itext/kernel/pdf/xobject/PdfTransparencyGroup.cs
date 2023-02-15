@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -51,7 +51,11 @@ namespace iText.Kernel.Pdf.Xobject {
         }
 
         /// <summary>Determining the initial backdrop against which its stack is composited.</summary>
-        /// <param name="isolated"/>
+        /// <param name="isolated">
+        /// defines whether the
+        /// <see cref="iText.Kernel.Pdf.PdfName.I"/>
+        /// flag will be set or removed
+        /// </param>
         public virtual void SetIsolated(bool isolated) {
             if (isolated) {
                 GetPdfObject().Put(PdfName.I, PdfBoolean.TRUE);
@@ -63,7 +67,11 @@ namespace iText.Kernel.Pdf.Xobject {
 
         /// <summary>Determining whether the objects within the stack are composited with one another or only with the group's backdrop.
         ///     </summary>
-        /// <param name="knockout"/>
+        /// <param name="knockout">
+        /// defines whether the
+        /// <see cref="iText.Kernel.Pdf.PdfName.K"/>
+        /// flag will be set or removed
+        /// </param>
         public virtual void SetKnockout(bool knockout) {
             if (knockout) {
                 GetPdfObject().Put(PdfName.K, PdfBoolean.TRUE);

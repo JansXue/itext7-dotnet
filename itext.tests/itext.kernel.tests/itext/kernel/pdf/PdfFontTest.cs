@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,8 +43,10 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.IO;
+using iText.Commons.Utils;
 using iText.IO.Font;
 using iText.IO.Font.Constants;
+using iText.IO.Font.Otf;
 using iText.IO.Source;
 using iText.IO.Util;
 using iText.Kernel.Colors;
@@ -56,6 +58,7 @@ using iText.Test;
 using iText.Test.Attributes;
 
 namespace iText.Kernel.Pdf {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class PdfFontTest : ExtendedITextTest {
         public const int PageCount = 1;
 
@@ -72,15 +75,11 @@ namespace iText.Kernel.Pdf {
 
         internal const String creator = "iText 7";
 
-        internal const String pangramme = "Amazingly few discotheques provide jukeboxes " + "but it now while sayingly ABEFGHJKNOPQRSTUWYZ?";
-
         [NUnit.Framework.OneTimeSetUp]
         public static void BeforeClass() {
             CreateDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CreateDocumentWithKozmin() {
             String filename = destinationFolder + "DocumentWithKozmin.pdf";
@@ -105,8 +104,6 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CreateDocumentWithKozminAndDifferentCodespaceRanges() {
             String filename = destinationFolder + "DocumentWithKozminDifferentCodespaceRanges.pdf";
@@ -116,7 +113,8 @@ namespace iText.Kernel.Pdf {
             writer.SetCompressionLevel(CompressionConstants.NO_COMPRESSION);
             PdfDocument pdfDoc = new PdfDocument(writer);
             pdfDoc.GetDocumentInfo().SetAuthor(author).SetCreator(creator).SetTitle(title);
-            PdfFont type0Font = PdfFontFactory.CreateFont("KozMinPro-Regular", "83pv-RKSJ-H", true);
+            PdfFont type0Font = PdfFontFactory.CreateFont("KozMinPro-Regular", "83pv-RKSJ-H", PdfFontFactory.EmbeddingStrategy
+                .PREFER_EMBEDDED);
             NUnit.Framework.Assert.IsTrue(type0Font is PdfType0Font, "Type0Font expected");
             NUnit.Framework.Assert.IsTrue(type0Font.GetFontProgram() is CidFont, "CidFont expected");
             PdfPage page = pdfDoc.AddNewPage();
@@ -130,8 +128,6 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CreateDocumentWithStSongUni() {
             String filename = destinationFolder + "DocumentWithStSongUni.pdf";
@@ -155,8 +151,6 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CreateDocumentWithStSong() {
             String filename = destinationFolder + "DocumentWithStSong.pdf";
@@ -180,8 +174,6 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CreateDocumentWithTrueTypeAsType0() {
             String filename = destinationFolder + "DocumentWithTrueTypeAsType0.pdf";
@@ -222,14 +214,12 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CreateDocumentWithType3Font() {
             String filename = destinationFolder + "DocumentWithType3Font.pdf";
             String cmpFilename = sourceFolder + "cmp_DocumentWithType3Font.pdf";
-            String testString = "A A A A E E E ~ \u00E9";
             // A A A A E E E ~ é
+            String testString = "A A A A E E E ~ \u00E9";
             //writing type3 font characters
             String title = "Type3 font iText 7 Document";
             PdfWriter writer = new PdfWriter(filename);
@@ -242,9 +232,11 @@ namespace iText.Kernel.Pdf {
             a.LineTo(300, 695);
             a.LineTo(595, 5);
             a.ClosePathFillStroke();
+            NUnit.Framework.Assert.AreEqual(600.0, GetContentWidth(type3, 'A'), 1e-5);
             Type3Glyph space = type3.AddGlyph(' ', 600, 0, 0, 600, 700);
             space.SetLineWidth(10);
             space.ClosePathFillStroke();
+            NUnit.Framework.Assert.AreEqual(600.0, GetContentWidth(type3, ' '), 1e-5);
             Type3Glyph e = type3.AddGlyph('E', 600, 0, 0, 600, 700);
             e.SetLineWidth(100);
             e.MoveTo(595, 5);
@@ -253,16 +245,19 @@ namespace iText.Kernel.Pdf {
             e.LineTo(5, 695);
             e.LineTo(595, 695);
             e.Stroke();
+            NUnit.Framework.Assert.AreEqual(600.0, GetContentWidth(type3, 'E'), 1e-5);
             Type3Glyph tilde = type3.AddGlyph('~', 600, 0, 0, 600, 700);
             tilde.SetLineWidth(100);
             tilde.MoveTo(595, 5);
             tilde.LineTo(5, 5);
             tilde.Stroke();
+            NUnit.Framework.Assert.AreEqual(600.0, GetContentWidth(type3, '~'), 1e-5);
             Type3Glyph symbol233 = type3.AddGlyph('\u00E9', 600, 0, 0, 600, 700);
             symbol233.SetLineWidth(100);
             symbol233.MoveTo(540, 5);
             symbol233.LineTo(5, 340);
             symbol233.Stroke();
+            NUnit.Framework.Assert.AreEqual(600.0, GetContentWidth(type3, '\u00E9'), 1e-5);
             pdfDoc.GetDocumentInfo().SetAuthor(author).SetCreator(creator).SetTitle(title);
             for (int i = 0; i < PageCount; i++) {
                 PdfPage page = pdfDoc.AddNewPage();
@@ -276,14 +271,25 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
+        [NUnit.Framework.Test]
+        public virtual void NotReplaceToUnicodeMappingTest() {
+            //TODO DEVSIX-4995 This test should be updated when DEVSIX-4995 is resolved
+            String filename = sourceFolder + "toUnicodeAndDifferenceFor32.pdf";
+            using (PdfDocument pdf = new PdfDocument(new PdfReader(filename))) {
+                PdfDictionary pdfType3FontDict = (PdfDictionary)pdf.GetPdfObject(112);
+                PdfType3Font pdfType3Font = (PdfType3Font)PdfFontFactory.CreateFont(pdfType3FontDict);
+                //should be another glyph defined in ToUnicode mapping
+                Glyph glyph = pdfType3Font.GetGlyph(32);
+                NUnit.Framework.Assert.AreEqual(0, glyph.GetWidth());
+            }
+        }
+
         [NUnit.Framework.Test]
         public virtual void CreateTaggedDocumentWithType3Font() {
             String filename = destinationFolder + "createTaggedDocumentWithType3Font.pdf";
             String cmpFilename = sourceFolder + "cmp_createTaggedDocumentWithType3Font.pdf";
-            String testString = "A A A A E E E ~ \u00E9";
             // A A A A E E E ~ é
+            String testString = "A A A A E E E ~ \u00E9";
             //writing type3 font characters
             String title = "Type3 font iText 7 Document";
             PdfWriter writer = new PdfWriter(filename, new WriterProperties());
@@ -331,8 +337,6 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CreateDocumentWithHelvetica() {
             String filename = destinationFolder + "DocumentWithHelvetica.pdf";
@@ -356,8 +360,6 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CreateDocumentWithHelveticaOblique() {
             String filename = destinationFolder + "DocumentWithHelveticaOblique.pdf";
@@ -381,8 +383,6 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CreateDocumentWithHelveticaBoldOblique() {
             String filename = destinationFolder + "DocumentWithHelveticaBoldOblique.pdf";
@@ -406,8 +406,6 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CreateDocumentWithCourierBold() {
             String filename = destinationFolder + "DocumentWithCourierBold.pdf";
@@ -431,8 +429,6 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CreateDocumentWithType1FontAfm() {
             String filename = destinationFolder + "DocumentWithCMR10Afm.pdf";
@@ -443,7 +439,8 @@ namespace iText.Kernel.Pdf {
             PdfDocument pdfDoc = new PdfDocument(writer);
             pdfDoc.GetDocumentInfo().SetAuthor(author).SetCreator(creator).SetTitle(title);
             PdfFont pdfType1Font = PdfFontFactory.CreateFont(FontProgramFactory.CreateType1Font(fontsFolder + "cmr10.afm"
-                , fontsFolder + "cmr10.pfb"), FontEncoding.FONT_SPECIFIC, true);
+                , fontsFolder + "cmr10.pfb"), FontEncoding.FONT_SPECIFIC, PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED
+                );
             NUnit.Framework.Assert.IsTrue(pdfType1Font is PdfType1Font, "PdfType1Font expected");
             new PdfCanvas(pdfDoc.AddNewPage()).SaveState().BeginText().MoveText(36, 700).SetFontAndSize(pdfType1Font, 
                 72).ShowText("\u0000\u0001\u007cHello world").EndText().RestoreState().Rectangle(100, 500, 100, 100).Fill
@@ -453,7 +450,7 @@ namespace iText.Kernel.Pdf {
             byte[] pfb = StreamUtil.InputStreamToArray(new FileStream(fontsFolder + "cmr10.pfb", FileMode.Open, FileAccess.Read
                 ));
             pdfType1Font = PdfFontFactory.CreateFont(FontProgramFactory.CreateType1Font(afm, pfb), FontEncoding.FONT_SPECIFIC
-                , true);
+                , PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED);
             NUnit.Framework.Assert.IsTrue(pdfType1Font is PdfType1Font, "PdfType1Font expected");
             new PdfCanvas(pdfDoc.AddNewPage()).SaveState().BeginText().MoveText(36, 700).SetFontAndSize(pdfType1Font, 
                 72).ShowText("\u0000\u0001\u007cHello world").EndText().RestoreState().Rectangle(100, 500, 100, 100).Fill
@@ -463,8 +460,6 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CreateDocumentWithType1FontPfm() {
             String filename = destinationFolder + "DocumentWithCMR10Pfm.pdf";
@@ -475,7 +470,8 @@ namespace iText.Kernel.Pdf {
             PdfDocument pdfDoc = new PdfDocument(writer);
             pdfDoc.GetDocumentInfo().SetAuthor(author).SetCreator(creator).SetTitle(title);
             PdfFont pdfType1Font = PdfFontFactory.CreateFont(FontProgramFactory.CreateType1Font(fontsFolder + "cmr10.pfm"
-                , fontsFolder + "cmr10.pfb"), FontEncoding.FONT_SPECIFIC, true);
+                , fontsFolder + "cmr10.pfb"), FontEncoding.FONT_SPECIFIC, PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED
+                );
             PdfPage page = pdfDoc.AddNewPage();
             PdfCanvas canvas = new PdfCanvas(page);
             canvas.SaveState().BeginText().MoveText(36, 700).SetFontAndSize(pdfType1Font, 72).ShowText("Hello world").
@@ -488,8 +484,6 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CreateDocumentWithTrueTypeFont1() {
             String filename = destinationFolder + "DocumentWithTrueTypeFont1.pdf";
@@ -500,7 +494,8 @@ namespace iText.Kernel.Pdf {
             PdfDocument pdfDoc = new PdfDocument(writer);
             pdfDoc.GetDocumentInfo().SetAuthor(author).SetCreator(creator).SetTitle(title);
             String font = fontsFolder + "abserif4_5.ttf";
-            PdfFont pdfTrueTypeFont = PdfFontFactory.CreateFont(font, true);
+            PdfFont pdfTrueTypeFont = PdfFontFactory.CreateFont(font, PdfEncodings.WINANSI, PdfFontFactory.EmbeddingStrategy
+                .FORCE_EMBEDDED);
             NUnit.Framework.Assert.IsTrue(pdfTrueTypeFont is PdfTrueTypeFont, "PdfTrueTypeFont expected");
             pdfTrueTypeFont.SetSubset(true);
             PdfPage page = pdfDoc.AddNewPage();
@@ -508,7 +503,8 @@ namespace iText.Kernel.Pdf {
                 ("Hello world").EndText().RestoreState().Rectangle(100, 500, 100, 100).Fill().Release();
             page.Flush();
             byte[] ttf = StreamUtil.InputStreamToArray(new FileStream(font, FileMode.Open, FileAccess.Read));
-            pdfTrueTypeFont = PdfFontFactory.CreateFont(ttf, true);
+            pdfTrueTypeFont = PdfFontFactory.CreateFont(ttf, PdfEncodings.WINANSI, PdfFontFactory.EmbeddingStrategy.FORCE_EMBEDDED
+                );
             NUnit.Framework.Assert.IsTrue(pdfTrueTypeFont is PdfTrueTypeFont, "PdfTrueTypeFont expected");
             pdfTrueTypeFont.SetSubset(true);
             page = pdfDoc.AddNewPage();
@@ -519,8 +515,6 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CreateDocumentWithTrueTypeFont1NotEmbedded() {
             String filename = destinationFolder + "createDocumentWithTrueTypeFont1NotEmbedded.pdf";
@@ -531,7 +525,8 @@ namespace iText.Kernel.Pdf {
             PdfDocument pdfDoc = new PdfDocument(writer);
             pdfDoc.GetDocumentInfo().SetAuthor(author).SetCreator(creator).SetTitle(title);
             String font = fontsFolder + "abserif4_5.ttf";
-            PdfFont pdfTrueTypeFont = PdfFontFactory.CreateFont(font, false);
+            PdfFont pdfTrueTypeFont = PdfFontFactory.CreateFont(font, PdfEncodings.WINANSI, PdfFontFactory.EmbeddingStrategy
+                .FORCE_NOT_EMBEDDED);
             NUnit.Framework.Assert.IsTrue(pdfTrueTypeFont is PdfTrueTypeFont, "PdfTrueTypeFont expected");
             pdfTrueTypeFont.SetSubset(true);
             PdfPage page = pdfDoc.AddNewPage();
@@ -539,7 +534,8 @@ namespace iText.Kernel.Pdf {
                 ("Hello world").EndText().RestoreState().Rectangle(100, 500, 100, 100).Fill().Release();
             page.Flush();
             byte[] ttf = StreamUtil.InputStreamToArray(new FileStream(font, FileMode.Open, FileAccess.Read));
-            pdfTrueTypeFont = PdfFontFactory.CreateFont(ttf, false);
+            pdfTrueTypeFont = PdfFontFactory.CreateFont(ttf, PdfEncodings.WINANSI, PdfFontFactory.EmbeddingStrategy.FORCE_NOT_EMBEDDED
+                );
             NUnit.Framework.Assert.IsTrue(pdfTrueTypeFont is PdfTrueTypeFont, "PdfTrueTypeFont expected");
             pdfTrueTypeFont.SetSubset(true);
             page = pdfDoc.AddNewPage();
@@ -550,8 +546,6 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CreateDocumentWithTrueTypeOtfFont() {
             String filename = destinationFolder + "DocumentWithTrueTypeOtfFont.pdf";
@@ -562,7 +556,8 @@ namespace iText.Kernel.Pdf {
             PdfDocument pdfDoc = new PdfDocument(writer);
             pdfDoc.GetDocumentInfo().SetAuthor(author).SetCreator(creator).SetTitle(title);
             String font = fontsFolder + "Puritan2.otf";
-            PdfFont pdfTrueTypeFont = PdfFontFactory.CreateFont(font, true);
+            PdfFont pdfTrueTypeFont = PdfFontFactory.CreateFont(font, PdfEncodings.WINANSI, PdfFontFactory.EmbeddingStrategy
+                .FORCE_EMBEDDED);
             NUnit.Framework.Assert.IsTrue(pdfTrueTypeFont is PdfTrueTypeFont, "PdfTrueTypeFont expected");
             pdfTrueTypeFont.SetSubset(true);
             PdfPage page = pdfDoc.AddNewPage();
@@ -573,7 +568,8 @@ namespace iText.Kernel.Pdf {
             canvas.Release();
             page.Flush();
             byte[] ttf = StreamUtil.InputStreamToArray(new FileStream(font, FileMode.Open, FileAccess.Read));
-            pdfTrueTypeFont = PdfFontFactory.CreateFont(ttf, true);
+            pdfTrueTypeFont = PdfFontFactory.CreateFont(ttf, PdfEncodings.WINANSI, PdfFontFactory.EmbeddingStrategy.FORCE_EMBEDDED
+                );
             NUnit.Framework.Assert.IsTrue(pdfTrueTypeFont is PdfTrueTypeFont, "PdfTrueTypeFont expected");
             pdfTrueTypeFont.SetSubset(true);
             page = pdfDoc.AddNewPage();
@@ -587,8 +583,6 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CreateDocumentWithTrueTypeOtfFontPdf20() {
             String filename = destinationFolder + "DocumentWithTrueTypeOtfFontPdf20.pdf";
@@ -618,8 +612,6 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CreateDocumentWithType0OtfFont() {
             String filename = destinationFolder + "DocumentWithType0OtfFont.pdf";
@@ -655,73 +647,94 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TestUpdateType3FontBasedExistingFont() {
             String inputFileName = sourceFolder + "type3Font.pdf";
             String outputFileName = destinationFolder + "type3Font_update.pdf";
             String cmpOutputFileName = sourceFolder + "cmp_type3Font_update.pdf";
             String title = "Type3 font iText 7 Document";
-            PdfReader reader = new PdfReader(inputFileName);
-            PdfWriter writer = new PdfWriter(outputFileName);
-            writer.SetCompressionLevel(CompressionConstants.NO_COMPRESSION);
-            PdfDocument pdfDoc = new PdfDocument(reader, writer);
-            pdfDoc.GetDocumentInfo().SetAuthor(author).SetCreator(creator).SetTitle(title);
-            PdfType3Font pdfType3Font = (PdfType3Font)PdfFontFactory.CreateFont((PdfDictionary)pdfDoc.GetPdfObject(5));
-            Type3Glyph newGlyph = pdfType3Font.AddGlyph('\u00F6', 600, 0, 0, 600, 700);
-            newGlyph.SetLineWidth(100);
-            newGlyph.MoveTo(540, 5);
-            newGlyph.LineTo(5, 840);
-            newGlyph.Stroke();
-            PdfPage page = pdfDoc.AddNewPage();
-            PdfCanvas canvas = new PdfCanvas(page);
-            canvas.SaveState().BeginText().SetFontAndSize(pdfType3Font, 12).MoveText(50, 800).ShowText("A A A A A A E E E E ~ \u00E9 \u00F6"
-                ).EndText().RestoreState();
-            // é ö
-            page.Flush();
-            pdfDoc.Close();
-            NUnit.Framework.Assert.AreEqual(6, pdfType3Font.GetNumberOfGlyphs());
+            int numberOfGlyphs = 0;
+            using (PdfDocument pdfDoc = new PdfDocument(new PdfReader(inputFileName), new PdfWriter(outputFileName).SetCompressionLevel
+                (CompressionConstants.NO_COMPRESSION))) {
+                pdfDoc.GetDocumentInfo().SetAuthor(author).SetCreator(creator).SetTitle(title);
+                PdfType3Font pdfType3Font = (PdfType3Font)PdfFontFactory.CreateFont((PdfDictionary)pdfDoc.GetPdfObject(5));
+                Type3Glyph newGlyph = pdfType3Font.AddGlyph('\u00F6', 600, 0, 0, 600, 700);
+                newGlyph.SetLineWidth(100);
+                newGlyph.MoveTo(540, 5);
+                newGlyph.LineTo(5, 840);
+                newGlyph.Stroke();
+                PdfPage page = pdfDoc.AddNewPage();
+                PdfCanvas canvas = new PdfCanvas(page);
+                canvas.SaveState().BeginText().SetFontAndSize(pdfType3Font, 12).MoveText(50, 800)
+                                // A A A A A A E E E E ~ é ö
+                                .ShowText("A A A A A A E E E E ~ \u00E9 \u00F6").EndText().RestoreState();
+                page.Flush();
+                numberOfGlyphs = pdfType3Font.GetNumberOfGlyphs();
+            }
+            NUnit.Framework.Assert.AreEqual(6, numberOfGlyphs);
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outputFileName, cmpOutputFileName, destinationFolder
                 , "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TestNewType3FontBasedExistingFont() {
             String inputFileName = sourceFolder + "type3Font.pdf";
             String outputFileName = destinationFolder + "type3Font_new.pdf";
             String cmpOutputFileName = sourceFolder + "cmp_type3Font_new.pdf";
             String title = "Type3 font iText 7 Document";
-            PdfReader reader = new PdfReader(inputFileName);
-            PdfWriter pdfWriter = new PdfWriter(outputFileName);
-            pdfWriter.SetCompressionLevel(CompressionConstants.NO_COMPRESSION);
-            PdfDocument inputPdfDoc = new PdfDocument(reader);
-            PdfDocument outputPdfDoc = new PdfDocument(pdfWriter);
-            outputPdfDoc.GetDocumentInfo().SetAuthor(author).SetCreator(creator).SetTitle(title);
-            PdfDictionary pdfType3FontDict = (PdfDictionary)inputPdfDoc.GetPdfObject(5);
-            PdfType3Font pdfType3Font = (PdfType3Font)PdfFontFactory.CreateFont((PdfDictionary)pdfType3FontDict.CopyTo
-                (outputPdfDoc));
-            Type3Glyph newGlyph = pdfType3Font.AddGlyph('\u00F6', 600, 0, 0, 600, 700);
-            newGlyph.SetLineWidth(100);
-            newGlyph.MoveTo(540, 5);
-            newGlyph.LineTo(5, 840);
-            newGlyph.Stroke();
-            PdfPage page = outputPdfDoc.AddNewPage();
-            PdfCanvas canvas = new PdfCanvas(page);
-            canvas.SaveState().BeginText().SetFontAndSize(pdfType3Font, 12).MoveText(50, 800).ShowText("AAAAAA EEEE ~ \u00E9 \u00F6"
-                ).EndText();
-            // é ö
-            page.Flush();
-            outputPdfDoc.Close();
-            NUnit.Framework.Assert.AreEqual(6, pdfType3Font.GetNumberOfGlyphs());
+            int numberOfGlyphs = 0;
+            using (PdfDocument inputPdfDoc = new PdfDocument(new PdfReader(inputFileName))) {
+                using (PdfDocument outputPdfDoc = new PdfDocument(new PdfWriter(outputFileName).SetCompressionLevel(CompressionConstants
+                    .NO_COMPRESSION))) {
+                    outputPdfDoc.GetDocumentInfo().SetAuthor(author).SetCreator(creator).SetTitle(title);
+                    PdfDictionary pdfType3FontDict = (PdfDictionary)inputPdfDoc.GetPdfObject(5);
+                    PdfType3Font pdfType3Font = (PdfType3Font)PdfFontFactory.CreateFont((PdfDictionary)pdfType3FontDict.CopyTo
+                        (outputPdfDoc));
+                    Type3Glyph newGlyph = pdfType3Font.AddGlyph('\u00F6', 600, 0, 0, 600, 700);
+                    newGlyph.SetLineWidth(100);
+                    newGlyph.MoveTo(540, 5);
+                    newGlyph.LineTo(5, 840);
+                    newGlyph.Stroke();
+                    PdfPage page = outputPdfDoc.AddNewPage();
+                    PdfCanvas canvas = new PdfCanvas(page);
+                    canvas.SaveState().BeginText().SetFontAndSize(pdfType3Font, 12).MoveText(50, 800)
+                                        // AAAAAA EEEE ~ é ö
+                                        .ShowText("AAAAAA EEEE ~ \u00E9 \u00F6").EndText();
+                    page.Flush();
+                    numberOfGlyphs = pdfType3Font.GetNumberOfGlyphs();
+                }
+            }
+            NUnit.Framework.Assert.AreEqual(6, numberOfGlyphs);
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outputFileName, cmpOutputFileName, destinationFolder
                 , "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
+        [NUnit.Framework.Test]
+        public virtual void TestAddGlyphToType3FontWithCustomNames() {
+            String inputFile = sourceFolder + "type3FontWithCustomNames.pdf";
+            int initialGlyphsNumber = 0;
+            int finalGlyphsNumber = 0;
+            using (PdfDocument pdfDoc = new PdfDocument(new PdfReader(inputFile), new PdfWriter(new ByteArrayOutputStream
+                ()))) {
+                PdfDictionary pdfType3FontDict = (PdfDictionary)pdfDoc.GetPdfObject(6);
+                PdfType3Font pdfType3Font = (PdfType3Font)PdfFontFactory.CreateFont(pdfType3FontDict);
+                initialGlyphsNumber = pdfType3Font.GetNumberOfGlyphs();
+                Type3Glyph newGlyph = pdfType3Font.AddGlyph('\u00F6', 600, 0, 0, 600, 700);
+                newGlyph.SetLineWidth(100);
+                newGlyph.MoveTo(540, 5);
+                newGlyph.LineTo(5, 840);
+                newGlyph.Stroke();
+                PdfPage page = pdfDoc.GetPage(1);
+                PdfCanvas canvas = new PdfCanvas(page);
+                canvas.SaveState().BeginText().SetFontAndSize(pdfType3Font, 12).MoveText(50, 800)
+                                // AAAAAA EEEE ~ é ö
+                                .ShowText("AAAAAA EEEE ~ \u00E9 \u00F6").EndText();
+                page.Flush();
+                finalGlyphsNumber = pdfType3Font.GetNumberOfGlyphs();
+            }
+            NUnit.Framework.Assert.AreEqual(initialGlyphsNumber + 1, finalGlyphsNumber);
+        }
+
         [NUnit.Framework.Test]
         public virtual void TestNewType1FontBasedExistingFont() {
             String inputFileName1 = sourceFolder + "DocumentWithCMR10Afm.pdf";
@@ -748,8 +761,6 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TestNewTrueTypeFont1BasedExistingFont() {
             String inputFileName1 = sourceFolder + "DocumentWithTrueTypeFont1.pdf";
@@ -776,8 +787,6 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TestNewTrueTypeFont2BasedExistingFont() {
             String inputFileName1 = sourceFolder + "DocumentWithTrueTypeFont2.pdf";
@@ -804,8 +813,6 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TestTrueTypeFont1BasedExistingFont() {
             String inputFileName1 = sourceFolder + "DocumentWithTrueTypeFont1.pdf";
@@ -829,8 +836,6 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TestUpdateCjkFontBasedExistingFont() {
             String inputFileName1 = sourceFolder + "DocumentWithKozmin.pdf";
@@ -856,8 +861,6 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TestNewCjkFontBasedExistingFont() {
             String inputFileName1 = sourceFolder + "DocumentWithKozmin.pdf";
@@ -884,8 +887,6 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CreateDocumentWithTrueTypeAsType0BasedExistingFont() {
             String inputFileName1 = sourceFolder + "DocumentWithTrueTypeAsType0.pdf";
@@ -912,8 +913,6 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CreateUpdatedDocumentWithTrueTypeAsType0BasedExistingFont() {
             String inputFileName1 = sourceFolder + "DocumentWithTrueTypeAsType0.pdf";
@@ -938,8 +937,6 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CreateDocumentWithType1WithToUnicodeBasedExistingFont() {
             String inputFileName1 = sourceFolder + "fontWithToUnicode.pdf";
@@ -966,8 +963,6 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TestType1FontUpdateContent() {
             String inputFileName1 = sourceFolder + "DocumentWithCMR10Afm.pdf";
@@ -990,8 +985,6 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TestType1FontUpdateContent2() {
             String inputFileName1 = sourceFolder + "DocumentWithCMR10Afm.pdf";
@@ -1018,8 +1011,6 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CreateWrongAfm1() {
             String message = "";
@@ -1028,14 +1019,12 @@ namespace iText.Kernel.Pdf {
                     ));
                 FontProgramFactory.CreateType1Font(null, pfb);
             }
-            catch (iText.IO.IOException e) {
+            catch (iText.IO.Exceptions.IOException e) {
                 message = e.Message;
             }
             NUnit.Framework.Assert.AreEqual("Invalid afm or pfm font file.", message);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CreateWrongAfm2() {
             String message = "";
@@ -1043,17 +1032,15 @@ namespace iText.Kernel.Pdf {
             try {
                 FontProgramFactory.CreateType1Font(font, null);
             }
-            catch (iText.IO.IOException e) {
+            catch (iText.IO.Exceptions.IOException e) {
                 message = e.Message;
             }
-            NUnit.Framework.Assert.AreEqual(MessageFormatUtil.Format(iText.IO.IOException._1IsNotAnAfmOrPfmFontFile, font
-                ), message);
+            NUnit.Framework.Assert.AreEqual(MessageFormatUtil.Format(iText.IO.Exceptions.IOException._1IsNotAnAfmOrPfmFontFile
+                , font), message);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.START_MARKER_MISSING_IN_PFB_FILE)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.START_MARKER_MISSING_IN_PFB_FILE)]
         public virtual void CreateWrongPfb() {
             byte[] afm = StreamUtil.InputStreamToArray(new FileStream(fontsFolder + "cmr10.afm", FileMode.Open, FileAccess.Read
                 ));
@@ -1062,8 +1049,6 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.IsTrue(streamContent == null, "Empty stream content expected");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void AutoDetect1() {
             byte[] afm = StreamUtil.InputStreamToArray(new FileStream(fontsFolder + "cmr10.afm", FileMode.Open, FileAccess.Read
@@ -1072,8 +1057,6 @@ namespace iText.Kernel.Pdf {
                 );
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void AutoDetect2() {
             byte[] afm = StreamUtil.InputStreamToArray(new FileStream(fontsFolder + "cmr10.afm", FileMode.Open, FileAccess.Read
@@ -1084,8 +1067,6 @@ namespace iText.Kernel.Pdf {
                 );
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void AutoDetect3() {
             byte[] otf = StreamUtil.InputStreamToArray(new FileStream(fontsFolder + "Puritan2.otf", FileMode.Open, FileAccess.Read
@@ -1094,8 +1075,6 @@ namespace iText.Kernel.Pdf {
                 );
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void AutoDetect4() {
             byte[] ttf = StreamUtil.InputStreamToArray(new FileStream(fontsFolder + "abserif4_5.ttf", FileMode.Open, FileAccess.Read
@@ -1104,8 +1083,6 @@ namespace iText.Kernel.Pdf {
                 );
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void AutoDetect5() {
             byte[] ttf = StreamUtil.InputStreamToArray(new FileStream(fontsFolder + "abserif4_5.ttf", FileMode.Open, FileAccess.Read
@@ -1114,8 +1091,6 @@ namespace iText.Kernel.Pdf {
                 );
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TestPdfFontFactoryTtc() {
             String filename = destinationFolder + "testPdfFontFactoryTtc.pdf";
@@ -1132,8 +1107,6 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TestWriteTTC() {
             String filename = destinationFolder + "DocumentWithTTC.pdf";
@@ -1144,7 +1117,8 @@ namespace iText.Kernel.Pdf {
             PdfDocument pdfDoc = new PdfDocument(writer);
             pdfDoc.GetDocumentInfo().SetAuthor(author).SetCreator(creator).SetTitle(title);
             String font = fontsFolder + "uming.ttc";
-            PdfFont pdfTrueTypeFont = PdfFontFactory.CreateTtcFont(font, 0, PdfEncodings.WINANSI, true, false);
+            PdfFont pdfTrueTypeFont = PdfFontFactory.CreateTtcFont(font, 0, PdfEncodings.WINANSI, PdfFontFactory.EmbeddingStrategy
+                .FORCE_EMBEDDED, false);
             pdfTrueTypeFont.SetSubset(true);
             PdfPage page = pdfDoc.AddNewPage();
             PdfCanvas canvas = new PdfCanvas(page);
@@ -1154,7 +1128,8 @@ namespace iText.Kernel.Pdf {
             canvas.Release();
             page.Flush();
             byte[] ttc = StreamUtil.InputStreamToArray(new FileStream(font, FileMode.Open, FileAccess.Read));
-            pdfTrueTypeFont = PdfFontFactory.CreateTtcFont(ttc, 1, PdfEncodings.WINANSI, true, false);
+            pdfTrueTypeFont = PdfFontFactory.CreateTtcFont(ttc, 1, PdfEncodings.WINANSI, PdfFontFactory.EmbeddingStrategy
+                .FORCE_EMBEDDED, false);
             pdfTrueTypeFont.SetSubset(true);
             page = pdfDoc.AddNewPage();
             canvas = new PdfCanvas(page);
@@ -1167,8 +1142,6 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TestWriteTTCNotEmbedded() {
             String filename = destinationFolder + "testWriteTTCNotEmbedded.pdf";
@@ -1179,7 +1152,8 @@ namespace iText.Kernel.Pdf {
             PdfDocument pdfDoc = new PdfDocument(writer);
             pdfDoc.GetDocumentInfo().SetAuthor(author).SetCreator(creator).SetTitle(title);
             String font = fontsFolder + "uming.ttc";
-            PdfFont pdfTrueTypeFont = PdfFontFactory.CreateTtcFont(font, 0, PdfEncodings.WINANSI, false, false);
+            PdfFont pdfTrueTypeFont = PdfFontFactory.CreateTtcFont(font, 0, PdfEncodings.WINANSI, PdfFontFactory.EmbeddingStrategy
+                .FORCE_NOT_EMBEDDED, false);
             pdfTrueTypeFont.SetSubset(true);
             PdfPage page = pdfDoc.AddNewPage();
             PdfCanvas canvas = new PdfCanvas(page);
@@ -1189,7 +1163,8 @@ namespace iText.Kernel.Pdf {
             canvas.Release();
             page.Flush();
             byte[] ttc = StreamUtil.InputStreamToArray(new FileStream(font, FileMode.Open, FileAccess.Read));
-            pdfTrueTypeFont = PdfFontFactory.CreateTtcFont(ttc, 1, PdfEncodings.WINANSI, false, false);
+            pdfTrueTypeFont = PdfFontFactory.CreateTtcFont(ttc, 1, PdfEncodings.WINANSI, PdfFontFactory.EmbeddingStrategy
+                .FORCE_NOT_EMBEDDED, false);
             pdfTrueTypeFont.SetSubset(true);
             page = pdfDoc.AddNewPage();
             canvas = new PdfCanvas(page);
@@ -1202,8 +1177,6 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TestNotoFont() {
             String filename = destinationFolder + "testNotoFont.pdf";
@@ -1211,7 +1184,8 @@ namespace iText.Kernel.Pdf {
             String japanese = "\u713C";
             PdfDocument doc = new PdfDocument(new PdfWriter(filename));
             PdfPage page = doc.AddNewPage();
-            PdfFont font = PdfFontFactory.CreateFont(fontsFolder + "NotoSansCJKjp-Bold.otf", "Identity-H", true);
+            PdfFont font = PdfFontFactory.CreateFont(fontsFolder + "NotoSansCJKjp-Bold.otf", "Identity-H", PdfFontFactory.EmbeddingStrategy
+                .PREFER_EMBEDDED);
             PdfCanvas canvas = new PdfCanvas(page);
             canvas.SaveState().BeginText().MoveText(36, 680).SetFontAndSize(font, 12).ShowText(japanese).EndText().RestoreState
                 ();
@@ -1220,16 +1194,15 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        public virtual void TestWoffFont() {
+        public virtual void WoffFontTest() {
             String filename = destinationFolder + "testWoffFont.pdf";
             String cmpFilename = sourceFolder + "cmp_testWoffFont.pdf";
             String helloWorld = "Hello world";
             PdfDocument doc = new PdfDocument(new PdfWriter(filename));
             PdfPage page = doc.AddNewPage();
-            PdfFont font = PdfFontFactory.CreateFont(fontsFolder + "Amaranth-Regular.woff", "Identity-H", true);
+            PdfFont font = PdfFontFactory.CreateFont(fontsFolder + "SourceSerif4-Black.woff", "Identity-H", PdfFontFactory.EmbeddingStrategy
+                .PREFER_EMBEDDED);
             PdfCanvas canvas = new PdfCanvas(page);
             canvas.SaveState().BeginText().MoveText(36, 680).SetFontAndSize(font, 12).ShowText(helloWorld).EndText().RestoreState
                 ();
@@ -1238,8 +1211,6 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void NotoSansCJKjpTest() {
             String filename = destinationFolder + "NotoSansCJKjpTest.pdf";
@@ -1257,8 +1228,6 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void NotoSansCJKjpTest02() {
             String filename = destinationFolder + "NotoSansCJKjpTest02.pdf";
@@ -1276,8 +1245,6 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void NotoSansCJKjpTest03() {
             String filename = destinationFolder + "NotoSansCJKjpTest03.pdf";
@@ -1289,15 +1256,13 @@ namespace iText.Kernel.Pdf {
             // font.setSubset(false);
             PdfCanvas canvas = new PdfCanvas(page);
             canvas.SaveState().SetFillColor(ColorConstants.RED).BeginText().MoveText(36, 680).SetFontAndSize(font, 12)
-                .ShowText("\u0BA4").EndText().RestoreState();
-            // there is no such glyph in provided cff
+                        // there is no such glyph in provided cff
+                        .ShowText("\u0BA4").EndText().RestoreState();
             doc.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(filename, cmpFilename, destinationFolder, 
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void SourceHanSansHWTest() {
             String filename = destinationFolder + "SourceHanSansHWTest.pdf";
@@ -1314,47 +1279,40 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [NUnit.Framework.Ignore("DEVSIX-1579")]
         public virtual void SourceHanSerifKRRegularTest() {
             String filename = destinationFolder + "SourceHanSerifKRRegularTest.pdf";
             String cmpFilename = sourceFolder + "cmp_SourceHanSerifKRRegularTest.pdf";
             PdfDocument doc = new PdfDocument(new PdfWriter(filename));
             PdfPage page = doc.AddNewPage();
             // Identity-H must be embedded
-            PdfFont font = PdfFontFactory.CreateFont(fontsFolder + "SourceHanSerifKR-Regular.otf", "Identity-H");
+            PdfFont font = PdfFontFactory.CreateFont(fontsFolder + "SourceHanSerifKR-Regular.otf");
             //font.setSubset(false);
             PdfCanvas canvas = new PdfCanvas(page);
             canvas.SaveState().SetFillColor(ColorConstants.RED).BeginText().MoveText(36, 680).SetFontAndSize(font, 12)
                 .ShowText("\ube48\uc9d1").EndText().RestoreState();
             doc.Close();
-            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(filename, cmpFilename, destinationFolder, 
-                "diff_"));
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(filename, cmpFilename, destinationFolder)
+                );
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [NUnit.Framework.Ignore("DEVSIX-1579")]
         public virtual void SourceHanSerifKRRegularFullTest() {
             String filename = destinationFolder + "SourceHanSerifKRRegularFullTest.pdf";
             String cmpFilename = sourceFolder + "cmp_SourceHanSerifKRRegularFullTest.pdf";
             PdfDocument doc = new PdfDocument(new PdfWriter(filename));
             PdfPage page = doc.AddNewPage();
             // Identity-H must be embedded
-            PdfFont font = PdfFontFactory.CreateFont(fontsFolder + "SourceHanSerifKR-Regular.otf", "Identity-H");
+            PdfFont font = PdfFontFactory.CreateFont(fontsFolder + "SourceHanSerifKR-Regular.otf");
             font.SetSubset(false);
             PdfCanvas canvas = new PdfCanvas(page);
             canvas.SaveState().SetFillColor(ColorConstants.RED).BeginText().MoveText(36, 680).SetFontAndSize(font, 12)
                 .ShowText("\ube48\uc9d1").EndText().RestoreState();
             doc.Close();
-            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(filename, cmpFilename, destinationFolder, 
-                "diff_"));
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(filename, cmpFilename, destinationFolder)
+                );
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void MmType1ReadTest() {
             String src = sourceFolder + "mmtype1.pdf";
@@ -1365,8 +1323,6 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.AreEqual(typeof(PdfType1Font), font.GetType());
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void MmType1WriteTest() {
             String src = sourceFolder + "mmtype1.pdf";
@@ -1382,22 +1338,21 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TestFontStyleProcessing() {
             String filename = destinationFolder + "testFontStyleProcessing.pdf";
             String cmpFilename = sourceFolder + "cmp_testFontStyleProcessing.pdf";
             PdfDocument pdfDoc = new PdfDocument(new PdfWriter(filename));
-            PdfFont romanDefault = PdfFontFactory.CreateRegisteredFont("Times-Roman", PdfEncodings.WINANSI, false);
-            PdfFont romanNormal = PdfFontFactory.CreateRegisteredFont("Times-Roman", PdfEncodings.WINANSI, false, FontStyles
-                .NORMAL);
-            PdfFont romanBold = PdfFontFactory.CreateRegisteredFont("Times-Roman", PdfEncodings.WINANSI, false, FontStyles
-                .BOLD);
-            PdfFont romanItalic = PdfFontFactory.CreateRegisteredFont("Times-Roman", PdfEncodings.WINANSI, false, FontStyles
-                .ITALIC);
-            PdfFont romanBoldItalic = PdfFontFactory.CreateRegisteredFont("Times-Roman", PdfEncodings.WINANSI, false, 
-                FontStyles.BOLDITALIC);
+            PdfFont romanDefault = PdfFontFactory.CreateRegisteredFont("Times-Roman", PdfEncodings.WINANSI, PdfFontFactory.EmbeddingStrategy
+                .FORCE_NOT_EMBEDDED);
+            PdfFont romanNormal = PdfFontFactory.CreateRegisteredFont("Times-Roman", PdfEncodings.WINANSI, PdfFontFactory.EmbeddingStrategy
+                .FORCE_NOT_EMBEDDED, FontStyles.NORMAL);
+            PdfFont romanBold = PdfFontFactory.CreateRegisteredFont("Times-Roman", PdfEncodings.WINANSI, PdfFontFactory.EmbeddingStrategy
+                .FORCE_NOT_EMBEDDED, FontStyles.BOLD);
+            PdfFont romanItalic = PdfFontFactory.CreateRegisteredFont("Times-Roman", PdfEncodings.WINANSI, PdfFontFactory.EmbeddingStrategy
+                .FORCE_NOT_EMBEDDED, FontStyles.ITALIC);
+            PdfFont romanBoldItalic = PdfFontFactory.CreateRegisteredFont("Times-Roman", PdfEncodings.WINANSI, PdfFontFactory.EmbeddingStrategy
+                .FORCE_NOT_EMBEDDED, FontStyles.BOLDITALIC);
             PdfPage page = pdfDoc.AddNewPage(PageSize.A4.Rotate());
             PdfCanvas canvas = new PdfCanvas(page);
             canvas.SaveState().BeginText().MoveText(36, 400).SetFontAndSize(romanDefault, 72).ShowText("Times-Roman default"
@@ -1413,14 +1368,12 @@ namespace iText.Kernel.Pdf {
                 "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void TestCheckTTCSize() {
             TrueTypeCollection collection = new TrueTypeCollection(fontsFolder + "uming.ttc");
             NUnit.Framework.Assert.IsTrue(collection.GetTTCSize() == 4);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void TestFontDirectoryRegister() {
             PdfFontFactory.RegisterDirectory(sourceFolder);
@@ -1437,22 +1390,20 @@ namespace iText.Kernel.Pdf {
             pdfDoc.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        public virtual void TestFontRegister() {
-            FontProgramFactory.RegisterFont(fontsFolder + "Aller_Rg.ttf", "aller");
+        public virtual void FontRegisterTest() {
+            FontProgramFactory.RegisterFont(fontsFolder + "NotoSerif-Regular_v1.7.ttf", "notoSerifRegular");
             PdfWriter writer = new PdfWriter(new ByteArrayOutputStream());
             writer.SetCompressionLevel(CompressionConstants.NO_COMPRESSION);
             PdfDocument pdfDoc = new PdfDocument(writer);
-            PdfFont pdfFont = PdfFontFactory.CreateRegisteredFont("aller");
+            PdfFont pdfFont = PdfFontFactory.CreateRegisteredFont("notoSerifRegular");
             //clear font cache for other tests
             FontProgramFactory.ClearRegisteredFonts();
-            NUnit.Framework.Assert.IsTrue(pdfFont is PdfTrueTypeFont);
+            NUnit.Framework.Assert.IsTrue(pdfFont is PdfType0Font);
             pdfDoc.AddNewPage();
             pdfDoc.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void TestSplitString() {
             PdfFont font = PdfFontFactory.CreateFont();
@@ -1463,7 +1414,6 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.IsTrue(list2.Count == 5);
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void KozminNames() {
             FontProgramDescriptor descriptor = FontProgramDescriptorFactory.FetchDescriptor("KozMinPro-Regular");
@@ -1472,7 +1422,6 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.AreEqual(descriptor.GetFontWeight(), 400);
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void HelveticaNames() {
             FontProgramDescriptor descriptor = FontProgramDescriptorFactory.FetchDescriptor("Helvetica");
@@ -1482,7 +1431,6 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.AreEqual(descriptor.GetFontWeight(), 500);
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void OtfByStringNames() {
             FontProgramDescriptor descriptor = FontProgramDescriptorFactory.FetchDescriptor(fontsFolder + "Puritan2.otf"
@@ -1495,7 +1443,6 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.AreEqual(descriptor.GetFontWeight(), 400);
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void OtfByStreamNames() {
             FontProgramDescriptor descriptor = FontProgramDescriptorFactory.FetchDescriptor(StreamUtil.InputStreamToArray
@@ -1508,7 +1455,6 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.AreEqual(descriptor.GetFontWeight(), 400);
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TtfByStringNames() {
             FontProgramDescriptor descriptor = FontProgramDescriptorFactory.FetchDescriptor(fontsFolder + "abserif4_5.ttf"
@@ -1521,7 +1467,6 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.AreEqual(descriptor.GetFontWeight(), 400);
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TtfByStreamNames() {
             FontProgramDescriptor descriptor = FontProgramDescriptorFactory.FetchDescriptor(StreamUtil.InputStreamToArray
@@ -1534,7 +1479,6 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.AreEqual(descriptor.GetFontWeight(), 400);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void TestDefaultFontWithReader() {
             String inputFileName = sourceFolder + "type3Font.pdf";
@@ -1542,6 +1486,28 @@ namespace iText.Kernel.Pdf {
                 NUnit.Framework.Assert.IsNotNull(pdfDoc.GetDefaultFont());
                 NUnit.Framework.Assert.IsNull(pdfDoc.GetDefaultFont().GetPdfObject().GetIndirectReference());
             }
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void MSungLightFontRanges() {
+            //TODO DEVSIX-3348
+            String filename = destinationFolder + "mSungLightFontRanges.pdf";
+            String cmpFilename = sourceFolder + "cmp_mSungLightFontRanges.pdf";
+            PdfWriter writer = new PdfWriter(filename);
+            writer.SetCompressionLevel(CompressionConstants.NO_COMPRESSION);
+            PdfDocument pdfDoc = new PdfDocument(writer);
+            PdfFont mSungFont = PdfFontFactory.CreateFont("MSung-Light", "UniCNS-UCS2-H");
+            PdfPage page = pdfDoc.AddNewPage();
+            PdfCanvas canvas = new PdfCanvas(page);
+            canvas.SaveState().BeginText().MoveText(36, 700).SetFontAndSize(mSungFont, 40).ShowText("\u98db \u6708 \u9577"
+                ).EndText().RestoreState();
+            pdfDoc.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(filename, cmpFilename, destinationFolder)
+                );
+        }
+
+        private float GetContentWidth(PdfType3Font type3, char glyph) {
+            return type3.GetContentWidth(new PdfString(new byte[] { (byte)type3.GetGlyph(glyph).GetCode() }));
         }
     }
 }

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,11 +42,12 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System.IO;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
 using iText.IO.Source;
-using iText.IO.Util;
-using iText.Kernel;
 using iText.Kernel.Crypto;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf.Filters;
 
 namespace iText.Kernel.Pdf {
@@ -63,7 +64,8 @@ namespace iText.Kernel.Pdf {
 
         private static readonly byte[] endIndirectWithZeroGenNr = ByteUtils.GetIsoBytes(" 0 R");
 
-        private byte[] duplicateContentBuffer = null;
+        private static readonly ILogger LOGGER = ITextLogManager.GetLogger(typeof(iText.Kernel.Pdf.PdfOutputStream
+            ));
 
         /// <summary>Document associated with PdfOutputStream.</summary>
         protected internal PdfDocument document = null;
@@ -77,7 +79,6 @@ namespace iText.Kernel.Pdf {
             : base(outputStream) {
         }
 
-        // For internal usage only
         /// <summary>Write a PdfObject to the outputstream.</summary>
         /// <param name="pdfObject">PdfObject to write</param>
         /// <returns>this PdfOutPutStream</returns>
@@ -87,7 +88,7 @@ namespace iText.Kernel.Pdf {
                 pdfObject = pdfObject.GetIndirectReference();
             }
             if (pdfObject.CheckState(PdfObject.READ_ONLY)) {
-                throw new PdfException(PdfException.CannotWriteObjectAfterItWasReleased);
+                throw new PdfException(KernelExceptionMessageConstant.CANNOT_WRITE_OBJECT_AFTER_IT_WAS_RELEASED);
             }
             switch (pdfObject.GetObjectType()) {
                 case PdfObject.ARRAY: {
@@ -142,7 +143,6 @@ namespace iText.Kernel.Pdf {
         /// <summary>Writes corresponding amount of bytes from a given long</summary>
         /// <param name="bytes">a source of bytes, must be &gt;= 0</param>
         /// <param name="size">expected amount of bytes</param>
-        /// <exception cref="System.IO.IOException"/>
         internal virtual void Write(long bytes, int size) {
             System.Diagnostics.Debug.Assert(bytes >= 0);
             while (--size >= 0) {
@@ -153,7 +153,6 @@ namespace iText.Kernel.Pdf {
         /// <summary>Writes corresponding amount of bytes from a given int</summary>
         /// <param name="bytes">a source of bytes, must be &gt;= 0</param>
         /// <param name="size">expected amount of bytes</param>
-        /// <exception cref="System.IO.IOException"/>
         internal virtual void Write(int bytes, int size) {
             //safe convert to long, despite sign.
             Write(bytes & 0xFFFFFFFFL, size);
@@ -184,9 +183,8 @@ namespace iText.Kernel.Pdf {
                 Write(key);
                 PdfObject value = pdfDictionary.Get(key, false);
                 if (value == null) {
-                    ILog logger = LogManager.GetLogger(typeof(iText.Kernel.Pdf.PdfOutputStream));
-                    logger.Warn(MessageFormatUtil.Format(iText.IO.LogMessageConstant.INVALID_KEY_VALUE_KEY_0_HAS_NULL_VALUE, key
-                        ));
+                    LOGGER.LogWarning(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.INVALID_KEY_VALUE_KEY_0_HAS_NULL_VALUE
+                        , key));
                     value = PdfNull.PDF_NULL;
                 }
                 if ((value.GetObjectType() == PdfObject.NUMBER || value.GetObjectType() == PdfObject.LITERAL || value.GetObjectType
@@ -211,18 +209,17 @@ namespace iText.Kernel.Pdf {
 
         private void Write(PdfIndirectReference indirectReference) {
             if (document != null && !indirectReference.GetDocument().Equals(document)) {
-                throw new PdfException(PdfException.PdfIndirectObjectBelongsToOtherPdfDocument);
+                throw new PdfException(KernelExceptionMessageConstant.PDF_INDIRECT_OBJECT_BELONGS_TO_OTHER_PDF_DOCUMENT);
             }
             if (indirectReference.IsFree()) {
-                ILog logger = LogManager.GetLogger(typeof(iText.Kernel.Pdf.PdfOutputStream));
-                logger.Error(iText.IO.LogMessageConstant.FLUSHED_OBJECT_CONTAINS_FREE_REFERENCE);
+                LOGGER.LogError(iText.IO.Logs.IoLogMessageConstant.FLUSHED_OBJECT_CONTAINS_FREE_REFERENCE);
                 Write(PdfNull.PDF_NULL);
             }
             else {
                 if (indirectReference.refersTo == null && (indirectReference.CheckState(PdfObject.MODIFIED) || indirectReference
                     .GetReader() == null || !(indirectReference.GetOffset() > 0 || indirectReference.GetIndex() >= 0))) {
-                    ILog logger = LogManager.GetLogger(typeof(iText.Kernel.Pdf.PdfOutputStream));
-                    logger.Error(iText.IO.LogMessageConstant.FLUSHED_OBJECT_CONTAINS_REFERENCE_WHICH_NOT_REFER_TO_ANY_OBJECT);
+                    LOGGER.LogError(iText.IO.Logs.IoLogMessageConstant.FLUSHED_OBJECT_CONTAINS_REFERENCE_WHICH_NOT_REFER_TO_ANY_OBJECT
+                        );
                     Write(PdfNull.PDF_NULL);
                 }
                 else {
@@ -302,7 +299,8 @@ namespace iText.Kernel.Pdf {
                     Stream fout = this;
                     DeflaterOutputStream def = null;
                     OutputStreamEncryption ose = null;
-                    if (crypto != null && !crypto.IsEmbeddedFilesOnly()) {
+                    if (crypto != null && (!crypto.IsEmbeddedFilesOnly() || document.DoesStreamBelongToEmbeddedFile(pdfStream)
+                        )) {
                         fout = ose = crypto.GetEncryptionStream(fout);
                     }
                     if (toCompress && (allowCompression || userDefinedCompression)) {
@@ -347,7 +345,8 @@ namespace iText.Kernel.Pdf {
                     System.Diagnostics.Debug.Assert(pdfStream.GetOutputStream() != null, "PdfStream lost OutputStream");
                     ByteArrayOutputStream byteArrayStream;
                     try {
-                        if (toCompress && !ContainsFlateFilter(pdfStream) && (allowCompression || userDefinedCompression)) {
+                        if (toCompress && !ContainsFlateFilter(pdfStream) && DecodeParamsArrayNotFlushed(pdfStream) && (allowCompression
+                             || userDefinedCompression)) {
                             // compress
                             UpdateCompressionFilter(pdfStream);
                             byteArrayStream = new ByteArrayOutputStream();
@@ -384,7 +383,7 @@ namespace iText.Kernel.Pdf {
                         }
                     }
                     catch (System.IO.IOException ioe) {
-                        throw new PdfException(PdfException.IoException, ioe);
+                        throw new PdfException(KernelExceptionMessageConstant.IO_EXCEPTION, ioe);
                     }
                     pdfStream.Put(PdfName.Length, new PdfNumber(byteArrayStream.Length));
                     pdfStream.UpdateLength((int)byteArrayStream.Length);
@@ -396,95 +395,101 @@ namespace iText.Kernel.Pdf {
                 }
             }
             catch (System.IO.IOException e) {
-                throw new PdfException(PdfException.CannotWriteToPdfStream, e, pdfStream);
+                throw new PdfException(KernelExceptionMessageConstant.CANNOT_WRITE_TO_PDF_STREAM, e, pdfStream);
             }
         }
 
         protected internal virtual bool CheckEncryption(PdfStream pdfStream) {
-            if (crypto == null || crypto.IsEmbeddedFilesOnly()) {
+            if (crypto == null || (crypto.IsEmbeddedFilesOnly() && !document.DoesStreamBelongToEmbeddedFile(pdfStream)
+                )) {
                 return false;
             }
-            else {
-                if (IsXRefStream(pdfStream)) {
-                    // The cross-reference stream shall not be encrypted
-                    return false;
-                }
-                else {
-                    PdfObject filter = pdfStream.Get(PdfName.Filter, true);
-                    if (filter != null) {
-                        if (PdfName.Crypt.Equals(filter)) {
-                            return false;
-                        }
-                        else {
-                            if (filter.GetObjectType() == PdfObject.ARRAY) {
-                                PdfArray filters = (PdfArray)filter;
-                                if (!filters.IsEmpty() && PdfName.Crypt.Equals(filters.Get(0, true))) {
-                                    return false;
-                                }
-                            }
-                        }
-                    }
+            if (IsXRefStream(pdfStream)) {
+                // The cross-reference stream shall not be encrypted
+                return false;
+            }
+            PdfObject filter = pdfStream.Get(PdfName.Filter, true);
+            if (filter == null) {
+                return true;
+            }
+            if (filter.IsFlushed()) {
+                IndirectFilterUtils.ThrowFlushedFilterException(pdfStream);
+            }
+            if (PdfName.Crypt.Equals(filter)) {
+                return false;
+            }
+            if (filter.GetObjectType() == PdfObject.ARRAY) {
+                PdfArray filters = (PdfArray)filter;
+                if (filters.IsEmpty()) {
                     return true;
                 }
+                if (filters.Get(0).IsFlushed()) {
+                    IndirectFilterUtils.ThrowFlushedFilterException(pdfStream);
+                }
+                return !PdfName.Crypt.Equals(filters.Get(0, true));
             }
+            return true;
         }
 
         protected internal virtual bool ContainsFlateFilter(PdfStream pdfStream) {
             PdfObject filter = pdfStream.Get(PdfName.Filter);
-            if (filter != null) {
-                if (filter.GetObjectType() == PdfObject.NAME) {
-                    if (PdfName.FlateDecode.Equals(filter)) {
-                        return true;
-                    }
-                }
-                else {
-                    if (filter.GetObjectType() == PdfObject.ARRAY) {
-                        if (((PdfArray)filter).Contains(PdfName.FlateDecode)) {
-                            return true;
-                        }
-                    }
-                    else {
-                        throw new PdfException(PdfException.FilterIsNotANameOrArray);
-                    }
+            if (filter == null) {
+                return false;
+            }
+            if (filter.IsFlushed()) {
+                IndirectFilterUtils.LogFilterWasAlreadyFlushed(LOGGER, pdfStream);
+                return true;
+            }
+            if (filter.GetObjectType() != PdfObject.NAME && filter.GetObjectType() != PdfObject.ARRAY) {
+                throw new PdfException(KernelExceptionMessageConstant.FILTER_IS_NOT_A_NAME_OR_ARRAY);
+            }
+            if (filter.GetObjectType() == PdfObject.NAME) {
+                return PdfName.FlateDecode.Equals(filter);
+            }
+            foreach (PdfObject obj in (PdfArray)filter) {
+                if (obj.IsFlushed()) {
+                    IndirectFilterUtils.LogFilterWasAlreadyFlushed(LOGGER, pdfStream);
+                    return true;
                 }
             }
-            return false;
+            return ((PdfArray)filter).Contains(PdfName.FlateDecode);
         }
 
         protected internal virtual void UpdateCompressionFilter(PdfStream pdfStream) {
             PdfObject filter = pdfStream.Get(PdfName.Filter);
             if (filter == null) {
+                // Remove if any
+                pdfStream.Remove(PdfName.DecodeParms);
                 pdfStream.Put(PdfName.Filter, PdfName.FlateDecode);
+                return;
+            }
+            PdfArray filters = new PdfArray();
+            filters.Add(PdfName.FlateDecode);
+            if (filter is PdfArray) {
+                filters.AddAll((PdfArray)filter);
             }
             else {
-                PdfArray filters = new PdfArray();
-                filters.Add(PdfName.FlateDecode);
-                if (filter is PdfArray) {
-                    filters.AddAll((PdfArray)filter);
+                filters.Add(filter);
+            }
+            PdfObject decodeParms = pdfStream.Get(PdfName.DecodeParms);
+            if (decodeParms != null) {
+                if (decodeParms is PdfDictionary) {
+                    PdfArray array = new PdfArray();
+                    array.Add(new PdfNull());
+                    array.Add(decodeParms);
+                    pdfStream.Put(PdfName.DecodeParms, array);
                 }
                 else {
-                    filters.Add(filter);
-                }
-                PdfObject decodeParms = pdfStream.Get(PdfName.DecodeParms);
-                if (decodeParms != null) {
-                    if (decodeParms is PdfDictionary) {
-                        PdfArray array = new PdfArray();
-                        array.Add(new PdfNull());
-                        array.Add(decodeParms);
-                        pdfStream.Put(PdfName.DecodeParms, array);
+                    if (decodeParms is PdfArray) {
+                        ((PdfArray)decodeParms).Add(0, new PdfNull());
                     }
                     else {
-                        if (decodeParms is PdfArray) {
-                            ((PdfArray)decodeParms).Add(0, new PdfNull());
-                        }
-                        else {
-                            throw new PdfException(PdfException.DecodeParameterType1IsNotSupported).SetMessageParams(decodeParms.GetType
-                                ().ToString());
-                        }
+                        throw new PdfException(KernelExceptionMessageConstant.THIS_DECODE_PARAMETER_TYPE_IS_NOT_SUPPORTED).SetMessageParams
+                            (decodeParms.GetType().ToString());
                     }
                 }
-                pdfStream.Put(PdfName.Filter, filters);
             }
+            pdfStream.Put(PdfName.Filter, filters);
         }
 
         protected internal virtual byte[] DecodeFlateBytes(PdfStream stream, byte[] bytes) {
@@ -501,11 +506,19 @@ namespace iText.Kernel.Pdf {
             else {
                 if (filterObject is PdfArray) {
                     filtersArray = (PdfArray)filterObject;
+                    if (filtersArray.IsFlushed()) {
+                        IndirectFilterUtils.LogFilterWasAlreadyFlushed(LOGGER, stream);
+                        return bytes;
+                    }
                     filterName = filtersArray.GetAsName(0);
                 }
                 else {
-                    throw new PdfException(PdfException.FilterIsNotANameOrArray);
+                    throw new PdfException(KernelExceptionMessageConstant.FILTER_IS_NOT_A_NAME_OR_ARRAY);
                 }
+            }
+            if (filterName.IsFlushed()) {
+                IndirectFilterUtils.LogFilterWasAlreadyFlushed(LOGGER, stream);
+                return bytes;
             }
             if (!PdfName.FlateDecode.Equals(filterName)) {
                 return bytes;
@@ -518,19 +531,31 @@ namespace iText.Kernel.Pdf {
                 decodeParams = null;
             }
             else {
-                if (decodeParamsObject.GetObjectType() == PdfObject.DICTIONARY) {
-                    decodeParams = (PdfDictionary)decodeParamsObject;
+                if (decodeParamsObject.IsFlushed()) {
+                    IndirectFilterUtils.LogFilterWasAlreadyFlushed(LOGGER, stream);
+                    return bytes;
                 }
                 else {
-                    if (decodeParamsObject.GetObjectType() == PdfObject.ARRAY) {
-                        decodeParamsArray = (PdfArray)decodeParamsObject;
-                        decodeParams = decodeParamsArray.GetAsDictionary(0);
+                    if (decodeParamsObject.GetObjectType() == PdfObject.DICTIONARY) {
+                        decodeParams = (PdfDictionary)decodeParamsObject;
                     }
                     else {
-                        throw new PdfException(PdfException.DecodeParameterType1IsNotSupported).SetMessageParams(decodeParamsObject
-                            .GetType().ToString());
+                        if (decodeParamsObject.GetObjectType() == PdfObject.ARRAY) {
+                            decodeParamsArray = (PdfArray)decodeParamsObject;
+                            decodeParams = decodeParamsArray.GetAsDictionary(0);
+                        }
+                        else {
+                            throw new PdfException(KernelExceptionMessageConstant.THIS_DECODE_PARAMETER_TYPE_IS_NOT_SUPPORTED).SetMessageParams
+                                (decodeParamsObject.GetType().ToString());
+                        }
                     }
                 }
+            }
+            if (decodeParams != null && (decodeParams.IsFlushed() || IsFlushed(decodeParams, PdfName.Predictor) || IsFlushed
+                (decodeParams, PdfName.Columns) || IsFlushed(decodeParams, PdfName.Colors) || IsFlushed(decodeParams, 
+                PdfName.BitsPerComponent))) {
+                IndirectFilterUtils.LogFilterWasAlreadyFlushed(LOGGER, stream);
+                return bytes;
             }
             // decode
             byte[] res = FlateDecodeFilter.FlateDecode(bytes, true);
@@ -576,6 +601,23 @@ namespace iText.Kernel.Pdf {
                 stream.Put(PdfName.DecodeParms, decodeParamsObject);
             }
             return bytes;
+        }
+
+        private static bool IsFlushed(PdfDictionary dict, PdfName name) {
+            PdfObject obj = dict.Get(name);
+            return obj != null && obj.IsFlushed();
+        }
+
+        private static bool DecodeParamsArrayNotFlushed(PdfStream pdfStream) {
+            PdfArray decodeParams = pdfStream.GetAsArray(PdfName.DecodeParms);
+            if (decodeParams == null) {
+                return true;
+            }
+            if (decodeParams.IsFlushed()) {
+                IndirectFilterUtils.LogFilterWasAlreadyFlushed(LOGGER, pdfStream);
+                return false;
+            }
+            return true;
         }
     }
 }

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,18 +43,22 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.X509;
-using iText.IO.Util;
+using iText.Commons.Bouncycastle.Cert;
+using iText.Commons.Bouncycastle.Crypto;
+using iText.Commons.Utils;
+using iText.Forms;
 using iText.Kernel.Font;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using iText.Kernel.Utils;
+using iText.Pdfa.Exceptions;
 using iText.Signatures;
+using iText.Signatures.Testutils;
 using iText.Test;
-using iText.Test.Signutils;
+using iText.Test.Pdfa;
 
 namespace iText.Signatures.Sign {
+    [NUnit.Framework.Category("BouncyCastleIntegrationTest")]
     public class PdfASigningTest : ExtendedITextTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/signatures/sign/PdfASigningTest/";
@@ -63,36 +67,28 @@ namespace iText.Signatures.Sign {
              + "/test/itext/signatures/sign/PdfASigningTest/";
 
         public static readonly String keystorePath = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
-            .CurrentContext.TestDirectory) + "/resources/itext/signatures/certs/signCertRsa01.p12";
+            .CurrentContext.TestDirectory) + "/resources/itext/signatures/certs/signCertRsa01.pem";
 
-        public static readonly char[] password = "testpass".ToCharArray();
+        public static readonly char[] password = "testpassphrase".ToCharArray();
 
         public static readonly String FONT = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/signatures/font/FreeSans.ttf";
 
-        private X509Certificate[] chain;
+        private IX509Certificate[] chain;
 
-        private ICipherParameters pk;
+        private IPrivateKey pk;
 
         [NUnit.Framework.OneTimeSetUp]
         public static void Before() {
             CreateOrClearDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="Java.Security.KeyStoreException"/>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="Java.Security.Cert.CertificateException"/>
-        /// <exception cref="Org.BouncyCastle.Security.SecurityUtilityException"/>
-        /// <exception cref="Java.Security.UnrecoverableKeyException"/>
         [NUnit.Framework.SetUp]
         public virtual void Init() {
-            pk = Pkcs12FileHelper.ReadFirstKey(keystorePath, password, password);
-            chain = Pkcs12FileHelper.ReadFirstChain(keystorePath, password);
+            pk = PemFileHelper.ReadFirstKey(keystorePath, password);
+            chain = PemFileHelper.ReadFirstChain(keystorePath);
         }
 
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void SimpleSigningTest() {
             String src = sourceFolder + "simplePdfADocument.pdf";
@@ -106,22 +102,58 @@ namespace iText.Signatures.Sign {
             String fieldName = "Signature1";
             Sign(src, fieldName, dest, chain, pk, DigestAlgorithms.SHA256, PdfSigner.CryptoStandard.CADES, "Test 1", "TestCity"
                 , rect, false, false, PdfSigner.NOT_CERTIFIED, 12f);
+            NUnit.Framework.Assert.IsNull(new VeraPdfValidator().Validate(dest));
+            NUnit.Framework.Assert.IsNull(SignaturesCompareTool.CompareSignatures(dest, sourceFolder + "cmp_" + fileName
+                ));
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareVisually(dest, sourceFolder + "cmp_" + fileName, destinationFolder
-                , "diff_", GetTestMap(new Rectangle(67, 575, 155, 15))));
+                , "diff_", GetTestMap(new Rectangle(27, 550, 195, 40))));
         }
 
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
-        /// <exception cref="System.IO.IOException"/>
-        protected internal virtual void Sign(String src, String name, String dest, X509Certificate[] chain, ICipherParameters
+        [NUnit.Framework.Test]
+        public virtual void SigningPdfA2DocumentTest() {
+            String src = sourceFolder + "simplePdfA2Document.pdf";
+            String @out = destinationFolder + "signedPdfA2Document.pdf";
+            PdfReader reader = new PdfReader(new FileStream(src, FileMode.Open, FileAccess.Read));
+            PdfSigner signer = new PdfSigner(reader, new FileStream(@out, FileMode.Create), new StampingProperties());
+            signer.SetFieldLockDict(new PdfSigFieldLock());
+            signer.SetCertificationLevel(PdfSigner.CERTIFIED_NO_CHANGES_ALLOWED);
+            IExternalSignature pks = new PrivateKeySignature(pk, DigestAlgorithms.SHA256);
+            signer.SignDetached(pks, chain, null, null, null, 0, PdfSigner.CryptoStandard.CADES);
+            NUnit.Framework.Assert.IsNull(new VeraPdfValidator().Validate(@out));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void FailedSigningPdfA2DocumentTest() {
+            String src = sourceFolder + "simplePdfADocument.pdf";
+            String @out = destinationFolder + "signedPdfADocument2.pdf";
+            PdfReader reader = new PdfReader(new FileStream(src, FileMode.Open, FileAccess.Read));
+            PdfSigner signer = new PdfSigner(reader, new FileStream(@out, FileMode.Create), new StampingProperties());
+            signer.SetFieldLockDict(new PdfSigFieldLock());
+            signer.SetCertificationLevel(PdfSigner.NOT_CERTIFIED);
+            int x = 36;
+            int y = 548;
+            int w = 200;
+            int h = 100;
+            Rectangle rect = new Rectangle(x, y, w, h);
+            PdfFont font = PdfFontFactory.CreateFont("Helvetica", "WinAnsi", PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED
+                );
+            PdfSignatureAppearance appearance = signer.GetSignatureAppearance().SetReason("pdfA test").SetLocation("TestCity"
+                ).SetLayer2Font(font).SetReuseAppearance(false).SetPageRect(rect);
+            IExternalSignature pks = new PrivateKeySignature(pk, DigestAlgorithms.SHA256);
+            Exception e = NUnit.Framework.Assert.Catch(typeof(PdfAConformanceException), () => signer.SignDetached(pks
+                , chain, null, null, null, 0, PdfSigner.CryptoStandard.CADES));
+            NUnit.Framework.Assert.AreEqual(MessageFormatUtil.Format(PdfAConformanceException.ALL_THE_FONTS_MUST_BE_EMBEDDED_THIS_ONE_IS_NOT_0
+                , "Helvetica"), e.Message);
+        }
+
+        protected internal virtual void Sign(String src, String name, String dest, IX509Certificate[] chain, IPrivateKey
              pk, String digestAlgorithm, PdfSigner.CryptoStandard subfilter, String reason, String location, Rectangle
              rectangleForNewField, bool setReuseAppearance, bool isAppendMode) {
             Sign(src, name, dest, chain, pk, digestAlgorithm, subfilter, reason, location, rectangleForNewField, setReuseAppearance
                 , isAppendMode, PdfSigner.NOT_CERTIFIED, null);
         }
 
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
-        /// <exception cref="System.IO.IOException"/>
-        protected internal virtual void Sign(String src, String name, String dest, X509Certificate[] chain, ICipherParameters
+        protected internal virtual void Sign(String src, String name, String dest, IX509Certificate[] chain, IPrivateKey
              pk, String digestAlgorithm, PdfSigner.CryptoStandard subfilter, String reason, String location, Rectangle
              rectangleForNewField, bool setReuseAppearance, bool isAppendMode, int certificationLevel, float? fontSize
             ) {
@@ -132,7 +164,8 @@ namespace iText.Signatures.Sign {
             }
             PdfSigner signer = new PdfSigner(reader, new FileStream(dest, FileMode.Create), properties);
             signer.SetCertificationLevel(certificationLevel);
-            PdfFont font = PdfFontFactory.CreateFont(FONT, "WinAnsi", true);
+            PdfFont font = PdfFontFactory.CreateFont(FONT, "WinAnsi", PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED
+                );
             // Creating the appearance
             PdfSignatureAppearance appearance = signer.GetSignatureAppearance().SetReason(reason).SetLocation(location
                 ).SetLayer2Font(font).SetReuseAppearance(setReuseAppearance);
@@ -150,7 +183,7 @@ namespace iText.Signatures.Sign {
 
         private static IDictionary<int, IList<Rectangle>> GetTestMap(Rectangle ignoredArea) {
             IDictionary<int, IList<Rectangle>> result = new Dictionary<int, IList<Rectangle>>();
-            result.Put(1, JavaUtil.ArraysAsList(ignoredArea));
+            result.Put(1, JavaCollectionsUtil.SingletonList(ignoredArea));
             return result;
         }
     }

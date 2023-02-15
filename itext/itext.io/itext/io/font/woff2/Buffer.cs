@@ -17,8 +17,16 @@
 //
 // This is part of java port of project hosted at https://github.com/google/woff2
 using System;
+using iText.IO.Exceptions;
 
 namespace iText.IO.Font.Woff2 {
+    // -----------------------------------------------------------------------------
+    // Buffer helper class
+    //
+    // This class perform some trival buffer operations while checking for
+    // out-of-bounds errors. As a family they throw exception if anything is amiss,
+    // updating the current offset otherwise.
+    // -----------------------------------------------------------------------------
     internal class Buffer {
         private byte[] data;
 
@@ -29,13 +37,6 @@ namespace iText.IO.Font.Woff2 {
         private int length;
 
         public Buffer(byte[] data, int data_offset, int length) {
-            // -----------------------------------------------------------------------------
-            // Buffer helper class
-            //
-            // This class perform some trival buffer operations while checking for
-            // out-of-bounds errors. As a family they throw exception if anything is amiss,
-            // updating the current offset otherwise.
-            // -----------------------------------------------------------------------------
             this.offset = 0;
             this.initial_offset = data_offset;
             this.length = length;

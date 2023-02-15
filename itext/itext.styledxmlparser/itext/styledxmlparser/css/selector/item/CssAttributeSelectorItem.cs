@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,7 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Text.RegularExpressions;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.StyledXmlParser.Node;
 
 namespace iText.StyledXmlParser.Css.Selector.Item {
@@ -132,7 +132,8 @@ namespace iText.StyledXmlParser.Css.Selector.Item {
 
                     case '~': {
                         String pattern = MessageFormatUtil.Format("(^{0}\\s+)|(\\s+{1}\\s+)|(\\s+{2}$)", value, value, value);
-                        return iText.IO.Util.StringUtil.Match(iText.IO.Util.StringUtil.RegexCompile(pattern), attributeValue).Success;
+                        return iText.Commons.Utils.Matcher.Match(iText.Commons.Utils.StringUtil.RegexCompile(pattern), attributeValue
+                            ).Matches();
                     }
 
                     case '*': {

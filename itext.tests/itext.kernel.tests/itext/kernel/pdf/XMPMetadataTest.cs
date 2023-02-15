@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -49,6 +49,7 @@ using iText.Test;
 using iText.Test.Attributes;
 
 namespace iText.Kernel.Pdf {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class XMPMetadataTest : ExtendedITextTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/kernel/pdf/XmpWriterTest/";
@@ -61,7 +62,6 @@ namespace iText.Kernel.Pdf {
             CreateOrClearDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CreateEmptyDocumentWithXmp() {
             String filename = "emptyDocumentWithXmp.pdf";
@@ -85,7 +85,6 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.IsTrue(new CompareTool().CompareXmls(outBytes, cmpBytes));
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void EmptyDocumentWithXmpAppendMode01() {
             String created = destinationFolder + "emptyDocumentWithXmpAppendMode01.pdf";
@@ -93,8 +92,8 @@ namespace iText.Kernel.Pdf {
             String updatedAgain = destinationFolder + "emptyDocumentWithXmpAppendMode01_updatedAgain.pdf";
             PdfDocument pdfDocument = new PdfDocument(new PdfWriter(created));
             pdfDocument.AddNewPage();
-            pdfDocument.GetXmpMetadata(true);
             // create XMP metadata
+            pdfDocument.GetXmpMetadata(true);
             pdfDocument.Close();
             pdfDocument = new PdfDocument(new PdfReader(created), new PdfWriter(updated), new StampingProperties().UseAppendMode
                 ());
@@ -118,7 +117,6 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.IsTrue(new CompareTool().CompareXmls(outBytes, cmpBytes));
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void EmptyDocumentWithXmpAppendMode02() {
             String created = destinationFolder + "emptyDocumentWithXmpAppendMode02.pdf";
@@ -129,8 +127,8 @@ namespace iText.Kernel.Pdf {
             pdfDocument.Close();
             pdfDocument = new PdfDocument(new PdfReader(created), new PdfWriter(updated), new StampingProperties().UseAppendMode
                 ());
-            pdfDocument.GetXmpMetadata(true);
             // create XMP metadata
+            pdfDocument.GetXmpMetadata(true);
             pdfDocument.Close();
             pdfDocument = new PdfDocument(new PdfReader(updated), new PdfWriter(updatedAgain), new StampingProperties(
                 ).UseAppendMode());
@@ -151,10 +149,8 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.IsTrue(new CompareTool().CompareXmls(outBytes, cmpBytes));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.EXCEPTION_WHILE_UPDATING_XMPMETADATA)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.EXCEPTION_WHILE_UPDATING_XMPMETADATA)]
         public virtual void CreateEmptyDocumentWithAbcXmp() {
             MemoryStream fos = new MemoryStream();
             PdfWriter writer = new PdfWriter(fos);
@@ -165,19 +161,17 @@ namespace iText.Kernel.Pdf {
             pdfDoc.GetDocumentInfo().GetPdfObject().Remove(PdfName.ModDate);
             PdfPage page = pdfDoc.AddNewPage();
             page.Flush();
-            pdfDoc.SetXmpMetadata("abc".GetBytes(iText.IO.Util.EncodingUtil.ISO_8859_1));
+            pdfDoc.SetXmpMetadata("abc".GetBytes(iText.Commons.Utils.EncodingUtil.ISO_8859_1));
             pdfDoc.Close();
             PdfReader reader = new PdfReader(new MemoryStream(fos.ToArray()));
             PdfDocument pdfDocument = new PdfDocument(reader);
             NUnit.Framework.Assert.AreEqual(false, reader.HasRebuiltXref(), "Rebuilt");
-            NUnit.Framework.Assert.AreEqual("abc".GetBytes(iText.IO.Util.EncodingUtil.ISO_8859_1), pdfDocument.GetXmpMetadata
+            NUnit.Framework.Assert.AreEqual("abc".GetBytes(iText.Commons.Utils.EncodingUtil.ISO_8859_1), pdfDocument.GetXmpMetadata
                 ());
             NUnit.Framework.Assert.IsNotNull(pdfDocument.GetPage(1));
             reader.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         [NUnit.Framework.Ignore("DEVSIX-1899: fails in .NET passes in Java")]
         public virtual void CustomXmpTest() {
@@ -191,8 +185,6 @@ namespace iText.Kernel.Pdf {
                  + " </rdf:Description>\n" + "\n" + "</rdf:RDF>\n" + "<?xpacket end='r'?>");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         [NUnit.Framework.Ignore("DEVSIX-1899: fails in .NET passes in Java")]
         public virtual void CustomXmpTest02() {
@@ -202,15 +194,13 @@ namespace iText.Kernel.Pdf {
                  + "</rdf:RDF><?xpacket end='r'?>");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         private void RunCustomXmpTest(String name, String xmp) {
             String outPath = destinationFolder + name + ".pdf";
             String cmpPath = sourceFolder + "cmp_" + name + ".pdf";
             PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outPath));
             PdfPage page = pdfDoc.AddNewPage();
             page.Flush();
-            pdfDoc.SetXmpMetadata(xmp.GetBytes(iText.IO.Util.EncodingUtil.ISO_8859_1));
+            pdfDoc.SetXmpMetadata(xmp.GetBytes(iText.Commons.Utils.EncodingUtil.ISO_8859_1));
             pdfDoc.Close();
             CompareTool compareTool = new CompareTool();
             NUnit.Framework.Assert.IsNull(compareTool.CompareByContent(outPath, cmpPath, destinationFolder, "diff_" + 
@@ -218,7 +208,6 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.IsNull(compareTool.CompareDocumentInfo(outPath, cmpPath));
         }
 
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
         private byte[] RemoveAlwaysDifferentEntries(byte[] cmpBytes) {
             XMPMeta xmpMeta = XMPMetaFactory.ParseFromBuffer(cmpBytes);
             XMPUtils.RemoveProperties(xmpMeta, XMPConst.NS_XMP, PdfConst.CreateDate, true, true);

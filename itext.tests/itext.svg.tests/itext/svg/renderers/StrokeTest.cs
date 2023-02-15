@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,8 +42,10 @@ address: sales@itextpdf.com
 */
 using System;
 using iText.Test;
+using iText.Test.Attributes;
 
 namespace iText.Svg.Renderers {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class StrokeTest : SvgIntegrationTest {
         private static readonly String SOURCE_FOLDER = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/svg/renderers/impl/StrokeTest/";
@@ -56,33 +58,33 @@ namespace iText.Svg.Renderers {
             ITextTest.CreateDestinationFolder(DESTINATION_FOLDER);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void NormalLineStrokeTest() {
-            ConvertAndCompareVisually(SOURCE_FOLDER, DESTINATION_FOLDER, "normalLineStroke");
+            ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "normalLineStroke");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void NoLineStrokeTest() {
-            ConvertAndCompareVisually(SOURCE_FOLDER, DESTINATION_FOLDER, "noLineStroke");
+            ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "noLineStroke");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void NoLineStrokeWidthTest() {
-            ConvertAndCompareVisually(SOURCE_FOLDER, DESTINATION_FOLDER, "noLineStrokeWidth");
+            ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "noLineStrokeWidth");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        public virtual void Advanced_stroke_Test() {
+        public virtual void AdvancedStrokeTest() {
             //TODO: update cmp-file after DEVSIX-2258
-            ConvertAndCompareVisually(SOURCE_FOLDER, DESTINATION_FOLDER, "stroke_advanced");
+            ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "strokeAdvanced");
+        }
+
+        [NUnit.Framework.Test]
+        // TODO DEVSIX-3432 relative values doesn't support correctly for stroke-width attribute
+        [LogMessage(iText.StyledXmlParser.Logs.StyledXmlParserLogMessageConstant.UNKNOWN_ABSOLUTE_METRIC_LENGTH_PARSED
+            , Count = 12)]
+        public virtual void StrokeWidthMeasureUnitsTest() {
+            ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "strokeWidthMeasureUnitsTest");
         }
     }
 }

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -143,20 +143,20 @@ namespace iText.IO.Font {
             return fontFound != null ? FetchDescriptorFromFontProgram(fontFound) : null;
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private static FontProgramDescriptor FetchTTCDescriptor(String baseName) {
             int ttcSplit = baseName.ToLowerInvariant().IndexOf(".ttc,", StringComparison.Ordinal);
             if (ttcSplit > 0) {
                 String ttcName;
                 int ttcIndex;
                 try {
-                    ttcName = baseName.JSubstring(0, ttcSplit + 4);
                     // count(.ttc) = 4
-                    ttcIndex = Convert.ToInt32(baseName.Substring(ttcSplit + 5));
+                    ttcName = baseName.JSubstring(0, ttcSplit + 4);
+                    // count(.ttc,) = 5)
+                    ttcIndex = Convert.ToInt32(baseName.Substring(ttcSplit + 5), System.Globalization.CultureInfo.InvariantCulture
+                        );
                 }
                 catch (FormatException nfe) {
-                    // count(.ttc,) = 5)
-                    throw new iText.IO.IOException(nfe.Message, nfe);
+                    throw new iText.IO.Exceptions.IOException(nfe.Message, nfe);
                 }
                 OpenTypeParser parser = new OpenTypeParser(ttcName, ttcIndex);
                 FontProgramDescriptor descriptor = FetchOpenTypeFontDescriptor(parser);
@@ -168,28 +168,24 @@ namespace iText.IO.Font {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private static FontProgramDescriptor FetchTrueTypeFontDescriptor(String fontName) {
             using (OpenTypeParser parser = new OpenTypeParser(fontName)) {
                 return FetchOpenTypeFontDescriptor(parser);
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private static FontProgramDescriptor FetchTrueTypeFontDescriptor(byte[] fontProgram) {
             using (OpenTypeParser parser = new OpenTypeParser(fontProgram)) {
                 return FetchOpenTypeFontDescriptor(parser);
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private static FontProgramDescriptor FetchOpenTypeFontDescriptor(OpenTypeParser fontParser) {
             fontParser.LoadTables(false);
             return new FontProgramDescriptor(fontParser.GetFontNames(), fontParser.GetPostTable().italicAngle, fontParser
                 .GetPostTable().isFixedPitch);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private static FontProgramDescriptor FetchType1FontDescriptor(String fontName, byte[] afm) {
             //TODO close original stream, may be separate static method should introduced
             Type1Font fp = new Type1Font(fontName, null, afm, null);

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -75,14 +75,12 @@ namespace iText.IO.Font.Otf {
             return false;
         }
 
-        /// <exception cref="System.IO.IOException"/>
         protected internal virtual void ReadSubTables() {
             foreach (int subTableLocation in subTableLocations) {
                 ReadSubTable(subTableLocation);
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         protected internal abstract void ReadSubTable(int subTableLocation);
 
         public class GlyphIndexer {

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,8 +42,8 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-using iText.IO.Util;
-using iText.Kernel;
+using iText.Commons.Utils;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf.Colorspace;
 
 namespace iText.Kernel.Colors {
@@ -78,6 +78,7 @@ namespace iText.Kernel.Colors {
         /// All color value components will be initialised with zeroes.
         /// </remarks>
         /// <param name="colorSpace">the color space to which the returned Color object relates</param>
+        /// <returns>the created Color object.</returns>
         public static iText.Kernel.Colors.Color MakeColor(PdfColorSpace colorSpace) {
             return MakeColor(colorSpace, null);
         }
@@ -89,6 +90,7 @@ namespace iText.Kernel.Colors {
         /// </remarks>
         /// <param name="colorSpace">the color space to which the returned Color object relates</param>
         /// <param name="colorValue">the color value of the returned Color object</param>
+        /// <returns>the created Color object.</returns>
         public static iText.Kernel.Colors.Color MakeColor(PdfColorSpace colorSpace, float[] colorValue) {
             iText.Kernel.Colors.Color c = null;
             bool unknownColorSpace = false;
@@ -166,7 +168,6 @@ namespace iText.Kernel.Colors {
                             c = new iText.Kernel.Colors.Color(colorSpace, colorValue);
                         }
                         else {
-                            // TODO review this. at least log a warning
                             unknownColorSpace = true;
                         }
                     }
@@ -244,7 +245,7 @@ namespace iText.Kernel.Colors {
         /// <param name="value">new color value</param>
         public virtual void SetColorValue(float[] value) {
             if (colorValue.Length != value.Length) {
-                throw new PdfException(PdfException.IncorrectNumberOfComponents, this);
+                throw new PdfException(KernelExceptionMessageConstant.INCORRECT_NUMBER_OF_COMPONENTS, this);
             }
             colorValue = value;
         }
@@ -272,7 +273,7 @@ namespace iText.Kernel.Colors {
 
         /// <summary><inheritDoc/></summary>
         public override int GetHashCode() {
-            int result = colorSpace != null ? colorSpace.GetHashCode() : 0;
+            int result = colorSpace == null ? 0 : colorSpace.GetPdfObject().GetHashCode();
             result = 31 * result + (colorValue != null ? JavaUtil.ArraysHashCode(colorValue) : 0);
             return result;
         }

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,348 +45,99 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
 using Versions.Attributes;
+using iText.Commons;
+using iText.Commons.Actions.Contexts;
+using iText.Commons.Actions.Sequence;
+using iText.Commons.Utils;
 using iText.IO.Font;
 using iText.IO.Font.Otf;
-using iText.IO.Util;
-using iText.Kernel.Font;
 using iText.Layout.Properties;
+using iText.Layout.Renderer.Typography;
 
 namespace iText.Layout.Renderer {
-    internal sealed class TypographyUtils {
-        private static readonly ILog logger = LogManager.GetLogger(typeof(TypographyUtils));
-
+    public sealed class TypographyUtils {
         private const String TYPOGRAPHY_PACKAGE = "iText.Typography.";
 
-        private const String SHAPER = "Shaping.Shaper,iText.Typography";
+        private const String TYPOGRAPHY_APPLIER = "Shaping.TypographyApplier,iText.Typography";
 
-        private const String BIDI_CHARACTER_MAP = "Bidi.BidiCharacterMap,iText.Typography";
+        private const String TYPOGRAPHY_APPLIER_INITIALIZE = "RegisterForLayout";
 
-        private const String BIDI_BRACKET_MAP = "Bidi.BidiBracketMap,iText.Typography";
-
-        private const String BIDI_ALGORITHM = "Bidi.BidiAlgorithm,iText.Typography";
-
-        private const String APPLY_OTF_SCRIPT = "ApplyOtfScript";
-
-        private const String APPLY_KERNING = "ApplyKerning";
-
-        private const String GET_SUPPORTED_SCRIPTS = "GetSupportedScripts";
-
-        private const String GET_CHARACTER_TYPES = "GetCharacterTypes";
-
-        private const String GET_BRACKET_TYPES = "GetBracketTypes";
-
-        private const String GET_BRACKET_VALUES = "GetBracketValues";
-
-        private const String GET_PAIRED_BRACKET = "GetPairedBracket";
-
-        private const String GET_LEVELS = "GetLevels";
-
-        private const String COMPUTE_REORDERING = "ComputeReordering";
-
-        private const String INVERSE_REORDERING = "InverseReordering";
-
-        private static readonly ICollection<UnicodeScript> SUPPORTED_SCRIPTS;
-
-        private static readonly bool TYPOGRAPHY_MODULE_INITIALIZED;
-
-        private static IDictionary<String, Type> cachedClasses = new Dictionary<String, Type>();
-
-        private static IDictionary<TypographyUtils.TypographyMethodSignature, MemberInfo> cachedMethods = new Dictionary
-            <TypographyUtils.TypographyMethodSignature, MemberInfo>();
-
-        private const String typographyNotFoundException = "Cannot find pdfCalligraph module, which was implicitly required by one of the layout properties";
+        private static AbstractTypographyApplier applierInstance;
 
         static TypographyUtils() {
-            bool moduleFound = false;
             try {
-                Type type = GetTypographyClass(TYPOGRAPHY_PACKAGE + SHAPER);
+                Type type = GetTypographyClass(TYPOGRAPHY_PACKAGE + TYPOGRAPHY_APPLIER);
                 if (type != null) {
-                    moduleFound = true;
+                    MethodInfo method = type.GetMethod(TYPOGRAPHY_APPLIER_INITIALIZE, new Type[] {  });
+                    if (method != null) {
+                        method.Invoke(null, new Object[] {  });
+                    }
                 }
             }
-            catch (TypeLoadException) {
+            catch (Exception) {
             }
-            ICollection<UnicodeScript> supportedScripts = null;
-            if (moduleFound) {
-                try {
-                    supportedScripts = (ICollection<UnicodeScript>)CallMethod(TYPOGRAPHY_PACKAGE + SHAPER, GET_SUPPORTED_SCRIPTS
-                        , new Type[] {  });
-                }
-                catch (Exception e) {
-                    supportedScripts = null;
-                    logger.Error(e.Message);
-                }
+            // do nothing
+            if (applierInstance == null) {
+                SetTypographyApplierInstance(new DefaultTypographyApplier());
             }
-            moduleFound = supportedScripts != null;
-            if (!moduleFound) {
-                cachedClasses.Clear();
-                cachedMethods.Clear();
-            }
-            TYPOGRAPHY_MODULE_INITIALIZED = moduleFound;
-            SUPPORTED_SCRIPTS = supportedScripts;
+        }
+
+        private TypographyUtils() {
+        }
+
+        /// <summary>
+        /// Set
+        /// <see cref="iText.Layout.Renderer.Typography.AbstractTypographyApplier"/>
+        /// instance to use.
+        /// </summary>
+        /// <param name="newInstance">the instance to set</param>
+        public static void SetTypographyApplierInstance(AbstractTypographyApplier newInstance) {
+            applierInstance = newInstance;
+        }
+
+        /// <summary>Checks if layout module can access pdfCalligraph</summary>
+        /// <returns><c>true</c> if layout can access pdfCalligraph and <c>false</c> otherwise</returns>
+        public static bool IsPdfCalligraphAvailable() {
+            return applierInstance.IsPdfCalligraphInstance();
+        }
+
+        public static ICollection<UnicodeScript> GetSupportedScripts() {
+            return applierInstance.GetSupportedScripts();
+        }
+
+        public static ICollection<UnicodeScript> GetSupportedScripts(Object typographyConfig) {
+            return applierInstance.GetSupportedScripts(typographyConfig);
+        }
+
+        public static IDictionary<String, byte[]> LoadShippedFonts() {
+            return applierInstance.LoadShippedFonts();
         }
 
         internal static void ApplyOtfScript(FontProgram fontProgram, GlyphLine text, UnicodeScript? script, Object
-             typographyConfig) {
-            if (!TYPOGRAPHY_MODULE_INITIALIZED) {
-                logger.Warn(typographyNotFoundException);
-            }
-            else {
-                CallMethod(TYPOGRAPHY_PACKAGE + SHAPER, APPLY_OTF_SCRIPT, new Type[] { typeof(TrueTypeFont), typeof(GlyphLine
-                    ), typeof(UnicodeScript?), typeof(Object) }, fontProgram, text, script, typographyConfig);
-            }
+             typographyConfig, SequenceId sequenceId, IMetaInfo metaInfo) {
+            applierInstance.ApplyOtfScript((TrueTypeFont)fontProgram, text, script, typographyConfig, sequenceId, metaInfo
+                );
         }
 
-        internal static void ApplyKerning(FontProgram fontProgram, GlyphLine text) {
-            if (!TYPOGRAPHY_MODULE_INITIALIZED) {
-                logger.Warn(typographyNotFoundException);
-            }
-            else {
-                CallMethod(TYPOGRAPHY_PACKAGE + SHAPER, APPLY_KERNING, new Type[] { typeof(FontProgram), typeof(GlyphLine)
-                     }, fontProgram, text);
-            }
+        internal static void ApplyKerning(FontProgram fontProgram, GlyphLine text, SequenceId sequenceId, IMetaInfo
+             metaInfo) {
+            applierInstance.ApplyKerning(fontProgram, text, sequenceId, metaInfo);
         }
 
-        //            Shaper.applyKerning(fontProgram, text);
-        internal static byte[] GetBidiLevels(BaseDirection? baseDirection, int[] unicodeIds) {
-            if (!TYPOGRAPHY_MODULE_INITIALIZED) {
-                logger.Warn(typographyNotFoundException);
-            }
-            else {
-                byte direction;
-                switch (baseDirection) {
-                    case BaseDirection.LEFT_TO_RIGHT: {
-                        direction = 0;
-                        break;
-                    }
-
-                    case BaseDirection.RIGHT_TO_LEFT: {
-                        direction = 1;
-                        break;
-                    }
-
-                    case BaseDirection.DEFAULT_BIDI:
-                    default: {
-                        direction = 2;
-                        break;
-                    }
-                }
-                int len = unicodeIds.Length;
-                byte[] types = (byte[])CallMethod(TYPOGRAPHY_PACKAGE + BIDI_CHARACTER_MAP, GET_CHARACTER_TYPES, new Type[]
-                     { typeof(int[]), typeof(int), typeof(int) }, unicodeIds, 0, len);
-                //            byte[] types = BidiCharacterMap.getCharacterTypes(unicodeIds, 0, len);
-                byte[] pairTypes = (byte[])CallMethod(TYPOGRAPHY_PACKAGE + BIDI_BRACKET_MAP, GET_BRACKET_TYPES, new Type[]
-                     { typeof(int[]), typeof(int), typeof(int) }, unicodeIds, 0, len);
-                //            byte[] pairTypes = BidiBracketMap.getBracketTypes(unicodeIds, 0, len);
-                int[] pairValues = (int[])CallMethod(TYPOGRAPHY_PACKAGE + BIDI_BRACKET_MAP, GET_BRACKET_VALUES, new Type[]
-                     { typeof(int[]), typeof(int), typeof(int) }, unicodeIds, 0, len);
-                //            int[] pairValues = BidiBracketMap.getBracketValues(unicodeIds, 0, len);
-                Object bidiReorder = CallConstructor(TYPOGRAPHY_PACKAGE + BIDI_ALGORITHM, new Type[] { typeof(byte[]), typeof(
-                    byte[]), typeof(int[]), typeof(byte) }, types, pairTypes, pairValues, direction);
-                //            BidiAlgorithm bidiReorder = new BidiAlgorithm(types, pairTypes, pairValues, direction);
-                return (byte[])CallMethod(TYPOGRAPHY_PACKAGE + BIDI_ALGORITHM, GET_LEVELS, bidiReorder, new Type[] { typeof(
-                    int[]) }, new int[] { len });
-            }
-            //            return bidiReorder.getLevels(new int[]{len});
-            return null;
+        internal static byte[] GetBidiLevels(BaseDirection? baseDirection, int[] unicodeIds, SequenceId sequenceId
+            , IMetaInfo metaInfo) {
+            return applierInstance.GetBidiLevels(baseDirection, unicodeIds, sequenceId, metaInfo);
         }
 
         internal static int[] ReorderLine(IList<LineRenderer.RendererGlyph> line, byte[] lineLevels, byte[] levels
             ) {
-            if (!TYPOGRAPHY_MODULE_INITIALIZED) {
-                logger.Warn(typographyNotFoundException);
-            }
-            else {
-                if (levels == null) {
-                    return null;
-                }
-                int[] reorder = (int[])CallMethod(TYPOGRAPHY_PACKAGE + BIDI_ALGORITHM, COMPUTE_REORDERING, new Type[] { typeof(
-                    byte[]) }, lineLevels);
-                //            int[] reorder = BidiAlgorithm.computeReordering(lineLevels);
-                int[] inverseReorder = (int[])CallMethod(TYPOGRAPHY_PACKAGE + BIDI_ALGORITHM, INVERSE_REORDERING, new Type
-                    [] { typeof(int[]) }, reorder);
-                //            int[] inverseReorder = BidiAlgorithm.inverseReordering(reorder);
-                IList<LineRenderer.RendererGlyph> reorderedLine = new List<LineRenderer.RendererGlyph>(lineLevels.Length);
-                for (int i = 0; i < line.Count; i++) {
-                    reorderedLine.Add(line[reorder[i]]);
-                    // Mirror RTL glyphs
-                    if (levels[reorder[i]] % 2 == 1) {
-                        if (reorderedLine[i].glyph.HasValidUnicode()) {
-                            int unicode = reorderedLine[i].glyph.GetUnicode();
-                            int pairedBracket = (int)CallMethod(TYPOGRAPHY_PACKAGE + BIDI_BRACKET_MAP, GET_PAIRED_BRACKET, new Type[] 
-                                { typeof(int) }, unicode);
-                            //                        int pairedBracket = BidiBracketMap.getPairedBracket(reorderedLine.get(i).glyph.getUnicode());
-                            if (pairedBracket != unicode) {
-                                PdfFont font = reorderedLine[i].renderer.GetPropertyAsFont(Property.FONT);
-                                reorderedLine[i] = new LineRenderer.RendererGlyph(font.GetGlyph(pairedBracket), reorderedLine[i].renderer);
-                            }
-                        }
-                    }
-                }
-                // fix anchorDelta
-                for (int i = 0; i < reorderedLine.Count; i++) {
-                    Glyph glyph = reorderedLine[i].glyph;
-                    if (glyph.HasPlacement()) {
-                        int oldAnchor = reorder[i] + glyph.GetAnchorDelta();
-                        int newPos = inverseReorder[oldAnchor];
-                        int newAnchorDelta = newPos - i;
-                        glyph.SetAnchorDelta((short)newAnchorDelta);
-                    }
-                }
-                line.Clear();
-                line.AddAll(reorderedLine);
-                return reorder;
-            }
-            return null;
+            return applierInstance.ReorderLine(line, lineLevels, levels);
         }
 
-        internal static ICollection<UnicodeScript> GetSupportedScripts() {
-            if (!TYPOGRAPHY_MODULE_INITIALIZED) {
-                logger.Warn(typographyNotFoundException);
-                return null;
-            }
-            else {
-                return SUPPORTED_SCRIPTS;
-            }
-        }
-
-        internal static ICollection<UnicodeScript> GetSupportedScripts(Object typographyConfig) {
-            if (!TYPOGRAPHY_MODULE_INITIALIZED) {
-                logger.Warn(typographyNotFoundException);
-                return null;
-            }
-            else {
-                return (ICollection<UnicodeScript>)CallMethod(TYPOGRAPHY_PACKAGE + SHAPER, GET_SUPPORTED_SCRIPTS, (Object)
-                    null, new Type[] { typeof(Object) }, typographyConfig);
-            }
-        }
-
-        internal static bool IsTypographyModuleInitialized() {
-            return TYPOGRAPHY_MODULE_INITIALIZED;
-        }
-
-        private static Object CallMethod(String className, String methodName, Type[] parameterTypes, params Object
-            [] args) {
-            return CallMethod(className, methodName, (Object)null, parameterTypes, args);
-        }
-
-        private static Object CallMethod(String className, String methodName, Object target, Type[] parameterTypes
-            , params Object[] args) {
-            try {
-                MethodInfo method = FindMethod(className, methodName, parameterTypes);
-                return method.Invoke(target, args);
-            }
-            catch (MissingMethodException) {
-                logger.Warn(MessageFormatUtil.Format("Cannot find method {0} for class {1}", methodName, className));
-            }
-            catch (TypeLoadException) {
-                logger.Warn(MessageFormatUtil.Format("Cannot find class {0}", className));
-            }
-            catch (ArgumentException e) {
-                logger.Warn(MessageFormatUtil.Format("Illegal arguments passed to {0}#{1} method call: {2}", className, methodName
-                    , e.Message));
-            }
-            catch (Exception e) {
-                throw new Exception(e.ToString(), e);
-            }
-            return null;
-        }
-
-        private static Object CallConstructor(String className, Type[] parameterTypes, params Object[] args) {
-            try {
-                ConstructorInfo constructor = FindConstructor(className, parameterTypes);
-                return constructor.Invoke(args);
-            }
-            catch (MissingMethodException) {
-                logger.Warn(MessageFormatUtil.Format("Cannot find constructor for class {0}", className));
-            }
-            catch (TypeLoadException) {
-                logger.Warn(MessageFormatUtil.Format("Cannot find class {0}", className));
-            }
-            catch (Exception exc) {
-                throw new Exception(exc.ToString(), exc);
-            }
-            return null;
-        }
-
-        /// <exception cref="System.MissingMethodException"/>
-        /// <exception cref="System.TypeLoadException"/>
-        private static MethodInfo FindMethod(String className, String methodName, Type[] parameterTypes) {
-            TypographyUtils.TypographyMethodSignature tm = new TypographyUtils.TypographyMethodSignature(className, parameterTypes
-                , methodName);
-            MethodInfo m = (MethodInfo)cachedMethods.Get(tm);
-            if (m == null) {
-                m = FindClass(className).GetMethod(methodName, parameterTypes);
-                cachedMethods.Put(tm, m);
-            }
-            return m;
-        }
-
-        /// <exception cref="System.MissingMethodException"/>
-        /// <exception cref="System.TypeLoadException"/>
-        private static ConstructorInfo FindConstructor(String className, Type[] parameterTypes) {
-            TypographyUtils.TypographyMethodSignature tc = new TypographyUtils.TypographyMethodSignature(className, parameterTypes
-                );
-            ConstructorInfo c = (ConstructorInfo)cachedMethods.Get(tc);
-            if (c == null) {
-                c = FindClass(className).GetConstructor(parameterTypes);
-                cachedMethods.Put(tc, c);
-            }
-            return c;
-        }
-
-        /// <exception cref="System.TypeLoadException"/>
-        private static Type FindClass(String className) {
-            Type c = cachedClasses.Get(className);
-            if (c == null) {
-                c = GetTypographyClass(className);
-                cachedClasses.Put(className, c);
-            }
-            return c;
-        }
-
-        private class TypographyMethodSignature {
-            protected internal readonly String className;
-
-            protected internal Type[] parameterTypes;
-
-            private readonly String methodName;
-
-            internal TypographyMethodSignature(String className, Type[] parameterTypes)
-                : this(className, parameterTypes, null) {
-            }
-
-            internal TypographyMethodSignature(String className, Type[] parameterTypes, String methodName) {
-                this.methodName = methodName;
-                this.className = className;
-                this.parameterTypes = parameterTypes;
-            }
-
-            public override bool Equals(Object o) {
-                if (this == o) {
-                    return true;
-                }
-                if (o == null || GetType() != o.GetType()) {
-                    return false;
-                }
-                TypographyUtils.TypographyMethodSignature that = (TypographyUtils.TypographyMethodSignature)o;
-                if (!className.Equals(that.className)) {
-                    return false;
-                }
-                if (!JavaUtil.ArraysEquals(parameterTypes, that.parameterTypes)) {
-                    return false;
-                }
-                return methodName != null ? methodName.Equals(that.methodName) : that.methodName == null;
-            }
-
-            public override int GetHashCode() {
-                int result = className.GetHashCode();
-                result = 31 * result + JavaUtil.ArraysHashCode(parameterTypes);
-                result = 31 * result + (methodName != null ? methodName.GetHashCode() : 0);
-                return result;
-            }
+        internal static IList<int> GetPossibleBreaks(String str) {
+            return applierInstance.GetPossibleBreaks(str);
         }
 
         private static Type GetTypographyClass(String partialName) {
@@ -431,8 +182,8 @@ namespace iText.Layout.Renderer {
                         }
                     }
                     if (type == null && fileLoadExceptionMessage != null) {
-                        ILog logger = LogManager.GetLogger(typeof(TypographyUtils));
-                        logger.Error(fileLoadExceptionMessage);
+                        ILogger logger = ITextLogManager.GetLogger(typeof(TypographyUtils));
+                        logger.LogError(fileLoadExceptionMessage);
                     }
                 }
             }

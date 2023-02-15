@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,7 +41,7 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.Kernel.Geom;
 using iText.Svg.Renderers;
 
@@ -50,7 +50,7 @@ namespace iText.Svg.Renderers.Impl {
     /// <see cref="iText.Svg.Renderers.ISvgNodeRenderer"/>
     /// implementation for the &lt;polygon&gt; tag.
     /// </summary>
-    public class PolygonSvgNodeRenderer : PolylineSvgNodeRenderer {
+    public class PolygonSvgNodeRenderer : PolylineSvgNodeRenderer, IMarkerCapable {
         /// <summary>
         /// Calls setPoints(String) to set
         /// <see cref="PolylineSvgNodeRenderer.points"/>
@@ -74,7 +74,7 @@ namespace iText.Svg.Renderers.Impl {
             }
             Point start = points[0];
             Point end = points[points.Count - 1];
-            if (JavaUtil.DoubleCompare(start.x, end.x) != 0 && JavaUtil.DoubleCompare(start.y, end.y) != 0) {
+            if (JavaUtil.DoubleCompare(start.x, end.x) != 0 || JavaUtil.DoubleCompare(start.y, end.y) != 0) {
                 points.Add(new Point(start.x, start.y));
             }
         }

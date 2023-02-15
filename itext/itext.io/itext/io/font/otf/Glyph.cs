@@ -1,7 +1,7 @@
 /*
 *
 * This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 * Authors: Bruno Lowagie, Paulo Soares, et al.
 *
 * This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,7 @@ Copyright (c) 1998-2019 iText Group NV
 * address: sales@itextpdf.com
 */
 using System;
-using iText.IO.Util;
+using iText.Commons.Utils;
 
 namespace iText.IO.Font.Otf {
     public class Glyph {
@@ -52,26 +52,35 @@ namespace iText.IO.Font.Otf {
 
         private static readonly String REPLACEMENT_CHARACTER_STRING = REPLACEMENT_CHARACTER.ToString();
 
+        // The <i>code</i> or <i>id</i> by which this is represented in the Font File.
         private readonly int code;
 
+        // The normalized width of this Glyph.
         private readonly int width;
 
+        // The normalized bbox of this Glyph.
         private int[] bbox = null;
 
+        // utf-32 representation of glyph if appears. Correct value is > -1
         private int unicode;
 
+        // The Unicode text represented by this Glyph
         private char[] chars;
 
+        // true, if this Glyph is Mark
         private readonly bool isMark;
 
+        // placement offset
         internal short xPlacement = 0;
 
         internal short yPlacement = 0;
 
+        // advance offset
         internal short xAdvance = 0;
 
         internal short yAdvance = 0;
 
+        // Index delta to base glyph. If after a glyph there are several anchored glyphs we should know we to find base glyph.
         internal short anchorDelta = 0;
 
         /// <summary>Construct a non-mark Glyph, retrieving characters from unicode.</summary>
@@ -97,15 +106,6 @@ namespace iText.IO.Font.Otf {
         /// <param name="bbox">The normalized bounding box of this Glyph.</param>
         public Glyph(int code, int width, int unicode, int[] bbox)
             : this(code, width, unicode, null, false) {
-            // The <i>code</i> or <i>id</i> by which this is represented in the Font File.
-            // The normalized width of this Glyph.
-            // The normalized bbox of this Glyph.
-            // utf-32 representation of glyph if appears. Correct value is > -1
-            // The Unicode text represented by this Glyph
-            // true, if this Glyph is Mark
-            // placement offset
-            // advance offset
-            // Index delta to base glyph. If after a glyph there are several anchored glyphs we should know we to find base glyph.
             this.bbox = bbox;
         }
 
@@ -252,11 +252,12 @@ namespace iText.IO.Font.Otf {
         }
 
         public virtual bool HasOffsets() {
-            return xPlacement != 0 || yPlacement != 0 || xAdvance != 0 || yAdvance != 0;
+            return HasAdvance() || HasPlacement();
         }
 
+        // In case some of placement values are not zero we always expect anchorDelta to be non-zero
         public virtual bool HasPlacement() {
-            return xPlacement != 0 || yPlacement != 0;
+            return anchorDelta != 0;
         }
 
         public virtual bool HasAdvance() {

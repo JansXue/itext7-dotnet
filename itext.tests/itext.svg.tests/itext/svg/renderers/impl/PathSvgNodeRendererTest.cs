@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -54,6 +54,7 @@ using iText.Svg.Renderers;
 using iText.Test;
 
 namespace iText.Svg.Renderers.Impl {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class PathSvgNodeRendererTest : SvgIntegrationTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/svg/renderers/impl/PathSvgNodeRendererTest/";
@@ -66,8 +67,6 @@ namespace iText.Svg.Renderers.Impl {
             ITextTest.CreateDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void PathNodeRendererMoveToTest() {
             String filename = "pathNodeRendererMoveToTest.pdf";
@@ -89,11 +88,8 @@ namespace iText.Svg.Renderers.Impl {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void PathNodeRendererMoveToTest1() {
-            //TODO (RND-904) This test should fail when RND-904 (relative line operator l ) is implemented.
             String filename = "pathNodeRendererMoveToTest1.pdf";
             PdfDocument doc = new PdfDocument(new PdfWriter(destinationFolder + filename));
             doc.AddNewPage();
@@ -113,8 +109,6 @@ namespace iText.Svg.Renderers.Impl {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void PathNodeRendererCurveToTest() {
             String filename = "pathNodeRendererCurveToTest.pdf";
@@ -136,8 +130,6 @@ namespace iText.Svg.Renderers.Impl {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void PathNodeRendererCurveToTest1() {
             String filename = "pathNodeRendererCurveToTest1.pdf";
@@ -159,8 +151,6 @@ namespace iText.Svg.Renderers.Impl {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void PathNodeRendererQCurveToCurveToTest() {
             String filename = "pathNodeRendererQCurveToCurveToTest.pdf";
@@ -182,8 +172,6 @@ namespace iText.Svg.Renderers.Impl {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void PathNodeRendererQCurveToCurveToTest1() {
             String filename = "pathNodeRendererQCurveToCurveToTest1.pdf";
@@ -205,8 +193,6 @@ namespace iText.Svg.Renderers.Impl {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void SmoothCurveTest1() {
             String filename = "smoothCurveTest1.pdf";
@@ -216,7 +202,7 @@ namespace iText.Svg.Renderers.Impl {
             Stream xmlStream = new FileStream(sourceFolder + svgFilename, FileMode.Open, FileAccess.Read);
             IElementNode rootTag = new JsoupXmlParser().Parse(xmlStream, "ISO-8859-1");
             DefaultSvgProcessor processor = new DefaultSvgProcessor();
-            IBranchSvgNodeRenderer root = (IBranchSvgNodeRenderer)processor.Process(rootTag).GetRootRenderer();
+            IBranchSvgNodeRenderer root = (IBranchSvgNodeRenderer)processor.Process(rootTag, null).GetRootRenderer();
             SvgDrawContext context = new SvgDrawContext(null, null);
             PdfCanvas cv = new PdfCanvas(doc, 1);
             context.PushCanvas(cv);
@@ -225,8 +211,6 @@ namespace iText.Svg.Renderers.Impl {
             doc.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void SmoothCurveTest2() {
             String filename = "smoothCurveTest2.pdf";
@@ -236,7 +220,7 @@ namespace iText.Svg.Renderers.Impl {
             Stream xmlStream = new FileStream(sourceFolder + svgFilename, FileMode.Open, FileAccess.Read);
             IElementNode rootTag = new JsoupXmlParser().Parse(xmlStream, "ISO-8859-1");
             DefaultSvgProcessor processor = new DefaultSvgProcessor();
-            IBranchSvgNodeRenderer root = (IBranchSvgNodeRenderer)processor.Process(rootTag).GetRootRenderer();
+            IBranchSvgNodeRenderer root = (IBranchSvgNodeRenderer)processor.Process(rootTag, null).GetRootRenderer();
             SvgDrawContext context = new SvgDrawContext(null, null);
             PdfCanvas cv = new PdfCanvas(doc, 1);
             context.PushCanvas(cv);
@@ -245,8 +229,6 @@ namespace iText.Svg.Renderers.Impl {
             doc.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void SmoothCurveTest3() {
             String filename = "smoothCurveTest3.pdf";
@@ -256,7 +238,7 @@ namespace iText.Svg.Renderers.Impl {
             Stream xmlStream = new FileStream(sourceFolder + svgFilename, FileMode.Open, FileAccess.Read);
             IElementNode rootTag = new JsoupXmlParser().Parse(xmlStream, "ISO-8859-1");
             DefaultSvgProcessor processor = new DefaultSvgProcessor();
-            IBranchSvgNodeRenderer root = (IBranchSvgNodeRenderer)processor.Process(rootTag).GetRootRenderer();
+            IBranchSvgNodeRenderer root = (IBranchSvgNodeRenderer)processor.Process(rootTag, null).GetRootRenderer();
             SvgDrawContext context = new SvgDrawContext(null, null);
             PdfCanvas cv = new PdfCanvas(doc, 1);
             context.PushCanvas(cv);
@@ -265,179 +247,139 @@ namespace iText.Svg.Renderers.Impl {
             doc.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void PathNodeRendererCurveComplexTest() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "curves");
+            ConvertAndCompare(sourceFolder, destinationFolder, "curves");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        public virtual void PathZOperatorTest01() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "pathZOperatorTest01");
+        public virtual void PathZOperatorMultipleZTest() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "pathZOperatorMultipleZTest");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        public virtual void PathZOperatorTest02() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "pathZOperatorTest02");
+        public virtual void PathZOperatorSingleZTest() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "pathZOperatorSingleZTest");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        public virtual void PathZOperatorTest03() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "pathZOperatorTest03");
+        public virtual void PathZOperatorSingleZInstructionsAfterTest() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "pathZOperatorSingleZInstructionsAfterTest");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        public virtual void PathZOperatorTest04() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "pathZOperatorTest04");
+        public virtual void InvalidZOperatorTest() {
+            NUnit.Framework.Assert.Catch(typeof(SvgProcessingException), () => ConvertAndCompare(sourceFolder, destinationFolder
+                , "invalidZOperatorTest01"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        public virtual void InvalidZOperatorTest01() {
-            NUnit.Framework.Assert.That(() =>  {
-                ConvertAndCompareVisually(sourceFolder, destinationFolder, "invalidZOperatorTest01");
-            }
-            , NUnit.Framework.Throws.InstanceOf<SvgProcessingException>())
-;
+        public virtual void InvalidOperatorTest() {
+            NUnit.Framework.Assert.Catch(typeof(SvgProcessingException), () => ConvertAndCompare(sourceFolder, destinationFolder
+                , "invalidOperatorTest01"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        [NUnit.Framework.Test]
-        public virtual void InvalidOperatorTest01() {
-            NUnit.Framework.Assert.That(() =>  {
-                ConvertAndCompareVisually(sourceFolder, destinationFolder, "invalidOperatorTest01");
-            }
-            , NUnit.Framework.Throws.InstanceOf<SvgProcessingException>())
-;
-        }
-
-        /* This test should fail when RND-1034 is resolved*/
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
+        //TODO DEVSIX-2242. This test should fail when the ticket is resolved
         [NUnit.Framework.Test]
         public virtual void PathLOperatorMultipleCoordinates() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "pathLOperatorMultipleCoordinates");
+            ConvertAndCompare(sourceFolder, destinationFolder, "pathLOperatorMultipleCoordinates");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        public virtual void PathVOperatorTest01() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "pathVOperatorTest01");
+        public virtual void PathVOperatorTest() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "pathVOperatorTest01");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void PathZOperatorContinuePathingTest() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "pathZOperatorContinuePathingTest");
+            ConvertAndCompare(sourceFolder, destinationFolder, "pathZOperatorContinuePathingTest");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void PathVOperatorMultipleArgumentsTest() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "pathVOperatorMultipleArgumentsTest");
+            ConvertAndCompare(sourceFolder, destinationFolder, "pathVOperatorMultipleArgumentsTest");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        public virtual void PathHOperatorSimpleTest01() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "pathHOperatorSimpleTest01");
+        public virtual void PathHOperatorSimpleTest() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "pathHOperatorSimpleTest");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        public virtual void PathHandVOperatorTest01() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "pathHandVOperatorTest01");
+        public virtual void PathHandVOperatorTest() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "pathHandVOperatorTest");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CurveToContinuePathingTest() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "curveToContinuePathingTest");
+            ConvertAndCompare(sourceFolder, destinationFolder, "curveToContinuePathingTest");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void RelativeHorizontalLineToTest() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "relativeHorizontalLineTo");
+            ConvertAndCompare(sourceFolder, destinationFolder, "relativeHorizontalLineTo");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void RelativeVerticalLineToTest() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "relativeVerticalLineTo");
+            ConvertAndCompare(sourceFolder, destinationFolder, "relativeVerticalLineTo");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CombinedRelativeVerticalLineToAndRelativeHorizontalLineToTest() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "combinedRelativeVerticalLineToAndRelativeHorizontalLineTo"
+            ConvertAndCompare(sourceFolder, destinationFolder, "combinedRelativeVerticalLineToAndRelativeHorizontalLineTo"
                 );
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void MultipleRelativeHorizontalLineToTest() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "multipleRelativeHorizontalLineTo");
+            ConvertAndCompare(sourceFolder, destinationFolder, "multipleRelativeHorizontalLineTo");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void MultipleRelativeVerticalLineToTest() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "multipleRelativeVerticalLineTo");
+            ConvertAndCompare(sourceFolder, destinationFolder, "multipleRelativeVerticalLineTo");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void MoveToRelativeMultipleTest() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "moveToRelativeMultiple");
+            ConvertAndCompare(sourceFolder, destinationFolder, "moveToRelativeMultiple");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void MoveToAbsoluteMultipleTest() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "moveToAbsoluteMultiple");
+            ConvertAndCompare(sourceFolder, destinationFolder, "moveToAbsoluteMultiple");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ITextLogoTest() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "iTextLogo");
+            ConvertAndCompare(sourceFolder, destinationFolder, "iTextLogo");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void EofillUnsuportedPathTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                ConvertAndCompareVisually(sourceFolder, destinationFolder, "eofillUnsuportedPathTest");
-            }
-            , NUnit.Framework.Throws.InstanceOf<SvgProcessingException>())
-;
+            NUnit.Framework.Assert.Catch(typeof(SvgProcessingException), () => ConvertAndCompare(sourceFolder, destinationFolder
+                , "eofillUnsuportedPathTest"));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void MultiplePairsAfterMoveToRelativeTest() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "multiplePairsAfterMoveToRelative");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void MultiplePairsAfterMoveToAbsoluteTest() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "multiplePairsAfterMoveToAbsolute");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void PathHOperatorAbsoluteAfterMultiplePairsTest() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "pathHOperatorAbsoluteAfterMultiplePairs");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void PathHOperatorRelativeAfterMultiplePairsTest() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "pathHOperatorRelativeAfterMultiplePairs");
         }
     }
 }

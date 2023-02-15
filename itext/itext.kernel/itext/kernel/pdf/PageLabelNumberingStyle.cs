@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,12 +41,23 @@ source product.
 For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
+using System;
+
 namespace iText.Kernel.Pdf {
+    /// <summary>
+    /// Page label numbering style constants for
+    /// <see cref="PdfPage.SetPageLabel(PageLabelNumberingStyle, String)"/>.
+    /// </summary>
     public enum PageLabelNumberingStyle {
+        /// <summary>1, 2, 3, 4...</summary>
         DECIMAL_ARABIC_NUMERALS,
+        /// <summary>I, II, III, IV...</summary>
         UPPERCASE_ROMAN_NUMERALS,
+        /// <summary>i, ii, iii, iv...</summary>
         LOWERCASE_ROMAN_NUMERALS,
+        /// <summary>A, B, C, D...</summary>
         UPPERCASE_LETTERS,
+        /// <summary>a, b, c, d...</summary>
         LOWERCASE_LETTERS
     }
 }

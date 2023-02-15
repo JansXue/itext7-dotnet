@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,13 +43,14 @@ address: sales@itextpdf.com
 */
 using System;
 using System.IO;
-using Common.Logging;
-using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.Math;
-using Org.BouncyCastle.Security;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Bouncycastle.Crypto;
+using iText.Commons.Bouncycastle.Math;
+using iText.Commons.Utils;
 using iText.IO.Util;
-using iText.Kernel;
 using iText.Kernel.Crypto;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf;
 
 namespace iText.Kernel.Crypto.Securityhandler {
@@ -157,7 +158,7 @@ namespace iText.Kernel.Crypto.Securityhandler {
                 SetAES256DicEntries(encryptionDictionary, oeKey, ueKey, aes256Perms, encryptMetadata, embeddedFilesOnly);
             }
             catch (Exception ex) {
-                throw new PdfException(PdfException.PdfEncryption, ex);
+                throw new PdfException(KernelExceptionMessageConstant.PDF_ENCRYPTION, ex);
             }
         }
 
@@ -222,7 +223,7 @@ namespace iText.Kernel.Crypto.Securityhandler {
                 else {
                     hash = ComputeHash(password, uValue, VALIDATION_SALT_OFFSET, SALT_LENGTH);
                     if (!CompareArray(hash, uValue, 32)) {
-                        throw new BadPasswordException(PdfException.BadUserPassword);
+                        throw new BadPasswordException(KernelExceptionMessageConstant.BAD_USER_PASSWORD);
                     }
                     hash = ComputeHash(password, uValue, KEY_SALT_OFFSET, SALT_LENGTH);
                     AESCipherCBCnoPad ac = new AESCipherCBCnoPad(false, hash);
@@ -232,7 +233,7 @@ namespace iText.Kernel.Crypto.Securityhandler {
                 AESCipherCBCnoPad ac_1 = new AESCipherCBCnoPad(false, nextObjectKey);
                 byte[] decPerms = ac_1.ProcessBlock(perms, 0, perms.Length);
                 if (decPerms[9] != (byte)'a' || decPerms[10] != (byte)'d' || decPerms[11] != (byte)'b') {
-                    throw new BadPasswordException(PdfException.BadUserPassword);
+                    throw new BadPasswordException(KernelExceptionMessageConstant.BAD_USER_PASSWORD);
                 }
                 int permissionsDecoded = (decPerms[0] & 0xff) | ((decPerms[1] & 0xff) << 8) | ((decPerms[2] & 0xff) << 16)
                      | ((decPerms[3] & 0xff) << 24);
@@ -240,8 +241,9 @@ namespace iText.Kernel.Crypto.Securityhandler {
                 bool? encryptMetadataEntry = encryptionDictionary.GetAsBool(PdfName.EncryptMetadata);
                 if (permissionsDecoded != permissions || encryptMetadataEntry != null && encryptMetadata != encryptMetadataEntry
                     ) {
-                    ILog logger = LogManager.GetLogger(typeof(iText.Kernel.Crypto.Securityhandler.StandardHandlerUsingAes256));
-                    logger.Error(iText.IO.LogMessageConstant.ENCRYPTION_ENTRIES_P_AND_ENCRYPT_METADATA_NOT_CORRESPOND_PERMS_ENTRY
+                    ILogger logger = ITextLogManager.GetLogger(typeof(iText.Kernel.Crypto.Securityhandler.StandardHandlerUsingAes256
+                        ));
+                    logger.LogError(iText.IO.Logs.IoLogMessageConstant.ENCRYPTION_ENTRIES_P_AND_ENCRYPT_METADATA_NOT_CORRESPOND_PERMS_ENTRY
                         );
                 }
                 this.permissions = permissionsDecoded;
@@ -251,18 +253,17 @@ namespace iText.Kernel.Crypto.Securityhandler {
                 throw;
             }
             catch (Exception ex) {
-                throw new PdfException(PdfException.PdfEncryption, ex);
+                throw new PdfException(KernelExceptionMessageConstant.PDF_ENCRYPTION, ex);
             }
         }
 
-        /// <exception cref="Org.BouncyCastle.Security.SecurityUtilityException"/>
         private byte[] ComputeHash(byte[] password, byte[] salt, int saltOffset, int saltLen) {
             return ComputeHash(password, salt, saltOffset, saltLen, null);
         }
 
-        /// <exception cref="Org.BouncyCastle.Security.SecurityUtilityException"/>
         private byte[] ComputeHash(byte[] password, byte[] salt, int saltOffset, int saltLen, byte[] userKey) {
-            IDigest mdSha256 = DigestUtilities.GetDigest("SHA-256");
+            IIDigest mdSha256 = iText.Bouncycastleconnector.BouncyCastleFactoryCreator.GetFactory().CreateIDigest("SHA-256"
+                );
             mdSha256.Update(password);
             mdSha256.Update(salt, saltOffset, saltLen);
             if (userKey != null) {
@@ -271,8 +272,10 @@ namespace iText.Kernel.Crypto.Securityhandler {
             byte[] k = mdSha256.Digest();
             if (isPdf2) {
                 // See 7.6.4.3.3 "Algorithm 2.B"
-                IDigest mdSha384 = DigestUtilities.GetDigest("SHA-384");
-                IDigest mdSha512 = DigestUtilities.GetDigest("SHA-512");
+                IIDigest mdSha384 = iText.Bouncycastleconnector.BouncyCastleFactoryCreator.GetFactory().CreateIDigest("SHA-384"
+                    );
+                IIDigest mdSha512 = iText.Bouncycastleconnector.BouncyCastleFactoryCreator.GetFactory().CreateIDigest("SHA-512"
+                    );
                 int userKeyLen = userKey != null ? userKey.Length : 0;
                 int passAndUserKeyLen = password.Length + userKeyLen;
                 // k1 repetition length
@@ -295,9 +298,11 @@ namespace iText.Kernel.Crypto.Securityhandler {
                         (k, 16, 32));
                     byte[] e = cipher.ProcessBlock(k1, 0, k1.Length);
                     // c)
-                    IDigest md = null;
-                    BigInteger i_1 = new BigInteger(1, JavaUtil.ArraysCopyOf(e, 16));
-                    int remainder = i_1.Remainder(BigInteger.ValueOf(3)).IntValue;
+                    IIDigest md = null;
+                    IBigInteger i_1 = iText.Bouncycastleconnector.BouncyCastleFactoryCreator.GetFactory().CreateBigInteger(1, 
+                        JavaUtil.ArraysCopyOf(e, 16));
+                    int remainder = i_1.Remainder(iText.Bouncycastleconnector.BouncyCastleFactoryCreator.GetFactory().CreateBigInteger().ValueOf
+                        (3)).GetIntValue();
                     switch (remainder) {
                         case 0: {
                             md = mdSha256;
@@ -319,8 +324,8 @@ namespace iText.Kernel.Crypto.Securityhandler {
                     ++roundNum;
                     if (roundNum > 63) {
                         // e)
-                        int condVal = e[e.Length - 1] & 0xFF;
                         // interpreting last byte as unsigned integer
+                        int condVal = e[e.Length - 1] & 0xFF;
                         if (condVal <= roundNum - 32) {
                             break;
                         }

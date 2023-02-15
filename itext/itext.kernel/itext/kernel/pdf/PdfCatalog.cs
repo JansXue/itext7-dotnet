@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,38 +43,74 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Common.Logging;
-using iText.Kernel;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
+using iText.Kernel.Exceptions;
+using iText.Kernel.Logs;
 using iText.Kernel.Pdf.Action;
 using iText.Kernel.Pdf.Collection;
 using iText.Kernel.Pdf.Layer;
 using iText.Kernel.Pdf.Navigation;
+using iText.Kernel.Utils;
 
 namespace iText.Kernel.Pdf {
+    /// <summary>The root of a document’s object hierarchy.</summary>
     public class PdfCatalog : PdfObjectWrapper<PdfDictionary> {
+        private static readonly ILogger LOGGER = ITextLogManager.GetLogger(typeof(iText.Kernel.Pdf.PdfCatalog));
+
+        private const String ROOT_OUTLINE_TITLE = "Outlines";
+
+        private static readonly ICollection<PdfName> PAGE_MODES = JavaCollectionsUtil.UnmodifiableSet(new HashSet<
+            PdfName>(JavaUtil.ArraysAsList(PdfName.UseNone, PdfName.UseOutlines, PdfName.UseThumbs, PdfName.FullScreen
+            , PdfName.UseOC, PdfName.UseAttachments)));
+
+        private static readonly ICollection<PdfName> PAGE_LAYOUTS = JavaCollectionsUtil.UnmodifiableSet(new HashSet
+            <PdfName>(JavaUtil.ArraysAsList(PdfName.SinglePage, PdfName.OneColumn, PdfName.TwoColumnLeft, PdfName.
+            TwoColumnRight, PdfName.TwoPageLeft, PdfName.TwoPageRight)));
+
         private readonly PdfPagesTree pageTree;
 
-        protected internal IDictionary<PdfName, PdfNameTree> nameTrees = new Dictionary<PdfName, PdfNameTree>();
+        /// <summary>
+        /// Map of the
+        /// <see cref="PdfNameTree"/>.
+        /// </summary>
+        /// <remarks>
+        /// Map of the
+        /// <see cref="PdfNameTree"/>
+        /// . Used for creation
+        /// <c>name tree</c>
+        /// dictionary.
+        /// </remarks>
+        protected internal IDictionary<PdfName, PdfNameTree> nameTrees = new LinkedDictionary<PdfName, PdfNameTree
+            >();
 
+        /// <summary>Defining the page labelling for the document.</summary>
         protected internal PdfNumTree pageLabels;
 
+        /// <summary>The document’s optional content properties dictionary.</summary>
         protected internal PdfOCProperties ocProperties;
-
-        private const String OutlineRoot = "Outlines";
 
         private PdfOutline outlines;
 
-        private IDictionary<PdfObject, IList<PdfOutline>> pagesWithOutlines = new Dictionary<PdfObject, IList<PdfOutline
-            >>();
+        //This HashMap contents all pages of the document and outlines associated to them
+        private readonly IDictionary<PdfObject, IList<PdfOutline>> pagesWithOutlines = new Dictionary<PdfObject, IList
+            <PdfOutline>>();
 
+        //This flag determines if Outline tree of the document has been built via calling getOutlines method.
+        // If this flag is false all outline operations will be ignored
         private bool outlineMode;
 
+        /// <summary>
+        /// Create
+        /// <see cref="PdfCatalog"/>
+        /// dictionary.
+        /// </summary>
+        /// <param name="pdfObject">the dictionary to be wrapped</param>
         protected internal PdfCatalog(PdfDictionary pdfObject)
             : base(pdfObject) {
-            //This HashMap contents all pages of the document and outlines associated to them
-            //This flag determines if Outline tree of the document has been built via calling getOutlines method. If this flag is false all outline operations will be ignored
             if (pdfObject == null) {
-                throw new PdfException(PdfException.DocumentHasNoPdfCatalogObject);
+                throw new PdfException(KernelExceptionMessageConstant.DOCUMENT_HAS_NO_PDF_CATALOG_OBJECT);
             }
             EnsureObjectIsAddedToDocument(pdfObject);
             GetPdfObject().Put(PdfName.Type, PdfName.Catalog);
@@ -82,22 +118,43 @@ namespace iText.Kernel.Pdf {
             pageTree = new PdfPagesTree(this);
         }
 
+        /// <summary>
+        /// Create
+        /// <see cref="PdfCatalog"/>
+        /// to
+        /// <see cref="PdfDocument"/>.
+        /// </summary>
+        /// <param name="pdfDocument">
+        /// A
+        /// <see cref="PdfDocument"/>
+        /// object representing the document
+        /// to which redaction applies
+        /// </param>
         protected internal PdfCatalog(PdfDocument pdfDocument)
             : this((PdfDictionary)new PdfDictionary().MakeIndirect(pdfDocument)) {
         }
 
-        /// <summary>Use this method to get the <B>Optional Content Properties Dictionary</B>.</summary>
+        /// <summary>Use this method to get the <b>Optional Content Properties Dictionary</b>.</summary>
         /// <remarks>
-        /// Use this method to get the <B>Optional Content Properties Dictionary</B>.
-        /// Note that if you call this method, then the PdfDictionary with OCProperties will be
-        /// generated from PdfOCProperties object right before closing the PdfDocument,
-        /// so if you want to make low-level changes in Pdf structures themselves (PdfArray, PdfDictionary, etc),
-        /// then you should address directly those objects, e.g.:
-        /// <CODE>
+        /// Use this method to get the <b>Optional Content Properties Dictionary</b>.
+        /// Note that if you call this method, then the
+        /// <see cref="PdfDictionary"/>
+        /// with OCProperties will be
+        /// generated from
+        /// <see cref="iText.Kernel.Pdf.Layer.PdfOCProperties"/>
+        /// object right before closing the
+        /// <see cref="PdfDocument"/>
+        /// ,
+        /// so if you want to make low-level changes in Pdf structures themselves (
+        /// <see cref="PdfArray"/>
+        /// ,
+        /// <see cref="PdfDictionary"/>
+        /// , etc), then you should address directly those objects, e.g.:
+        /// <c>
         /// PdfCatalog pdfCatalog = pdfDoc.getCatalog();
         /// PdfDictionary ocProps = pdfCatalog.getAsDictionary(PdfName.OCProperties);
         /// // manipulate with ocProps.
-        /// </CODE>
+        /// </c>
         /// Also note that this method is implicitly called when creating a new PdfLayer instance,
         /// so you should either use hi-level logic of operating with layers,
         /// or manipulate low-level Pdf objects by yourself.
@@ -128,6 +185,12 @@ namespace iText.Kernel.Pdf {
             return ocProperties;
         }
 
+        /// <summary>
+        /// Get
+        /// <see cref="PdfDocument"/>
+        /// with indirect reference associated with the object.
+        /// </summary>
+        /// <returns>the resultant dictionary</returns>
         public virtual PdfDocument GetDocument() {
             return GetPdfObject().GetIndirectReference().GetDocument();
         }
@@ -135,21 +198,66 @@ namespace iText.Kernel.Pdf {
         /// <summary>PdfCatalog will be flushed in PdfDocument.close().</summary>
         /// <remarks>PdfCatalog will be flushed in PdfDocument.close(). User mustn't flush PdfCatalog!</remarks>
         public override void Flush() {
-            ILog logger = LogManager.GetLogger(typeof(PdfDocument));
-            logger.Warn("PdfCatalog cannot be flushed manually");
+            ILogger logger = ITextLogManager.GetLogger(typeof(PdfDocument));
+            logger.LogWarning("PdfCatalog cannot be flushed manually");
         }
 
+        protected internal override bool IsWrappedObjectMustBeIndirect() {
+            return true;
+        }
+
+        /// <summary>A value specifying a destination that shall be displayed when the document is opened.</summary>
+        /// <remarks>
+        /// A value specifying a destination that shall be displayed when the document is opened.
+        /// See ISO 32000-1, Table 28 – Entries in the catalog dictionary.
+        /// </remarks>
+        /// <param name="destination">
+        /// instance of
+        /// <see cref="iText.Kernel.Pdf.Navigation.PdfDestination"/>.
+        /// </param>
+        /// <returns>destination</returns>
         public virtual iText.Kernel.Pdf.PdfCatalog SetOpenAction(PdfDestination destination) {
             return Put(PdfName.OpenAction, destination.GetPdfObject());
         }
 
+        /// <summary>A value specifying an action that shall be performed when the document is opened.</summary>
+        /// <remarks>
+        /// A value specifying an action that shall be performed when the document is opened.
+        /// See ISO 32000-1, Table 28 – Entries in the catalog dictionary.
+        /// </remarks>
+        /// <param name="action">
+        /// instance of
+        /// <see cref="iText.Kernel.Pdf.Action.PdfAction"/>.
+        /// </param>
+        /// <returns>action</returns>
         public virtual iText.Kernel.Pdf.PdfCatalog SetOpenAction(PdfAction action) {
             return Put(PdfName.OpenAction, action.GetPdfObject());
         }
 
+        /// <summary>The actions that shall be taken in response to various trigger events affecting the document as a whole.
+        ///     </summary>
+        /// <remarks>
+        /// The actions that shall be taken in response to various trigger events affecting the document as a whole.
+        /// See ISO 32000-1, Table 28 – Entries in the catalog dictionary.
+        /// </remarks>
+        /// <param name="key">the key of which the associated value needs to be returned</param>
+        /// <param name="action">
+        /// instance of
+        /// <see cref="iText.Kernel.Pdf.Action.PdfAction"/>.
+        /// </param>
+        /// <returns>additional action</returns>
         public virtual iText.Kernel.Pdf.PdfCatalog SetAdditionalAction(PdfName key, PdfAction action) {
             PdfAction.SetAdditionalAction(this, key, action);
             return this;
+        }
+
+        /// <summary>Get page mode of the document.</summary>
+        /// <returns>
+        /// current instance of
+        /// <see cref="PdfCatalog"/>
+        /// </returns>
+        public virtual PdfName GetPageMode() {
+            return GetPdfObject().GetAsName(PdfName.PageMode);
         }
 
         /// <summary>This method sets a page mode of the document.</summary>
@@ -167,48 +275,39 @@ namespace iText.Kernel.Pdf {
         /// ,
         /// <c>PdfName.UseOC</c>
         /// ,
-        /// <c>PdfName.UseAttachments</c>
-        /// .
+        /// <c>PdfName.UseAttachments</c>.
         /// </remarks>
         /// <param name="pageMode">page mode.</param>
         /// <returns>current instance of PdfCatalog</returns>
         public virtual iText.Kernel.Pdf.PdfCatalog SetPageMode(PdfName pageMode) {
-            if (pageMode.Equals(PdfName.UseNone) || pageMode.Equals(PdfName.UseOutlines) || pageMode.Equals(PdfName.UseThumbs
-                ) || pageMode.Equals(PdfName.FullScreen) || pageMode.Equals(PdfName.UseOC) || pageMode.Equals(PdfName.
-                UseAttachments)) {
+            if (PAGE_MODES.Contains(pageMode)) {
                 return Put(PdfName.PageMode, pageMode);
             }
             return this;
         }
 
-        public virtual PdfName GetPageMode() {
-            return GetPdfObject().GetAsName(PdfName.PageMode);
+        /// <summary>Get page layout of the document.</summary>
+        /// <returns>name object of page layout that shall be used when document is opened</returns>
+        public virtual PdfName GetPageLayout() {
+            return GetPdfObject().GetAsName(PdfName.PageLayout);
         }
 
         /// <summary>This method sets a page layout of the document</summary>
-        /// <param name="pageLayout"/>
+        /// <param name="pageLayout">page layout of the document</param>
+        /// <returns>
+        /// 
+        /// <see cref="PdfCatalog"/>
+        /// instance with applied page layout
+        /// </returns>
         public virtual iText.Kernel.Pdf.PdfCatalog SetPageLayout(PdfName pageLayout) {
-            if (pageLayout.Equals(PdfName.SinglePage) || pageLayout.Equals(PdfName.OneColumn) || pageLayout.Equals(PdfName
-                .TwoColumnLeft) || pageLayout.Equals(PdfName.TwoColumnRight) || pageLayout.Equals(PdfName.TwoPageLeft)
-                 || pageLayout.Equals(PdfName.TwoPageRight)) {
+            if (PAGE_LAYOUTS.Contains(pageLayout)) {
                 return Put(PdfName.PageLayout, pageLayout);
             }
             return this;
         }
 
-        public virtual PdfName GetPageLayout() {
-            return GetPdfObject().GetAsName(PdfName.PageLayout);
-        }
-
-        /// <summary>
-        /// This method sets the document viewer preferences, specifying the way the document shall be displayed on the
-        /// screen
-        /// </summary>
-        /// <param name="preferences"/>
-        public virtual iText.Kernel.Pdf.PdfCatalog SetViewerPreferences(PdfViewerPreferences preferences) {
-            return Put(PdfName.ViewerPreferences, preferences.GetPdfObject());
-        }
-
+        /// <summary>Get viewer preferences of the document.</summary>
+        /// <returns>dictionary of viewer preferences</returns>
         public virtual PdfViewerPreferences GetViewerPreferences() {
             PdfDictionary viewerPreferences = GetPdfObject().GetAsDictionary(PdfName.ViewerPreferences);
             if (viewerPreferences != null) {
@@ -217,6 +316,23 @@ namespace iText.Kernel.Pdf {
             else {
                 return null;
             }
+        }
+
+        /// <summary>
+        /// This method sets the document viewer preferences, specifying the way the document shall be displayed on the
+        /// screen
+        /// </summary>
+        /// <param name="preferences">
+        /// document's
+        /// <see cref="PdfViewerPreferences">viewer preferences</see>
+        /// </param>
+        /// <returns>
+        /// 
+        /// <see cref="PdfCatalog"/>
+        /// instance with applied viewer preferences
+        /// </returns>
+        public virtual iText.Kernel.Pdf.PdfCatalog SetViewerPreferences(PdfViewerPreferences preferences) {
+            return Put(PdfName.ViewerPreferences, preferences.GetPdfObject());
         }
 
         /// <summary>This method gets Names tree from the catalog.</summary>
@@ -235,6 +351,10 @@ namespace iText.Kernel.Pdf {
         }
 
         /// <summary>This method returns the NumberTree of Page Labels</summary>
+        /// <param name="createIfNotExists">
+        /// defines whether the NumberTree of Page Labels should be created
+        /// if it didn't exist before
+        /// </param>
         /// <returns>
         /// returns
         /// <see cref="PdfNumTree"/>
@@ -246,27 +366,68 @@ namespace iText.Kernel.Pdf {
             return pageLabels;
         }
 
+        /// <summary>Get natural language.</summary>
+        /// <returns>natural language</returns>
+        public virtual PdfString GetLang() {
+            return GetPdfObject().GetAsString(PdfName.Lang);
+        }
+
         /// <summary>An entry specifying the natural language, and optionally locale.</summary>
         /// <remarks>
         /// An entry specifying the natural language, and optionally locale. Use this
         /// to specify the Language attribute on a Tagged Pdf element.
         /// For the content usage dictionary, use PdfName.Language
         /// </remarks>
+        /// <param name="lang">
+        /// 
+        /// <see cref="PdfString">language</see>
+        /// to be set
+        /// </param>
         public virtual void SetLang(PdfString lang) {
             Put(PdfName.Lang, lang);
         }
 
-        public virtual PdfString GetLang() {
-            return GetPdfObject().GetAsString(PdfName.Lang);
-        }
-
+        /// <summary>
+        /// Add an extensions dictionary containing developer prefix identification and version
+        /// numbers for developer extensions that occur in this document.
+        /// </summary>
+        /// <remarks>
+        /// Add an extensions dictionary containing developer prefix identification and version
+        /// numbers for developer extensions that occur in this document.
+        /// See ISO 32000-1, Table 28 – Entries in the catalog dictionary.
+        /// </remarks>
+        /// <param name="extension">
+        /// enables developers to identify their own extension
+        /// relative to a base version of PDF
+        /// </param>
         public virtual void AddDeveloperExtension(PdfDeveloperExtension extension) {
             PdfDictionary extensions = GetPdfObject().GetAsDictionary(PdfName.Extensions);
             if (extensions == null) {
                 extensions = new PdfDictionary();
                 Put(PdfName.Extensions, extensions);
             }
+            if (extension.IsMultiValued()) {
+                // for multivalued extensions, we only check whether one of the same level is present or not
+                // (main use case: ISO extensions)
+                PdfArray existingExtensionArray = extensions.GetAsArray(extension.GetPrefix());
+                if (existingExtensionArray == null) {
+                    existingExtensionArray = new PdfArray();
+                    extensions.Put(extension.GetPrefix(), existingExtensionArray);
+                }
+                else {
+                    for (int i = 0; i < existingExtensionArray.Size(); i++) {
+                        PdfDictionary pdfDict = existingExtensionArray.GetAsDictionary(i);
+                        // for array-based extensions, we check for membership only, since comparison doesn't make sense
+                        if (pdfDict.GetAsNumber(PdfName.ExtensionLevel).IntValue() == extension.GetExtensionLevel()) {
+                            return;
+                        }
+                    }
+                }
+                existingExtensionArray.Add(extension.GetDeveloperExtensions());
+                existingExtensionArray.SetModified();
+            }
             else {
+                // for single-valued extensions, we compare against the existing extension level
                 PdfDictionary existingExtensionDict = extensions.GetAsDictionary(extension.GetPrefix());
                 if (existingExtensionDict != null) {
                     int diff = extension.GetBaseVersion().CompareTo(existingExtensionDict.GetAsName(PdfName.BaseVersion));
@@ -279,8 +440,8 @@ namespace iText.Kernel.Pdf {
                         return;
                     }
                 }
+                extensions.Put(extension.GetPrefix(), extension.GetDeveloperExtensions());
             }
-            extensions.Put(extension.GetPrefix(), extension.GetDeveloperExtensions());
         }
 
         /// <summary>
@@ -304,32 +465,48 @@ namespace iText.Kernel.Pdf {
         /// Sets collection dictionary that a conforming reader shall use to enhance the presentation of file attachments
         /// stored in the PDF document.
         /// </summary>
-        /// <param name="collection"/>
+        /// <param name="collection">
+        /// 
+        /// <see cref="iText.Kernel.Pdf.Collection.PdfCollection">dictionary</see>
+        /// </param>
+        /// <returns>
+        /// 
+        /// <see cref="PdfCatalog"/>
+        /// instance with applied collection dictionary
+        /// </returns>
         public virtual iText.Kernel.Pdf.PdfCatalog SetCollection(PdfCollection collection) {
             Put(PdfName.Collection, collection.GetPdfObject());
             return this;
         }
 
+        /// <summary>
+        /// Add key and value to
+        /// <see cref="PdfCatalog"/>
+        /// dictionary.
+        /// </summary>
+        /// <param name="key">the dictionary key corresponding with the PDF object</param>
+        /// <param name="value">the value of key</param>
+        /// <returns>the key and value</returns>
         public virtual iText.Kernel.Pdf.PdfCatalog Put(PdfName key, PdfObject value) {
             GetPdfObject().Put(key, value);
             SetModified();
             return this;
         }
 
+        /// <summary>Remove key from catalog dictionary.</summary>
+        /// <param name="key">the dictionary key corresponding with the PDF object</param>
+        /// <returns>the key</returns>
         public virtual iText.Kernel.Pdf.PdfCatalog Remove(PdfName key) {
             GetPdfObject().Remove(key);
             SetModified();
             return this;
         }
 
-        protected internal override bool IsWrappedObjectMustBeIndirect() {
-            return true;
-        }
-
         /// <summary>
         /// True indicates that getOCProperties() was called, may have been modified,
         /// and thus its dictionary needs to be reconstructed.
         /// </summary>
+        /// <returns>boolean indicating if the dictionary needs to be reconstructed</returns>
         protected internal virtual bool IsOCPropertiesMayHaveChanged() {
             return ocProperties != null;
         }
@@ -352,7 +529,7 @@ namespace iText.Kernel.Pdf {
         /// An object destination refers to. Must be an array or a dictionary with key /D and array.
         /// See ISO 32000-1 12.3.2.3 for more info.
         /// </param>
-        internal virtual void AddNamedDestination(String key, PdfObject value) {
+        internal virtual void AddNamedDestination(PdfString key, PdfObject value) {
             AddNameToNameTree(key, value, PdfName.Dests);
         }
 
@@ -362,14 +539,15 @@ namespace iText.Kernel.Pdf {
         /// <param name="key">key in the name tree</param>
         /// <param name="value">value in the name tree</param>
         /// <param name="treeType">type of the tree (Dests, AP, EmbeddedFiles etc).</param>
-        internal virtual void AddNameToNameTree(String key, PdfObject value, PdfName treeType) {
+        internal virtual void AddNameToNameTree(PdfString key, PdfObject value, PdfName treeType) {
             GetNameTree(treeType).AddEntry(key, value);
         }
 
         /// <summary>This method returns a complete outline tree of the whole document.</summary>
         /// <param name="updateOutlines">
         /// if the flag is true, the method read the whole document and creates outline tree.
-        /// If false the method gets cached outline tree (if it was cached via calling getOutlines method before).
+        /// If false the method gets cached outline tree (if it was cached via calling
+        /// getOutlines method before).
         /// </param>
         /// <returns>
         /// fully initialized
@@ -394,7 +572,7 @@ namespace iText.Kernel.Pdf {
                 outlines = new PdfOutline(GetDocument());
             }
             else {
-                ConstructOutlines(outlineRoot, destsTree.GetNames());
+                ConstructOutlines(outlineRoot, destsTree);
             }
             return outlines;
         }
@@ -413,15 +591,17 @@ namespace iText.Kernel.Pdf {
 
         /// <summary>This flag determines if Outline tree of the document has been built via calling getOutlines method.
         ///     </summary>
-        /// <remarks>This flag determines if Outline tree of the document has been built via calling getOutlines method. If this flag is false all outline operations will be ignored
-        ///     </remarks>
+        /// <remarks>
+        /// This flag determines if Outline tree of the document has been built via calling getOutlines method.
+        /// If this flag is false all outline operations will be ignored
+        /// </remarks>
         /// <returns>state of outline mode.</returns>
         internal virtual bool IsOutlineMode() {
             return outlineMode;
         }
 
         /// <summary>This method removes all outlines associated with a given page</summary>
-        /// <param name="page"/>
+        /// <param name="page">the page to remove outlines</param>
         internal virtual void RemoveOutlines(PdfPage page) {
             if (GetDocument().GetWriter() == null) {
                 return;
@@ -439,7 +619,7 @@ namespace iText.Kernel.Pdf {
         }
 
         /// <summary>This method sets the root outline element in the catalog.</summary>
-        /// <param name="outline"/>
+        /// <param name="outline">the outline dictionary that shall be the root of the document’s outline hierarchy</param>
         internal virtual void AddRootOutline(PdfOutline outline) {
             if (!outlineMode) {
                 return;
@@ -449,15 +629,112 @@ namespace iText.Kernel.Pdf {
             }
         }
 
+        /// <summary>
+        /// Construct
+        /// <see cref="PdfCatalog">dictionary</see>
+        /// iteratively.
+        /// </summary>
+        /// <remarks>
+        /// Construct
+        /// <see cref="PdfCatalog">dictionary</see>
+        /// iteratively. Invalid pdf documents will be processed depending on
+        /// <see cref="StrictnessLevel"/>
+        /// , if it set to lenient, we will ignore and process invalid outline structure, otherwise
+        /// <see cref="iText.Kernel.Exceptions.PdfException"/>
+        /// will be thrown.
+        /// </remarks>
+        /// <param name="outlineRoot">
+        /// 
+        /// <see cref="PdfOutline">dictionary</see>
+        /// root.
+        /// </param>
+        /// <param name="names">map containing the PdfObjects stored in the tree.</param>
+        internal virtual void ConstructOutlines(PdfDictionary outlineRoot, IPdfNameTreeAccess names) {
+            if (outlineRoot == null) {
+                return;
+            }
+            PdfReader reader = GetDocument().GetReader();
+            bool isLenientLevel = reader == null || PdfReader.StrictnessLevel.CONSERVATIVE.IsStricter(reader.GetStrictnessLevel
+                ());
+            PdfDictionary current = outlineRoot.GetAsDictionary(PdfName.First);
+            outlines = new PdfOutline(ROOT_OUTLINE_TITLE, outlineRoot, GetDocument());
+            PdfOutline parentOutline = outlines;
+            IDictionary<PdfOutline, PdfDictionary> nextUnprocessedChildForParentMap = new Dictionary<PdfOutline, PdfDictionary
+                >();
+            ICollection<PdfDictionary> alreadyVisitedOutlinesSet = new HashSet<PdfDictionary>();
+            while (current != null) {
+                PdfDictionary parent = current.GetAsDictionary(PdfName.Parent);
+                if (null == parent && !isLenientLevel) {
+                    throw new PdfException(MessageFormatUtil.Format(KernelExceptionMessageConstant.CORRUPTED_OUTLINE_NO_PARENT_ENTRY
+                        , current.indirectReference));
+                }
+                PdfString title = current.GetAsString(PdfName.Title);
+                if (null == title) {
+                    throw new PdfException(MessageFormatUtil.Format(KernelExceptionMessageConstant.CORRUPTED_OUTLINE_NO_TITLE_ENTRY
+                        , current.indirectReference));
+                }
+                PdfOutline currentOutline = new PdfOutline(title.ToUnicodeString(), current, parentOutline);
+                alreadyVisitedOutlinesSet.Add(current);
+                AddOutlineToPage(currentOutline, current, names);
+                parentOutline.GetAllChildren().Add(currentOutline);
+                PdfDictionary first = current.GetAsDictionary(PdfName.First);
+                PdfDictionary next = current.GetAsDictionary(PdfName.Next);
+                if (first != null) {
+                    if (alreadyVisitedOutlinesSet.Contains(first)) {
+                        if (!isLenientLevel) {
+                            throw new PdfException(MessageFormatUtil.Format(KernelExceptionMessageConstant.CORRUPTED_OUTLINE_DICTIONARY_HAS_INFINITE_LOOP
+                                , first));
+                        }
+                        LOGGER.LogWarning(MessageFormatUtil.Format(KernelLogMessageConstant.CORRUPTED_OUTLINE_DICTIONARY_HAS_INFINITE_LOOP
+                            , first));
+                        return;
+                    }
+                    // Down in hierarchy; when returning up, process `next`.
+                    nextUnprocessedChildForParentMap.Put(parentOutline, next);
+                    parentOutline = currentOutline;
+                    current = first;
+                }
+                else {
+                    if (next != null) {
+                        if (alreadyVisitedOutlinesSet.Contains(next)) {
+                            if (!isLenientLevel) {
+                                throw new PdfException(MessageFormatUtil.Format(KernelExceptionMessageConstant.CORRUPTED_OUTLINE_DICTIONARY_HAS_INFINITE_LOOP
+                                    , next));
+                            }
+                            LOGGER.LogWarning(MessageFormatUtil.Format(KernelLogMessageConstant.CORRUPTED_OUTLINE_DICTIONARY_HAS_INFINITE_LOOP
+                                , next));
+                            return;
+                        }
+                        // Next sibling in hierarchy
+                        current = next;
+                    }
+                    else {
+                        // Up in hierarchy using 'nextUnprocessedChildForParentMap'.
+                        current = null;
+                        while (current == null && parentOutline != null) {
+                            parentOutline = parentOutline.GetParent();
+                            if (parentOutline != null) {
+                                current = nextUnprocessedChildForParentMap.Get(parentOutline);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         internal virtual PdfDestination CopyDestination(PdfObject dest, IDictionary<PdfPage, PdfPage> page2page, PdfDocument
              toDocument) {
+            if (null == dest) {
+                return null;
+            }
             PdfDestination d = null;
             if (dest.IsArray()) {
                 PdfObject pageObject = ((PdfArray)dest).Get(0);
                 foreach (PdfPage oldPage in page2page.Keys) {
                     if (oldPage.GetPdfObject() == pageObject) {
-                        // in the copiedArray old page ref will be correctly replaced by the new page ref as this page is already copied
-                        PdfArray copiedArray = (PdfArray)dest.CopyTo(toDocument, false);
+                        // in the copiedArray old page ref will be correctly replaced by the new page ref
+                        // as this page is already copied
+                        PdfArray copiedArray = (PdfArray)dest.CopyTo(toDocument, false, NullCopyFilter.GetInstance());
                         d = new PdfExplicitDestination(copiedArray);
                         break;
                     }
@@ -466,8 +743,8 @@ namespace iText.Kernel.Pdf {
             else {
                 if (dest.IsString() || dest.IsName()) {
                     PdfNameTree destsTree = GetNameTree(PdfName.Dests);
-                    IDictionary<String, PdfObject> dests = destsTree.GetNames();
-                    String srcDestName = dest.IsString() ? ((PdfString)dest).ToUnicodeString() : ((PdfName)dest).GetValue();
+                    IDictionary<PdfString, PdfObject> dests = destsTree.GetNames();
+                    PdfString srcDestName = dest.IsString() ? (PdfString)dest : new PdfString(((PdfName)dest).GetValue());
                     PdfArray srcDestArray = (PdfArray)dests.Get(srcDestName);
                     if (srcDestArray != null) {
                         PdfObject pageObject = srcDestArray.Get(0);
@@ -478,11 +755,12 @@ namespace iText.Kernel.Pdf {
                             if (oldPage.GetPdfObject() == pageObject) {
                                 d = new PdfStringDestination(srcDestName);
                                 if (!IsEqualSameNameDestExist(page2page, toDocument, srcDestName, srcDestArray, oldPage)) {
-                                    // in the copiedArray old page ref will be correctly replaced by the new page ref as this page is already copied
+                                    // in the copiedArray old page ref will be correctly replaced by the new page ref as this
+                                    // page is already copied
                                     PdfArray copiedArray = (PdfArray)srcDestArray.CopyTo(toDocument, false);
-                                    // here we can safely replace first item of the array because array of NamedDestination or StringDestination
-                                    // never refers to page in another document via PdfNumber, but should always refer to page within current document
-                                    // via page object reference.
+                                    // here we can safely replace first item of the array because array of NamedDestination or
+                                    // StringDestination never refers to page in another document via PdfNumber, but should
+                                    // always refer to page within current document via page object reference.
                                     copiedArray.Set(0, page2page.Get(oldPage).GetPdfObject());
                                     toDocument.AddNamedDestination(srcDestName, copiedArray);
                                 }
@@ -495,7 +773,21 @@ namespace iText.Kernel.Pdf {
             return d;
         }
 
-        private bool IsEqualSameNameDestExist(IDictionary<PdfPage, PdfPage> page2page, PdfDocument toDocument, String
+        internal virtual PdfDictionary FillAndGetOcPropertiesDictionary() {
+            if (ocProperties != null) {
+                ocProperties.FillDictionary(false);
+                GetPdfObject().Put(PdfName.OCProperties, ocProperties.GetPdfObject());
+                ocProperties = null;
+            }
+            if (GetPdfObject().GetAsDictionary(PdfName.OCProperties) == null) {
+                PdfDictionary pdfDictionary = new PdfDictionary();
+                pdfDictionary.MakeIndirect(GetDocument());
+                GetDocument().GetCatalog().GetPdfObject().Put(PdfName.OCProperties, pdfDictionary);
+            }
+            return GetPdfObject().GetAsDictionary(PdfName.OCProperties);
+        }
+
+        private bool IsEqualSameNameDestExist(IDictionary<PdfPage, PdfPage> page2page, PdfDocument toDocument, PdfString
              srcDestName, PdfArray srcDestArray, PdfPage oldPage) {
             PdfArray sameNameDest = (PdfArray)toDocument.GetCatalog().GetNameTree(PdfName.Dests).GetNames().Get(srcDestName
                 );
@@ -513,10 +805,18 @@ namespace iText.Kernel.Pdf {
             return equalSameNameDestExists;
         }
 
-        private void AddOutlineToPage(PdfOutline outline, IDictionary<String, PdfObject> names) {
+        private void AddOutlineToPage(PdfOutline outline, IPdfNameTreeAccess names) {
             PdfObject pageObj = outline.GetDestination().GetDestinationPage(names);
             if (pageObj is PdfNumber) {
-                pageObj = GetDocument().GetPage(((PdfNumber)pageObj).IntValue() + 1).GetPdfObject();
+                int pageNumber = ((PdfNumber)pageObj).IntValue() + 1;
+                try {
+                    pageObj = GetDocument().GetPage(pageNumber).GetPdfObject();
+                }
+                catch (IndexOutOfRangeException) {
+                    pageObj = null;
+                    LOGGER.LogWarning(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.OUTLINE_DESTINATION_PAGE_NUMBER_IS_OUT_OF_BOUNDS
+                        , pageNumber));
+                }
             }
             if (pageObj != null) {
                 IList<PdfOutline> outs = pagesWithOutlines.Get(pageObj);
@@ -528,70 +828,7 @@ namespace iText.Kernel.Pdf {
             }
         }
 
-        /// <summary>Get the next outline of the current node in the outline tree by looking for a child or sibling node.
-        ///     </summary>
-        /// <remarks>
-        /// Get the next outline of the current node in the outline tree by looking for a child or sibling node.
-        /// If there is no child or sibling of the current node
-        /// <see cref="GetParentNextOutline(PdfDictionary)"/>
-        /// is called to get a hierarchical parent's next node.
-        /// <see langword="null"/>
-        /// is returned if one does not exist.
-        /// </remarks>
-        /// <returns>
-        /// the
-        /// <see cref="PdfDictionary"/>
-        /// object of the next outline if one exists,
-        /// <see langword="null"/>
-        /// otherwise.
-        /// </returns>
-        private PdfDictionary GetNextOutline(PdfDictionary first, PdfDictionary next, PdfDictionary parent) {
-            if (first != null) {
-                return first;
-            }
-            else {
-                if (next != null) {
-                    return next;
-                }
-                else {
-                    return GetParentNextOutline(parent);
-                }
-            }
-        }
-
-        /// <summary>Gets the parent's next outline of the current node.</summary>
-        /// <remarks>
-        /// Gets the parent's next outline of the current node.
-        /// If the parent does not have a next we look at the grand parent, great-grand parent, etc until we find a next node or reach the root at which point
-        /// <see langword="null"/>
-        /// is returned to signify there is no next node present.
-        /// </remarks>
-        /// <returns>
-        /// the
-        /// <see cref="PdfDictionary"/>
-        /// object of the next outline if one exists,
-        /// <see langword="null"/>
-        /// otherwise.
-        /// </returns>
-        private PdfDictionary GetParentNextOutline(PdfDictionary parent) {
-            if (parent == null) {
-                return null;
-            }
-            PdfDictionary current = null;
-            while (current == null) {
-                current = parent.GetAsDictionary(PdfName.Next);
-                if (current == null) {
-                    parent = parent.GetAsDictionary(PdfName.Parent);
-                    if (parent == null) {
-                        return null;
-                    }
-                }
-            }
-            return current;
-        }
-
-        private void AddOutlineToPage(PdfOutline outline, PdfDictionary item, IDictionary<String, PdfObject> names
-            ) {
+        private void AddOutlineToPage(PdfOutline outline, PdfDictionary item, IPdfNameTreeAccess names) {
             PdfObject dest = item.Get(PdfName.Dest);
             if (dest != null) {
                 PdfDestination destination = PdfDestination.MakeDestination(dest);
@@ -615,39 +852,6 @@ namespace iText.Kernel.Pdf {
                         }
                     }
                 }
-            }
-        }
-
-        /// <summary>
-        /// Constructs
-        /// <see cref="outlines"/>
-        /// iteratively
-        /// </summary>
-        private void ConstructOutlines(PdfDictionary outlineRoot, IDictionary<String, PdfObject> names) {
-            if (outlineRoot == null) {
-                return;
-            }
-            PdfDictionary first = outlineRoot.GetAsDictionary(PdfName.First);
-            PdfDictionary current = first;
-            PdfDictionary next;
-            PdfDictionary parent;
-            Dictionary<PdfDictionary, PdfOutline> parentOutlineMap = new Dictionary<PdfDictionary, PdfOutline>();
-            outlines = new PdfOutline(OutlineRoot, outlineRoot, GetDocument());
-            PdfOutline parentOutline = outlines;
-            parentOutlineMap.Put(outlineRoot, parentOutline);
-            while (current != null) {
-                first = current.GetAsDictionary(PdfName.First);
-                next = current.GetAsDictionary(PdfName.Next);
-                parent = current.GetAsDictionary(PdfName.Parent);
-                parentOutline = parentOutlineMap.Get(parent);
-                PdfOutline currentOutline = new PdfOutline(current.GetAsString(PdfName.Title).ToUnicodeString(), current, 
-                    parentOutline);
-                AddOutlineToPage(currentOutline, current, names);
-                parentOutline.GetAllChildren().Add(currentOutline);
-                if (first != null) {
-                    parentOutlineMap.Put(current, currentOutline);
-                }
-                current = GetNextOutline(first, next, parent);
             }
         }
     }

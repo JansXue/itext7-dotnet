@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,10 +44,12 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
 using iText.IO.Source;
 
 namespace iText.IO.Codec {
+    //TODO DEVSIX-6406: add support for indeterminate-segment-size value of dataLength
     /// <summary>
     /// Class to read a JBIG2 file at a basic level: understand all the segments,
     /// understand what segments belong to which pages, how many pages there are,
@@ -61,49 +63,69 @@ namespace iText.IO.Codec {
     /// are any.  Or: the minimum required to be able to take a normal sequential
     /// or random-access organized file, and be able to embed JBIG2 pages as images
     /// in a PDF.
-    /// TODO: the indeterminate-segment-size value of dataLength, else?
     /// </remarks>
     public class Jbig2SegmentReader {
+        //see 7.4.2.
         public const int SYMBOL_DICTIONARY = 0;
 
+        //see 7.4.3.
         public const int INTERMEDIATE_TEXT_REGION = 4;
 
+        //see 7.4.3.//see 7.4.3.
         public const int IMMEDIATE_TEXT_REGION = 6;
 
+        //see 7.4.3.
         public const int IMMEDIATE_LOSSLESS_TEXT_REGION = 7;
 
+        //see 7.4.4.
         public const int PATTERN_DICTIONARY = 16;
 
+        //see 7.4.5.
         public const int INTERMEDIATE_HALFTONE_REGION = 20;
 
+        //see 7.4.5.
         public const int IMMEDIATE_HALFTONE_REGION = 22;
 
+        //see 7.4.5.
         public const int IMMEDIATE_LOSSLESS_HALFTONE_REGION = 23;
 
+        //see 7.4.6.
         public const int INTERMEDIATE_GENERIC_REGION = 36;
 
+        //see 7.4.6.
         public const int IMMEDIATE_GENERIC_REGION = 38;
 
+        //see 7.4.6.
         public const int IMMEDIATE_LOSSLESS_GENERIC_REGION = 39;
 
+        //see 7.4.7.
         public const int INTERMEDIATE_GENERIC_REFINEMENT_REGION = 40;
 
+        //see 7.4.7.
         public const int IMMEDIATE_GENERIC_REFINEMENT_REGION = 42;
 
+        //see 7.4.7.
         public const int IMMEDIATE_LOSSLESS_GENERIC_REFINEMENT_REGION = 43;
 
+        //see 7.4.8.
         public const int PAGE_INFORMATION = 48;
 
+        //see 7.4.9.
         public const int END_OF_PAGE = 49;
 
+        //see 7.4.10.
         public const int END_OF_STRIPE = 50;
 
+        //see 7.4.11.
         public const int END_OF_FILE = 51;
 
+        //see 7.4.12.
         public const int PROFILES = 52;
 
+        //see 7.4.13.
         public const int TABLES = 53;
 
+        //see 7.4.14.
         public const int EXTENSION = 62;
 
         private readonly IDictionary<int, Jbig2SegmentReader.Jbig2Segment> segments = new SortedDictionary<int, Jbig2SegmentReader.Jbig2Segment
@@ -152,27 +174,6 @@ namespace iText.IO.Codec {
             public int page_association_offset = -1;
 
             public Jbig2Segment(int segment_number) {
-                //see 7.4.2.
-                //see 7.4.3.
-                //see 7.4.3.
-                //see 7.4.3.
-                //see 7.4.4.
-                //see 7.4.5.
-                //see 7.4.5.
-                //see 7.4.5.
-                //see 7.4.6.
-                //see 7.4.6.
-                //see 7.4.6.
-                //see 7.4.7.
-                //see 7.4.7.
-                //see 7.4.7.
-                //see 7.4.8.
-                //see 7.4.9.
-                //see 7.4.10.
-                //see 7.4.11.
-                //see 7.4.12.
-                //see 7.4.13.
-                //see 7.4.14.
                 this.segmentNumber = segment_number;
             }
 
@@ -209,7 +210,6 @@ namespace iText.IO.Codec {
             /// if for_embedding, skip the segment types that are known to be not for acrobat.
             /// </remarks>
             /// <param name="for_embedding">True if the bytes represents embedded data, false otherwise</param>
-            /// <exception cref="System.IO.IOException"/>
             /// <returns>a byte array</returns>
             public virtual byte[] GetData(bool for_embedding) {
                 MemoryStream os = new MemoryStream();
@@ -248,7 +248,6 @@ namespace iText.IO.Codec {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         public Jbig2SegmentReader(RandomAccessFileOrArray ra) {
             this.ra = ra;
         }
@@ -259,7 +258,6 @@ namespace iText.IO.Codec {
             return bc;
         }
 
-        /// <exception cref="System.IO.IOException"/>
         public virtual void Read() {
             if (this.read) {
                 throw new InvalidOperationException("already.attempted.a.read.on.this.jbig2.file");
@@ -268,8 +266,8 @@ namespace iText.IO.Codec {
             ReadFileHeader();
             // Annex D
             if (this.sequential) {
+                // D.1
                 do {
-                    // D.1
                     Jbig2SegmentReader.Jbig2Segment tmp = ReadHeader();
                     ReadSegment(tmp);
                     segments.Put(tmp.segmentNumber, tmp);
@@ -290,11 +288,10 @@ namespace iText.IO.Codec {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         internal virtual void ReadSegment(Jbig2SegmentReader.Jbig2Segment s) {
             int ptr = (int)ra.GetPosition();
+            //TODO DEVSIX-6406 7.2.7 not supported
             if (s.dataLength == unchecked((long)(0xffffffffl))) {
-                // TODO figure this bit out, 7.2.7
                 return;
             }
             byte[] data = new byte[(int)s.dataLength];
@@ -308,15 +305,14 @@ namespace iText.IO.Codec {
                 ra.Seek(last);
                 Jbig2SegmentReader.Jbig2Page p = pages.Get(s.page);
                 if (p == null) {
-                    throw new iText.IO.IOException("Referring to widht or height of a page we haven't seen yet: {0}").SetMessageParams
-                        (s.page);
+                    throw new iText.IO.Exceptions.IOException("Referring to widht or height of a page we haven't seen yet: {0}"
+                        ).SetMessageParams(s.page);
                 }
                 p.pageBitmapWidth = page_bitmap_width;
                 p.pageBitmapHeight = page_bitmap_height;
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         internal virtual Jbig2SegmentReader.Jbig2Segment ReadHeader() {
             int ptr = (int)ra.GetPosition();
             // 7.2.1
@@ -362,7 +358,7 @@ namespace iText.IO.Codec {
                 }
                 else {
                     if (count_of_referred_to_segments == 5 || count_of_referred_to_segments == 6) {
-                        throw new iText.IO.IOException("Count of referred-to segments has forbidden value in the header for segment {0} starting at {1}"
+                        throw new iText.IO.Exceptions.IOException("Count of referred-to segments has forbidden value in the header for segment {0} starting at {1}"
                             ).SetMessageParams(segment_number, ptr);
                     }
                 }
@@ -384,7 +380,6 @@ namespace iText.IO.Codec {
                     }
                 }
             }
-            // TODO wtf ack
             s.referredToSegmentNumbers = referred_to_segment_numbers;
             // 7.2.6
             int segment_page_association;
@@ -396,8 +391,8 @@ namespace iText.IO.Codec {
                 segment_page_association = ra.Read();
             }
             if (segment_page_association < 0) {
-                throw new iText.IO.IOException("Page {0} is invalid for segment {1} starting at {2}").SetMessageParams(segment_page_association
-                    , segment_number, ptr);
+                throw new iText.IO.Exceptions.IOException("Page {0} is invalid for segment {1} starting at {2}").SetMessageParams
+                    (segment_page_association, segment_number, ptr);
             }
             s.page = segment_page_association;
             // so we can change the page association at embedding time.
@@ -414,7 +409,7 @@ namespace iText.IO.Codec {
             }
             // 7.2.7
             long segment_data_length = ra.ReadUnsignedInt();
-            // TODO the 0xffffffff value that might be here, and how to understand those afflicted segments
+            //TODO DEVSIX-6406 the 0xffffffff value that might be here, and how to understand those afflicted segments
             s.dataLength = segment_data_length;
             int end_ptr = (int)ra.GetPosition();
             ra.Seek(ptr);
@@ -424,7 +419,6 @@ namespace iText.IO.Codec {
             return s;
         }
 
-        /// <exception cref="System.IO.IOException"/>
         internal virtual void ReadFileHeader() {
             ra.Seek(0);
             byte[] idstring = new byte[8];
@@ -432,14 +426,15 @@ namespace iText.IO.Codec {
             byte[] refidstring = new byte[] { (byte)0x97, 0x4A, 0x42, 0x32, 0x0D, 0x0A, 0x1A, 0x0A };
             for (int i = 0; i < idstring.Length; i++) {
                 if (idstring[i] != refidstring[i]) {
-                    throw new iText.IO.IOException("File header idstring is not good at byte {0}").SetMessageParams(i);
+                    throw new iText.IO.Exceptions.IOException("File header idstring is not good at byte {0}").SetMessageParams
+                        (i);
                 }
             }
             int fileheaderflags = ra.Read();
             this.sequential = (fileheaderflags & 0x1) == 0x1;
             this.number_of_pages_known = (fileheaderflags & 0x2) == 0x0;
             if ((fileheaderflags & 0xfc) != 0x0) {
-                throw new iText.IO.IOException("File header flags bits from 2 to 7 should be 0, some not");
+                throw new iText.IO.Exceptions.IOException("File header flags bits from 2 to 7 should be 0, some not");
             }
             if (this.number_of_pages_known) {
                 this.number_of_pages = ra.ReadInt();
@@ -480,8 +475,8 @@ namespace iText.IO.Codec {
                 os.Dispose();
             }
             catch (System.IO.IOException e) {
-                ILog logger = LogManager.GetLogger(typeof(Jbig2SegmentReader));
-                logger.Debug(e.Message);
+                ILogger logger = ITextLogManager.GetLogger(typeof(Jbig2SegmentReader));
+                logger.LogDebug(e.Message);
             }
             return streamBytes;
         }

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -49,6 +49,7 @@ using iText.Layout.Element;
 using iText.Test;
 
 namespace iText.Layout {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class BackgroundColorTest : ExtendedITextTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/layout/BackgroundColorTest/";
@@ -69,9 +70,6 @@ namespace iText.Layout {
             CreateDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ShouldAddBackgroundColorAttributeToAccessiblityWhenBackgroundColorIsSet() {
             fileName = "simpleBackgroundColorTest.pdf";
@@ -86,8 +84,6 @@ namespace iText.Layout {
             CloseDocumentAndCompareOutputs(doc);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         private void CloseDocumentAndCompareOutputs(Document document) {
             document.Close();
             String compareResult = new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder, "diff"

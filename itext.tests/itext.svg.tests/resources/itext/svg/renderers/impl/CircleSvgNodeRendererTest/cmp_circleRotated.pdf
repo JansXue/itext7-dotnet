@@ -1,9 +1,8 @@
 %PDF-1.7
 %‚„œ”
 5 0 obj
-<</Length 27>>stream
+<</Length 12>>stream
 q
-1 0 0 1 0 0 cm
 /Fm1 Do
 Q
 
@@ -16,7 +15,7 @@ endobj
 <</Pages 2 0 R/Type/Catalog>>
 endobj
 3 0 obj
-<</CreationDate(D:20190107143522+01'00')/ModDate(D:20190107143522+01'00')/Producer(iTextÆ 7.1.5-SNAPSHOT ©2000-2019 iText Group NV \(AGPL-version\))>>
+<</CreationDate(D:20211018115323+03'00')/ModDate(D:20211018115323+03'00')/Producer(iTextÆ Core 7.2.1-SNAPSHOT \(AGPL version\) ©2000-2021 iText Group NV)>>
 endobj
 2 0 obj
 <</Count 1/Kids[4 0 R]/Type/Pages>>
@@ -33,10 +32,14 @@ Q
 endstream
 endobj
 7 0 obj
-<</BBox[0 0 600 600]/Length 518/Resources<<>>/Subtype/Form/Type/XObject>>stream
+<</BBox[0 0 600 600]/Length 557/Resources<<>>/Subtype/Form/Type/XObject>>stream
+0 0 600 600 re
+W
+n
 q
 0 1 1 rg
 0 0.50196 0 RG
+0.75 w
 % ellipse
 60 0 m
 60 33.14 33.14 60 0 60 c
@@ -44,12 +47,12 @@ q
 -60 -33.14 -33.14 -60 0 -60 c
 33.14 -60 60 -33.14 60 0 c
 B
-h
 Q
 q
 0.90631 0.42262 -0.42262 0.90631 75 75 cm
 0 0.50196 0 rg
 1 0 0 RG
+0.75 w
 % ellipse
 60 0 m
 60 33.14 33.14 60 0 60 c
@@ -57,25 +60,24 @@ q
 -60 -33.14 -33.14 -60 0 -60 c
 33.14 -60 60 -33.14 60 0 c
 B
-h
 Q
 q
 0.90631 0.42262 -0.42262 0.90631 75 75 cm
 0 0 0 RG
+0.75 w
 % line
 0 0 m
 75 0 l
 S
-h
 Q
 q
 0.90631 0.42262 -0.42262 0.90631 75 75 cm
 0 0 0 RG
+0.75 w
 % line
 0 0 m
 0 75 l
 S
-h
 Q
 
 endstream
@@ -83,16 +85,16 @@ endobj
 xref
 0 8
 0000000000 65535 f 
-0000000226 00000 n 
-0000000437 00000 n 
-0000000271 00000 n 
-0000000089 00000 n 
+0000000211 00000 n 
+0000000427 00000 n 
+0000000256 00000 n 
+0000000074 00000 n 
 0000000015 00000 n 
-0000000488 00000 n 
-0000000671 00000 n 
+0000000478 00000 n 
+0000000661 00000 n 
 trailer
-<</ID [<f7f51d1116220e0dd5f8e9895c7752f8><f7f51d1116220e0dd5f8e9895c7752f8>]/Info 3 0 R/Root 1 0 R/Size 8>>
-%iText-7.1.5-SNAPSHOT
+<</ID [<e6e56fcb0e0054b119cfead16b333d15><e6e56fcb0e0054b119cfead16b333d15>]/Info 3 0 R/Root 1 0 R/Size 8>>
+%iText-Core-7.2.1-SNAPSHOT
 startxref
-1295
+1324
 %%EOF

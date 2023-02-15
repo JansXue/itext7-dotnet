@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-    Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -51,12 +51,14 @@ namespace iText.Test.Attributes
         private string messageTemplate;
         public int Count;
         public bool Ignore;
+        public int LogLevel;
 
         public LogMessageAttribute(string messageTemplate)
         {
             this.messageTemplate = messageTemplate;
             this.Count = 1;
             this.Ignore = false;
+            this.LogLevel = LogLevelConstants.UNKNOWN;
         }
 
         public string GetMessageTemplate()

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -52,6 +52,7 @@ using iText.Svg.Exceptions;
 using iText.Svg.Renderers;
 
 namespace iText.Svg.Renderers.Impl {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class PdfRootSvgNodeRendererIntegrationTest : SvgIntegrationTest {
         [NUnit.Framework.Test]
         public virtual void CalculateOutermostViewportTest() {
@@ -110,20 +111,17 @@ namespace iText.Svg.Renderers.Impl {
 
         [NUnit.Framework.Test]
         public virtual void NoBoundingBoxOnXObjectTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                PdfDocument document = new PdfDocument(new PdfWriter(new MemoryStream(), new WriterProperties().SetCompressionLevel
-                    (0)));
-                document.AddNewPage();
-                ISvgNodeRenderer processed = SvgConverter.Process(SvgConverter.Parse("<svg />")).GetRootRenderer();
-                PdfRootSvgNodeRenderer root = new PdfRootSvgNodeRenderer(processed);
-                PdfFormXObject pdfForm = new PdfFormXObject(new PdfStream());
-                PdfCanvas canvas = new PdfCanvas(pdfForm, document);
-                SvgDrawContext context = new SvgDrawContext(null, null);
-                context.PushCanvas(canvas);
-                root.Draw(context);
-            }
-            , NUnit.Framework.Throws.InstanceOf<SvgProcessingException>().With.Message.EqualTo(SvgLogMessageConstant.ROOT_SVG_NO_BBOX))
-;
+            PdfDocument document = new PdfDocument(new PdfWriter(new MemoryStream(), new WriterProperties().SetCompressionLevel
+                (0)));
+            document.AddNewPage();
+            ISvgNodeRenderer processed = SvgConverter.Process(SvgConverter.Parse("<svg />"), null).GetRootRenderer();
+            PdfRootSvgNodeRenderer root = new PdfRootSvgNodeRenderer(processed);
+            PdfFormXObject pdfForm = new PdfFormXObject(new PdfStream());
+            PdfCanvas canvas = new PdfCanvas(pdfForm, document);
+            SvgDrawContext context = new SvgDrawContext(null, null);
+            context.PushCanvas(canvas);
+            Exception e = NUnit.Framework.Assert.Catch(typeof(SvgProcessingException), () => root.Draw(context));
+            NUnit.Framework.Assert.AreEqual(SvgExceptionMessageConstant.ROOT_SVG_NO_BBOX, e.Message);
         }
 
         [NUnit.Framework.Test]

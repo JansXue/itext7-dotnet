@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,14 +45,15 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using iText.Commons.Utils;
 using iText.IO.Font.Cmap;
 using iText.IO.Font.Constants;
 using iText.IO.Util;
 
 namespace iText.IO.Font {
     public class FontCache {
-        private static readonly IDictionary<String, IDictionary<String, Object>> allCidFonts = new Dictionary<String
-            , IDictionary<String, Object>>();
+        private static readonly IDictionary<String, IDictionary<String, Object>> allCidFonts = new LinkedDictionary
+            <String, IDictionary<String, Object>>();
 
         private static readonly IDictionary<String, ICollection<String>> registryNames = new Dictionary<String, ICollection
             <String>>();
@@ -103,6 +104,9 @@ namespace iText.IO.Font {
             return true;
         }
 
+        /// <summary>Finds a CJK font family which is compatible to the given CMap.</summary>
+        /// <param name="cmap">a name of the CMap for which compatible font is searched.</param>
+        /// <returns>a CJK font name if there's known compatible font for the given cmap name, or null otherwise.</returns>
         public static String GetCompatibleCidFont(String cmap) {
             foreach (KeyValuePair<String, ICollection<String>> e in registryNames) {
                 if (e.Value.Contains(cmap)) {
@@ -117,8 +121,18 @@ namespace iText.IO.Font {
             return null;
         }
 
+        /// <summary>
+        /// Finds all CMap names that belong to the same registry to which a given
+        /// font belongs.
+        /// </summary>
+        /// <param name="fontName">a name of the font for which CMap's are searched.</param>
+        /// <returns>a set of CMap names corresponding to the given font.</returns>
         public static ICollection<String> GetCompatibleCmaps(String fontName) {
-            String registry = (String)FontCache.GetAllPredefinedCidFonts().Get(fontName).Get(REGISTRY_PROP);
+            IDictionary<String, Object> cidFonts = FontCache.GetAllPredefinedCidFonts().Get(fontName);
+            if (cidFonts == null) {
+                return null;
+            }
+            String registry = (String)cidFonts.Get(REGISTRY_PROP);
             return registryNames.Get(registry);
         }
 
@@ -130,6 +144,11 @@ namespace iText.IO.Font {
             return registryNames;
         }
 
+        /// <summary>Parses CMap with a given name producing it in a form of cid to unicode mapping.</summary>
+        /// <param name="uniMap">a CMap name. It is expected that CMap identified by this name defines unicode to cid mapping.
+        ///     </param>
+        /// <returns>an object for convenient mapping from cid to unicode. If no CMap was found for provided name an exception is thrown.
+        ///     </returns>
         public static CMapCidUni GetCid2UniCmap(String uniMap) {
             CMapCidUni cidUni = new CMapCidUni();
             return ParseCmap(uniMap, cidUni);
@@ -148,6 +167,24 @@ namespace iText.IO.Font {
         public static CMapCidByte GetCid2Byte(String cmap) {
             CMapCidByte cidByte = new CMapCidByte();
             return ParseCmap(cmap, cidByte);
+        }
+
+        /// <summary>
+        /// Clears the cache by removing fonts that were added via
+        /// <see cref="SaveFont(FontProgram, System.String)"/>.
+        /// </summary>
+        /// <remarks>
+        /// Clears the cache by removing fonts that were added via
+        /// <see cref="SaveFont(FontProgram, System.String)"/>.
+        /// <para />
+        /// Be aware that in multithreading environment this method call will affect the result of
+        /// <see cref="GetFont(System.String)"/>.
+        /// This in its turn affects creation of fonts via factories when
+        /// <c>cached</c>
+        /// argument is set to true (which is by default).
+        /// </remarks>
+        public static void ClearSavedFonts() {
+            fontCache.Clear();
         }
 
         public static FontProgram GetFont(String fontName) {
@@ -171,7 +208,6 @@ namespace iText.IO.Font {
             return font;
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private static void LoadRegistry() {
             Stream resource = ResourceUtil.GetResourceStream(FontResources.CMAPS + CJK_REGISTRY_FILENAME);
             try {
@@ -179,7 +215,7 @@ namespace iText.IO.Font {
                 p.Load(resource);
                 foreach (KeyValuePair<Object, Object> entry in p) {
                     String value = (String)entry.Value;
-                    String[] splitValue = iText.IO.Util.StringUtil.Split(value, " ");
+                    String[] splitValue = iText.Commons.Utils.StringUtil.Split(value, " ");
                     ICollection<String> set = new HashSet<String>();
                     foreach (String s in splitValue) {
                         if (s.Length != 0) {
@@ -196,7 +232,6 @@ namespace iText.IO.Font {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private static IDictionary<String, Object> ReadFontProperties(String name) {
             Stream resource = ResourceUtil.GetResourceStream(FontResources.CMAPS + name + ".properties");
             try {
@@ -221,8 +256,8 @@ namespace iText.IO.Font {
             IntHashtable h = new IntHashtable();
             StringTokenizer tk = new StringTokenizer(s);
             while (tk.HasMoreTokens()) {
-                int n1 = Convert.ToInt32(tk.NextToken());
-                h.Put(n1, Convert.ToInt32(tk.NextToken()));
+                int n1 = Convert.ToInt32(tk.NextToken(), System.Globalization.CultureInfo.InvariantCulture);
+                h.Put(n1, Convert.ToInt32(tk.NextToken(), System.Globalization.CultureInfo.InvariantCulture));
             }
             return h;
         }
@@ -233,7 +268,7 @@ namespace iText.IO.Font {
                 CMapParser.ParseCid(name, cmap, new CMapLocationResource());
             }
             catch (System.IO.IOException e) {
-                throw new iText.IO.IOException(iText.IO.IOException.IoException, e);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.IoException, e);
             }
             return cmap;
         }

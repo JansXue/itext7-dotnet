@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,10 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Common.Logging;
+using System.Linq;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
 using iText.IO.Font.Constants;
 using iText.IO.Font.Otf;
 using iText.IO.Util;
@@ -65,16 +68,15 @@ namespace iText.IO.Font {
         /// <summary>The map containing the kerning information.</summary>
         /// <remarks>
         /// The map containing the kerning information. It represents the content of
-        /// table 'kern'. The key is an <CODE>Integer</CODE> where the top 16 bits
+        /// table 'kern'. The key is an <c>Integer</c> where the top 16 bits
         /// are the glyph number for the first character and the lower 16 bits are the
         /// glyph number for the second character. The value is the amount of kerning in
-        /// normalized 1000 units as an <CODE>Integer</CODE>. This value is usually negative.
+        /// normalized 1000 units as an <c>Integer</c>. This value is usually negative.
         /// </remarks>
         protected internal IntHashtable kerning = new IntHashtable();
 
         private byte[] fontStreamBytes;
 
-        /// <exception cref="System.IO.IOException"/>
         private TrueTypeFont(OpenTypeParser fontParser) {
             this.fontParser = fontParser;
             this.fontParser.LoadTables(true);
@@ -85,22 +87,18 @@ namespace iText.IO.Font {
             fontNames = new FontNames();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         public TrueTypeFont(String path)
             : this(new OpenTypeParser(path)) {
         }
 
-        /// <exception cref="System.IO.IOException"/>
         public TrueTypeFont(byte[] ttf)
             : this(new OpenTypeParser(ttf)) {
         }
 
-        /// <exception cref="System.IO.IOException"/>
         internal TrueTypeFont(String ttcPath, int ttcIndex)
             : this(new OpenTypeParser(ttcPath, ttcIndex)) {
         }
 
-        /// <exception cref="System.IO.IOException"/>
         internal TrueTypeFont(byte[] ttc, int ttcIndex)
             : this(new OpenTypeParser(ttc, ttcIndex)) {
         }
@@ -163,7 +161,7 @@ namespace iText.IO.Font {
             }
             catch (System.IO.IOException e) {
                 fontStreamBytes = null;
-                throw new iText.IO.IOException(iText.IO.IOException.IoException, e);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.IoException, e);
             }
             return fontStreamBytes;
         }
@@ -188,6 +186,7 @@ namespace iText.IO.Font {
         /// The offset from the start of the file to the table directory.
         /// It is 0 for TTF and may vary for TTC depending on the chosen font.
         /// </remarks>
+        /// <returns>directory Offset</returns>
         public virtual int GetDirectoryOffset() {
             return fontParser.directoryOffset;
         }
@@ -209,11 +208,35 @@ namespace iText.IO.Font {
                 return fontParser.GetSubset(glyphs, subset);
             }
             catch (System.IO.IOException e) {
-                throw new iText.IO.IOException(iText.IO.IOException.IoException, e);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.IoException, e);
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
+        /// <summary>
+        /// Maps a set of glyph CIDs (as used in PDF file) to corresponding GID values
+        /// (as a glyph primary identifier in the font file).
+        /// </summary>
+        /// <remarks>
+        /// Maps a set of glyph CIDs (as used in PDF file) to corresponding GID values
+        /// (as a glyph primary identifier in the font file).
+        /// This call is only meaningful for fonts that return true for
+        /// <see cref="IsCff()"/>.
+        /// For other types of fonts, GID and CID are always the same, so that call would essentially
+        /// return a set of the same values.
+        /// </remarks>
+        /// <param name="glyphs">a set of glyph CIDs</param>
+        /// <returns>a set of glyph ids corresponding to the passed glyph CIDs</returns>
+        public virtual ICollection<int> MapGlyphsCidsToGids(ICollection<int> glyphs) {
+            return glyphs.Select((i) => {
+                Glyph usedGlyph = GetGlyphByCode(i);
+                if (usedGlyph is GidAwareGlyph) {
+                    return ((GidAwareGlyph)usedGlyph).GetGid();
+                }
+                return i;
+            }
+            ).ToList();
+        }
+
         protected internal virtual void ReadGdefTable() {
             int[] gdef = fontParser.tables.Get("GDEF");
             if (gdef != null) {
@@ -225,7 +248,6 @@ namespace iText.IO.Font {
             gdefTable.ReadTable();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         protected internal virtual void ReadGsubTable() {
             int[] gsub = fontParser.tables.Get("GSUB");
             if (gsub != null) {
@@ -234,7 +256,6 @@ namespace iText.IO.Font {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         protected internal virtual void ReadGposTable() {
             int[] gpos = fontParser.tables.Get("GPOS");
             if (gpos != null) {
@@ -243,7 +264,6 @@ namespace iText.IO.Font {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private void InitializeFontProperties() {
             // initialize sfnt tables
             OpenTypeParser.HeaderTable head = fontParser.GetHeadTable();
@@ -300,20 +320,36 @@ namespace iText.IO.Font {
             unicodeToGlyph = new LinkedDictionary<int, Glyph>(cmap.Count);
             codeToGlyph = new LinkedDictionary<int, Glyph>(numOfGlyphs);
             avgWidth = 0;
+            CFFFontSubset cffFontSubset = null;
+            if (IsCff()) {
+                cffFontSubset = new CFFFontSubset(GetFontStreamBytes());
+            }
             foreach (int charCode in cmap.Keys) {
                 int index = cmap.Get(charCode)[0];
                 if (index >= numOfGlyphs) {
-                    ILog LOGGER = LogManager.GetLogger(typeof(iText.IO.Font.TrueTypeFont));
-                    LOGGER.Warn(MessageFormatUtil.Format(iText.IO.LogMessageConstant.FONT_HAS_INVALID_GLYPH, GetFontNames().GetFontName
-                        (), index));
+                    ILogger LOGGER = ITextLogManager.GetLogger(typeof(iText.IO.Font.TrueTypeFont));
+                    LOGGER.LogWarning(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.FONT_HAS_INVALID_GLYPH, GetFontNames
+                        ().GetFontName(), index));
                     continue;
                 }
-                Glyph glyph = new Glyph(index, glyphWidths[index], charCode, bBoxes != null ? bBoxes[index] : null);
+                int cid;
+                Glyph glyph;
+                int[] glyphBBox = bBoxes != null ? bBoxes[index] : null;
+                if (cffFontSubset != null && cffFontSubset.IsCID()) {
+                    cid = cffFontSubset.GetCidForGlyphId(index);
+                    GidAwareGlyph cffGlyph = new GidAwareGlyph(cid, glyphWidths[index], charCode, glyphBBox);
+                    cffGlyph.SetGid(index);
+                    glyph = cffGlyph;
+                }
+                else {
+                    cid = index;
+                    glyph = new Glyph(cid, glyphWidths[index], charCode, glyphBBox);
+                }
                 unicodeToGlyph.Put(charCode, glyph);
                 // This is done on purpose to keep the mapping to glyphs with smaller unicode values, in contrast with
                 // larger values which often represent different forms of other characters.
-                if (!codeToGlyph.ContainsKey(index)) {
-                    codeToGlyph.Put(index, glyph);
+                if (!codeToGlyph.ContainsKey(cid)) {
+                    codeToGlyph.Put(cid, glyph);
                 }
                 avgWidth += glyph.GetWidth();
             }
@@ -364,7 +400,6 @@ namespace iText.IO.Font {
             return Object.Equals(fontParser.fileName, fontProgram);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         public virtual void Close() {
             if (fontParser != null) {
                 fontParser.Close();
@@ -376,9 +411,12 @@ namespace iText.IO.Font {
         ///     </summary>
         /// <remarks>
         /// The method will update usedGlyphs with additional range or with all glyphs if there is no subset.
-        /// usedGlyphs can be used for width array and ToUnicode CMAP.
+        /// This set of used glyphs can be used for building width array and ToUnicode CMAP.
         /// </remarks>
-        /// <param name="usedGlyphs">used glyphs that will be updated if needed.</param>
+        /// <param name="usedGlyphs">
+        /// a set of integers, which are glyph ids that denote used glyphs.
+        /// This set is updated inside of the method if needed.
+        /// </param>
         /// <param name="subset">subset status</param>
         /// <param name="subsetRanges">additional subset ranges</param>
         public virtual void UpdateUsedGlyphs(SortedSet<int> usedGlyphs, bool subset, IList<int[]> subsetRanges) {
@@ -405,6 +443,17 @@ namespace iText.IO.Font {
             }
         }
 
+        /// <summary>
+        /// Normalizes given ranges by making sure that first values in pairs are lower than second values and merges overlapping
+        /// ranges in one.
+        /// </summary>
+        /// <param name="ranges">
+        /// a
+        /// <see cref="System.Collections.IList{E}"/>
+        /// of integer arrays, which are constituted by pairs of ints that denote
+        /// each range limits. Each integer array size shall be a multiple of two.
+        /// </param>
+        /// <returns>single merged array consisting of pairs of integers, each of them denoting a range.</returns>
         private static int[] ToCompactRange(IList<int[]> ranges) {
             IList<int[]> simp = new List<int[]>();
             foreach (int[] range in ranges) {

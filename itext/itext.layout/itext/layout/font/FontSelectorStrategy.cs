@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -49,9 +49,13 @@ namespace iText.Layout.Font {
     /// <summary>
     /// <see cref="FontSelectorStrategy"/>
     /// is responsible for splitting text into sub texts with one particular font.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="FontSelectorStrategy"/>
+    /// is responsible for splitting text into sub texts with one particular font.
     /// <see cref="NextGlyphs()"/>
     /// will create next sub text and set current font.
-    /// </summary>
+    /// </remarks>
     public abstract class FontSelectorStrategy {
         protected internal String text;
 
@@ -59,13 +63,13 @@ namespace iText.Layout.Font {
 
         protected internal readonly FontProvider provider;
 
-        protected internal readonly FontSet tempFonts;
+        protected internal readonly FontSet additionalFonts;
 
-        protected internal FontSelectorStrategy(String text, FontProvider provider, FontSet tempFonts) {
+        protected internal FontSelectorStrategy(String text, FontProvider provider, FontSet additionalFonts) {
             this.text = text;
             this.index = 0;
             this.provider = provider;
-            this.tempFonts = tempFonts;
+            this.additionalFonts = additionalFonts;
         }
 
         public virtual bool EndOfText() {
@@ -81,7 +85,7 @@ namespace iText.Layout.Font {
         /// <returns>cached or just created PdfFont on success, otherwise null.</returns>
         /// <seealso cref="FontProvider.GetPdfFont(FontInfo, FontSet)"/>
         protected internal virtual PdfFont GetPdfFont(FontInfo fontInfo) {
-            return provider.GetPdfFont(fontInfo, tempFonts);
+            return provider.GetPdfFont(fontInfo, additionalFonts);
         }
     }
 }

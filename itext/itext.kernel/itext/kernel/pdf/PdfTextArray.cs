@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -47,18 +47,30 @@ using System.Text;
 using iText.Kernel.Font;
 
 namespace iText.Kernel.Pdf {
-    /// <summary><CODE>PdfTextArray</CODE> defines an array with displacements and <CODE>PdfString</CODE>-objects.
-    ///     </summary>
+    /// <summary>
+    /// <see cref="PdfTextArray"/>
+    /// defines an array with displacements and
+    /// <see cref="PdfString"/>
+    /// -objects.
+    /// </summary>
     /// <remarks>
-    /// <CODE>PdfTextArray</CODE> defines an array with displacements and <CODE>PdfString</CODE>-objects.
-    /// <P>
-    /// A <CODE>PdfTextArray</CODE> is used with the operator <VAR>TJ</VAR> in <CODE>PdfCanvas</CODE>.
-    /// The first object in this array has to be a <CODE>PdfString</CODE>;
+    /// <see cref="PdfTextArray"/>
+    /// defines an array with displacements and
+    /// <see cref="PdfString"/>
+    /// -objects.
+    /// <para />
+    /// A
+    /// <see cref="PdfTextArray"/>
+    /// is used with the operator TJ in
+    /// <see cref="iText.Kernel.Pdf.Canvas.PdfCanvas"/>.
+    /// The first object in this array has to be a
+    /// <see cref="PdfString"/>
+    /// ;
     /// see reference manual version 1.3 section 8.7.5, pages 346-347.
     /// OR
     /// see reference manual version 1.6 section 5.3.2, pages 378-379.
     /// To emit a more efficient array, we consolidate repeated numbers or strings into single array entries.
-    /// "add( 50 ); add( -50 );" will REMOVE the combined zero from the array.
+    /// For example: "add( 50 ); add( -50 );" will REMOVE the combined zero from the array.
     /// </remarks>
     public class PdfTextArray : PdfArray {
         private float lastNumber = float.NaN;
@@ -78,8 +90,7 @@ namespace iText.Kernel.Pdf {
 
         /// <summary>
         /// Adds content of the
-        /// <c>PdfArray</c>
-        /// .
+        /// <c>PdfArray</c>.
         /// </summary>
         /// <param name="a">
         /// the

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,7 +41,8 @@ source product.
 For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 
@@ -66,6 +67,19 @@ namespace iText.Kernel.Pdf.Annot {
             : base(rect) {
         }
 
+        /// <summary>
+        /// Instantiates a new
+        /// <see cref="PdfMarkupAnnotation"/>
+        /// instance based on
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// instance, that represents existing annotation object in the document.
+        /// </summary>
+        /// <param name="pdfObject">
+        /// the
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// representing annotation object
+        /// </param>
+        /// <seealso cref="PdfAnnotation.MakeAnnotation(iText.Kernel.Pdf.PdfObject)"/>
         protected internal PdfMarkupAnnotation(PdfDictionary pdfObject)
             : base(pdfObject) {
         }
@@ -331,8 +345,8 @@ namespace iText.Kernel.Pdf.Annot {
                 if (popupObject != null) {
                     PdfAnnotation annotation = MakeAnnotation(popupObject);
                     if (!(annotation is PdfPopupAnnotation)) {
-                        ILog logger = LogManager.GetLogger(typeof(iText.Kernel.Pdf.Annot.PdfMarkupAnnotation));
-                        logger.Warn(iText.IO.LogMessageConstant.POPUP_ENTRY_IS_NOT_POPUP_ANNOTATION);
+                        ILogger logger = ITextLogManager.GetLogger(typeof(iText.Kernel.Pdf.Annot.PdfMarkupAnnotation));
+                        logger.LogWarning(iText.IO.Logs.IoLogMessageConstant.POPUP_ENTRY_IS_NOT_POPUP_ANNOTATION);
                         return null;
                     }
                     popup = (PdfPopupAnnotation)annotation;
@@ -370,25 +384,32 @@ namespace iText.Kernel.Pdf.Annot {
         /// A name specifying the relationship (the "reply type") between this annotation and one specified by IRT entry
         /// (see
         /// <see cref="GetInReplyTo()"/>
+        /// ).
+        /// </summary>
+        /// <remarks>
+        /// A name specifying the relationship (the "reply type") between this annotation and one specified by IRT entry
+        /// (see
+        /// <see cref="GetInReplyTo()"/>
         /// ). Valid values are:
-        /// <ul>
-        /// <li>
+        /// <list type="bullet">
+        /// <item><description>
         /// <see cref="iText.Kernel.Pdf.PdfName.R"/>
         /// - The annotation shall be considered a reply to the annotation specified by IRT.
         /// Conforming readers shall not display replies to an annotation individually but together in the form of
-        /// threaded comments.</li>
-        /// <li>
+        /// threaded comments.
+        /// </description></item>
+        /// <item><description>
         /// <see cref="iText.Kernel.Pdf.PdfName.Group"/>
-        /// - The annotation shall be grouped with the annotation specified by IRT.</li>
-        /// </ul>
-        /// </summary>
+        /// - The annotation shall be grouped with the annotation specified by IRT.
+        /// </description></item>
+        /// </list>
+        /// </remarks>
         /// <returns>
         /// a
         /// <see cref="iText.Kernel.Pdf.PdfName"/>
         /// specifying relationship with the specified by the IRT entry; or null if reply
         /// type is not specified, in this case the default value is
-        /// <see cref="iText.Kernel.Pdf.PdfName.R"/>
-        /// .
+        /// <see cref="iText.Kernel.Pdf.PdfName.R"/>.
         /// </returns>
         public virtual PdfName GetReplyType() {
             return GetPdfObject().GetAsName(PdfName.RT);
@@ -398,10 +419,15 @@ namespace iText.Kernel.Pdf.Annot {
         /// Sets the relationship (the "reply type") between this annotation and one specified by IRT entry
         /// (see
         /// <see cref="SetInReplyTo(PdfAnnotation)"/>
-        /// ). For valid values see
-        /// <see cref="GetInReplyTo()"/>
-        /// .
+        /// ).
         /// </summary>
+        /// <remarks>
+        /// Sets the relationship (the "reply type") between this annotation and one specified by IRT entry
+        /// (see
+        /// <see cref="SetInReplyTo(PdfAnnotation)"/>
+        /// ). For valid values see
+        /// <see cref="GetInReplyTo()"/>.
+        /// </remarks>
         /// <param name="replyType">
         /// a
         /// <see cref="iText.Kernel.Pdf.PdfName"/>
@@ -438,10 +464,9 @@ namespace iText.Kernel.Pdf.Annot {
         /// Intents allow conforming readers to distinguish between different uses and behaviors
         /// of a single markup annotation type. If this entry is not present or its value is the same as the annotation type,
         /// the annotation shall have no explicit intent and should behave in a generic manner in a conforming reader.
-        /// <p>
+        /// <para />
         /// See ISO-320001, free text annotations (Table 174), line annotations (Table 175), polygon annotations (Table 178),
         /// and polyline annotations (Table 178) for the specific intent values for those types.
-        /// </p>
         /// </remarks>
         /// <param name="intent">
         /// a
@@ -461,13 +486,13 @@ namespace iText.Kernel.Pdf.Annot {
         /// <remarks>
         /// An external data dictionary specifying data that shall be associated with the annotation.
         /// This dictionary contains the following entries:
-        /// <ul>
-        /// <li>
+        /// <list type="bullet">
+        /// <item><description>
         /// <see cref="iText.Kernel.Pdf.PdfName.Type"/>
         /// - (optional) If present, shall be
-        /// <see cref="iText.Kernel.Pdf.PdfName.ExData"/>
-        /// .</li>
-        /// <li>
+        /// <see cref="iText.Kernel.Pdf.PdfName.ExData"/>.
+        /// </description></item>
+        /// <item><description>
         /// <see cref="iText.Kernel.Pdf.PdfName.Subtype"/>
         /// - (required) a name specifying the type of data that the markup annotation
         /// shall be associated with. The only defined value is
@@ -475,8 +500,9 @@ namespace iText.Kernel.Pdf.Annot {
         /// . Table 298 (ISO-320001)
         /// lists the values that correspond to a subtype of Markup3D (See also
         /// <see cref="Pdf3DAnnotation"/>
-        /// ).</li>
-        /// </ul>
+        /// ).
+        /// </description></item>
+        /// </list>
         /// </remarks>
         /// <returns>
         /// An external data
@@ -491,13 +517,13 @@ namespace iText.Kernel.Pdf.Annot {
         /// <remarks>
         /// Sets an external data dictionary specifying data that shall be associated with the annotation.
         /// This dictionary should contain the following entries:
-        /// <ul>
-        /// <li>
+        /// <list type="bullet">
+        /// <item><description>
         /// <see cref="iText.Kernel.Pdf.PdfName.Type"/>
         /// - (optional) If present, shall be
-        /// <see cref="iText.Kernel.Pdf.PdfName.ExData"/>
-        /// .</li>
-        /// <li>
+        /// <see cref="iText.Kernel.Pdf.PdfName.ExData"/>.
+        /// </description></item>
+        /// <item><description>
         /// <see cref="iText.Kernel.Pdf.PdfName.Subtype"/>
         /// - (required) a name specifying the type of data that the markup annotation
         /// shall be associated with. The only defined value is
@@ -505,15 +531,17 @@ namespace iText.Kernel.Pdf.Annot {
         /// . Table 298 (ISO-320001)
         /// lists the values that correspond to a subtype of Markup3D (See also
         /// <see cref="Pdf3DAnnotation"/>
-        /// ).</li>
-        /// </ul>
+        /// ).
+        /// </description></item>
+        /// </list>
         /// </remarks>
+        /// <param name="exData">the external data dictionary</param>
         /// <returns>
         /// this
         /// <see cref="PdfMarkupAnnotation"/>
-        /// instance.
+        /// instance
         /// </returns>
-        public virtual iText.Kernel.Pdf.Annot.PdfMarkupAnnotation SetExternalData(PdfName exData) {
+        public virtual iText.Kernel.Pdf.Annot.PdfMarkupAnnotation SetExternalData(PdfDictionary exData) {
             return (iText.Kernel.Pdf.Annot.PdfMarkupAnnotation)Put(PdfName.ExData, exData);
         }
     }

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,10 +42,12 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Common.Logging;
-using iText.IO.Util;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
 using iText.StyledXmlParser.Css;
 using iText.StyledXmlParser.Css.Resolve.Shorthand;
+using iText.StyledXmlParser.Css.Util;
 
 namespace iText.StyledXmlParser.Css.Resolve.Shorthand.Impl {
     /// <summary>
@@ -78,13 +80,13 @@ namespace iText.StyledXmlParser.Css.Resolve.Shorthand.Impl {
         * @see com.itextpdf.styledxmlparser.css.resolve.shorthand.IShorthandResolver#resolveShorthand(java.lang.String)
         */
         public virtual IList<CssDeclaration> ResolveShorthand(String shorthandExpression) {
-            String[] props = iText.IO.Util.StringUtil.Split(shorthandExpression, "\\s+");
+            IList<String> props = CssUtils.ExtractShorthandProperties(shorthandExpression)[0];
             IList<CssDeclaration> resolvedDecl = new List<CssDeclaration>();
             String topProperty = MessageFormatUtil.Format(_0_TOP_1, GetPrefix(), GetPostfix());
             String rightProperty = MessageFormatUtil.Format(_0_RIGHT_1, GetPrefix(), GetPostfix());
             String bottomProperty = MessageFormatUtil.Format(_0_BOTTOM_1, GetPrefix(), GetPostfix());
             String leftProperty = MessageFormatUtil.Format(_0_LEFT_1, GetPrefix(), GetPostfix());
-            if (props.Length == 1) {
+            if (props.Count == 1) {
                 resolvedDecl.Add(new CssDeclaration(topProperty, props[0]));
                 resolvedDecl.Add(new CssDeclaration(rightProperty, props[0]));
                 resolvedDecl.Add(new CssDeclaration(bottomProperty, props[0]));
@@ -93,27 +95,27 @@ namespace iText.StyledXmlParser.Css.Resolve.Shorthand.Impl {
             else {
                 foreach (String prop in props) {
                     if (CommonCssConstants.INHERIT.Equals(prop) || CommonCssConstants.INITIAL.Equals(prop)) {
-                        ILog logger = LogManager.GetLogger(typeof(AbstractBoxShorthandResolver));
-                        logger.Warn(MessageFormatUtil.Format(iText.StyledXmlParser.LogMessageConstant.INVALID_CSS_PROPERTY_DECLARATION
+                        ILogger logger = ITextLogManager.GetLogger(typeof(AbstractBoxShorthandResolver));
+                        logger.LogWarning(MessageFormatUtil.Format(iText.StyledXmlParser.Logs.StyledXmlParserLogMessageConstant.INVALID_CSS_PROPERTY_DECLARATION
                             , shorthandExpression));
                         return JavaCollectionsUtil.EmptyList<CssDeclaration>();
                     }
                 }
-                if (props.Length == 2) {
+                if (props.Count == 2) {
                     resolvedDecl.Add(new CssDeclaration(topProperty, props[0]));
                     resolvedDecl.Add(new CssDeclaration(rightProperty, props[1]));
                     resolvedDecl.Add(new CssDeclaration(bottomProperty, props[0]));
                     resolvedDecl.Add(new CssDeclaration(leftProperty, props[1]));
                 }
                 else {
-                    if (props.Length == 3) {
+                    if (props.Count == 3) {
                         resolvedDecl.Add(new CssDeclaration(topProperty, props[0]));
                         resolvedDecl.Add(new CssDeclaration(rightProperty, props[1]));
                         resolvedDecl.Add(new CssDeclaration(bottomProperty, props[2]));
                         resolvedDecl.Add(new CssDeclaration(leftProperty, props[1]));
                     }
                     else {
-                        if (props.Length == 4) {
+                        if (props.Count == 4) {
                             resolvedDecl.Add(new CssDeclaration(topProperty, props[0]));
                             resolvedDecl.Add(new CssDeclaration(rightProperty, props[1]));
                             resolvedDecl.Add(new CssDeclaration(bottomProperty, props[2]));

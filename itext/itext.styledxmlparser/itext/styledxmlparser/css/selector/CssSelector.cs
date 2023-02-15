@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -91,7 +91,6 @@ namespace iText.StyledXmlParser.Css.Selector {
             if (lastSelectorItemInd < 0) {
                 return true;
             }
-            //TODO: Consider pseudo-elements in SVG
             bool isPseudoElement = element is CssPseudoElementNode;
             for (int i = lastSelectorItemInd; i >= 0; i--) {
                 if (isPseudoElement && selectorItems[lastSelectorItemInd] is CssPseudoElementSelectorItem && i < lastSelectorItemInd

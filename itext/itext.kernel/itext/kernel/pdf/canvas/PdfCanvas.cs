@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -48,8 +48,8 @@ using iText.IO.Font.Otf;
 using iText.IO.Image;
 using iText.IO.Source;
 using iText.IO.Util;
-using iText.Kernel;
 using iText.Kernel.Colors;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Font;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
@@ -202,6 +202,12 @@ namespace iText.Kernel.Pdf.Canvas {
 
         private static readonly PdfSpecialCs.Pattern pattern = new PdfSpecialCs.Pattern();
 
+        private const float IDENTITY_MATRIX_EPS = 1e-4f;
+
+        // Flag showing whether to check the color on drawing or not
+        // Normally the color is checked on setColor but not the default one which is DeviceGray.BLACK
+        private bool defaultDeviceGrayBlackColorCheckRequired = true;
+
         /// <summary>a LIFO stack of graphics state saved states.</summary>
         protected internal Stack<CanvasGraphicsState> gsStack = new Stack<CanvasGraphicsState>();
 
@@ -301,8 +307,7 @@ namespace iText.Kernel.Pdf.Canvas {
 
         /// <summary>
         /// Gets current
-        /// <see cref="CanvasGraphicsState"/>
-        /// .
+        /// <see cref="CanvasGraphicsState"/>.
         /// </summary>
         /// <returns>container containing properties for the current state of the canvas.</returns>
         public virtual CanvasGraphicsState GetGraphicsState() {
@@ -336,7 +341,7 @@ namespace iText.Kernel.Pdf.Canvas {
         public virtual iText.Kernel.Pdf.Canvas.PdfCanvas RestoreState() {
             document.CheckIsoConformance('Q', IsoKey.CANVAS_STACK);
             if (gsStack.IsEmpty()) {
-                throw new PdfException(PdfException.UnbalancedSaveRestoreStateOperators);
+                throw new PdfException(KernelExceptionMessageConstant.UNBALANCED_SAVE_RESTORE_STATE_OPERATORS);
             }
             currentGs = gsStack.Pop();
             contentStream.GetOutputStream().WriteBytes(Q);
@@ -399,14 +404,9 @@ namespace iText.Kernel.Pdf.Canvas {
         /// Concatenates the affine transformation matrix to the current matrix
         /// in the content stream managed by this Canvas.
         /// </summary>
-        /// <remarks>
-        /// Concatenates the affine transformation matrix to the current matrix
-        /// in the content stream managed by this Canvas.
-        /// See also
-        /// <see cref="ConcatMatrix(double, double, double, double, double, double)"/>
-        /// </remarks>
-        /// <param name="transform"/>
+        /// <param name="transform">affine transformation matrix to be concatenated to the current matrix</param>
         /// <returns>current canvas</returns>
+        /// <seealso cref="ConcatMatrix(double, double, double, double, double, double)"/>
         public virtual iText.Kernel.Pdf.Canvas.PdfCanvas ConcatMatrix(AffineTransform transform) {
             float[] matrix = new float[6];
             transform.GetMatrix(matrix);
@@ -501,12 +501,12 @@ namespace iText.Kernel.Pdf.Canvas {
 
         /// <summary>
         /// Moves to the next line and shows
-        /// <paramref name="text"/>
-        /// .
+        /// <paramref name="text"/>.
         /// </summary>
         /// <param name="text">the text to write</param>
         /// <returns>current canvas.</returns>
         public virtual iText.Kernel.Pdf.Canvas.PdfCanvas NewlineShowText(String text) {
+            CheckDefaultDeviceGrayBlackColor(GetColorKeyForText());
             ShowTextInt(text);
             contentStream.GetOutputStream().WriteByte('\'').WriteNewLine();
             return this;
@@ -520,6 +520,7 @@ namespace iText.Kernel.Pdf.Canvas {
         /// <returns>current canvas.</returns>
         public virtual iText.Kernel.Pdf.Canvas.PdfCanvas NewlineShowText(float wordSpacing, float charSpacing, String
              text) {
+            CheckDefaultDeviceGrayBlackColor(GetColorKeyForText());
             contentStream.GetOutputStream().WriteFloat(wordSpacing).WriteSpace().WriteFloat(charSpacing);
             ShowTextInt(text);
             contentStream.GetOutputStream().WriteByte('"').WriteNewLine();
@@ -625,6 +626,7 @@ namespace iText.Kernel.Pdf.Canvas {
         /// <param name="text">text to show.</param>
         /// <returns>current canvas.</returns>
         public virtual iText.Kernel.Pdf.Canvas.PdfCanvas ShowText(String text) {
+            CheckDefaultDeviceGrayBlackColor(GetColorKeyForText());
             ShowTextInt(text);
             contentStream.GetOutputStream().WriteBytes(Tj);
             return this;
@@ -646,12 +648,14 @@ namespace iText.Kernel.Pdf.Canvas {
         /// <returns>current canvas.</returns>
         public virtual iText.Kernel.Pdf.Canvas.PdfCanvas ShowText(GlyphLine text, IEnumerator<GlyphLine.GlyphLinePart
             > iterator) {
+            CheckDefaultDeviceGrayBlackColor(GetColorKeyForText());
             document.CheckIsoConformance(currentGs, IsoKey.FONT_GLYPHS, null, contentStream);
             PdfFont font;
             if ((font = currentGs.GetFont()) == null) {
-                throw new PdfException(PdfException.FontAndSizeMustBeSetBeforeWritingAnyText, currentGs);
+                throw new PdfException(KernelExceptionMessageConstant.FONT_AND_SIZE_MUST_BE_SET_BEFORE_WRITING_ANY_TEXT, currentGs
+                    );
             }
-            float fontSize = currentGs.GetFontSize() / 1000f;
+            float fontSize = FontProgram.ConvertTextSpaceToGlyphSpace(currentGs.GetFontSize());
             float charSpacing = currentGs.GetCharSpacing();
             float scaling = currentGs.GetHorizontalScaling() / 100f;
             IList<GlyphLine.GlyphLinePart> glyphLineParts = EnumeratorToList(iterator);
@@ -685,7 +689,8 @@ namespace iText.Kernel.Pdf.Canvas {
                                 float xPlacementAddition = 0;
                                 int currentGlyphIndex = i;
                                 Glyph currentGlyph = text.Get(i);
-                                while (currentGlyph != null && currentGlyph.GetXPlacement() != 0) {
+                                // if xPlacement is not zero, anchorDelta is expected to be non-zero as well
+                                while (currentGlyph != null && (currentGlyph.GetAnchorDelta() != 0)) {
                                     xPlacementAddition += currentGlyph.GetXPlacement();
                                     if (currentGlyph.GetAnchorDelta() == 0) {
                                         break;
@@ -723,11 +728,12 @@ namespace iText.Kernel.Pdf.Canvas {
                                 ().WriteBytes(Td);
                         }
                         if (glyph.HasAdvance()) {
-                            contentStream.GetOutputStream().WriteFloat((((glyph.HasPlacement() ? 0 : glyph.GetWidth()) + glyph.GetXAdvance
-                                ()) * fontSize + charSpacing + GetWordSpacingAddition(glyph)) * scaling, true).WriteSpace().WriteFloat
-                                (glyph.GetYAdvance() * fontSize, true).WriteSpace().WriteBytes(Td);
+                            contentStream.GetOutputStream()
+                                                        // Let's explicitly ignore width of glyphs with placement if they also have xAdvance, since their width doesn't affect text cursor position.
+                                                        .WriteFloat((((glyph.HasPlacement() ? 0 : glyph.GetWidth()) + glyph.GetXAdvance()) * fontSize + charSpacing
+                                 + GetWordSpacingAddition(glyph)) * scaling, true).WriteSpace().WriteFloat(glyph.GetYAdvance() * fontSize
+                                , true).WriteSpace().WriteBytes(Td);
                         }
-                        // Let's explicitly ignore width of glyphs with placement if they also have xAdvance, since their width doesn't affect text cursor position.
                         sub = i + 1;
                     }
                 }
@@ -758,7 +764,7 @@ namespace iText.Kernel.Pdf.Canvas {
         /// XAdvance is not taken into account neither before `from` nor after `to` glyphs.
         /// </remarks>
         private float GetSubrangeWidth(GlyphLine text, int from, int to) {
-            float fontSize = currentGs.GetFontSize() / 1000f;
+            float fontSize = FontProgram.ConvertTextSpaceToGlyphSpace(currentGs.GetFontSize());
             float charSpacing = currentGs.GetCharSpacing();
             float scaling = currentGs.GetHorizontalScaling() / 100f;
             float width = 0;
@@ -775,7 +781,7 @@ namespace iText.Kernel.Pdf.Canvas {
         }
 
         private float GetSubrangeYDelta(GlyphLine text, int from, int to) {
-            float fontSize = currentGs.GetFontSize() / 1000f;
+            float fontSize = FontProgram.ConvertTextSpaceToGlyphSpace(currentGs.GetFontSize());
             float yDelta = 0;
             for (int iter = from; iter < to; iter++) {
                 yDelta += text.Get(iter).GetYAdvance() * fontSize;
@@ -801,9 +807,11 @@ namespace iText.Kernel.Pdf.Canvas {
         /// </param>
         /// <returns>current canvas.</returns>
         public virtual iText.Kernel.Pdf.Canvas.PdfCanvas ShowText(PdfArray textArray) {
+            CheckDefaultDeviceGrayBlackColor(GetColorKeyForText());
             document.CheckIsoConformance(currentGs, IsoKey.FONT_GLYPHS, null, contentStream);
             if (currentGs.GetFont() == null) {
-                throw new PdfException(PdfException.FontAndSizeMustBeSetBeforeWritingAnyText, currentGs);
+                throw new PdfException(KernelExceptionMessageConstant.FONT_AND_SIZE_MUST_BE_SET_BEFORE_WRITING_ANY_TEXT, currentGs
+                    );
             }
             contentStream.GetOutputStream().WriteBytes(ByteUtils.GetIsoBytes("["));
             foreach (PdfObject obj in textArray) {
@@ -843,7 +851,7 @@ namespace iText.Kernel.Pdf.Canvas {
             return this;
         }
 
-        /// <summary>Appends a B&#xea;zier curve to the path, starting from the current point.</summary>
+        /// <summary>Appends a B&amp;#xea;zier curve to the path, starting from the current point.</summary>
         /// <param name="x1">x coordinate of the first control point.</param>
         /// <param name="y1">y coordinate of the first control point.</param>
         /// <param name="x2">x coordinate of the second control point.</param>
@@ -901,17 +909,29 @@ namespace iText.Kernel.Pdf.Canvas {
         /// <returns>current canvas.</returns>
         public virtual iText.Kernel.Pdf.Canvas.PdfCanvas Arc(double x1, double y1, double x2, double y2, double startAng
             , double extent) {
-            IList<double[]> ar = BezierArc(x1, y1, x2, y2, startAng, extent);
-            if (ar.IsEmpty()) {
-                return this;
-            }
-            double[] pt = ar[0];
-            MoveTo(pt[0], pt[1]);
-            for (int i = 0; i < ar.Count; ++i) {
-                pt = ar[i];
-                CurveTo(pt[2], pt[3], pt[4], pt[5], pt[6], pt[7]);
-            }
-            return this;
+            return DrawArc(x1, y1, x2, y2, startAng, extent, false);
+        }
+
+        /// <summary>
+        /// Draws a partial ellipse with the preceding line to the start of the arc to prevent path
+        /// broking.
+        /// </summary>
+        /// <remarks>
+        /// Draws a partial ellipse with the preceding line to the start of the arc to prevent path
+        /// broking. The target arc is inscribed within the rectangle x1,y1,x2,y2, starting
+        /// at startAng degrees and covering extent degrees. Angles start with 0 to the right (+x)
+        /// and increase counter-clockwise.
+        /// </remarks>
+        /// <param name="x1">a corner of the enclosing rectangle</param>
+        /// <param name="y1">a corner of the enclosing rectangle</param>
+        /// <param name="x2">a corner of the enclosing rectangle</param>
+        /// <param name="y2">a corner of the enclosing rectangle</param>
+        /// <param name="startAng">starting angle in degrees</param>
+        /// <param name="extent">angle extent in degrees</param>
+        /// <returns>the current canvas</returns>
+        public virtual iText.Kernel.Pdf.Canvas.PdfCanvas ArcContinuous(double x1, double y1, double x2, double y2, 
+            double startAng, double extent) {
+            return DrawArc(x1, y1, x2, y2, startAng, extent, true);
         }
 
         /// <summary>Draws an ellipse inscribed within the rectangle x1,y1,x2,y2.</summary>
@@ -1070,7 +1090,7 @@ namespace iText.Kernel.Pdf.Canvas {
         }
 
         /// <summary>Paints a shading object and adds it to the resources of this canvas</summary>
-        /// <param name="shading"/>
+        /// <param name="shading">a shading object to be painted</param>
         /// <returns>current canvas.</returns>
         public virtual iText.Kernel.Pdf.Canvas.PdfCanvas PaintShading(PdfShading shading) {
             PdfName shadingName = resources.AddShading(shading);
@@ -1092,6 +1112,7 @@ namespace iText.Kernel.Pdf.Canvas {
         ///     </summary>
         /// <returns>current canvas.</returns>
         public virtual iText.Kernel.Pdf.Canvas.PdfCanvas ClosePathEoFillStroke() {
+            CheckDefaultDeviceGrayBlackColor(PdfCanvas.CheckColorMode.FILL_AND_STROKE);
             contentStream.GetOutputStream().WriteBytes(bStar);
             return this;
         }
@@ -1100,18 +1121,9 @@ namespace iText.Kernel.Pdf.Canvas {
         ///     </summary>
         /// <returns>current canvas.</returns>
         public virtual iText.Kernel.Pdf.Canvas.PdfCanvas ClosePathFillStroke() {
+            CheckDefaultDeviceGrayBlackColor(PdfCanvas.CheckColorMode.FILL_AND_STROKE);
             contentStream.GetOutputStream().WriteBytes(b);
             return this;
-        }
-
-        /// <returns>
-        /// current canvas.
-        /// Ends the path without filling or stroking it.
-        /// </returns>
-        [System.ObsoleteAttribute(@"in favour of endPath(), which does exactly the same thing but is better named"
-            )]
-        public virtual iText.Kernel.Pdf.Canvas.PdfCanvas NewPath() {
-            return this.EndPath();
         }
 
         /// <summary>Ends the path without filling or stroking it.</summary>
@@ -1124,6 +1136,7 @@ namespace iText.Kernel.Pdf.Canvas {
         /// <summary>Strokes the path.</summary>
         /// <returns>current canvas.</returns>
         public virtual iText.Kernel.Pdf.Canvas.PdfCanvas Stroke() {
+            CheckDefaultDeviceGrayBlackColor(PdfCanvas.CheckColorMode.STROKE);
             contentStream.GetOutputStream().WriteBytes(S);
             return this;
         }
@@ -1158,6 +1171,7 @@ namespace iText.Kernel.Pdf.Canvas {
         /// <summary>Fills current path.</summary>
         /// <returns>current canvas.</returns>
         public virtual iText.Kernel.Pdf.Canvas.PdfCanvas Fill() {
+            CheckDefaultDeviceGrayBlackColor(PdfCanvas.CheckColorMode.FILL);
             contentStream.GetOutputStream().WriteBytes(f);
             return this;
         }
@@ -1166,6 +1180,7 @@ namespace iText.Kernel.Pdf.Canvas {
         ///     </summary>
         /// <returns>current canvas.</returns>
         public virtual iText.Kernel.Pdf.Canvas.PdfCanvas FillStroke() {
+            CheckDefaultDeviceGrayBlackColor(PdfCanvas.CheckColorMode.FILL_AND_STROKE);
             contentStream.GetOutputStream().WriteBytes(B);
             return this;
         }
@@ -1173,6 +1188,7 @@ namespace iText.Kernel.Pdf.Canvas {
         /// <summary>EOFills current path.</summary>
         /// <returns>current canvas.</returns>
         public virtual iText.Kernel.Pdf.Canvas.PdfCanvas EoFill() {
+            CheckDefaultDeviceGrayBlackColor(PdfCanvas.CheckColorMode.FILL);
             contentStream.GetOutputStream().WriteBytes(fStar);
             return this;
         }
@@ -1180,6 +1196,7 @@ namespace iText.Kernel.Pdf.Canvas {
         /// <summary>Fills the path, using the even-odd rule to determine the region to fill and strokes it.</summary>
         /// <returns>current canvas.</returns>
         public virtual iText.Kernel.Pdf.Canvas.PdfCanvas EoFillStroke() {
+            CheckDefaultDeviceGrayBlackColor(PdfCanvas.CheckColorMode.FILL_AND_STROKE);
             contentStream.GetOutputStream().WriteBytes(BStar);
             return this;
         }
@@ -1200,7 +1217,7 @@ namespace iText.Kernel.Pdf.Canvas {
         /// Sets the line cap style, the shape to be used at the ends of open subpaths
         /// when they are stroked.
         /// </summary>
-        /// <param name="lineCapStyle"/>
+        /// <param name="lineCapStyle">a line cap style to be set</param>
         /// <returns>current canvas.</returns>
         /// <seealso cref="LineCapStyle">for possible values.</seealso>
         public virtual iText.Kernel.Pdf.Canvas.PdfCanvas SetLineCapStyle(int lineCapStyle) {
@@ -1216,7 +1233,7 @@ namespace iText.Kernel.Pdf.Canvas {
         /// Sets the line join style, the shape to be used at the corners of paths
         /// when they are stroked.
         /// </summary>
-        /// <param name="lineJoinStyle"/>
+        /// <param name="lineJoinStyle">a line join style to be set</param>
         /// <returns>current canvas.</returns>
         /// <seealso cref="LineJoinStyle">for possible values.</seealso>
         public virtual iText.Kernel.Pdf.Canvas.PdfCanvas SetLineJoinStyle(int lineJoinStyle) {
@@ -1232,7 +1249,7 @@ namespace iText.Kernel.Pdf.Canvas {
         /// Sets the miter limit, a parameter specifying the maximum length a miter join
         /// may extend beyond the join point, relative to the angle of the line segments.
         /// </summary>
-        /// <param name="miterLimit"/>
+        /// <param name="miterLimit">a miter limit to be set</param>
         /// <returns>current canvas.</returns>
         public virtual iText.Kernel.Pdf.Canvas.PdfCanvas SetMiterLimit(float miterLimit) {
             if (currentGs.GetMiterLimit() == miterLimit) {
@@ -1243,12 +1260,12 @@ namespace iText.Kernel.Pdf.Canvas {
             return this;
         }
 
-        /// <summary>Changes the value of the <VAR>line dash pattern</VAR>.</summary>
+        /// <summary>Changes the value of the <var>line dash pattern</var>.</summary>
         /// <remarks>
-        /// Changes the value of the <VAR>line dash pattern</VAR>.
+        /// Changes the value of the <var>line dash pattern</var>.
         /// <br />
         /// The line dash pattern controls the pattern of dashes and gaps used to stroke paths.
-        /// It is specified by an <I>array</I> and a <I>phase</I>. The array specifies the length
+        /// It is specified by an <i>array</i> and a <i>phase</i>. The array specifies the length
         /// of the alternating dashes and gaps. The phase specifies the distance into the dash
         /// pattern to start the dash.
         /// </remarks>
@@ -1261,12 +1278,12 @@ namespace iText.Kernel.Pdf.Canvas {
             return this;
         }
 
-        /// <summary>Changes the value of the <VAR>line dash pattern</VAR>.</summary>
+        /// <summary>Changes the value of the <var>line dash pattern</var>.</summary>
         /// <remarks>
-        /// Changes the value of the <VAR>line dash pattern</VAR>.
+        /// Changes the value of the <var>line dash pattern</var>.
         /// <br />
         /// The line dash pattern controls the pattern of dashes and gaps used to stroke paths.
-        /// It is specified by an <I>array</I> and a <I>phase</I>. The array specifies the length
+        /// It is specified by an <i>array</i> and a <i>phase</i>. The array specifies the length
         /// of the alternating dashes and gaps. The phase specifies the distance into the dash
         /// pattern to start the dash.
         /// </remarks>
@@ -1281,12 +1298,12 @@ namespace iText.Kernel.Pdf.Canvas {
             return this;
         }
 
-        /// <summary>Changes the value of the <VAR>line dash pattern</VAR>.</summary>
+        /// <summary>Changes the value of the <var>line dash pattern</var>.</summary>
         /// <remarks>
-        /// Changes the value of the <VAR>line dash pattern</VAR>.
+        /// Changes the value of the <var>line dash pattern</var>.
         /// <br />
         /// The line dash pattern controls the pattern of dashes and gaps used to stroke paths.
-        /// It is specified by an <I>array</I> and a <I>phase</I>. The array specifies the length
+        /// It is specified by an <i>array</i> and a <i>phase</i>. The array specifies the length
         /// of the alternating dashes and gaps. The phase specifies the distance into the dash
         /// pattern to start the dash.
         /// </remarks>
@@ -1301,12 +1318,12 @@ namespace iText.Kernel.Pdf.Canvas {
             return this;
         }
 
-        /// <summary>Changes the value of the <VAR>line dash pattern</VAR>.</summary>
+        /// <summary>Changes the value of the <var>line dash pattern</var>.</summary>
         /// <remarks>
-        /// Changes the value of the <VAR>line dash pattern</VAR>.
+        /// Changes the value of the <var>line dash pattern</var>.
         /// <br />
         /// The line dash pattern controls the pattern of dashes and gaps used to stroke paths.
-        /// It is specified by an <I>array</I> and a <I>phase</I>. The array specifies the length
+        /// It is specified by an <i>array</i> and a <i>phase</i>. The array specifies the length
         /// of the alternating dashes and gaps. The phase specifies the distance into the dash
         /// pattern to start the dash.
         /// </remarks>
@@ -1344,12 +1361,12 @@ namespace iText.Kernel.Pdf.Canvas {
             return this;
         }
 
-        /// <summary>Changes the <VAR>Flatness</VAR>.</summary>
+        /// <summary>Changes the Flatness.</summary>
         /// <remarks>
-        /// Changes the <VAR>Flatness</VAR>.
-        /// <br />
-        /// <VAR>Flatness</VAR> sets the maximum permitted distance in device pixels between the
-        /// mathematically correct path and an approximation constructed from straight line segments.<BR>
+        /// Changes the Flatness.
+        /// <para />
+        /// Flatness sets the maximum permitted distance in device pixels between the
+        /// mathematically correct path and an approximation constructed from straight line segments.
         /// </remarks>
         /// <param name="flatnessTolerance">a value</param>
         /// <returns>current canvas.</returns>
@@ -1378,7 +1395,7 @@ namespace iText.Kernel.Pdf.Canvas {
 
         /// <summary>Changes the current color for paths.</summary>
         /// <param name="color">the new color.</param>
-        /// <param name="fill">set fill color (<code>true</code>) or stroke color (<code>false</code>)</param>
+        /// <param name="fill">set fill color (<c>true</c>) or stroke color (<c>false</c>)</param>
         /// <returns>current canvas.</returns>
         public virtual iText.Kernel.Pdf.Canvas.PdfCanvas SetColor(Color color, bool fill) {
             if (color is PatternColor) {
@@ -1393,7 +1410,7 @@ namespace iText.Kernel.Pdf.Canvas {
         /// <param name="colorSpace">the color space of the new color</param>
         /// <param name="colorValue">a list of numerical values with a length corresponding to the specs of the color space. Values should be in the range [0,1]
         ///     </param>
-        /// <param name="fill">set fill color (<code>true</code>) or stroke color (<code>false</code>)</param>
+        /// <param name="fill">set fill color (<c>true</c>) or stroke color (<c>false</c>)</param>
         /// <returns>current canvas.</returns>
         public virtual iText.Kernel.Pdf.Canvas.PdfCanvas SetColor(PdfColorSpace colorSpace, float[] colorValue, bool
              fill) {
@@ -1405,7 +1422,7 @@ namespace iText.Kernel.Pdf.Canvas {
         /// <param name="colorValue">a list of numerical values with a length corresponding to the specs of the color space. Values should be in the range [0,1]
         ///     </param>
         /// <param name="pattern">a pattern for the colored line or area</param>
-        /// <param name="fill">set fill color (<code>true</code>) or stroke color (<code>false</code>)</param>
+        /// <param name="fill">set fill color (<c>true</c>) or stroke color (<c>false</c>)</param>
         /// <returns>current canvas.</returns>
         public virtual iText.Kernel.Pdf.Canvas.PdfCanvas SetColor(PdfColorSpace colorSpace, float[] colorValue, PdfPattern
              pattern, bool fill) {
@@ -1568,12 +1585,12 @@ namespace iText.Kernel.Pdf.Canvas {
             return SetStrokeColorCmyk(0, 0, 0, 1);
         }
 
-        /// <summary>Begins a graphic block whose visibility is controlled by the <CODE>layer</CODE>.</summary>
+        /// <summary>Begins a graphic block whose visibility is controlled by the <c>layer</c>.</summary>
         /// <remarks>
-        /// Begins a graphic block whose visibility is controlled by the <CODE>layer</CODE>.
+        /// Begins a graphic block whose visibility is controlled by the <c>layer</c>.
         /// Blocks can be nested. Each block must be terminated by an
         /// <see cref="EndLayer()"/>
-        /// .<p>
+        /// .<para />
         /// Note that nested layers with
         /// <see cref="iText.Kernel.Pdf.Layer.PdfLayer.AddChild(iText.Kernel.Pdf.Layer.PdfLayer)"/>
         /// only require a single
@@ -1624,7 +1641,7 @@ namespace iText.Kernel.Pdf.Canvas {
                 layerDepth.JRemoveAt(layerDepth.Count - 1);
             }
             else {
-                throw new PdfException(PdfException.UnbalancedLayerOperators);
+                throw new PdfException(KernelExceptionMessageConstant.UNBALANCED_LAYER_OPERATORS);
             }
             while (num-- > 0) {
                 contentStream.GetOutputStream().WriteBytes(EMC).WriteNewLine();
@@ -1632,11 +1649,22 @@ namespace iText.Kernel.Pdf.Canvas {
             return this;
         }
 
-        /// <summary>Creates Image XObject from image and adds it to canvas (as Image XObject).</summary>
+        /// <summary>
+        /// Creates
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfImageXObject"/>
+        /// from image and adds it to canvas.
+        /// </summary>
+        /// <remarks>
+        /// Creates
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfImageXObject"/>
+        /// from image and adds it to canvas.
+        /// <para />
+        /// The float arguments will be used in concatenating the transformation matrix as operands.
+        /// </remarks>
         /// <param name="image">
-        /// the
-        /// <c>PdfImageXObject</c>
-        /// object
+        /// the image from which
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfImageXObject"/>
+        /// will be created
         /// </param>
         /// <param name="a">an element of the transformation matrix</param>
         /// <param name="b">an element of the transformation matrix</param>
@@ -1644,16 +1672,29 @@ namespace iText.Kernel.Pdf.Canvas {
         /// <param name="d">an element of the transformation matrix</param>
         /// <param name="e">an element of the transformation matrix</param>
         /// <param name="f">an element of the transformation matrix</param>
-        /// <returns>created Image XObject.</returns>
-        public virtual PdfXObject AddImage(ImageData image, float a, float b, float c, float d, float e, float f) {
-            return AddImage(image, a, b, c, d, e, f, false);
+        /// <returns>the created imageXObject or null in case of in-line image (asInline = true)</returns>
+        /// <seealso cref="ConcatMatrix(double, double, double, double, double, double)"/>
+        public virtual PdfXObject AddImageWithTransformationMatrix(ImageData image, float a, float b, float c, float
+             d, float e, float f) {
+            return AddImageWithTransformationMatrix(image, a, b, c, d, e, f, false);
         }
 
-        /// <summary>Creates Image XObject from image and adds it to canvas.</summary>
+        /// <summary>
+        /// Creates
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfImageXObject"/>
+        /// from image and adds it to canvas.
+        /// </summary>
+        /// <remarks>
+        /// Creates
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfImageXObject"/>
+        /// from image and adds it to canvas.
+        /// <para />
+        /// The float arguments will be used in concatenating the transformation matrix as operands.
+        /// </remarks>
         /// <param name="image">
-        /// the
-        /// <c>PdfImageXObject</c>
-        /// object
+        /// the image from which
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfImageXObject"/>
+        /// will be created
         /// </param>
         /// <param name="a">an element of the transformation matrix</param>
         /// <param name="b">an element of the transformation matrix</param>
@@ -1661,14 +1702,15 @@ namespace iText.Kernel.Pdf.Canvas {
         /// <param name="d">an element of the transformation matrix</param>
         /// <param name="e">an element of the transformation matrix</param>
         /// <param name="f">an element of the transformation matrix</param>
-        /// <param name="asInline">true if to add image as in-line.</param>
-        /// <returns>created Image XObject or null in case of in-line image (asInline = true).</returns>
-        public virtual PdfXObject AddImage(ImageData image, float a, float b, float c, float d, float e, float f, 
-            bool asInline) {
+        /// <param name="asInline">true if to add image as in-line</param>
+        /// <returns>the created imageXObject or null in case of in-line image (asInline = true)</returns>
+        /// <seealso cref="ConcatMatrix(double, double, double, double, double, double)"/>
+        public virtual PdfXObject AddImageWithTransformationMatrix(ImageData image, float a, float b, float c, float
+             d, float e, float f, bool asInline) {
             if (image.GetOriginalType() == ImageType.WMF) {
                 WmfImageHelper wmf = new WmfImageHelper(image);
                 PdfXObject xObject = wmf.CreateFormXObject(document);
-                AddXObject(xObject, a, b, c, d, e, f);
+                AddXObjectWithTransformationMatrix(xObject, a, b, c, d, e, f);
                 return xObject;
             }
             else {
@@ -1678,32 +1720,65 @@ namespace iText.Kernel.Pdf.Canvas {
                     return null;
                 }
                 else {
-                    AddImage(imageXObject, a, b, c, d, e, f);
+                    AddImageWithTransformationMatrix(imageXObject, a, b, c, d, e, f);
                     return imageXObject;
                 }
             }
         }
 
-        /// <summary>Creates Image XObject from image and adds it to canvas.</summary>
-        /// <param name="image"/>
-        /// <param name="rect"/>
-        /// <param name="asInline">true if to add image as in-line.</param>
-        /// <returns>created XObject or null in case of in-line image (asInline = true).</returns>
-        public virtual PdfXObject AddImage(ImageData image, iText.Kernel.Geom.Rectangle rect, bool asInline) {
-            return AddImage(image, rect.GetWidth(), 0, 0, rect.GetHeight(), rect.GetX(), rect.GetY(), asInline);
+        /// <summary>
+        /// Creates
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfImageXObject"/>
+        /// from image and fitted into specific rectangle on canvas.
+        /// </summary>
+        /// <remarks>
+        /// Creates
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfImageXObject"/>
+        /// from image and fitted into specific rectangle on canvas.
+        /// The created imageXObject will be fit inside on the specified rectangle without preserving aspect ratio.
+        /// <para />
+        /// The x, y, width and height parameters of the rectangle will be used in concatenating
+        /// the transformation matrix as operands.
+        /// </remarks>
+        /// <param name="image">
+        /// the image from which
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfImageXObject"/>
+        /// will be created
+        /// </param>
+        /// <param name="rect">the rectangle in which the created imageXObject will be fit</param>
+        /// <param name="asInline">true if to add image as in-line</param>
+        /// <returns>the created imageXObject or null in case of in-line image (asInline = true)</returns>
+        /// <seealso cref="ConcatMatrix(double, double, double, double, double, double)"/>
+        /// <seealso cref="iText.Kernel.Pdf.Xobject.PdfXObject.CalculateProportionallyFitRectangleWithWidth(iText.Kernel.Pdf.Xobject.PdfXObject, float, float, float)
+        ///     "/>
+        /// <seealso cref="iText.Kernel.Pdf.Xobject.PdfXObject.CalculateProportionallyFitRectangleWithHeight(iText.Kernel.Pdf.Xobject.PdfXObject, float, float, float)
+        ///     "/>
+        public virtual PdfXObject AddImageFittedIntoRectangle(ImageData image, iText.Kernel.Geom.Rectangle rect, bool
+             asInline) {
+            return AddImageWithTransformationMatrix(image, rect.GetWidth(), 0, 0, rect.GetHeight(), rect.GetX(), rect.
+                GetY(), asInline);
         }
 
-        /// <summary>Creates Image XObject from image and adds it to canvas.</summary>
-        /// <param name="image"/>
-        /// <param name="x"/>
-        /// <param name="y"/>
-        /// <param name="asInline">true if to add image as in-line.</param>
-        /// <returns>created XObject or null in case of in-line image (asInline = true).</returns>
-        public virtual PdfXObject AddImage(ImageData image, float x, float y, bool asInline) {
+        /// <summary>
+        /// Creates
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfImageXObject"/>
+        /// from image and adds it to the specified position.
+        /// </summary>
+        /// <param name="image">
+        /// the image from which
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfImageXObject"/>
+        /// will be created
+        /// </param>
+        /// <param name="x">the horizontal position of the imageXObject</param>
+        /// <param name="y">the vertical position of the imageXObject</param>
+        /// <param name="asInline">true if to add image as in-line</param>
+        /// <returns>the created imageXObject or null in case of in-line image (asInline = true)</returns>
+        public virtual PdfXObject AddImageAt(ImageData image, float x, float y, bool asInline) {
             if (image.GetOriginalType() == ImageType.WMF) {
                 WmfImageHelper wmf = new WmfImageHelper(image);
                 PdfXObject xObject = wmf.CreateFormXObject(document);
-                AddXObject(xObject, image.GetWidth(), 0, 0, image.GetHeight(), x, y);
+                //For FormXObject args "a" and "d" will become multipliers and will not set the size, as for ImageXObject
+                AddXObjectWithTransformationMatrix(xObject, 1, 0, 0, 1, x, y);
                 return xObject;
             }
             else {
@@ -1713,80 +1788,41 @@ namespace iText.Kernel.Pdf.Canvas {
                     return null;
                 }
                 else {
-                    AddImage(imageXObject, image.GetWidth(), 0, 0, image.GetHeight(), x, y);
+                    AddImageWithTransformationMatrix(imageXObject, image.GetWidth(), 0, 0, image.GetHeight(), x, y);
                     return imageXObject;
                 }
             }
-        }
-
-        /// <summary>Creates Image XObject from image and adds it to the specified position with specified width preserving aspect ratio.
-        ///     </summary>
-        /// <param name="image"/>
-        /// <param name="x"/>
-        /// <param name="y"/>
-        /// <param name="width"/>
-        /// <param name="asInline">true if to add image as in-line.</param>
-        /// <returns>created XObject or null in case of in-line image (asInline = true).</returns>
-        public virtual PdfXObject AddImage(ImageData image, float x, float y, float width, bool asInline) {
-            if (image.GetOriginalType() == ImageType.WMF) {
-                WmfImageHelper wmf = new WmfImageHelper(image);
-                // TODO add matrix parameters
-                PdfXObject xObject = wmf.CreateFormXObject(document);
-                AddImage(xObject, width, 0, 0, width, x, y);
-                return xObject;
-            }
-            else {
-                PdfImageXObject imageXObject = new PdfImageXObject(image);
-                if (asInline && image.CanImageBeInline()) {
-                    AddInlineImage(imageXObject, width, 0, 0, width / image.GetWidth() * image.GetHeight(), x, y);
-                    return null;
-                }
-                else {
-                    AddImage(imageXObject, width, 0, 0, width / image.GetWidth() * image.GetHeight(), x, y);
-                    return imageXObject;
-                }
-            }
-        }
-
-        /// <summary>Creates Image XObject from image and adds it to the specified position with specified width preserving aspect ratio.
-        ///     </summary>
-        /// <param name="image"/>
-        /// <param name="x"/>
-        /// <param name="y"/>
-        /// <param name="height"/>
-        /// <param name="asInline">true if to add image as in-line.</param>
-        /// <param name="dummy"/>
-        /// <returns>created XObject or null in case of in-line image (asInline = true).</returns>
-        public virtual PdfXObject AddImage(ImageData image, float x, float y, float height, bool asInline, bool dummy
-            ) {
-            return AddImage(image, height / image.GetHeight() * image.GetWidth(), 0, 0, height, x, y, asInline);
         }
 
         /// <summary>
         /// Adds
-        /// <c>PdfXObject</c>
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfXObject"/>
         /// to canvas.
         /// </summary>
-        /// <param name="xObject">
-        /// the
-        /// <c>PdfImageXObject</c>
-        /// object
-        /// </param>
+        /// <remarks>
+        /// Adds
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfXObject"/>
+        /// to canvas.
+        /// <para />
+        /// The float arguments will be used in concatenating the transformation matrix as operands.
+        /// </remarks>
+        /// <param name="xObject">the xObject to add</param>
         /// <param name="a">an element of the transformation matrix</param>
         /// <param name="b">an element of the transformation matrix</param>
         /// <param name="c">an element of the transformation matrix</param>
         /// <param name="d">an element of the transformation matrix</param>
         /// <param name="e">an element of the transformation matrix</param>
         /// <param name="f">an element of the transformation matrix</param>
-        /// <returns>current canvas.</returns>
-        public virtual iText.Kernel.Pdf.Canvas.PdfCanvas AddXObject(PdfXObject xObject, float a, float b, float c, 
-            float d, float e, float f) {
+        /// <returns>the current canvas</returns>
+        /// <seealso cref="ConcatMatrix(double, double, double, double, double, double)"></seealso>
+        public virtual iText.Kernel.Pdf.Canvas.PdfCanvas AddXObjectWithTransformationMatrix(PdfXObject xObject, float
+             a, float b, float c, float d, float e, float f) {
             if (xObject is PdfFormXObject) {
-                return AddForm((PdfFormXObject)xObject, a, b, c, d, e, f);
+                return AddFormWithTransformationMatrix((PdfFormXObject)xObject, a, b, c, d, e, f, true);
             }
             else {
                 if (xObject is PdfImageXObject) {
-                    return AddImage((PdfImageXObject)xObject, a, b, c, d, e, f);
+                    return AddImageWithTransformationMatrix(xObject, a, b, c, d, e, f);
                 }
                 else {
                     throw new ArgumentException("PdfFormXObject or PdfImageXObject expected.");
@@ -1796,20 +1832,51 @@ namespace iText.Kernel.Pdf.Canvas {
 
         /// <summary>
         /// Adds
-        /// <c>PdfXObject</c>
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfXObject"/>
         /// to the specified position.
         /// </summary>
-        /// <param name="xObject"/>
-        /// <param name="x"/>
-        /// <param name="y"/>
-        /// <returns>current canvas.</returns>
+        /// <param name="xObject">the xObject to add</param>
+        /// <param name="x">the horizontal position of the xObject</param>
+        /// <param name="y">the vertical position of the xObject</param>
+        /// <returns>the current canvas</returns>
+        public virtual iText.Kernel.Pdf.Canvas.PdfCanvas AddXObjectAt(PdfXObject xObject, float x, float y) {
+            if (xObject is PdfFormXObject) {
+                return AddFormAt((PdfFormXObject)xObject, x, y);
+            }
+            else {
+                if (xObject is PdfImageXObject) {
+                    return AddImageAt((PdfImageXObject)xObject, x, y);
+                }
+                else {
+                    throw new ArgumentException("PdfFormXObject or PdfImageXObject expected.");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Adds
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfXObject"/>
+        /// to the specified position in the case of
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfImageXObject"/>
+        /// or moves to the specified offset in the case of
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfFormXObject"/>.
+        /// </summary>
+        /// <param name="xObject">the xObject to add</param>
+        /// <param name="x">the horizontal offset of the formXObject position or the horizontal position of the imageXObject
+        ///     </param>
+        /// <param name="y">the vertical offset of the formXObject position or the vertical position of the imageXObject
+        ///     </param>
+        /// <returns>the current canvas</returns>
+        [System.ObsoleteAttribute(@"will be removed in 7.2, use AddXObjectAt(iText.Kernel.Pdf.Xobject.PdfXObject, float, float) instead"
+            )]
         public virtual iText.Kernel.Pdf.Canvas.PdfCanvas AddXObject(PdfXObject xObject, float x, float y) {
+            //TODO DEVSIX-5729 Remove deprecated api in PdfCanvas
             if (xObject is PdfFormXObject) {
                 return AddForm((PdfFormXObject)xObject, x, y);
             }
             else {
                 if (xObject is PdfImageXObject) {
-                    return AddImage((PdfImageXObject)xObject, x, y);
+                    return AddImageAt((PdfImageXObject)xObject, x, y);
                 }
                 else {
                     throw new ArgumentException("PdfFormXObject or PdfImageXObject expected.");
@@ -1819,31 +1886,24 @@ namespace iText.Kernel.Pdf.Canvas {
 
         /// <summary>
         /// Adds
-        /// <c>PdfXObject</c>
-        /// to specified rectangle on canvas.
-        /// Do note that using this method of adding an XObject <b>will scale</b> the XObject using the width and the height
-        /// of the provided Rectangle. If you don't wish to scale the XObject, use
-        /// <see cref="AddXObject(iText.Kernel.Pdf.Xobject.PdfXObject, float, float)"/>
-        /// ,
-        /// <see cref="AddXObject(iText.Kernel.Pdf.Xobject.PdfXObject, float, float, float)"/>
-        /// ,
-        /// <see cref="AddXObject(iText.Kernel.Pdf.Xobject.PdfXObject, float, float, float, bool)"/>
-        /// ,
-        /// or
-        /// <see cref="AddXObject(iText.Kernel.Pdf.Xobject.PdfXObject, float, float, float, float, float, float)"/>
-        /// .
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfXObject"/>
+        /// fitted into specific rectangle on canvas.
         /// </summary>
-        /// <param name="xObject">the XObject to add</param>
-        /// <param name="rect">rectangle containing x and y coordinates and scaling information</param>
-        /// <returns>current canvas.</returns>
-        public virtual iText.Kernel.Pdf.Canvas.PdfCanvas AddXObject(PdfXObject xObject, iText.Kernel.Geom.Rectangle
+        /// <param name="xObject">the xObject to add</param>
+        /// <param name="rect">the rectangle in which the xObject will be fitted</param>
+        /// <returns>the current canvas</returns>
+        /// <seealso cref="iText.Kernel.Pdf.Xobject.PdfXObject.CalculateProportionallyFitRectangleWithWidth(iText.Kernel.Pdf.Xobject.PdfXObject, float, float, float)
+        ///     "/>
+        /// <seealso cref="iText.Kernel.Pdf.Xobject.PdfXObject.CalculateProportionallyFitRectangleWithHeight(iText.Kernel.Pdf.Xobject.PdfXObject, float, float, float)
+        ///     "/>
+        public virtual iText.Kernel.Pdf.Canvas.PdfCanvas AddXObjectFittedIntoRectangle(PdfXObject xObject, iText.Kernel.Geom.Rectangle
              rect) {
             if (xObject is PdfFormXObject) {
-                return AddForm((PdfFormXObject)xObject, rect);
+                return AddFormFittedIntoRectangle((PdfFormXObject)xObject, rect);
             }
             else {
                 if (xObject is PdfImageXObject) {
-                    return AddImage((PdfImageXObject)xObject, rect);
+                    return AddImageFittedIntoRectangle((PdfImageXObject)xObject, rect);
                 }
                 else {
                     throw new ArgumentException("PdfFormXObject or PdfImageXObject expected.");
@@ -1853,48 +1913,30 @@ namespace iText.Kernel.Pdf.Canvas {
 
         /// <summary>
         /// Adds
-        /// <c>PdfXObject</c>
-        /// to the specified position with specified width preserving aspect ratio.
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfXObject"/>
+        /// on canvas.
         /// </summary>
-        /// <param name="xObject"/>
-        /// <param name="x"/>
-        /// <param name="y"/>
-        /// <param name="width"/>
-        /// <returns>current canvas.</returns>
-        public virtual iText.Kernel.Pdf.Canvas.PdfCanvas AddXObject(PdfXObject xObject, float x, float y, float width
-            ) {
-            if (xObject is PdfFormXObject) {
-                return AddForm((PdfFormXObject)xObject, x, y, width);
-            }
-            else {
-                if (xObject is PdfImageXObject) {
-                    return AddImage((PdfImageXObject)xObject, x, y, width);
-                }
-                else {
-                    throw new ArgumentException("PdfFormXObject or PdfImageXObject expected.");
-                }
-            }
-        }
-
-        /// <summary>
+        /// <remarks>
         /// Adds
-        /// <c>PdfXObject</c>
-        /// to the specified position with specified height preserving aspect ratio.
-        /// </summary>
-        /// <param name="xObject"/>
-        /// <param name="x"/>
-        /// <param name="y"/>
-        /// <param name="height"/>
-        /// <param name="dummy"/>
-        /// <returns>current canvas.</returns>
-        public virtual iText.Kernel.Pdf.Canvas.PdfCanvas AddXObject(PdfXObject xObject, float x, float y, float height
-            , bool dummy) {
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfXObject"/>
+        /// on canvas.
+        /// <para />
+        /// Note: the
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfImageXObject"/>
+        /// will be placed at coordinates (0, 0) with its
+        /// original width and height, the
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfFormXObject"/>
+        /// will be fitted in its bBox.
+        /// </remarks>
+        /// <param name="xObject">the xObject to add</param>
+        /// <returns>the current canvas</returns>
+        public virtual iText.Kernel.Pdf.Canvas.PdfCanvas AddXObject(PdfXObject xObject) {
             if (xObject is PdfFormXObject) {
-                return AddForm((PdfFormXObject)xObject, x, y, height, dummy);
+                return AddFormWithTransformationMatrix((PdfFormXObject)xObject, 1, 0, 0, 1, 0, 0, false);
             }
             else {
                 if (xObject is PdfImageXObject) {
-                    return AddImage((PdfImageXObject)xObject, x, y, height, dummy);
+                    return AddImageAt((PdfImageXObject)xObject, 0, 0);
                 }
                 else {
                     throw new ArgumentException("PdfFormXObject or PdfImageXObject expected.");
@@ -1960,7 +2002,7 @@ namespace iText.Kernel.Pdf.Canvas {
         /// <returns>current canvas</returns>
         public virtual iText.Kernel.Pdf.Canvas.PdfCanvas EndMarkedContent() {
             if (--mcDepth < 0) {
-                throw new PdfException(PdfException.UnbalancedBeginEndMarkedContentOperators);
+                throw new PdfException(KernelExceptionMessageConstant.UNBALANCED_BEGIN_END_MARKED_CONTENT_OPERATORS);
             }
             contentStream.GetOutputStream().WriteBytes(EMC);
             return this;
@@ -2101,25 +2143,29 @@ namespace iText.Kernel.Pdf.Canvas {
 
         /// <summary>
         /// Adds
-        /// <c>PdfFormXObject</c>
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfFormXObject"/>
         /// to canvas.
         /// </summary>
-        /// <param name="form">
-        /// the
-        /// <c>PdfImageXObject</c>
-        /// object
-        /// </param>
+        /// <param name="form">the formXObject to add</param>
         /// <param name="a">an element of the transformation matrix</param>
         /// <param name="b">an element of the transformation matrix</param>
         /// <param name="c">an element of the transformation matrix</param>
         /// <param name="d">an element of the transformation matrix</param>
         /// <param name="e">an element of the transformation matrix</param>
         /// <param name="f">an element of the transformation matrix</param>
-        /// <returns>current canvas.</returns>
-        private iText.Kernel.Pdf.Canvas.PdfCanvas AddForm(PdfFormXObject form, float a, float b, float c, float d, 
-            float e, float f) {
+        /// <param name="writeIdentityMatrix">
+        /// true if the matrix is written in any case, otherwise if the
+        /// <see cref="IsIdentityMatrix(float, float, float, float, float, float)"/>
+        /// method indicates
+        /// that the matrix is identity, the matrix will not be written
+        /// </param>
+        /// <returns>current canvas</returns>
+        private iText.Kernel.Pdf.Canvas.PdfCanvas AddFormWithTransformationMatrix(PdfFormXObject form, float a, float
+             b, float c, float d, float e, float f, bool writeIdentityMatrix) {
             SaveState();
-            ConcatMatrix(a, b, c, d, e, f);
+            if (writeIdentityMatrix || !iText.Kernel.Pdf.Canvas.PdfCanvas.IsIdentityMatrix(a, b, c, d, e, f)) {
+                ConcatMatrix(a, b, c, d, e, f);
+            }
             PdfName name = resources.AddForm(form);
             contentStream.GetOutputStream().Write(name).WriteSpace().WriteBytes(Do);
             RestoreState();
@@ -2128,103 +2174,87 @@ namespace iText.Kernel.Pdf.Canvas {
 
         /// <summary>
         /// Adds
-        /// <c>PdfFormXObject</c>
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfFormXObject"/>
         /// to the specified position.
         /// </summary>
-        /// <param name="form"/>
-        /// <param name="x"/>
-        /// <param name="y"/>
-        /// <returns>current canvas.</returns>
+        /// <param name="form">the formXObject to add</param>
+        /// <param name="x">the horizontal position of the formXObject</param>
+        /// <param name="y">the vertical position of the formXObject</param>
+        /// <returns>the current canvas</returns>
+        private iText.Kernel.Pdf.Canvas.PdfCanvas AddFormAt(PdfFormXObject form, float x, float y) {
+            iText.Kernel.Geom.Rectangle bBox = PdfFormXObject.CalculateBBoxMultipliedByMatrix(form);
+            Vector bBoxMin = new Vector(bBox.GetLeft(), bBox.GetBottom(), 1);
+            Vector bBoxMax = new Vector(bBox.GetRight(), bBox.GetTop(), 1);
+            Vector rectMin = new Vector(x, y, 1);
+            Vector rectMax = new Vector(x + bBoxMax.Get(Vector.I1) - bBoxMin.Get(Vector.I1), y + bBoxMax.Get(Vector.I2
+                ) - bBoxMin.Get(Vector.I2), 1);
+            float[] result = iText.Kernel.Pdf.Canvas.PdfCanvas.CalculateTransformationMatrix(rectMin, rectMax, bBoxMin
+                , bBoxMax);
+            return AddFormWithTransformationMatrix(form, result[0], result[1], result[2], result[3], result[4], result
+                [5], false);
+        }
+
+        /// <summary>
+        /// Adds
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfFormXObject"/>
+        /// to the canvas and moves to the specified offset.
+        /// </summary>
+        /// <param name="form">the formXObject to add</param>
+        /// <param name="x">the horizontal offset of the formXObject position</param>
+        /// <param name="y">the vertical offset of the formXObject position</param>
+        /// <returns>the current canvas</returns>
+        [System.ObsoleteAttribute(@"will be removed in 7.2, use AddFormAt(iText.Kernel.Pdf.Xobject.PdfFormXObject, float, float) instead"
+            )]
         private iText.Kernel.Pdf.Canvas.PdfCanvas AddForm(PdfFormXObject form, float x, float y) {
-            return AddForm(form, 1, 0, 0, 1, x, y);
+            //TODO DEVSIX-5729 Remove deprecated api in PdfCanvas
+            return AddFormWithTransformationMatrix(form, 1, 0, 0, 1, x, y, true);
         }
 
         /// <summary>
         /// Adds
-        /// <c>PdfFormXObject</c>
-        /// to specified rectangle on canvas and scale it using the rectangle's width and height.
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfFormXObject"/>
+        /// fitted into specific rectangle on canvas.
         /// </summary>
-        /// <param name="form">PdfFormXObject to add</param>
-        /// <param name="rect">rectangle containing x and y coordinates and scaling information</param>
-        /// <returns>current canvas.</returns>
-        private iText.Kernel.Pdf.Canvas.PdfCanvas AddForm(PdfFormXObject form, iText.Kernel.Geom.Rectangle rect) {
-            return AddForm(form, rect.GetWidth(), 0, 0, rect.GetHeight(), rect.GetX(), rect.GetY());
-        }
-
-        /// <summary>
-        /// Adds I
-        /// <c>PdfFormXObject</c>
-        /// to the specified position with specified width preserving aspect ratio.
-        /// </summary>
-        /// <param name="form"/>
-        /// <param name="x"/>
-        /// <param name="y"/>
-        /// <param name="width"/>
-        /// <returns>current canvas.</returns>
-        private iText.Kernel.Pdf.Canvas.PdfCanvas AddForm(PdfFormXObject form, float x, float y, float width) {
-            PdfArray bbox = form.GetPdfObject().GetAsArray(PdfName.BBox);
-            if (bbox == null) {
-                throw new PdfException(PdfException.PdfFormXobjectHasInvalidBbox);
-            }
-            float formWidth = Math.Abs(bbox.GetAsNumber(2).FloatValue() - bbox.GetAsNumber(0).FloatValue());
-            float formHeight = Math.Abs(bbox.GetAsNumber(3).FloatValue() - bbox.GetAsNumber(1).FloatValue());
-            return AddForm(form, width, 0, 0, width / formWidth * formHeight, x, y);
+        /// <param name="form">the formXObject to add</param>
+        /// <param name="rect">the rectangle in which the formXObject will be fitted</param>
+        /// <returns>the current canvas</returns>
+        private iText.Kernel.Pdf.Canvas.PdfCanvas AddFormFittedIntoRectangle(PdfFormXObject form, iText.Kernel.Geom.Rectangle
+             rect) {
+            iText.Kernel.Geom.Rectangle bBox = PdfFormXObject.CalculateBBoxMultipliedByMatrix(form);
+            Vector bBoxMin = new Vector(bBox.GetLeft(), bBox.GetBottom(), 1);
+            Vector bBoxMax = new Vector(bBox.GetRight(), bBox.GetTop(), 1);
+            Vector rectMin = new Vector(rect.GetLeft(), rect.GetBottom(), 1);
+            Vector rectMax = new Vector(rect.GetRight(), rect.GetTop(), 1);
+            float[] result = iText.Kernel.Pdf.Canvas.PdfCanvas.CalculateTransformationMatrix(rectMin, rectMax, bBoxMin
+                , bBoxMax);
+            return AddFormWithTransformationMatrix(form, result[0], result[1], result[2], result[3], result[4], result
+                [5], false);
         }
 
         /// <summary>
         /// Adds
-        /// <c>PdfFormXObject</c>
-        /// to the specified position with specified height preserving aspect ratio.
-        /// </summary>
-        /// <param name="form"/>
-        /// <param name="x"/>
-        /// <param name="y"/>
-        /// <param name="height"/>
-        /// <param name="dummy"/>
-        /// <returns>current canvas</returns>
-        private iText.Kernel.Pdf.Canvas.PdfCanvas AddForm(PdfFormXObject form, float x, float y, float height, bool
-             dummy) {
-            PdfArray bbox = form.GetPdfObject().GetAsArray(PdfName.BBox);
-            if (bbox == null) {
-                throw new PdfException(PdfException.PdfFormXobjectHasInvalidBbox);
-            }
-            float formWidth = Math.Abs(bbox.GetAsNumber(2).FloatValue() - bbox.GetAsNumber(0).FloatValue());
-            float formHeight = Math.Abs(bbox.GetAsNumber(3).FloatValue() - bbox.GetAsNumber(1).FloatValue());
-            return AddForm(form, height / formHeight * formWidth, 0, 0, height, x, y);
-        }
-
-        /// <summary>
-        /// Adds
-        /// <c>PdfImageXObject</c>
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfXObject"/>
         /// to canvas.
         /// </summary>
-        /// <param name="image">
-        /// the
-        /// <c>PdfImageXObject</c>
-        /// object
-        /// </param>
+        /// <param name="xObject">the xObject to add</param>
         /// <param name="a">an element of the transformation matrix</param>
         /// <param name="b">an element of the transformation matrix</param>
         /// <param name="c">an element of the transformation matrix</param>
         /// <param name="d">an element of the transformation matrix</param>
         /// <param name="e">an element of the transformation matrix</param>
         /// <param name="f">an element of the transformation matrix</param>
-        /// <returns>canvas a reference to this object.</returns>
-        private iText.Kernel.Pdf.Canvas.PdfCanvas AddImage(PdfImageXObject image, float a, float b, float c, float
-             d, float e, float f) {
+        /// <returns>current canvas</returns>
+        private iText.Kernel.Pdf.Canvas.PdfCanvas AddImageWithTransformationMatrix(PdfXObject xObject, float a, float
+             b, float c, float d, float e, float f) {
             SaveState();
             ConcatMatrix(a, b, c, d, e, f);
-            PdfName name = resources.AddImage(image);
-            contentStream.GetOutputStream().Write(name).WriteSpace().WriteBytes(Do);
-            RestoreState();
-            return this;
-        }
-
-        private iText.Kernel.Pdf.Canvas.PdfCanvas AddImage(PdfXObject xObject, float a, float b, float c, float d, 
-            float e, float f) {
-            SaveState();
-            ConcatMatrix(a, b, c, d, e, f);
-            PdfName name = resources.AddImage(xObject.GetPdfObject());
+            PdfName name;
+            if (xObject is PdfImageXObject) {
+                name = resources.AddImage((PdfImageXObject)xObject);
+            }
+            else {
+                name = resources.AddImage(xObject.GetPdfObject());
+            }
             contentStream.GetOutputStream().Write(name).WriteSpace().WriteBytes(Do);
             RestoreState();
             return this;
@@ -2232,64 +2262,29 @@ namespace iText.Kernel.Pdf.Canvas {
 
         /// <summary>
         /// Adds
-        /// <c>PdfImageXObject</c>
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfImageXObject"/>
         /// to the specified position.
         /// </summary>
-        /// <param name="image"/>
-        /// <param name="x"/>
-        /// <param name="y"/>
-        /// <returns>current canvas</returns>
-        private iText.Kernel.Pdf.Canvas.PdfCanvas AddImage(PdfImageXObject image, float x, float y) {
-            return AddImage(image, image.GetWidth(), 0, 0, image.GetHeight(), x, y);
+        /// <param name="image">the imageXObject to add</param>
+        /// <param name="x">the horizontal position of the imageXObject</param>
+        /// <param name="y">the vertical position of the imageXObject</param>
+        /// <returns>the current canvas</returns>
+        private iText.Kernel.Pdf.Canvas.PdfCanvas AddImageAt(PdfImageXObject image, float x, float y) {
+            return AddImageWithTransformationMatrix(image, image.GetWidth(), 0, 0, image.GetHeight(), x, y);
         }
 
         /// <summary>
         /// Adds
-        /// <c>PdfImageXObject</c>
-        /// to specified rectangle on canvas and scale it using the rectangle's width and height.
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfImageXObject"/>
+        /// fitted into specific rectangle on canvas.
         /// </summary>
-        /// <param name="image">PdfImageXObject to add</param>
-        /// <param name="rect">rectangle containing x and y coordinates and scaling information</param>
+        /// <param name="image">the imageXObject to add</param>
+        /// <param name="rect">the rectangle in which the imageXObject will be fitted</param>
         /// <returns>current canvas</returns>
-        private iText.Kernel.Pdf.Canvas.PdfCanvas AddImage(PdfImageXObject image, iText.Kernel.Geom.Rectangle rect
-            ) {
-            return AddImage(image, rect.GetWidth(), 0, 0, rect.GetHeight(), rect.GetX(), rect.GetY());
-        }
-
-        /// <summary>
-        /// Adds
-        /// <c>PdfImageXObject</c>
-        /// to the specified position with specified width preserving aspect ratio.
-        /// </summary>
-        /// <param name="image"/>
-        /// <param name="x"/>
-        /// <param name="y"/>
-        /// <param name="width"/>
-        /// <returns>current canvas</returns>
-        private iText.Kernel.Pdf.Canvas.PdfCanvas AddImage(PdfImageXObject image, float x, float y, float width) {
-            return AddImage(image, width, 0, 0, width / image.GetWidth() * image.GetHeight(), x, y);
-        }
-
-        /// <summary>
-        /// Adds
-        /// <c>PdfImageXObject</c>
-        /// to the specified position with specified height preserving aspect ratio.
-        /// </summary>
-        /// <param name="image"/>
-        /// <param name="x"/>
-        /// <param name="y"/>
-        /// <param name="height"/>
-        /// <param name="dummy"/>
-        /// <returns>current canvas.</returns>
-        private iText.Kernel.Pdf.Canvas.PdfCanvas AddImage(PdfImageXObject image, float x, float y, float height, 
-            bool dummy) {
-            return AddImage(image, height / image.GetHeight() * image.GetWidth(), 0, 0, height, x, y);
-        }
-
-        private static PdfStream GetPageStream(PdfPage page) {
-            PdfStream stream = page.GetLastContentStream();
-            return stream == null || stream.GetOutputStream() == null || stream.ContainsKey(PdfName.Filter) ? page.NewContentStreamAfter
-                () : stream;
+        private iText.Kernel.Pdf.Canvas.PdfCanvas AddImageFittedIntoRectangle(PdfImageXObject image, iText.Kernel.Geom.Rectangle
+             rect) {
+            return AddImageWithTransformationMatrix(image, rect.GetWidth(), 0, 0, rect.GetHeight(), rect.GetX(), rect.
+                GetY());
         }
 
         private PdfStream EnsureStreamDataIsReadyToBeProcessed(PdfStream stream) {
@@ -2315,7 +2310,8 @@ namespace iText.Kernel.Pdf.Canvas {
         private void ShowTextInt(String text) {
             document.CheckIsoConformance(currentGs, IsoKey.FONT_GLYPHS, null, contentStream);
             if (currentGs.GetFont() == null) {
-                throw new PdfException(PdfException.FontAndSizeMustBeSetBeforeWritingAnyText, currentGs);
+                throw new PdfException(KernelExceptionMessageConstant.FONT_AND_SIZE_MUST_BE_SET_BEFORE_WRITING_ANY_TEXT, currentGs
+                    );
             }
             currentGs.GetFont().WriteText(text, contentStream.GetOutputStream());
         }
@@ -2377,12 +2373,108 @@ namespace iText.Kernel.Pdf.Canvas {
             }
         }
 
+        private iText.Kernel.Pdf.Canvas.PdfCanvas DrawArc(double x1, double y1, double x2, double y2, double startAng
+            , double extent, bool continuous) {
+            IList<double[]> ar = BezierArc(x1, y1, x2, y2, startAng, extent);
+            if (ar.IsEmpty()) {
+                return this;
+            }
+            double[] pt = ar[0];
+            if (continuous) {
+                LineTo(pt[0], pt[1]);
+            }
+            else {
+                MoveTo(pt[0], pt[1]);
+            }
+            for (int index = 0; index < ar.Count; ++index) {
+                pt = ar[index];
+                CurveTo(pt[2], pt[3], pt[4], pt[5], pt[6], pt[7]);
+            }
+            return this;
+        }
+
+        private void CheckDefaultDeviceGrayBlackColor(PdfCanvas.CheckColorMode checkColorMode) {
+            if (defaultDeviceGrayBlackColorCheckRequired) {
+                // It's enough to check DeviceGray.BLACK once for fill color or stroke color
+                // But it's still important to do not check fill color if it's not used and vice versa
+                if (currentGs.GetFillColor() == DeviceGray.BLACK && (checkColorMode == PdfCanvas.CheckColorMode.FILL || checkColorMode
+                     == PdfCanvas.CheckColorMode.FILL_AND_STROKE)) {
+                    document.CheckIsoConformance(currentGs, IsoKey.FILL_COLOR, resources, contentStream);
+                    defaultDeviceGrayBlackColorCheckRequired = false;
+                }
+                else {
+                    if (currentGs.GetStrokeColor() == DeviceGray.BLACK && (checkColorMode == PdfCanvas.CheckColorMode.STROKE ||
+                         checkColorMode == PdfCanvas.CheckColorMode.FILL_AND_STROKE)) {
+                        document.CheckIsoConformance(currentGs, IsoKey.STROKE_COLOR, resources, contentStream);
+                        defaultDeviceGrayBlackColorCheckRequired = false;
+                    }
+                }
+            }
+        }
+
+        // Nothing
+        private PdfCanvas.CheckColorMode GetColorKeyForText() {
+            switch (currentGs.GetTextRenderingMode()) {
+                case PdfCanvasConstants.TextRenderingMode.FILL:
+                case PdfCanvasConstants.TextRenderingMode.FILL_CLIP: {
+                    return PdfCanvas.CheckColorMode.FILL;
+                }
+
+                case PdfCanvasConstants.TextRenderingMode.STROKE:
+                case PdfCanvasConstants.TextRenderingMode.STROKE_CLIP: {
+                    return PdfCanvas.CheckColorMode.STROKE;
+                }
+
+                case PdfCanvasConstants.TextRenderingMode.FILL_STROKE:
+                case PdfCanvasConstants.TextRenderingMode.FILL_STROKE_CLIP: {
+                    return PdfCanvas.CheckColorMode.FILL_AND_STROKE;
+                }
+
+                default: {
+                    return PdfCanvas.CheckColorMode.NONE;
+                }
+            }
+        }
+
+        private static PdfStream GetPageStream(PdfPage page) {
+            PdfStream stream = page.GetLastContentStream();
+            return stream == null || stream.GetOutputStream() == null || stream.ContainsKey(PdfName.Filter) ? page.NewContentStreamAfter
+                () : stream;
+        }
+
         private static IList<T> EnumeratorToList<T>(IEnumerator<T> enumerator) {
             IList<T> list = new List<T>();
             while (enumerator.MoveNext()) {
                 list.Add(enumerator.Current);
             }
             return list;
+        }
+
+        private static float[] CalculateTransformationMatrix(Vector expectedMin, Vector expectedMax, Vector actualMin
+            , Vector actualMax) {
+            // Calculates a matrix such that if you multiply the actual vertices by it, you get the expected vertices
+            float[] result = new float[6];
+            result[0] = (expectedMin.Get(Vector.I1) - expectedMax.Get(Vector.I1)) / (actualMin.Get(Vector.I1) - actualMax
+                .Get(Vector.I1));
+            result[1] = 0;
+            result[2] = 0;
+            result[3] = (expectedMin.Get(Vector.I2) - expectedMax.Get(Vector.I2)) / (actualMin.Get(Vector.I2) - actualMax
+                .Get(Vector.I2));
+            result[4] = expectedMin.Get(Vector.I1) - actualMin.Get(Vector.I1) * result[0];
+            result[5] = expectedMin.Get(Vector.I2) - actualMin.Get(Vector.I2) * result[3];
+            return result;
+        }
+
+        private static bool IsIdentityMatrix(float a, float b, float c, float d, float e, float f) {
+            return Math.Abs(1 - a) < IDENTITY_MATRIX_EPS && Math.Abs(b) < IDENTITY_MATRIX_EPS && Math.Abs(c) < IDENTITY_MATRIX_EPS
+                 && Math.Abs(1 - d) < IDENTITY_MATRIX_EPS && Math.Abs(e) < IDENTITY_MATRIX_EPS && Math.Abs(f) < IDENTITY_MATRIX_EPS;
+        }
+
+        private enum CheckColorMode {
+            NONE,
+            FILL,
+            STROKE,
+            FILL_AND_STROKE
         }
     }
 }

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,9 +44,11 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
 using iText.IO.Source;
-using iText.IO.Util;
+using iText.Kernel.Utils;
 
 namespace iText.Kernel.Pdf {
     public class PdfWriter : PdfOutputStream {
@@ -54,9 +56,10 @@ namespace iText.Kernel.Pdf {
 
         private static readonly byte[] endobj = ByteUtils.GetIsoBytes("\nendobj\n");
 
-        private PdfOutputStream duplicateStream = null;
-
         protected internal WriterProperties properties;
+
+        //forewarned is forearmed
+        protected internal bool isUserWarnedAboutAcroFormCopying;
 
         /// <summary>Currently active object stream.</summary>
         /// <remarks>
@@ -71,17 +74,14 @@ namespace iText.Kernel.Pdf {
         /// It stores hashes of the indirect reference from the source document and the corresponding
         /// indirect references of the copied objects from the new document.
         /// </remarks>
-        private IDictionary<PdfDocument.IndirectRefDescription, PdfIndirectReference> copiedObjects = new LinkedDictionary
-            <PdfDocument.IndirectRefDescription, PdfIndirectReference>();
+        private IDictionary<PdfIndirectReference, PdfIndirectReference> copiedObjects = new LinkedDictionary<PdfIndirectReference
+            , PdfIndirectReference>();
 
         /// <summary>Is used in smart mode to serialize and store serialized objects content.</summary>
         private SmartModePdfObjectsSerializer smartModeSerializer = new SmartModePdfObjectsSerializer();
 
-        protected internal bool isUserWarnedAboutAcroFormCopying;
-
         /// <summary>Create a PdfWriter writing to the passed File and with default writer properties.</summary>
         /// <param name="file">File to write to.</param>
-        /// <exception cref="System.IO.FileNotFoundException"/>
         public PdfWriter(FileInfo file)
             : this(file.FullName) {
         }
@@ -93,17 +93,12 @@ namespace iText.Kernel.Pdf {
         }
 
         public PdfWriter(Stream os, WriterProperties properties)
-            : base(FileUtil.WrapWithBufferedOutputStream(os)) {
-            // For internal usage only
-            //forewarned is forearmed
+            : base(new CountOutputStream(FileUtil.WrapWithBufferedOutputStream(os))) {
             this.properties = properties;
-            if (properties.debugMode) {
-            }
         }
 
         /// <summary>Create a PdfWriter writing to the passed filename and with default writer properties.</summary>
         /// <param name="filename">filename of the resulting pdf.</param>
-        /// <exception cref="System.IO.FileNotFoundException"/>
         public PdfWriter(String filename)
             : this(filename, new WriterProperties()) {
         }
@@ -111,7 +106,6 @@ namespace iText.Kernel.Pdf {
         /// <summary>Create a PdfWriter writing to the passed filename and using the passed writer properties.</summary>
         /// <param name="filename">filename of the resulting pdf.</param>
         /// <param name="properties">writerproperties to use.</param>
-        /// <exception cref="System.IO.FileNotFoundException"/>
         public PdfWriter(String filename, WriterProperties properties)
             : this(FileUtil.GetBufferedOutputStream(filename), properties) {
         }
@@ -126,8 +120,7 @@ namespace iText.Kernel.Pdf {
         /// <remarks>
         /// Gets default compression level for @see PdfStream.
         /// For more details @see
-        /// <see cref="Java.Util.Zip.Deflater"/>
-        /// .
+        /// <see cref="iText.IO.Source.DeflaterOutputStream"/>.
         /// </remarks>
         /// <returns>compression level.</returns>
         public virtual int GetCompressionLevel() {
@@ -138,10 +131,14 @@ namespace iText.Kernel.Pdf {
         /// <remarks>
         /// Sets default compression level for @see PdfStream.
         /// For more details @see
-        /// <see cref="Java.Util.Zip.Deflater"/>
-        /// .
+        /// <see cref="iText.IO.Source.DeflaterOutputStream"/>.
         /// </remarks>
         /// <param name="compressionLevel">compression level.</param>
+        /// <returns>
+        /// this
+        /// <see cref="PdfWriter"/>
+        /// instance
+        /// </returns>
         public virtual iText.Kernel.Pdf.PdfWriter SetCompressionLevel(int compressionLevel) {
             this.properties.SetCompressionLevel(compressionLevel);
             return this;
@@ -158,28 +155,14 @@ namespace iText.Kernel.Pdf {
         /// of the resulting PDF document.
         /// </remarks>
         /// <param name="smartMode">True for enabling smart mode.</param>
+        /// <returns>
+        /// this
+        /// <see cref="PdfWriter"/>
+        /// instance
+        /// </returns>
         public virtual iText.Kernel.Pdf.PdfWriter SetSmartMode(bool smartMode) {
             this.properties.smartMode = smartMode;
             return this;
-        }
-
-        /// <summary>Gets the current object stream.</summary>
-        /// <returns>object stream.</returns>
-        /// <exception cref="System.IO.IOException"/>
-        internal virtual PdfObjectStream GetObjectStream() {
-            if (!IsFullCompression()) {
-                return null;
-            }
-            if (objectStream == null) {
-                objectStream = new PdfObjectStream(document);
-            }
-            else {
-                if (objectStream.GetSize() == PdfObjectStream.MAX_OBJ_STREAM_SIZE) {
-                    objectStream.Flush();
-                    objectStream = new PdfObjectStream(objectStream);
-                }
-            }
-            return objectStream;
         }
 
         protected internal virtual void InitCryptoIfSpecified(PdfVersion version) {
@@ -202,7 +185,6 @@ namespace iText.Kernel.Pdf {
         ///     </remarks>
         /// <param name="pdfObject">object to flush.</param>
         /// <param name="canBeInObjStm">indicates whether object can be placed into object stream.</param>
-        /// <exception cref="System.IO.IOException">on error.</exception>
         protected internal virtual void FlushObject(PdfObject pdfObject, bool canBeInObjStm) {
             PdfIndirectReference indirectReference = pdfObject.GetIndirectReference();
             if (IsFullCompression() && canBeInObjStm) {
@@ -246,8 +228,31 @@ namespace iText.Kernel.Pdf {
             }
         }
 
+        /// <summary>Copies a PdfObject either stand alone or as part of the PdfDocument passed as documentTo.</summary>
+        /// <param name="obj">object to copy</param>
+        /// <param name="documentTo">optional target document</param>
+        /// <param name="allowDuplicating">allow that some objects will become duplicated by this action</param>
+        /// <returns>the copies object</returns>
         protected internal virtual PdfObject CopyObject(PdfObject obj, PdfDocument documentTo, bool allowDuplicating
             ) {
+            return CopyObject(obj, documentTo, allowDuplicating, NullCopyFilter.GetInstance());
+        }
+
+        /// <summary>Copies a PdfObject either stand alone or as part of the PdfDocument passed as documentTo.</summary>
+        /// <param name="obj">object to copy</param>
+        /// <param name="documentTo">optional target document</param>
+        /// <param name="allowDuplicating">allow that some objects will become duplicated by this action</param>
+        /// <param name="copyFilter">
+        /// 
+        /// <see cref="iText.Kernel.Utils.ICopyFilter"/>
+        /// a filter to apply while copying arrays and dictionaries
+        /// *             Use
+        /// <see cref="iText.Kernel.Utils.NullCopyFilter"/>
+        /// for no filtering
+        /// </param>
+        /// <returns>the copies object</returns>
+        protected internal virtual PdfObject CopyObject(PdfObject obj, PdfDocument documentTo, bool allowDuplicating
+            , ICopyFilter copyFilter) {
             if (obj is PdfIndirectReference) {
                 obj = ((PdfIndirectReference)obj).GetRefersTo();
             }
@@ -255,47 +260,42 @@ namespace iText.Kernel.Pdf {
                 obj = PdfNull.PDF_NULL;
             }
             if (CheckTypeOfPdfDictionary(obj, PdfName.Catalog)) {
-                ILog logger = LogManager.GetLogger(typeof(PdfReader));
-                logger.Warn(iText.IO.LogMessageConstant.MAKE_COPY_OF_CATALOG_DICTIONARY_IS_FORBIDDEN);
+                ILogger logger = ITextLogManager.GetLogger(typeof(PdfReader));
+                logger.LogWarning(iText.IO.Logs.IoLogMessageConstant.MAKE_COPY_OF_CATALOG_DICTIONARY_IS_FORBIDDEN);
                 obj = PdfNull.PDF_NULL;
             }
             PdfIndirectReference indirectReference = obj.GetIndirectReference();
-            PdfDocument.IndirectRefDescription copiedObjectKey = null;
             bool tryToFindDuplicate = !allowDuplicating && indirectReference != null;
             if (tryToFindDuplicate) {
-                copiedObjectKey = new PdfDocument.IndirectRefDescription(indirectReference);
-                PdfIndirectReference copiedIndirectReference = copiedObjects.Get(copiedObjectKey);
+                PdfIndirectReference copiedIndirectReference = copiedObjects.Get(indirectReference);
                 if (copiedIndirectReference != null) {
                     return copiedIndirectReference.GetRefersTo();
                 }
             }
             SerializedObjectContent serializedContent = null;
-            if (properties.smartMode && tryToFindDuplicate && !CheckTypeOfPdfDictionary(obj, PdfName.Page)) {
+            if (properties.smartMode && tryToFindDuplicate && !CheckTypeOfPdfDictionary(obj, PdfName.Page) && !CheckTypeOfPdfDictionary
+                (obj, PdfName.OCG) && !CheckTypeOfPdfDictionary(obj, PdfName.OCMD)) {
                 serializedContent = smartModeSerializer.SerializeObject(obj);
                 PdfIndirectReference objectRef = smartModeSerializer.GetSavedSerializedObject(serializedContent);
                 if (objectRef != null) {
-                    copiedObjects.Put(copiedObjectKey, objectRef);
+                    copiedObjects.Put(indirectReference, objectRef);
                     return objectRef.refersTo;
                 }
             }
             PdfObject newObject = obj.NewInstance();
             if (indirectReference != null) {
-                if (copiedObjectKey == null) {
-                    copiedObjectKey = new PdfDocument.IndirectRefDescription(indirectReference);
-                }
                 PdfIndirectReference indRef = newObject.MakeIndirect(documentTo).GetIndirectReference();
                 if (serializedContent != null) {
                     smartModeSerializer.SaveSerializedObject(serializedContent, indRef);
                 }
-                copiedObjects.Put(copiedObjectKey, indRef);
+                copiedObjects.Put(indirectReference, indRef);
             }
-            newObject.CopyContent(obj, documentTo);
+            newObject.CopyContent(obj, documentTo, copyFilter);
             return newObject;
         }
 
         /// <summary>Writes object to body of PDF document.</summary>
         /// <param name="pdfObj">object to write.</param>
-        /// <exception cref="System.IO.IOException"/>
         protected internal virtual void WriteToBody(PdfObject pdfObj) {
             if (crypto != null) {
                 crypto.SetHashKeyForNextObject(pdfObj.GetIndirectReference().GetObjNumber(), pdfObj.GetIndirectReference()
@@ -315,11 +315,12 @@ namespace iText.Kernel.Pdf {
 
         /// <summary>Flushes all objects which have not been flushed yet.</summary>
         /// <param name="forbiddenToFlush">
-        /// 
+        /// a
         /// <see cref="Java.Util.Set{E}"/>
-        /// &lt;
-        /// <see cref="PdfIndirectReference"/>
-        /// &gt; of references that are forbidden to be flushed automatically.
+        /// of
+        /// <see cref="PdfIndirectReference">references</see>
+        /// that are forbidden to be flushed
+        /// automatically.
         /// </param>
         protected internal virtual void FlushWaitingObjects(ICollection<PdfIndirectReference> forbiddenToFlush) {
             PdfXrefTable xref = document.GetXref();
@@ -347,11 +348,12 @@ namespace iText.Kernel.Pdf {
         /// <summary>Flushes all modified objects which have not been flushed yet.</summary>
         /// <remarks>Flushes all modified objects which have not been flushed yet. Used in case incremental updates.</remarks>
         /// <param name="forbiddenToFlush">
-        /// 
+        /// a
         /// <see cref="Java.Util.Set{E}"/>
-        /// &lt;
-        /// <see cref="PdfIndirectReference"/>
-        /// &gt; of references that are forbidden to be flushed automatically.
+        /// of
+        /// <see cref="PdfIndirectReference">references</see>
+        /// that are forbidden to be flushed
+        /// automatically.
         /// </param>
         protected internal virtual void FlushModifiedWaitingObjects(ICollection<PdfIndirectReference> forbiddenToFlush
             ) {
@@ -377,20 +379,38 @@ namespace iText.Kernel.Pdf {
             }
         }
 
+        /// <summary>Gets the current object stream.</summary>
+        /// <returns>object stream.</returns>
+        internal virtual PdfObjectStream GetObjectStream() {
+            if (!IsFullCompression()) {
+                return null;
+            }
+            if (objectStream == null) {
+                objectStream = new PdfObjectStream(document);
+            }
+            else {
+                if (objectStream.GetSize() == PdfObjectStream.MAX_OBJ_STREAM_SIZE) {
+                    objectStream.Flush();
+                    objectStream = new PdfObjectStream(objectStream);
+                }
+            }
+            return objectStream;
+        }
+
         /// <summary>Flush all copied objects.</summary>
         /// <param name="docId">id of the source document</param>
         internal virtual void FlushCopiedObjects(long docId) {
-            IList<PdfDocument.IndirectRefDescription> remove = new List<PdfDocument.IndirectRefDescription>();
-            foreach (KeyValuePair<PdfDocument.IndirectRefDescription, PdfIndirectReference> copiedObject in copiedObjects
-                ) {
-                if (copiedObject.Key.docId == docId) {
+            IList<PdfIndirectReference> remove = new List<PdfIndirectReference>();
+            foreach (KeyValuePair<PdfIndirectReference, PdfIndirectReference> copiedObject in copiedObjects) {
+                PdfDocument document = copiedObject.Key.GetDocument();
+                if (document != null && document.GetDocumentId() == docId) {
                     if (copiedObject.Value.refersTo != null) {
                         copiedObject.Value.refersTo.Flush();
                         remove.Add(copiedObject.Key);
                     }
                 }
             }
-            foreach (PdfDocument.IndirectRefDescription ird in remove) {
+            foreach (PdfIndirectReference ird in remove) {
                 copiedObjects.JRemove(ird);
             }
         }

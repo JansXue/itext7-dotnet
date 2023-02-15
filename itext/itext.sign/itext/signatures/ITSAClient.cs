@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,13 +41,13 @@ source product.
 For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
-using Org.BouncyCastle.Crypto;
+using iText.Commons.Bouncycastle.Crypto;
 
 namespace iText.Signatures {
     /// <summary>Time Stamp Authority client (caller) interface.</summary>
     /// <remarks>
     /// Time Stamp Authority client (caller) interface.
-    /// <p>
+    /// <para />
     /// Interface used by the PdfPKCS7 digital signature builder to call
     /// Time Stamp Authority providing RFC 3161 compliant time stamp token.
     /// </remarks>
@@ -68,21 +68,19 @@ namespace iText.Signatures {
 
         /// <summary>
         /// Returns the
-        /// <see cref="Org.BouncyCastle.Crypto.IDigest"/>
+        /// <see cref="iText.Commons.Bouncycastle.Crypto.IIDigest"/>
         /// to digest the data imprint
         /// </summary>
         /// <returns>
         /// The
-        /// <see cref="Org.BouncyCastle.Crypto.IDigest"/>
+        /// <see cref="iText.Commons.Bouncycastle.Crypto.IIDigest"/>
         /// object.
         /// </returns>
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
-        IDigest GetMessageDigest();
+        IIDigest GetMessageDigest();
 
         /// <summary>Returns RFC 3161 timeStampToken.</summary>
         /// <param name="imprint">byte[] - data imprint to be time-stamped</param>
         /// <returns>byte[] - encoded, TSA signed data of the timeStampToken</returns>
-        /// <exception cref="System.Exception">- TSA request failed</exception>
         byte[] GetTimeStampToken(byte[] imprint);
     }
 }

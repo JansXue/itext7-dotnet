@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,8 +42,8 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
+using iText.Commons.Utils;
 using iText.IO.Source;
-using iText.IO.Util;
 
 namespace iText.IO.Font {
     /// <summary>Use this class for working with true type collection font (*.ttc)</summary>
@@ -64,7 +64,6 @@ namespace iText.IO.Font {
         /// instance by its bytes.
         /// </summary>
         /// <param name="ttc">the byte contents of the collection</param>
-        /// <exception cref="System.IO.IOException">in case the input in mal-formatted</exception>
         public TrueTypeCollection(byte[] ttc) {
             raf = new RandomAccessFileOrArray(new RandomAccessSourceFactory().CreateSource(ttc));
             this.ttc = ttc;
@@ -77,10 +76,10 @@ namespace iText.IO.Font {
         /// instance by its file path.
         /// </summary>
         /// <param name="ttcPath">the path of the collection</param>
-        /// <exception cref="System.IO.IOException">in case the input in mal-formatted</exception>
         public TrueTypeCollection(String ttcPath) {
             if (!FileUtil.FileExists(ttcPath)) {
-                throw new iText.IO.IOException(iText.IO.IOException.FontFile1NotFound).SetMessageParams(ttcPath);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.FontFile1NotFound).SetMessageParams
+                    (ttcPath);
             }
             raf = new RandomAccessFileOrArray(new RandomAccessSourceFactory().CreateBestSource(ttcPath));
             this.ttcPath = ttcPath;
@@ -90,10 +89,10 @@ namespace iText.IO.Font {
         /// <summary>method return TrueTypeFont by ttc index</summary>
         /// <param name="ttcIndex">the index for the TTC font</param>
         /// <returns>TrueTypeFont</returns>
-        /// <exception cref="System.IO.IOException"/>
         public virtual FontProgram GetFontByTccIndex(int ttcIndex) {
             if (ttcIndex > TTCSize - 1) {
-                throw new iText.IO.IOException(iText.IO.IOException.TtcIndexDoesNotExistInThisTtcFile);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.TtcIndexDoesNotExistInThisTtcFile
+                    );
             }
             if (ttcPath != null) {
                 return FontProgramFactory.CreateFont(ttcPath, ttcIndex, cached);
@@ -114,7 +113,7 @@ namespace iText.IO.Font {
         /// <see cref="GetFontByTccIndex(int)"/>
         /// will be cached or not.
         /// </summary>
-        /// <returns><code>true</code> if the created fonts will be cached, <code>false</code> otherwise</returns>
+        /// <returns><c>true</c> if the created fonts will be cached, <c>false</c> otherwise</returns>
         public virtual bool IsCached() {
             return cached;
         }
@@ -124,16 +123,15 @@ namespace iText.IO.Font {
         /// <see cref="GetFontByTccIndex(int)"/>
         /// will be cached or not.
         /// </summary>
-        /// <param name="cached"><code>true</code> if the created fonts will be cached, <code>false</code> otherwise</param>
+        /// <param name="cached"><c>true</c> if the created fonts will be cached, <c>false</c> otherwise</param>
         public virtual void SetCached(bool cached) {
             this.cached = cached;
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private void InitFontSize() {
             String mainTag = raf.ReadString(4, PdfEncodings.WINANSI);
             if (!mainTag.Equals("ttcf")) {
-                throw new iText.IO.IOException(iText.IO.IOException.InvalidTtcFile);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.InvalidTtcFile);
             }
             raf.SkipBytes(4);
             TTCSize = raf.ReadInt();

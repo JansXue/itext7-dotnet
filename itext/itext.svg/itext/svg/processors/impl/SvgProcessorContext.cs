@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -46,6 +46,7 @@ using iText.Layout.Font;
 using iText.StyledXmlParser.Css.Media;
 using iText.StyledXmlParser.Resolver.Font;
 using iText.StyledXmlParser.Resolver.Resource;
+using iText.Svg.Css;
 using iText.Svg.Processors;
 
 namespace iText.Svg.Processors.Impl {
@@ -57,10 +58,13 @@ namespace iText.Svg.Processors.Impl {
         /// <summary>Temporary set of fonts used in the PDF.</summary>
         private FontSet tempFonts;
 
-        private ResourceResolver resourceResolver;
+        private readonly ResourceResolver resourceResolver;
 
         /// <summary>The device description.</summary>
         private MediaDeviceDescription deviceDescription;
+
+        /// <summary>The SVG CSS context.</summary>
+        private readonly SvgCssContext cssContext;
 
         /// <summary>
         /// Instantiates a new
@@ -81,12 +85,9 @@ namespace iText.Svg.Processors.Impl {
             if (fontProvider == null) {
                 fontProvider = new BasicFontProvider();
             }
-            String baseUri = converterProperties.GetBaseUri();
-            if (baseUri == null) {
-                baseUri = "";
-            }
-            //TODO DEVSIX-2095
-            resourceResolver = new ResourceResolver(baseUri);
+            resourceResolver = new ResourceResolver(converterProperties.GetBaseUri(), converterProperties.GetResourceRetriever
+                ());
+            cssContext = new SvgCssContext();
         }
 
         /// <summary>Gets the font provider.</summary>
@@ -111,6 +112,25 @@ namespace iText.Svg.Processors.Impl {
         /// <returns>the set of fonts</returns>
         public virtual FontSet GetTempFonts() {
             return tempFonts;
+        }
+
+        /// <summary>Gets the SVG CSS context.</summary>
+        /// <returns>the SVG CSS context</returns>
+        public virtual SvgCssContext GetCssContext() {
+            return cssContext;
+        }
+
+        /// <summary>Add temporary font from @font-face.</summary>
+        /// <param name="fontProgram">the font program</param>
+        /// <param name="encoding">the encoding</param>
+        /// <param name="alias">the alias</param>
+        /// <param name="unicodeRange">the specific range of characters to be used from the font</param>
+        public virtual void AddTemporaryFont(FontProgram fontProgram, String encoding, String alias, Range unicodeRange
+            ) {
+            if (tempFonts == null) {
+                tempFonts = new FontSet();
+            }
+            tempFonts.AddFont(fontProgram, encoding, alias, unicodeRange);
         }
 
         /// <summary>Add temporary font from @font-face.</summary>

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -51,11 +51,17 @@ namespace iText.Layout.Element {
     /// A
     /// <see cref="BlockElement{T}"/>
     /// will try to take up as much horizontal space as
+    /// available to it on the canvas or page.
+    /// </summary>
+    /// <remarks>
+    /// A
+    /// <see cref="BlockElement{T}"/>
+    /// will try to take up as much horizontal space as
     /// available to it on the canvas or page. The concept is comparable to the block
     /// element in HTML. Also like in HTML, the visual representation of the object
     /// can be delimited by padding, a border, and/or a margin.
-    /// </summary>
-    /// 
+    /// </remarks>
+    /// <typeparam name="T">the type of the implementation</typeparam>
     public abstract class BlockElement<T> : AbstractElement<T>, IAccessibleElement, IBlockElement
         where T : IElement {
         /// <summary>Creates a BlockElement.</summary>
@@ -64,7 +70,6 @@ namespace iText.Layout.Element {
 
         public override T1 GetDefaultProperty<T1>(int property) {
             switch (property) {
-                case Property.OVERFLOW:
                 case Property.OVERFLOW_X:
                 case Property.OVERFLOW_Y: {
                     return (T1)(Object)OverflowPropertyValue.FIT;
@@ -290,6 +295,7 @@ namespace iText.Layout.Element {
         /// If <strong>ratio</strong> is 1, additional character spacing will not be applied.
         /// If <strong>ratio</strong> is 0, additional word spacing will not be applied.
         /// </param>
+        /// <returns>this element</returns>
         public virtual T SetSpacingRatio(float ratio) {
             SetProperty(Property.SPACING_RATIO, ratio);
             return (T)(Object)this;
@@ -347,10 +353,15 @@ namespace iText.Layout.Element {
         /// <see cref="BlockElement{T}"/>
         /// and the start of the next sibling of this element
         /// should be placed in the same area.
-        /// Note that this will only work for high-level elements, i.e. elements added to the
-        /// <see cref="iText.Layout.RootElement{T}"/>
-        /// .
         /// </summary>
+        /// <remarks>
+        /// Sets whether the end of this
+        /// <see cref="BlockElement{T}"/>
+        /// and the start of the next sibling of this element
+        /// should be placed in the same area.
+        /// Note that this will only work for high-level elements, i.e. elements added to the
+        /// <see cref="iText.Layout.RootElement{T}"/>.
+        /// </remarks>
         /// <param name="keepWithNext">
         /// the new value of the
         /// <see cref="iText.Layout.Properties.Property.KEEP_WITH_NEXT"/>
@@ -363,7 +374,7 @@ namespace iText.Layout.Element {
         }
 
         /// <summary>Sets the rotation radAngle.</summary>
-        /// <param name="angleInRadians">the new rotation radAngle, as a <code>float</code>, in radians</param>
+        /// <param name="angleInRadians">the new rotation radAngle, as a <c>float</c>, in radians</param>
         /// <returns>this element</returns>
         public virtual T SetRotationAngle(float angleInRadians) {
             SetProperty(Property.ROTATION_ANGLE, angleInRadians);
@@ -371,7 +382,7 @@ namespace iText.Layout.Element {
         }
 
         /// <summary>Sets the rotation angle.</summary>
-        /// <param name="angleInRadians">the new rotation angle, as a <code>double</code>, in radians</param>
+        /// <param name="angleInRadians">the new rotation angle, as a <c>double</c>, in radians</param>
         /// <returns>this element</returns>
         public virtual T SetRotationAngle(double angleInRadians) {
             SetProperty(Property.ROTATION_ANGLE, (float)angleInRadians);
@@ -388,8 +399,7 @@ namespace iText.Layout.Element {
 
         /// <summary>
         /// Sets the width property of a block element with a
-        /// <see cref="iText.Layout.Properties.UnitValue"/>
-        /// .
+        /// <see cref="iText.Layout.Properties.UnitValue"/>.
         /// </summary>
         /// <param name="width">
         /// a
@@ -411,8 +421,7 @@ namespace iText.Layout.Element {
 
         /// <summary>
         /// Sets the height property of a block element with a
-        /// <see cref="iText.Layout.Properties.UnitValue"/>
-        /// .
+        /// <see cref="iText.Layout.Properties.UnitValue"/>.
         /// </summary>
         /// <param name="height">
         /// a
@@ -451,8 +460,7 @@ namespace iText.Layout.Element {
 
         /// <summary>
         /// Sets the max-height property of a block element with a
-        /// <see cref="iText.Layout.Properties.UnitValue"/>
-        /// .
+        /// <see cref="iText.Layout.Properties.UnitValue"/>.
         /// </summary>
         /// <param name="maxHeight">
         /// a
@@ -467,8 +475,7 @@ namespace iText.Layout.Element {
 
         /// <summary>
         /// Sets the min-height property of a block element with a
-        /// <see cref="iText.Layout.Properties.UnitValue"/>
-        /// .
+        /// <see cref="iText.Layout.Properties.UnitValue"/>.
         /// </summary>
         /// <param name="minHeight">
         /// a
@@ -492,8 +499,7 @@ namespace iText.Layout.Element {
 
         /// <summary>
         /// Sets the max-width property of a block element with a
-        /// <see cref="iText.Layout.Properties.UnitValue"/>
-        /// .
+        /// <see cref="iText.Layout.Properties.UnitValue"/>.
         /// </summary>
         /// <param name="maxWidth">
         /// a
@@ -516,8 +522,7 @@ namespace iText.Layout.Element {
 
         /// <summary>
         /// Sets the min-width property of a block element with a
-        /// <see cref="iText.Layout.Properties.UnitValue"/>
-        /// .
+        /// <see cref="iText.Layout.Properties.UnitValue"/>.
         /// </summary>
         /// <param name="minWidth">
         /// a
@@ -535,6 +540,18 @@ namespace iText.Layout.Element {
         /// <returns>the block element itself</returns>
         public virtual T SetMinWidth(float minWidth) {
             SetProperty(Property.MIN_WIDTH, UnitValue.CreatePointValue(minWidth));
+            return (T)(Object)this;
+        }
+
+        /// <summary>Give this element a neutral role.</summary>
+        /// <remarks>
+        /// Give this element a neutral role. See also
+        /// <see cref="iText.Kernel.Pdf.Tagutils.AccessibilityProperties.SetRole(System.String)"/>.
+        /// </remarks>
+        /// <returns>this Element</returns>
+        public virtual T SetNeutralRole() {
+            this.GetAccessibilityProperties().SetRole(null);
+            // cast to Object is necessary for autoporting reasons
             return (T)(Object)this;
         }
 

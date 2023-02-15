@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,18 +42,21 @@ address: sales@itextpdf.com
 */
 using System;
 using System.IO;
+using iText.Commons.Utils;
 using iText.IO.Source;
-using iText.IO.Util;
 using iText.Kernel.Events;
 using iText.Kernel.Font;
+using iText.Kernel.Logs;
 using iText.Kernel.Pdf.Canvas;
 using iText.Kernel.Pdf.Canvas.Parser;
 using iText.Kernel.Pdf.Canvas.Parser.Listener;
 using iText.Kernel.Utils;
 using iText.Kernel.XMP;
 using iText.Test;
+using iText.Test.Attributes;
 
 namespace iText.Kernel.Pdf {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class PdfStampingTest : ExtendedITextTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/kernel/pdf/PdfStampingTest/";
@@ -66,7 +69,6 @@ namespace iText.Kernel.Pdf {
             CreateOrClearDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void Stamping1() {
             String filename1 = destinationFolder + "stamping1_1.pdf";
@@ -100,7 +102,7 @@ namespace iText.Kernel.Pdf {
             PdfString creator = info.GetAsString(PdfName.Creator);
             NUnit.Framework.Assert.AreEqual("iText 7", creator.ToString());
             byte[] bytes = document.GetPage(1).GetContentBytes();
-            NUnit.Framework.Assert.AreEqual("%Hello World\n", iText.IO.Util.JavaUtil.GetStringForBytes(bytes));
+            NUnit.Framework.Assert.AreEqual("%Hello World\n", iText.Commons.Utils.JavaUtil.GetStringForBytes(bytes));
             String date = document.GetDocumentInfo().GetPdfObject().GetAsString(PdfName.ModDate).GetValue();
             DateTime cl = PdfDate.Decode(date);
             double diff = DateTimeUtil.GetUtcMillisFromEpoch(null) - DateTimeUtil.GetUtcMillisFromEpoch(cl);
@@ -109,7 +111,6 @@ namespace iText.Kernel.Pdf {
             document.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void Stamping2() {
             String filename1 = destinationFolder + "stamping2_1.pdf";
@@ -139,13 +140,12 @@ namespace iText.Kernel.Pdf {
             PdfDocument pdfDocument = new PdfDocument(reader);
             NUnit.Framework.Assert.AreEqual(false, reader.HasRebuiltXref(), "Rebuilt");
             byte[] bytes = pdfDocument.GetPage(1).GetContentBytes();
-            NUnit.Framework.Assert.AreEqual("%page 1\n", iText.IO.Util.JavaUtil.GetStringForBytes(bytes));
+            NUnit.Framework.Assert.AreEqual("%page 1\n", iText.Commons.Utils.JavaUtil.GetStringForBytes(bytes));
             bytes = pdfDocument.GetPage(2).GetContentBytes();
-            NUnit.Framework.Assert.AreEqual("%page 2\n", iText.IO.Util.JavaUtil.GetStringForBytes(bytes));
+            NUnit.Framework.Assert.AreEqual("%page 2\n", iText.Commons.Utils.JavaUtil.GetStringForBytes(bytes));
             reader.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void Stamping3() {
             String filename1 = destinationFolder + "stamping3_1.pdf";
@@ -176,13 +176,12 @@ namespace iText.Kernel.Pdf {
             PdfDocument pdfDocument = new PdfDocument(reader);
             NUnit.Framework.Assert.AreEqual(false, reader.HasRebuiltXref(), "Rebuilt");
             byte[] bytes = pdfDocument.GetPage(1).GetContentBytes();
-            NUnit.Framework.Assert.AreEqual("%page 1\n", iText.IO.Util.JavaUtil.GetStringForBytes(bytes));
+            NUnit.Framework.Assert.AreEqual("%page 1\n", iText.Commons.Utils.JavaUtil.GetStringForBytes(bytes));
             bytes = pdfDocument.GetPage(2).GetContentBytes();
-            NUnit.Framework.Assert.AreEqual("%page 2\n", iText.IO.Util.JavaUtil.GetStringForBytes(bytes));
+            NUnit.Framework.Assert.AreEqual("%page 2\n", iText.Commons.Utils.JavaUtil.GetStringForBytes(bytes));
             pdfDocument.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void Stamping4() {
             String filename1 = destinationFolder + "stamping4_1.pdf";
@@ -215,12 +214,12 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.AreEqual(pageCount, pdfDocument.GetNumberOfPages(), "Page count");
             for (int i = 1; i < pdfDocument.GetNumberOfPages(); i++) {
                 byte[] bytes = pdfDocument.GetPage(i).GetContentBytes();
-                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.IO.Util.JavaUtil.GetStringForBytes(bytes));
+                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.Commons.Utils.JavaUtil.GetStringForBytes(bytes)
+                    );
             }
             pdfDocument.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void Stamping5() {
             String filename1 = destinationFolder + "stamping5_1.pdf";
@@ -255,12 +254,12 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.AreEqual(pageCount, pdfDocument.GetNumberOfPages(), "Page count");
             for (int i = 1; i < pdfDocument.GetNumberOfPages(); i++) {
                 byte[] bytes = pdfDocument.GetPage(i).GetContentBytes();
-                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.IO.Util.JavaUtil.GetStringForBytes(bytes));
+                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.Commons.Utils.JavaUtil.GetStringForBytes(bytes)
+                    );
             }
             reader.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void Stamping6() {
             String filename1 = destinationFolder + "stamping6_1.pdf";
@@ -289,13 +288,12 @@ namespace iText.Kernel.Pdf {
             PdfDocument pdfDocument = new PdfDocument(reader);
             NUnit.Framework.Assert.AreEqual(false, reader.HasRebuiltXref(), "Rebuilt");
             byte[] bytes = pdfDocument.GetPage(1).GetContentBytes();
-            NUnit.Framework.Assert.AreEqual("%page 1\n", iText.IO.Util.JavaUtil.GetStringForBytes(bytes));
+            NUnit.Framework.Assert.AreEqual("%page 1\n", iText.Commons.Utils.JavaUtil.GetStringForBytes(bytes));
             bytes = pdfDocument.GetPage(2).GetContentBytes();
-            NUnit.Framework.Assert.AreEqual("%page 2\n", iText.IO.Util.JavaUtil.GetStringForBytes(bytes));
+            NUnit.Framework.Assert.AreEqual("%page 2\n", iText.Commons.Utils.JavaUtil.GetStringForBytes(bytes));
             pdfDocument.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void Stamping7() {
             String filename1 = destinationFolder + "stamping7_1.pdf";
@@ -325,13 +323,12 @@ namespace iText.Kernel.Pdf {
             PdfDocument pdfDocument = new PdfDocument(reader);
             NUnit.Framework.Assert.AreEqual(false, reader.HasRebuiltXref(), "Rebuilt");
             byte[] bytes = pdfDocument.GetPage(1).GetContentBytes();
-            NUnit.Framework.Assert.AreEqual("%page 1\n", iText.IO.Util.JavaUtil.GetStringForBytes(bytes));
+            NUnit.Framework.Assert.AreEqual("%page 1\n", iText.Commons.Utils.JavaUtil.GetStringForBytes(bytes));
             bytes = pdfDocument.GetPage(2).GetContentBytes();
-            NUnit.Framework.Assert.AreEqual("%page 2\n", iText.IO.Util.JavaUtil.GetStringForBytes(bytes));
+            NUnit.Framework.Assert.AreEqual("%page 2\n", iText.Commons.Utils.JavaUtil.GetStringForBytes(bytes));
             pdfDocument.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void Stamping8() {
             String filename1 = destinationFolder + "stamping8_1.pdf";
@@ -364,13 +361,12 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.AreEqual(false, reader.HasRebuiltXref(), "Rebuilt");
             for (int i = 1; i <= pageCount; i++) {
                 byte[] bytes = pdfDocument.GetPage(i).GetContentBytes();
-                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.IO.Util.JavaUtil.GetStringForBytes(bytes), "Page content at page "
-                     + i);
+                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.Commons.Utils.JavaUtil.GetStringForBytes(bytes)
+                    , "Page content at page " + i);
             }
             pdfDocument.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void Stamping9() {
             String filename1 = destinationFolder + "stamping9_1.pdf";
@@ -403,13 +399,12 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.AreEqual(false, reader.HasRebuiltXref(), "Rebuilt");
             for (int i = 1; i <= pageCount; i++) {
                 byte[] bytes = pdfDocument.GetPage(i).GetContentBytes();
-                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.IO.Util.JavaUtil.GetStringForBytes(bytes), "Page content at page "
-                     + i);
+                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.Commons.Utils.JavaUtil.GetStringForBytes(bytes)
+                    , "Page content at page " + i);
             }
             pdfDocument.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void Stamping10() {
             String filename1 = destinationFolder + "stamping10_1.pdf";
@@ -442,13 +437,12 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.AreEqual(false, reader.HasRebuiltXref(), "Rebuilt");
             for (int i = 1; i <= pageCount; i++) {
                 byte[] bytes = pdfDocument.GetPage(i).GetContentBytes();
-                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.IO.Util.JavaUtil.GetStringForBytes(bytes), "Page content at page "
-                     + i);
+                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.Commons.Utils.JavaUtil.GetStringForBytes(bytes)
+                    , "Page content at page " + i);
             }
             pdfDocument.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void Stamping11() {
             String filename1 = destinationFolder + "stamping11_1.pdf";
@@ -481,13 +475,12 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.AreEqual(false, reader.HasRebuiltXref(), "Rebuilt");
             for (int i = 1; i <= pageCount; i++) {
                 byte[] bytes = pdfDocument.GetPage(i).GetContentBytes();
-                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.IO.Util.JavaUtil.GetStringForBytes(bytes), "Page content at page "
-                     + i);
+                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.Commons.Utils.JavaUtil.GetStringForBytes(bytes)
+                    , "Page content at page " + i);
             }
             pdfDocument.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void Stamping12() {
             String filename1 = destinationFolder + "stamping12_1.pdf";
@@ -524,13 +517,12 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.AreEqual(false, reader.HasRebuiltXref(), "Rebuilt");
             for (int i = 1; i <= pdfDocument.GetNumberOfPages(); i++) {
                 byte[] bytes = pdfDocument.GetPage(i).GetContentBytes();
-                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.IO.Util.JavaUtil.GetStringForBytes(bytes), "Page content at page "
-                     + i);
+                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.Commons.Utils.JavaUtil.GetStringForBytes(bytes)
+                    , "Page content at page " + i);
             }
             pdfDocument.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void Stamping13() {
             String filename1 = destinationFolder + "stamping13_1.pdf";
@@ -571,13 +563,12 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.AreEqual(false, reader.HasRebuiltXref(), "Rebuilt");
             for (int i = 1; i <= pageCount; i++) {
                 byte[] bytes = pdfDocument.GetPage(i).GetContentBytes();
-                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.IO.Util.JavaUtil.GetStringForBytes(bytes), "Page content at page "
-                     + i);
+                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.Commons.Utils.JavaUtil.GetStringForBytes(bytes)
+                    , "Page content at page " + i);
             }
             pdfDocument.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void Stamping14() {
             String filename1 = sourceFolder + "20000PagesDocument.pdf";
@@ -604,13 +595,12 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.AreEqual(false, reader.HasRebuiltXref(), "Rebuilt");
             for (int i = 1; i <= pdfDocument.GetNumberOfPages(); i++) {
                 byte[] bytes = pdfDocument.GetPage(i).GetContentBytes();
-                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.IO.Util.JavaUtil.GetStringForBytes(bytes), "Page content at page "
-                     + i);
+                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.Commons.Utils.JavaUtil.GetStringForBytes(bytes)
+                    , "Page content at page " + i);
             }
             pdfDocument.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void StampingStreamsCompression01() {
             // by default, old streams should not be recompressed
@@ -632,7 +622,6 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.IsTrue(coef < 0.01);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void StampingStreamsCompression02() {
             // if user specified, stream may be uncompressed
@@ -654,7 +643,6 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.IsTrue(coef < 0.01);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void StampingStreamsCompression03() {
             // if user specified, stream may be recompressed
@@ -674,8 +662,6 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.IsTrue(coef < 0.01);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
         [NUnit.Framework.Test]
         public virtual void StampingXmp1() {
             String filename1 = destinationFolder + "stampingXmp1_1.pdf";
@@ -712,14 +698,12 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.AreEqual(false, reader.HasRebuiltXref(), "Rebuilt");
             for (int i = 1; i <= pageCount; i++) {
                 byte[] bytes = pdfDocument.GetPage(i).GetContentBytes();
-                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.IO.Util.JavaUtil.GetStringForBytes(bytes), "Page content at page "
-                     + i);
+                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.Commons.Utils.JavaUtil.GetStringForBytes(bytes)
+                    , "Page content at page " + i);
             }
             pdfDocument.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
         [NUnit.Framework.Test]
         public virtual void StampingXmp2() {
             String filename1 = destinationFolder + "stampingXmp2_1.pdf";
@@ -756,13 +740,12 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.AreEqual(false, reader.HasRebuiltXref(), "Rebuilt");
             for (int i = 1; i <= pageCount; i++) {
                 byte[] bytes = pdfDocument.GetPage(i).GetContentBytes();
-                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.IO.Util.JavaUtil.GetStringForBytes(bytes), "Page content at page "
-                     + i);
+                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.Commons.Utils.JavaUtil.GetStringForBytes(bytes)
+                    , "Page content at page " + i);
             }
             pdfDocument.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void StampingAppend1() {
             String filename1 = destinationFolder + "stampingAppend1_1.pdf";
@@ -795,7 +778,7 @@ namespace iText.Kernel.Pdf {
             PdfString creator = info.GetAsString(PdfName.Creator);
             NUnit.Framework.Assert.AreEqual("iText 7", creator.ToString());
             byte[] bytes = pdfDocument.GetPage(1).GetContentBytes();
-            NUnit.Framework.Assert.AreEqual("%Hello World\n", iText.IO.Util.JavaUtil.GetStringForBytes(bytes));
+            NUnit.Framework.Assert.AreEqual("%Hello World\n", iText.Commons.Utils.JavaUtil.GetStringForBytes(bytes));
             String date = pdfDocument.GetDocumentInfo().GetPdfObject().GetAsString(PdfName.ModDate).GetValue();
             DateTime cl = PdfDate.Decode(date);
             double diff = DateTimeUtil.GetUtcMillisFromEpoch(null) - DateTimeUtil.GetUtcMillisFromEpoch(cl);
@@ -804,7 +787,6 @@ namespace iText.Kernel.Pdf {
             pdfDocument.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void StampingAppend2() {
             String filename1 = destinationFolder + "stampingAppend2_1.pdf";
@@ -834,13 +816,12 @@ namespace iText.Kernel.Pdf {
             PdfDocument pdfDocument = new PdfDocument(reader);
             NUnit.Framework.Assert.AreEqual(false, reader.HasRebuiltXref(), "Rebuilt");
             byte[] bytes = pdfDocument.GetPage(1).GetContentBytes();
-            NUnit.Framework.Assert.AreEqual("%page 1\n", iText.IO.Util.JavaUtil.GetStringForBytes(bytes));
+            NUnit.Framework.Assert.AreEqual("%page 1\n", iText.Commons.Utils.JavaUtil.GetStringForBytes(bytes));
             bytes = pdfDocument.GetPage(2).GetContentBytes();
-            NUnit.Framework.Assert.AreEqual("%page 2\n", iText.IO.Util.JavaUtil.GetStringForBytes(bytes));
+            NUnit.Framework.Assert.AreEqual("%page 2\n", iText.Commons.Utils.JavaUtil.GetStringForBytes(bytes));
             pdfDocument.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void StampingAppend3() {
             String filename1 = destinationFolder + "stampingAppend3_1.pdf";
@@ -870,13 +851,12 @@ namespace iText.Kernel.Pdf {
             PdfDocument pdfDocument = new PdfDocument(reader);
             NUnit.Framework.Assert.AreEqual(false, reader.HasRebuiltXref(), "Rebuilt");
             byte[] bytes = pdfDocument.GetPage(1).GetContentBytes();
-            NUnit.Framework.Assert.AreEqual("%page 1\n", iText.IO.Util.JavaUtil.GetStringForBytes(bytes));
+            NUnit.Framework.Assert.AreEqual("%page 1\n", iText.Commons.Utils.JavaUtil.GetStringForBytes(bytes));
             bytes = pdfDocument.GetPage(2).GetContentBytes();
-            NUnit.Framework.Assert.AreEqual("%page 2\n", iText.IO.Util.JavaUtil.GetStringForBytes(bytes));
+            NUnit.Framework.Assert.AreEqual("%page 2\n", iText.Commons.Utils.JavaUtil.GetStringForBytes(bytes));
             pdfDocument.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void StampingAppend4() {
             String filename1 = destinationFolder + "stampingAppend4_1.pdf";
@@ -910,13 +890,14 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.AreEqual(pageCount, pdfDocument.GetNumberOfPages(), "Page count");
             for (int i = 1; i < pdfDocument.GetNumberOfPages(); i++) {
                 byte[] bytes = pdfDocument.GetPage(i).GetContentBytes();
-                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.IO.Util.JavaUtil.GetStringForBytes(bytes));
+                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.Commons.Utils.JavaUtil.GetStringForBytes(bytes)
+                    );
             }
             pdfDocument.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.FULL_COMPRESSION_APPEND_MODE_XREF_TABLE_INCONSISTENCY)]
         public virtual void StampingAppend5() {
             String filename1 = destinationFolder + "stampingAppend5_1.pdf";
             String filename2 = destinationFolder + "stampingAppend5_2.pdf";
@@ -950,12 +931,12 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.AreEqual(pageCount, pdfDocument.GetNumberOfPages(), "Page count");
             for (int i = 1; i < pdfDocument.GetNumberOfPages(); i++) {
                 byte[] bytes = pdfDocument.GetPage(i).GetContentBytes();
-                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.IO.Util.JavaUtil.GetStringForBytes(bytes));
+                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.Commons.Utils.JavaUtil.GetStringForBytes(bytes)
+                    );
             }
             pdfDocument.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void StampingAppend8() {
             String filename1 = destinationFolder + "stampingAppend8_1.pdf";
@@ -987,14 +968,14 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.AreEqual(false, reader.HasRebuiltXref(), "Rebuilt");
             for (int i = 1; i <= pageCount; i++) {
                 byte[] bytes = pdfDocument.GetPage(i).GetContentBytes();
-                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.IO.Util.JavaUtil.GetStringForBytes(bytes), "Page content at page "
-                     + i);
+                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.Commons.Utils.JavaUtil.GetStringForBytes(bytes)
+                    , "Page content at page " + i);
             }
             pdfDocument.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.FULL_COMPRESSION_APPEND_MODE_XREF_TABLE_INCONSISTENCY)]
         public virtual void StampingAppend9() {
             String filename1 = destinationFolder + "stampingAppend9_1.pdf";
             String filename2 = destinationFolder + "stampingAppend9_2.pdf";
@@ -1026,14 +1007,14 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.AreEqual(false, reader.HasRebuiltXref(), "Rebuilt");
             for (int i = 1; i <= pageCount; i++) {
                 byte[] bytes = pdfDocument.GetPage(i).GetContentBytes();
-                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.IO.Util.JavaUtil.GetStringForBytes(bytes), "Page content at page "
-                     + i);
+                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.Commons.Utils.JavaUtil.GetStringForBytes(bytes)
+                    , "Page content at page " + i);
             }
             pdfDocument.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.FULL_COMPRESSION_APPEND_MODE_XREF_STREAM_INCONSISTENCY)]
         public virtual void StampingAppend10() {
             String filename1 = destinationFolder + "stampingAppend10_1.pdf";
             String filename2 = destinationFolder + "stampingAppend10_2.pdf";
@@ -1065,13 +1046,12 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.AreEqual(false, reader.HasRebuiltXref(), "Rebuilt");
             for (int i = 1; i <= pageCount; i++) {
                 byte[] bytes = pdfDocument.GetPage(i).GetContentBytes();
-                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.IO.Util.JavaUtil.GetStringForBytes(bytes), "Page content at page "
-                     + i);
+                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.Commons.Utils.JavaUtil.GetStringForBytes(bytes)
+                    , "Page content at page " + i);
             }
             pdfDocument.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void StampingAppend11() {
             String filename1 = destinationFolder + "stampingAppend11_1.pdf";
@@ -1104,13 +1084,12 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.AreEqual(false, reader.HasRebuiltXref(), "Rebuilt");
             for (int i = 1; i <= pageCount; i++) {
                 byte[] bytes = pdfDocument.GetPage(i).GetContentBytes();
-                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.IO.Util.JavaUtil.GetStringForBytes(bytes), "Page content at page "
-                     + i);
+                NUnit.Framework.Assert.AreEqual("%page " + i + "\n", iText.Commons.Utils.JavaUtil.GetStringForBytes(bytes)
+                    , "Page content at page " + i);
             }
             pdfDocument.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void StampingVersionTest01() {
             // By default the version of the output file should be the same as the original one
@@ -1124,7 +1103,6 @@ namespace iText.Kernel.Pdf {
             assertPdfDoc.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void StampingVersionTest02() {
             // There is a possibility to override version in stamping mode
@@ -1139,7 +1117,6 @@ namespace iText.Kernel.Pdf {
             assertPdfDoc.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void StampingAppendVersionTest01() {
             // There is a possibility to override version in stamping mode
@@ -1155,7 +1132,6 @@ namespace iText.Kernel.Pdf {
             assertPdfDoc.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void StampingTestWithTaggedStructure() {
             String filename = sourceFolder + "iphone_user_guide.pdf";
@@ -1164,39 +1140,25 @@ namespace iText.Kernel.Pdf {
             pdfDoc.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void StampingTestWithFullCompression01() {
-            String outPdf = destinationFolder + "stampingTestWithFullCompression01.pdf";
-            String cmpPdf = sourceFolder + "cmp_stampingTestWithFullCompression01.pdf";
+            String compressedOutPdf = destinationFolder + "stampingTestWithFullCompression01Compressed.pdf";
+            String decompressedOutPdf = destinationFolder + "stampingTestWithFullCompression01Decompressed.pdf";
             PdfDocument pdfDoc = new PdfDocument(new PdfReader(sourceFolder + "fullCompressedDocument.pdf"), new PdfWriter
-                (outPdf));
+                (compressedOutPdf));
             pdfDoc.Close();
-            float result = new FileInfo(outPdf).Length;
-            float expected = new FileInfo(cmpPdf).Length;
-            float coef = Math.Abs((expected - result) / expected);
-            String compareRes = new CompareTool().CompareByContent(outPdf, cmpPdf, destinationFolder);
-            NUnit.Framework.Assert.IsTrue(coef < 0.01);
+            float compressedLength = new FileInfo(compressedOutPdf).Length;
+            pdfDoc = new PdfDocument(new PdfReader(sourceFolder + "fullCompressedDocument.pdf"), new PdfWriter(decompressedOutPdf
+                , new WriterProperties().SetFullCompressionMode(false)));
+            pdfDoc.Close();
+            float decompressedLength = new FileInfo(decompressedOutPdf).Length;
+            float coef = compressedLength / decompressedLength;
+            String compareRes = new CompareTool().CompareByContent(compressedOutPdf, decompressedOutPdf, destinationFolder
+                );
+            NUnit.Framework.Assert.IsTrue(coef < 0.7);
             NUnit.Framework.Assert.IsNull(compareRes);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        [NUnit.Framework.Test]
-        public virtual void StampingTestWithFullCompression02() {
-            PdfDocument pdfDoc = new PdfDocument(new PdfReader(sourceFolder + "fullCompressedDocument.pdf"), new PdfWriter
-                (destinationFolder + "stampingTestWithFullCompression02.pdf", new WriterProperties().SetFullCompressionMode
-                (false)));
-            pdfDoc.Close();
-            float result = new FileInfo(destinationFolder + "stampingTestWithFullCompression02.pdf").Length;
-            float expected = new FileInfo(sourceFolder + "cmp_stampingTestWithFullCompression02.pdf").Length;
-            float coef = Math.Abs((expected - result) / expected);
-            NUnit.Framework.Assert.IsTrue(coef < 0.01);
-        }
-
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void StampingStreamNoEndingWhitespace01() {
             //TODO: DEVSIX-2007
@@ -1212,7 +1174,6 @@ namespace iText.Kernel.Pdf {
                 , sourceFolder + "cmp_stampingStreamNoEndingWhitespace01.pdf", destinationFolder, "diff_"));
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void StampingInAppendModeCreatesNewResourceDictionary() {
             // with some PDFs, when adding content to an existing PDF in append mode, the resource dictionary didn't get written as a new version
@@ -1236,8 +1197,8 @@ namespace iText.Kernel.Pdf {
             pdfDoc = new PdfDocument(new PdfReader(new MemoryStream(resultStream.ToArray())));
             LocationTextExtractionStrategy strat = new LocationTextExtractionStrategy();
             PdfCanvasProcessor processor = new PdfCanvasProcessor(strat);
-            processor.ProcessPageContent(pdfDoc.GetPage(1));
             // this fails with an NPE b/c the /F1 font isn't in the fonts dictionary
+            processor.ProcessPageContent(pdfDoc.GetPage(1));
             NUnit.Framework.Assert.IsTrue(strat.GetResultantText().Contains("TEXT TO STAMP"));
         }
 
@@ -1264,7 +1225,7 @@ namespace iText.Kernel.Pdf {
             }
         }
 
-        internal class WatermarkEventHandler : IEventHandler {
+        internal class WatermarkEventHandler : iText.Kernel.Events.IEventHandler {
             public virtual void HandleEvent(Event @event) {
                 PdfDocumentEvent pdfEvent = (PdfDocumentEvent)@event;
                 PdfPage page = pdfEvent.GetPage();

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -46,8 +46,7 @@ using System.Collections.Generic;
 namespace iText.Svg.Renderers.Path {
     /// <summary>
     /// Interface that will provide a mapping from path element-data  instruction names to
-    /// <see cref="IPathShape"/>
-    /// .
+    /// <see cref="IPathShape"/>.
     /// </summary>
     public interface IPathShapeMapper {
         /// <summary>Provides a mapping of Path-data instructions' names to path shape classes.</summary>

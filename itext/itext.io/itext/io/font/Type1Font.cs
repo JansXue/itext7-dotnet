@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,11 +43,12 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
 using iText.IO.Font.Constants;
 using iText.IO.Font.Otf;
 using iText.IO.Source;
-using iText.IO.Util;
 
 namespace iText.IO.Font {
     public class Type1Font : FontProgram {
@@ -71,13 +72,12 @@ namespace iText.IO.Font {
 
         private int[] fontStreamLengths;
 
-        /// <exception cref="System.IO.IOException"/>
         protected internal static iText.IO.Font.Type1Font CreateStandardFont(String name) {
             if (StandardFonts.IsStandardFont(name)) {
                 return new iText.IO.Font.Type1Font(name, null, null, null);
             }
             else {
-                throw new iText.IO.IOException("{0} is not a standard type1 font.").SetMessageParams(name);
+                throw new iText.IO.Exceptions.IOException("{0} is not a standard type1 font.").SetMessageParams(name);
             }
         }
 
@@ -85,7 +85,6 @@ namespace iText.IO.Font {
             fontNames = new FontNames();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         protected internal Type1Font(String metricsPath, String binaryPath, byte[] afm, byte[] pfb)
             : this() {
             fontParser = new Type1Parser(metricsPath, binaryPath, afm, pfb);
@@ -192,13 +191,13 @@ namespace iText.IO.Font {
                 int bytePtr = 0;
                 for (int k = 0; k < 3; ++k) {
                     if (raf.Read() != 0x80) {
-                        ILog logger = LogManager.GetLogger(typeof(iText.IO.Font.Type1Font));
-                        logger.Error(iText.IO.LogMessageConstant.START_MARKER_MISSING_IN_PFB_FILE);
+                        ILogger logger = ITextLogManager.GetLogger(typeof(iText.IO.Font.Type1Font));
+                        logger.LogError(iText.IO.Logs.IoLogMessageConstant.START_MARKER_MISSING_IN_PFB_FILE);
                         return null;
                     }
                     if (raf.Read() != PFB_TYPES[k]) {
-                        ILog logger = LogManager.GetLogger(typeof(iText.IO.Font.Type1Font));
-                        logger.Error("incorrect.segment.type.in.pfb.file");
+                        ILogger logger = ITextLogManager.GetLogger(typeof(iText.IO.Font.Type1Font));
+                        logger.LogError("incorrect.segment.type.in.pfb.file");
                         return null;
                     }
                     int size = raf.Read();
@@ -209,8 +208,8 @@ namespace iText.IO.Font {
                     while (size != 0) {
                         int got = raf.Read(fontStreamBytes, bytePtr, size);
                         if (got < 0) {
-                            ILog logger = LogManager.GetLogger(typeof(iText.IO.Font.Type1Font));
-                            logger.Error("premature.end.in.pfb.file");
+                            ILogger logger = ITextLogManager.GetLogger(typeof(iText.IO.Font.Type1Font));
+                            logger.LogError("premature.end.in.pfb.file");
                             return null;
                         }
                         bytePtr += got;
@@ -220,8 +219,8 @@ namespace iText.IO.Font {
                 return fontStreamBytes;
             }
             catch (Exception) {
-                ILog logger = LogManager.GetLogger(typeof(iText.IO.Font.Type1Font));
-                logger.Error("type1.font.file.exception");
+                ILogger logger = ITextLogManager.GetLogger(typeof(iText.IO.Font.Type1Font));
+                logger.LogError("type1.font.file.exception");
                 return null;
             }
             finally {
@@ -243,7 +242,6 @@ namespace iText.IO.Font {
             return Object.Equals(fontParser.GetAfmPath(), fontProgram);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         protected internal virtual void Process() {
             RandomAccessFileOrArray raf = fontParser.GetMetricsFile();
             String line;
@@ -362,10 +360,11 @@ namespace iText.IO.Font {
             if (!startKernPairs) {
                 String metricsPath = fontParser.GetAfmPath();
                 if (metricsPath != null) {
-                    throw new iText.IO.IOException("startcharmetrics is missing in {0}.").SetMessageParams(metricsPath);
+                    throw new iText.IO.Exceptions.IOException("startcharmetrics is missing in {0}.").SetMessageParams(metricsPath
+                        );
                 }
                 else {
-                    throw new iText.IO.IOException("startcharmetrics is missing in the metrics file.");
+                    throw new iText.IO.Exceptions.IOException("startcharmetrics is missing in the metrics file.");
                 }
             }
             avgWidth = 0;
@@ -393,7 +392,7 @@ namespace iText.IO.Font {
                     ident = tokc.NextToken();
                     switch (ident) {
                         case "C": {
-                            C = Convert.ToInt32(tokc.NextToken());
+                            C = Convert.ToInt32(tokc.NextToken(), System.Globalization.CultureInfo.InvariantCulture);
                             break;
                         }
 
@@ -408,8 +407,10 @@ namespace iText.IO.Font {
                         }
 
                         case "B": {
-                            B = new int[] { Convert.ToInt32(tokc.NextToken()), Convert.ToInt32(tokc.NextToken()), Convert.ToInt32(tokc
-                                .NextToken()), Convert.ToInt32(tokc.NextToken()) };
+                            B = new int[] { Convert.ToInt32(tokc.NextToken(), System.Globalization.CultureInfo.InvariantCulture), Convert.ToInt32
+                                (tokc.NextToken(), System.Globalization.CultureInfo.InvariantCulture), Convert.ToInt32(tokc.NextToken(
+                                ), System.Globalization.CultureInfo.InvariantCulture), Convert.ToInt32(tokc.NextToken(), System.Globalization.CultureInfo.InvariantCulture
+                                ) };
                             break;
                         }
                     }
@@ -431,10 +432,11 @@ namespace iText.IO.Font {
             if (startKernPairs) {
                 String metricsPath = fontParser.GetAfmPath();
                 if (metricsPath != null) {
-                    throw new iText.IO.IOException("endcharmetrics is missing in {0}.").SetMessageParams(metricsPath);
+                    throw new iText.IO.Exceptions.IOException("endcharmetrics is missing in {0}.").SetMessageParams(metricsPath
+                        );
                 }
                 else {
-                    throw new iText.IO.IOException("endcharmetrics is missing in the metrics file.");
+                    throw new iText.IO.Exceptions.IOException("endcharmetrics is missing in the metrics file.");
                 }
             }
             // From AdobeGlyphList:
@@ -494,20 +496,21 @@ namespace iText.IO.Font {
                 if (!endOfMetrics) {
                     String metricsPath = fontParser.GetAfmPath();
                     if (metricsPath != null) {
-                        throw new iText.IO.IOException("endfontmetrics is missing in {0}.").SetMessageParams(metricsPath);
+                        throw new iText.IO.Exceptions.IOException("endfontmetrics is missing in {0}.").SetMessageParams(metricsPath
+                            );
                     }
                     else {
-                        throw new iText.IO.IOException("endfontmetrics is missing in the metrics file.");
+                        throw new iText.IO.Exceptions.IOException("endfontmetrics is missing in the metrics file.");
                     }
                 }
             }
             if (startKernPairs) {
                 String metricsPath = fontParser.GetAfmPath();
                 if (metricsPath != null) {
-                    throw new iText.IO.IOException("endkernpairs is missing in {0}.").SetMessageParams(metricsPath);
+                    throw new iText.IO.Exceptions.IOException("endkernpairs is missing in {0}.").SetMessageParams(metricsPath);
                 }
                 else {
-                    throw new iText.IO.IOException("endkernpairs is missing in the metrics file.");
+                    throw new iText.IO.Exceptions.IOException("endkernpairs is missing in the metrics file.");
                 }
             }
             raf.Close();

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -51,6 +51,7 @@ using iText.Layout.Element;
 using iText.Test;
 
 namespace iText.Layout {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class PdfTextExtractorEncodingsTest : ExtendedITextTest {
         private static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/layout/PdfTextExtractorEncodingsTest/";
@@ -62,7 +63,6 @@ namespace iText.Layout {
         private const String TEXT2 = "\u0027\u0060\u00a4\u00a6";
 
         /// <summary>Test parsing a document which uses a standard non-embedded font.</summary>
-        /// <exception cref="System.Exception">any exception will cause the test to fail</exception>
         [NUnit.Framework.Test]
         public virtual void TestStandardFont() {
             PdfFont font = PdfFontFactory.CreateFont(StandardFonts.TIMES_ROMAN);
@@ -74,10 +74,9 @@ namespace iText.Layout {
         /// Test parsing a document which uses a font encoding which creates a /Differences
         /// PdfArray in the PDF.
         /// </summary>
-        /// <exception cref="System.Exception">any exception will cause the test to fail</exception>
         [NUnit.Framework.Test]
         public virtual void TestEncodedFont() {
-            PdfFont font = GetTTFont("ISO-8859-1", true);
+            PdfFont font = GetTTFont("ISO-8859-1", PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED);
             byte[] pdfBytes = CreatePdf(font);
             CheckPdf(pdfBytes);
         }
@@ -86,15 +85,13 @@ namespace iText.Layout {
         /// Test parsing a document which uses a Unicode font encoding which creates a /ToUnicode
         /// PdfArray.
         /// </summary>
-        /// <exception cref="System.Exception">any exception will cause the test to fail</exception>
         [NUnit.Framework.Test]
         public virtual void TestUnicodeFont() {
-            PdfFont font = GetTTFont(PdfEncodings.IDENTITY_H, true);
+            PdfFont font = GetTTFont(PdfEncodings.IDENTITY_H, PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED);
             byte[] pdfBytes = CreatePdf(font);
             CheckPdf(pdfBytes);
         }
 
-        /// <exception cref="System.Exception"/>
         private void CheckPdf(byte[] pdfBytes) {
             PdfDocument pdfDocument = new PdfDocument(new PdfReader(new MemoryStream(pdfBytes)));
             // Characters from http://unicode.org/charts/PDF/U0000.pdf
@@ -103,12 +100,11 @@ namespace iText.Layout {
             NUnit.Framework.Assert.AreEqual(TEXT2, PdfTextExtractor.GetTextFromPage(pdfDocument.GetPage(2)));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        protected internal static PdfFont GetTTFont(String encoding, bool embedded) {
-            return PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", encoding, embedded);
+        protected internal static PdfFont GetTTFont(String encoding, PdfFontFactory.EmbeddingStrategy embeddingStrategy
+            ) {
+            return PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", encoding, embeddingStrategy);
         }
 
-        /// <exception cref="System.Exception"/>
         private static byte[] CreatePdf(PdfFont font) {
             MemoryStream byteStream = new MemoryStream();
             Document document = new Document(new PdfDocument(new PdfWriter(byteStream)));

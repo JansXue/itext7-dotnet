@@ -1,31 +1,31 @@
 %PDF-1.7
 %‚„œ”
 5 0 obj
-<</Length 27>>stream
+<</Length 12>>stream
 q
-1 0 0 1 0 0 cm
 /Fm1 Do
 Q
 
 endstream
 endobj
 4 0 obj
-<</Contents 5 0 R/MediaBox[0 0 680.32 311.81]/Parent 2 0 R/Resources<</XObject<</Fm1 6 0 R>>>>/TrimBox[0 0 680.32 311.81]/Type/Page>>
+<</Contents 5 0 R/MediaBox[0 0 680.31 311.81]/Parent 2 0 R/Resources<</XObject<</Fm1 6 0 R>>>>/TrimBox[0 0 680.31 311.81]/Type/Page>>
 endobj
 1 0 obj
 <</Pages 2 0 R/Type/Catalog>>
 endobj
 3 0 obj
-<</CreationDate(D:20190702120202+03'00')/ModDate(D:20190702120202+03'00')/Producer(iTextÆ 7.1.7-SNAPSHOT ©2000-2019 iText Group NV \(AGPL-version\))>>
+<</CreationDate(D:20211018115827+03'00')/ModDate(D:20211018115827+03'00')/Producer(iTextÆ Core 7.2.1-SNAPSHOT \(AGPL version\) ©2000-2021 iText Group NV)>>
 endobj
 2 0 obj
 <</Count 1/Kids[4 0 R]/Type/Pages>>
 endobj
 6 0 obj
-<</BBox[0 0 680.32 311.81]/Length 86/Resources<</XObject<</Fm1 7 0 R>>>>/Subtype/Form/Type/XObject>>stream
+<</BBox[0 0 680.31 311.81]/Length 105/Resources<</XObject<</Fm1 7 0 R>>>>/Subtype/Form/Type/XObject>>stream
 1 0 0 -1 0 311.81 cm
 % svg root
-0.37795 0 0 0.34646 0 0 cm
+0.34646 0 0 0.34646 0 0 cm
+1 0 0 1 81.82 0 cm
 q
 1 0 0 1 0 0 cm
 /Fm1 Do
@@ -34,7 +34,10 @@ Q
 endstream
 endobj
 7 0 obj
-<</BBox[0 0 1800 900]/Length 2159/Resources<</ExtGState<</Gs1 8 0 R/Gs2 9 0 R>>>>/Subtype/Form/Type/XObject>>stream
+<</BBox[-81.82 0 1881.82 900]/Length 2154/Resources<</ExtGState<</Gs1 8 0 R/Gs2 9 0 R>>>>/Subtype/Form/Type/XObject>>stream
+-81.82 0 1963.64 900 re
+W
+n
 q
 1 0 0 rg
 0 0 1 RG
@@ -93,9 +96,8 @@ q
 75.97 143.11 79.5 119.58 90.38 108.7 c
 101.27 97.82 115.38 103.7 121.91 121.84 c
 129.41 114.34 l
-119.91 104.84 114.17 93.02 114.36 83.33 c
-114.55 73.64 120.63 67.56 130.32 67.37 c
-140 67.19 151.82 72.92 161.33 82.43 c
+114.73 99.65 109.96 80.6 118.78 71.79 c
+127.59 62.98 146.64 67.74 161.32 82.43 c
 236.25 7.5 l
 B
 Q
@@ -118,6 +120,7 @@ Q
 q
 1 1 0 rg
 0 0 0 RG
+0.75 w
 % path
 0 37.5 m
 7.5 37.5 l
@@ -250,18 +253,18 @@ endobj
 xref
 0 10
 0000000000 65535 f 
-0000000238 00000 n 
-0000000449 00000 n 
-0000000283 00000 n 
-0000000089 00000 n 
+0000000223 00000 n 
+0000000439 00000 n 
+0000000268 00000 n 
+0000000074 00000 n 
 0000000015 00000 n 
-0000000500 00000 n 
-0000000719 00000 n 
-0000003020 00000 n 
-0000003047 00000 n 
+0000000490 00000 n 
+0000000729 00000 n 
+0000003033 00000 n 
+0000003060 00000 n 
 trailer
-<</ID [<76d0f30293ca260e28e95ec70a04d71b><76d0f30293ca260e28e95ec70a04d71b>]/Info 3 0 R/Root 1 0 R/Size 10>>
-%iText-7.1.7-SNAPSHOT
+<</ID [<9d2688229cf7d94a4c56880f0afb35ca><9d2688229cf7d94a4c56880f0afb35ca>]/Info 3 0 R/Root 1 0 R/Size 10>>
+%iText-Core-7.2.1-SNAPSHOT
 startxref
-3074
+3087
 %%EOF

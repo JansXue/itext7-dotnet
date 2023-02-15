@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,31 +41,31 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
+using System.IO;
+using iText.Barcodes.Exceptions;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas;
 using iText.Kernel.Utils;
 using iText.Test;
 
 namespace iText.Barcodes {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class BarcodeCodabarTest : ExtendedITextTest {
-        public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
+        private static readonly String SOURCE_FOLDER = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/barcodes/";
 
-        public static readonly String destinationFolder = NUnit.Framework.TestContext.CurrentContext.TestDirectory
+        private static readonly String DESTINATION_FOLDER = NUnit.Framework.TestContext.CurrentContext.TestDirectory
              + "/test/itext/barcodes/Codabar/";
 
         [NUnit.Framework.OneTimeSetUp]
         public static void BeforeClass() {
-            CreateDestinationFolder(destinationFolder);
+            CreateDestinationFolder(DESTINATION_FOLDER);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.PdfException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void Barcode01Test() {
             String filename = "codabar.pdf";
-            PdfWriter writer = new PdfWriter(destinationFolder + filename);
+            PdfWriter writer = new PdfWriter(DESTINATION_FOLDER + filename);
             PdfDocument document = new PdfDocument(writer);
             PdfPage page = document.AddNewPage();
             PdfCanvas canvas = new PdfCanvas(page);
@@ -74,8 +74,48 @@ namespace iText.Barcodes {
             codabar.SetStartStopText(true);
             codabar.PlaceBarcode(canvas, null, null);
             document.Close();
-            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destinationFolder + filename, sourceFolder
-                 + "cmp_" + filename, destinationFolder, "diff_"));
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(DESTINATION_FOLDER + filename, SOURCE_FOLDER
+                 + "cmp_" + filename, DESTINATION_FOLDER, "diff_"));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void BarcodeHasNoAbcdAsStartCharacterTest() {
+            PdfDocument pdfDocument = new PdfDocument(new PdfWriter(new MemoryStream()));
+            BarcodeCodabar codabar = new BarcodeCodabar(pdfDocument);
+            Exception exception = NUnit.Framework.Assert.Catch(typeof(ArgumentException), () => BarcodeCodabar.GetBarsCodabar
+                ("qbcd"));
+            NUnit.Framework.Assert.AreEqual(BarcodeExceptionMessageConstant.CODABAR_MUST_HAVE_ONE_ABCD_AS_START_STOP_CHARACTER
+                , exception.Message);
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void BarcodeHasNoAbcdAsStopCharacterTest() {
+            PdfDocument pdfDocument = new PdfDocument(new PdfWriter(new MemoryStream()));
+            BarcodeCodabar codabar = new BarcodeCodabar(pdfDocument);
+            Exception exception = NUnit.Framework.Assert.Catch(typeof(ArgumentException), () => BarcodeCodabar.GetBarsCodabar
+                ("abcf"));
+            NUnit.Framework.Assert.AreEqual(BarcodeExceptionMessageConstant.CODABAR_MUST_HAVE_ONE_ABCD_AS_START_STOP_CHARACTER
+                , exception.Message);
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void BarcodeHasNoAbcdAsStartAndStopCharacterTest() {
+            PdfDocument pdfDocument = new PdfDocument(new PdfWriter(new MemoryStream()));
+            BarcodeCodabar codabar = new BarcodeCodabar(pdfDocument);
+            Exception exception = NUnit.Framework.Assert.Catch(typeof(ArgumentException), () => BarcodeCodabar.GetBarsCodabar
+                ("qbcq"));
+            NUnit.Framework.Assert.AreEqual(BarcodeExceptionMessageConstant.CODABAR_MUST_HAVE_ONE_ABCD_AS_START_STOP_CHARACTER
+                , exception.Message);
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void BarcodeHasNoStartAndStopCharacterTest() {
+            PdfDocument pdfDocument = new PdfDocument(new PdfWriter(new MemoryStream()));
+            BarcodeCodabar codabar = new BarcodeCodabar(pdfDocument);
+            Exception exception = NUnit.Framework.Assert.Catch(typeof(ArgumentException), () => BarcodeCodabar.GetBarsCodabar
+                (""));
+            NUnit.Framework.Assert.AreEqual(BarcodeExceptionMessageConstant.CODABAR_MUST_HAVE_AT_LEAST_START_AND_STOP_CHARACTER
+                , exception.Message);
         }
     }
 }

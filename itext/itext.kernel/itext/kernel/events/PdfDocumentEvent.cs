@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -50,13 +50,18 @@ namespace iText.Kernel.Events {
         /// <summary>Dispatched after page is created.</summary>
         public const String START_PAGE = "StartPdfPage";
 
-        /// <summary>Dispatched after page is inserted/added into document.</summary>
+        /// <summary>Dispatched after page is inserted/added into a document.</summary>
         public const String INSERT_PAGE = "InsertPdfPage";
 
-        /// <summary>Dispatched after page is removed from document.</summary>
+        /// <summary>Dispatched after page is removed from a document.</summary>
         public const String REMOVE_PAGE = "RemovePdfPage";
 
-        /// <summary>Dispatched before page is closed and written.</summary>
+        /// <summary>Dispatched before page is flushed to a document.</summary>
+        /// <remarks>
+        /// Dispatched before page is flushed to a document.
+        /// This event isn't necessarily dispatched when a successive page has been created.
+        /// Keep it in mind when using with highlevel iText API.
+        /// </remarks>
         public const String END_PAGE = "EndPdfPage";
 
         /// <summary>The PdfPage associated with this event.</summary>

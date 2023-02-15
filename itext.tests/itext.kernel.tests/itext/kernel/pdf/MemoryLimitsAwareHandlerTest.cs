@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,15 +41,18 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-using iText.Kernel;
+using iText.Kernel.Exceptions;
+using iText.Test;
 
 namespace iText.Kernel.Pdf {
-    public class MemoryLimitsAwareHandlerTest {
+    [NUnit.Framework.Category("UnitTest")]
+    public class MemoryLimitsAwareHandlerTest : ExtendedITextTest {
         [NUnit.Framework.Test]
         public virtual void DefaultMemoryHandler() {
             MemoryLimitsAwareHandler handler = new MemoryLimitsAwareHandler();
             NUnit.Framework.Assert.AreEqual(int.MaxValue / 100, handler.GetMaxSizeOfSingleDecompressedPdfStream());
             NUnit.Framework.Assert.AreEqual(int.MaxValue / 20, handler.GetMaxSizeOfDecompressedPdfStreamsSum());
+            NUnit.Framework.Assert.AreEqual(50000000, handler.GetMaxNumberOfElementsInXrefStructure());
         }
 
         [NUnit.Framework.Test]
@@ -57,6 +60,25 @@ namespace iText.Kernel.Pdf {
             MemoryLimitsAwareHandler handler = new MemoryLimitsAwareHandler(1000000);
             NUnit.Framework.Assert.AreEqual(100000000, handler.GetMaxSizeOfSingleDecompressedPdfStream());
             NUnit.Framework.Assert.AreEqual(500000000, handler.GetMaxSizeOfDecompressedPdfStreamsSum());
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void OverridenMemoryHandler() {
+            MemoryLimitsAwareHandler defaultHandler = new MemoryLimitsAwareHandler();
+            MemoryLimitsAwareHandler customHandler = new _MemoryLimitsAwareHandler_78();
+            PdfArray filters = new PdfArray();
+            filters.Add(PdfName.FlateDecode);
+            NUnit.Framework.Assert.IsFalse(defaultHandler.IsMemoryLimitsAwarenessRequiredOnDecompression(filters));
+            NUnit.Framework.Assert.IsTrue(customHandler.IsMemoryLimitsAwarenessRequiredOnDecompression(filters));
+        }
+
+        private sealed class _MemoryLimitsAwareHandler_78 : MemoryLimitsAwareHandler {
+            public _MemoryLimitsAwareHandler_78() {
+            }
+
+            public override bool IsMemoryLimitsAwarenessRequiredOnDecompression(PdfArray filters) {
+                return true;
+            }
         }
 
         [NUnit.Framework.Test]
@@ -90,8 +112,37 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.AreEqual(state1 + 100, state5);
         }
 
+        [NUnit.Framework.Test]
+        public virtual void CustomXrefCapacityHandlerTest() {
+            MemoryLimitsAwareHandler memoryLimitsAwareHandler = new MemoryLimitsAwareHandler();
+            NUnit.Framework.Assert.AreEqual(50000000, memoryLimitsAwareHandler.GetMaxNumberOfElementsInXrefStructure()
+                );
+            memoryLimitsAwareHandler.SetMaxNumberOfElementsInXrefStructure(20);
+            NUnit.Framework.Assert.AreEqual(20, memoryLimitsAwareHandler.GetMaxNumberOfElementsInXrefStructure());
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void CheckCapacityExceedsLimitTest() {
+            MemoryLimitsAwareHandler memoryLimitsAwareHandler = new MemoryLimitsAwareHandler();
+            // There we add 2 instead of 1 since xref structures used 1-based indexes, so we decrement the capacity
+            // before check.
+            int capacityExceededTheLimit = memoryLimitsAwareHandler.GetMaxNumberOfElementsInXrefStructure() + 2;
+            Exception ex = NUnit.Framework.Assert.Catch(typeof(MemoryLimitsAwareException), () => memoryLimitsAwareHandler
+                .CheckIfXrefStructureExceedsTheLimit(capacityExceededTheLimit));
+            NUnit.Framework.Assert.AreEqual(KernelExceptionMessageConstant.XREF_STRUCTURE_SIZE_EXCEEDED_THE_LIMIT, ex.
+                Message);
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void CheckCapacityTest() {
+            MemoryLimitsAwareHandler memoryLimitsAwareHandler = new MemoryLimitsAwareHandler();
+            int capacityToSet = 2;
+            NUnit.Framework.Assert.DoesNotThrow(() => memoryLimitsAwareHandler.CheckIfXrefStructureExceedsTheLimit(capacityToSet
+                ));
+        }
+
         private static void TestSingleStream(MemoryLimitsAwareHandler handler) {
-            String expectedExceptionMessage = PdfException.DuringDecompressionSingleStreamOccupiedMoreMemoryThanAllowed;
+            String expectedExceptionMessage = KernelExceptionMessageConstant.DURING_DECOMPRESSION_SINGLE_STREAM_OCCUPIED_MORE_MEMORY_THAN_ALLOWED;
             int expectedFailureIndex = 10;
             String occuredExceptionMessage = null;
             int limit = handler.GetMaxSizeOfSingleDecompressedPdfStream();
@@ -112,7 +163,7 @@ namespace iText.Kernel.Pdf {
         }
 
         private static void TestMultipleStreams(MemoryLimitsAwareHandler handler) {
-            String expectedExceptionMessage = PdfException.DuringDecompressionMultipleStreamsInSumOccupiedMoreMemoryThanAllowed;
+            String expectedExceptionMessage = KernelExceptionMessageConstant.DURING_DECOMPRESSION_MULTIPLE_STREAMS_IN_SUM_OCCUPIED_MORE_MEMORY_THAN_ALLOWED;
             int expectedFailureIndex = 10;
             String occuredExceptionMessage = null;
             int i = 0;

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -65,7 +65,7 @@ namespace iText.Layout.Borders {
         /// <summary>Creates a SolidBorder with the specified width, color and opacity.</summary>
         /// <param name="color">color of the border</param>
         /// <param name="width">width of the border</param>
-        /// <param name="opacity">width of the border</param>
+        /// <param name="opacity">the opacity which border should have</param>
         public SolidBorder(Color color, float width, float opacity)
             : base(color, width, opacity) {
         }

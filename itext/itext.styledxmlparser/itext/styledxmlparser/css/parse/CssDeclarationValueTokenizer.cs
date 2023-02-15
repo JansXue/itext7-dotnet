@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,7 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Text;
-using iText.IO.Util;
+using iText.Commons.Utils;
 
 namespace iText.StyledXmlParser.Css.Parse {
     /// <summary>Tokenizer for CSS declaration values.</summary>
@@ -184,7 +184,14 @@ namespace iText.StyledXmlParser.Css.Parse {
                             }
                             else {
                                 if (curChar == ',' && !inString && functionDepth == 0) {
-                                    return new CssDeclarationValueTokenizer.Token(",", CssDeclarationValueTokenizer.TokenType.COMMA);
+                                    if (buff.Length == 0) {
+                                        return new CssDeclarationValueTokenizer.Token(",", CssDeclarationValueTokenizer.TokenType.COMMA);
+                                    }
+                                    else {
+                                        --index;
+                                        return new CssDeclarationValueTokenizer.Token(buff.ToString(), CssDeclarationValueTokenizer.TokenType.UNKNOWN
+                                            );
+                                    }
                                 }
                                 else {
                                     if (iText.IO.Util.TextUtil.IsWhiteSpace(curChar)) {
@@ -276,9 +283,13 @@ namespace iText.StyledXmlParser.Css.Parse {
 
         /// <summary>Enumeration of the different token types.</summary>
         public enum TokenType {
+            /// <summary>The string type.</summary>
             STRING,
+            /// <summary>The function type.</summary>
             FUNCTION,
+            /// <summary>The comma type.</summary>
             COMMA,
+            /// <summary>Unknown type.</summary>
             UNKNOWN
         }
     }

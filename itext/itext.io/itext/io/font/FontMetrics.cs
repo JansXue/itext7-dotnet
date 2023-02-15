@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,85 +45,85 @@ namespace iText.IO.Font {
     public class FontMetrics {
         protected internal float normalizationCoef = 1f;
 
-        private int unitsPerEm = 1000;
+        // head.unitsPerEm
+        private int unitsPerEm = FontProgram.UNITS_NORMALIZATION;
 
+        // maxp.numGlyphs
         private int numOfGlyphs;
 
+        // hmtx
         private int[] glyphWidths;
 
+        // os_2.sTypoAscender * normalization
         private int typoAscender = 800;
 
+        // os_2.sTypoDescender * normalization
         private int typoDescender = -200;
 
+        // os_2.sCapHeight * normalization
         private int capHeight = 700;
 
+        // os_2.sxHeight * normalization
         private int xHeight = 0;
 
+        // post.italicAngle
         private float italicAngle = 0;
 
-        private int[] bbox = new int[] { -50, -200, 1000, 900 };
-
-        private int ascender;
-
-        private int descender;
-
-        private int lineGap;
-
-        private int winAscender;
-
-        private int winDescender;
-
-        private int advanceWidthMax;
-
-        private int underlinePosition = -100;
-
-        private int underlineThickness = 50;
-
-        private int strikeoutPosition;
-
-        private int strikeoutSize;
-
-        private int subscriptSize;
-
-        private int subscriptOffset;
-
-        private int superscriptSize;
-
-        private int superscriptOffset;
-
-        private int stemV = 80;
-
-        private int stemH = 0;
-
-        private bool isFixedPitch;
-
-        // head.unitsPerEm
-        // maxp.numGlyphs
-        // hmtx
-        // os_2.sTypoAscender * normalization
-        // os_2.sTypoDescender * normalization
-        // os_2.sCapHeight * normalization
-        // os_2.sxHeight * normalization
-        // post.italicAngle
         // llx: head.xMin * normalization; lly: head.yMin * normalization
         // urx: head.xMax * normalization; ury: head.yMax * normalization
+        private int[] bbox = new int[] { -50, -200, 1000, 900 };
+
         // hhea.Ascender * normalization
+        private int ascender;
+
         // hhea.Descender * normalization
+        private int descender;
+
         // hhea.LineGap * normaliztion (leading)
+        private int lineGap;
+
         // os_2.winAscender * normalization
+        private int winAscender;
+
         // os_2.winDescender * normalization
+        private int winDescender;
+
         // hhea.advanceWidthMax * normalization
+        private int advanceWidthMax;
+
         // (post.underlinePosition - post.underlineThickness / 2) * normalization
+        private int underlinePosition = -100;
+
         // post.underlineThickness * normalization
+        private int underlineThickness = 50;
+
         // os_2.yStrikeoutPosition * normalization
+        private int strikeoutPosition;
+
         // os_2.yStrikeoutSize * normalization
+        private int strikeoutSize;
+
         // os_2.ySubscriptYSize * normalization
+        private int subscriptSize;
+
         // -os_2.ySubscriptYOffset * normalization
+        private int subscriptOffset;
+
         // os_2.ySuperscriptYSize * normalization
+        private int superscriptSize;
+
         // os_2.ySuperscriptYOffset * normalization
+        private int superscriptOffset;
+
         // in type1/cff it is stdVW
+        private int stemV = 80;
+
         // in type1/cff it is stdHW
+        private int stemH = 0;
+
         // post.isFixedPitch (monospaced)
+        private bool isFixedPitch;
+
         public virtual int GetUnitsPerEm() {
             return unitsPerEm;
         }
@@ -136,14 +136,36 @@ namespace iText.IO.Font {
             return glyphWidths;
         }
 
+        /// <summary>Gets typo (a.k.a. sTypo or OS/2) vertical metric corresponding to ascender.</summary>
+        /// <remarks>
+        /// Gets typo (a.k.a. sTypo or OS/2) vertical metric corresponding to ascender.
+        /// <para />
+        /// Typo vertical metrics are the primary source for iText ascender/descender calculations.
+        /// </remarks>
+        /// <returns>typo ascender value in normalized 1000-units</returns>
         public virtual int GetTypoAscender() {
             return typoAscender;
         }
 
+        /// <summary>Gets typo (a.k.a. sTypo or OS/2) vertical metric corresponding to descender.</summary>
+        /// <remarks>
+        /// Gets typo (a.k.a. sTypo or OS/2) vertical metric corresponding to descender.
+        /// <para />
+        /// Typo vertical metrics are the primary source for iText ascender/descender calculations.
+        /// </remarks>
+        /// <returns>typo descender value in normalized 1000-units</returns>
         public virtual int GetTypoDescender() {
             return typoDescender;
         }
 
+        /// <summary>Gets the capital letters height.</summary>
+        /// <remarks>
+        /// Gets the capital letters height.
+        /// <para />
+        /// This property defines the vertical coordinate of the top of flat capital letters,
+        /// measured from the baseline.
+        /// </remarks>
+        /// <returns>cap height in 1000-units</returns>
         public virtual int GetCapHeight() {
             return capHeight;
         }
@@ -255,14 +277,36 @@ namespace iText.IO.Font {
             this.glyphWidths = glyphWidths;
         }
 
+        /// <summary>Sets typo (a.k.a. sTypo or OS/2) vertical metric corresponding to ascender.</summary>
+        /// <remarks>
+        /// Sets typo (a.k.a. sTypo or OS/2) vertical metric corresponding to ascender.
+        /// <para />
+        /// Typo vertical metrics are the primary source for iText ascender/descender calculations.
+        /// </remarks>
+        /// <param name="typoAscender">typo ascender value in normalized 1000-units</param>
         protected internal virtual void SetTypoAscender(int typoAscender) {
             this.typoAscender = (int)(typoAscender * normalizationCoef);
         }
 
-        protected internal virtual void SetTypoDescender(int typoDesctender) {
-            this.typoDescender = (int)(typoDesctender * normalizationCoef);
+        /// <summary>Sets typo (a.k.a. sTypo or OS/2) vertical metric corresponding to descender.</summary>
+        /// <remarks>
+        /// Sets typo (a.k.a. sTypo or OS/2) vertical metric corresponding to descender.
+        /// <para />
+        /// Typo vertical metrics are the primary source for iText ascender/descender calculations.
+        /// </remarks>
+        /// <param name="typoDescender">typo descender value in normalized 1000-units</param>
+        protected internal virtual void SetTypoDescender(int typoDescender) {
+            this.typoDescender = (int)(typoDescender * normalizationCoef);
         }
 
+        /// <summary>Sets the capital letters height.</summary>
+        /// <remarks>
+        /// Sets the capital letters height.
+        /// <para />
+        /// This property defines the vertical coordinate of the top of flat capital letters,
+        /// measured from the baseline.
+        /// </remarks>
+        /// <param name="capHeight">cap height in 1000-units</param>
         protected internal virtual void SetCapHeight(int capHeight) {
             this.capHeight = (int)(capHeight * normalizationCoef);
         }

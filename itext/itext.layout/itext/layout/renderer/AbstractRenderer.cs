@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,10 +44,12 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
 using iText.IO.Util;
-using iText.Kernel;
 using iText.Kernel.Colors;
+using iText.Kernel.Colors.Gradients;
 using iText.Kernel.Font;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
@@ -59,6 +61,7 @@ using iText.Kernel.Pdf.Xobject;
 using iText.Layout;
 using iText.Layout.Borders;
 using iText.Layout.Element;
+using iText.Layout.Exceptions;
 using iText.Layout.Font;
 using iText.Layout.Layout;
 using iText.Layout.Minmaxwidth;
@@ -68,10 +71,17 @@ namespace iText.Layout.Renderer {
     /// <summary>
     /// Defines the most common properties and behavior that are shared by most
     /// <see cref="IRenderer"/>
+    /// implementations.
+    /// </summary>
+    /// <remarks>
+    /// Defines the most common properties and behavior that are shared by most
+    /// <see cref="IRenderer"/>
     /// implementations. All default Renderers are subclasses of
     /// this default implementation.
-    /// </summary>
+    /// </remarks>
     public abstract class AbstractRenderer : IRenderer {
+        public const float OVERLAP_EPSILON = 1e-4f;
+
         /// <summary>
         /// The maximum difference between
         /// <see cref="iText.Kernel.Geom.Rectangle"/>
@@ -81,6 +91,40 @@ namespace iText.Layout.Renderer {
 
         /// <summary>The infinity value which is used while layouting</summary>
         protected internal const float INF = 1e6f;
+
+        /// <summary>
+        /// The common ordering index of top side in arrays of four elements which define top, right, bottom,
+        /// left sides values (e.g. margins, borders, paddings).
+        /// </summary>
+        internal const int TOP_SIDE = 0;
+
+        /// <summary>
+        /// The common ordering index of right side in arrays of four elements which define top, right, bottom,
+        /// left sides values (e.g. margins, borders, paddings).
+        /// </summary>
+        internal const int RIGHT_SIDE = 1;
+
+        /// <summary>
+        /// The common ordering index of bottom side in arrays of four elements which define top, right, bottom,
+        /// left sides values (e.g. margins, borders, paddings).
+        /// </summary>
+        internal const int BOTTOM_SIDE = 2;
+
+        /// <summary>
+        /// The common ordering index of left side in arrays of four elements which define top, right, bottom,
+        /// left sides values (e.g. margins, borders, paddings).
+        /// </summary>
+        internal const int LEFT_SIDE = 3;
+
+        private const int ARC_RIGHT_DEGREE = 0;
+
+        private const int ARC_TOP_DEGREE = 90;
+
+        private const int ARC_LEFT_DEGREE = 180;
+
+        private const int ARC_BOTTOM_DEGREE = 270;
+
+        private const int ARC_QUARTER_CLOCKWISE_EXTENT = -90;
 
         protected internal IList<IRenderer> childRenderers = new List<IRenderer>();
 
@@ -105,7 +149,6 @@ namespace iText.Layout.Renderer {
         /// <summary>Creates a renderer for the specified layout element.</summary>
         /// <param name="modelElement">the layout element that will be drawn by this renderer</param>
         protected internal AbstractRenderer(IElement modelElement) {
-            // TODO linkedList?
             this.modelElement = modelElement;
         }
 
@@ -209,12 +252,8 @@ namespace iText.Layout.Renderer {
 
         /// <summary>
         /// Checks if this renderer or its model element have the specified property,
-        /// i.e.
-        /// </summary>
-        /// <remarks>
-        /// Checks if this renderer or its model element have the specified property,
         /// i.e. if it was set to this very element or its very model element earlier.
-        /// </remarks>
+        /// </summary>
         /// <param name="property">the property to be checked</param>
         /// <returns>
         /// 
@@ -258,7 +297,6 @@ namespace iText.Layout.Renderer {
                 (key))) {
                 return (T1)property;
             }
-            // TODO in some situations we will want to check inheritance with additional info, such as parent and descendant.
             if (parent != null && Property.IsPropertyInherited(key) && (property = parent.GetProperty<T1>(key)) != null
                 ) {
                 return (T1)property;
@@ -319,8 +357,7 @@ namespace iText.Layout.Renderer {
 
         /// <summary>
         /// Returns a property with a certain key, as a
-        /// <see cref="iText.Layout.Properties.TransparentColor"/>
-        /// .
+        /// <see cref="iText.Layout.Properties.TransparentColor"/>.
         /// </summary>
         /// <param name="property">
         /// an
@@ -464,66 +501,32 @@ namespace iText.Layout.Renderer {
         /// <param name="drawContext">the context (canvas, document, etc) of this drawing operation.</param>
         public virtual void DrawBackground(DrawContext drawContext) {
             Background background = this.GetProperty<Background>(Property.BACKGROUND);
-            BackgroundImage backgroundImage = this.GetProperty<BackgroundImage>(Property.BACKGROUND_IMAGE);
-            if (background != null || backgroundImage != null) {
+            IList<BackgroundImage> backgroundImagesList = this.GetProperty<IList<BackgroundImage>>(Property.BACKGROUND_IMAGE
+                );
+            if (background != null || backgroundImagesList != null) {
                 Rectangle bBox = GetOccupiedAreaBBox();
                 bool isTagged = drawContext.IsTaggingEnabled();
                 if (isTagged) {
                     drawContext.GetCanvas().OpenTag(new CanvasArtifact());
                 }
-                Rectangle backgroundArea = ApplyMargins(bBox, false);
+                Rectangle backgroundArea = GetBackgroundArea(ApplyMargins(bBox, false));
                 if (backgroundArea.GetWidth() <= 0 || backgroundArea.GetHeight() <= 0) {
-                    ILog logger = LogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
-                    logger.Warn(MessageFormatUtil.Format(iText.IO.LogMessageConstant.RECTANGLE_HAS_NEGATIVE_OR_ZERO_SIZES, "background"
-                        ));
+                    ILogger logger = ITextLogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
+                    logger.LogInformation(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.RECTANGLE_HAS_NEGATIVE_OR_ZERO_SIZES
+                        , "background"));
                 }
                 else {
                     bool backgroundAreaIsClipped = false;
                     if (background != null) {
-                        backgroundAreaIsClipped = ClipBackgroundArea(drawContext, backgroundArea);
-                        TransparentColor backgroundColor = new TransparentColor(background.GetColor(), background.GetOpacity());
-                        drawContext.GetCanvas().SaveState().SetFillColor(backgroundColor.GetColor());
-                        backgroundColor.ApplyFillTransparency(drawContext.GetCanvas());
-                        drawContext.GetCanvas().Rectangle(backgroundArea.GetX() - background.GetExtraLeft(), backgroundArea.GetY()
-                             - background.GetExtraBottom(), backgroundArea.GetWidth() + background.GetExtraLeft() + background.GetExtraRight
-                            (), backgroundArea.GetHeight() + background.GetExtraTop() + background.GetExtraBottom()).Fill().RestoreState
-                            ();
+                        // TODO DEVSIX-4525 determine how background-clip affects background-radius
+                        Rectangle clippedBackgroundArea = ApplyBackgroundBoxProperty(backgroundArea.Clone(), background.GetBackgroundClip
+                            ());
+                        backgroundAreaIsClipped = ClipBackgroundArea(drawContext, clippedBackgroundArea);
+                        DrawColorBackground(background, drawContext, clippedBackgroundArea);
                     }
-                    if (backgroundImage != null && backgroundImage.IsBackgroundSpecified()) {
-                        if (!backgroundAreaIsClipped) {
-                            backgroundAreaIsClipped = ClipBackgroundArea(drawContext, backgroundArea);
-                        }
-                        ApplyBorderBox(backgroundArea, false);
-                        PdfXObject backgroundXObject = backgroundImage.GetImage();
-                        if (backgroundXObject == null) {
-                            backgroundXObject = backgroundImage.GetForm();
-                        }
-                        Rectangle imageRectangle = new Rectangle(backgroundArea.GetX(), backgroundArea.GetTop() - backgroundXObject
-                            .GetHeight(), backgroundXObject.GetWidth(), backgroundXObject.GetHeight());
-                        if (imageRectangle.GetWidth() <= 0 || imageRectangle.GetHeight() <= 0) {
-                            ILog logger = LogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
-                            logger.Warn(MessageFormatUtil.Format(iText.IO.LogMessageConstant.RECTANGLE_HAS_NEGATIVE_OR_ZERO_SIZES, "background-image"
-                                ));
-                        }
-                        else {
-                            ApplyBorderBox(backgroundArea, true);
-                            drawContext.GetCanvas().SaveState().Rectangle(backgroundArea).Clip().EndPath();
-                            float initialX = backgroundImage.IsRepeatX() ? imageRectangle.GetX() - imageRectangle.GetWidth() : imageRectangle
-                                .GetX();
-                            float initialY = backgroundImage.IsRepeatY() ? imageRectangle.GetTop() : imageRectangle.GetY();
-                            imageRectangle.SetY(initialY);
-                            do {
-                                imageRectangle.SetX(initialX);
-                                do {
-                                    drawContext.GetCanvas().AddXObject(backgroundXObject, imageRectangle);
-                                    imageRectangle.MoveRight(imageRectangle.GetWidth());
-                                }
-                                while (backgroundImage.IsRepeatX() && imageRectangle.GetLeft() < backgroundArea.GetRight());
-                                imageRectangle.MoveDown(imageRectangle.GetHeight());
-                            }
-                            while (backgroundImage.IsRepeatY() && imageRectangle.GetTop() > backgroundArea.GetBottom());
-                            drawContext.GetCanvas().RestoreState();
-                        }
+                    if (backgroundImagesList != null) {
+                        backgroundAreaIsClipped = DrawBackgroundImagesList(backgroundImagesList, backgroundAreaIsClipped, drawContext
+                            , backgroundArea);
                     }
                     if (backgroundAreaIsClipped) {
                         drawContext.GetCanvas().RestoreState();
@@ -533,6 +536,179 @@ namespace iText.Layout.Renderer {
                     drawContext.GetCanvas().CloseTag();
                 }
             }
+        }
+
+        private void DrawColorBackground(Background background, DrawContext drawContext, Rectangle colorBackgroundArea
+            ) {
+            TransparentColor backgroundColor = new TransparentColor(background.GetColor(), background.GetOpacity());
+            drawContext.GetCanvas().SaveState().SetFillColor(backgroundColor.GetColor());
+            backgroundColor.ApplyFillTransparency(drawContext.GetCanvas());
+            drawContext.GetCanvas().Rectangle((double)colorBackgroundArea.GetX() - background.GetExtraLeft(), (double)
+                colorBackgroundArea.GetY() - background.GetExtraBottom(), (double)colorBackgroundArea.GetWidth() + background
+                .GetExtraLeft() + background.GetExtraRight(), (double)colorBackgroundArea.GetHeight() + background.GetExtraTop
+                () + background.GetExtraBottom()).Fill().RestoreState();
+        }
+
+        private Rectangle ApplyBackgroundBoxProperty(Rectangle rectangle, BackgroundBox clip) {
+            if (BackgroundBox.PADDING_BOX == clip) {
+                ApplyBorderBox(rectangle, false);
+            }
+            else {
+                if (BackgroundBox.CONTENT_BOX == clip) {
+                    ApplyBorderBox(rectangle, false);
+                    ApplyPaddings(rectangle, false);
+                }
+            }
+            return rectangle;
+        }
+
+        private bool DrawBackgroundImagesList(IList<BackgroundImage> backgroundImagesList, bool backgroundAreaIsClipped
+            , DrawContext drawContext, Rectangle backgroundArea) {
+            for (int i = backgroundImagesList.Count - 1; i >= 0; i--) {
+                BackgroundImage backgroundImage = backgroundImagesList[i];
+                if (backgroundImage != null && backgroundImage.IsBackgroundSpecified()) {
+                    // TODO DEVSIX-4525 determine how background-clip affects background-radius
+                    if (!backgroundAreaIsClipped) {
+                        backgroundAreaIsClipped = ClipBackgroundArea(drawContext, backgroundArea);
+                    }
+                    DrawBackgroundImage(backgroundImage, drawContext, backgroundArea);
+                }
+            }
+            return backgroundAreaIsClipped;
+        }
+
+        private void DrawBackgroundImage(BackgroundImage backgroundImage, DrawContext drawContext, Rectangle backgroundArea
+            ) {
+            Rectangle originBackgroundArea = ApplyBackgroundBoxProperty(backgroundArea.Clone(), backgroundImage.GetBackgroundOrigin
+                ());
+            float[] imageWidthAndHeight = BackgroundSizeCalculationUtil.CalculateBackgroundImageSize(backgroundImage, 
+                originBackgroundArea.GetWidth(), originBackgroundArea.GetHeight());
+            PdfXObject backgroundXObject = backgroundImage.GetImage();
+            if (backgroundXObject == null) {
+                backgroundXObject = backgroundImage.GetForm();
+            }
+            Rectangle imageRectangle;
+            UnitValue xPosition = UnitValue.CreatePointValue(0);
+            UnitValue yPosition = UnitValue.CreatePointValue(0);
+            if (backgroundXObject == null) {
+                AbstractLinearGradientBuilder gradientBuilder = backgroundImage.GetLinearGradientBuilder();
+                if (gradientBuilder == null) {
+                    return;
+                }
+                // fullWidth and fullHeight is 0 because percentage shifts are ignored for linear-gradients
+                backgroundImage.GetBackgroundPosition().CalculatePositionValues(0, 0, xPosition, yPosition);
+                backgroundXObject = CreateXObject(gradientBuilder, originBackgroundArea, drawContext.GetDocument());
+                imageRectangle = new Rectangle(originBackgroundArea.GetLeft() + xPosition.GetValue(), originBackgroundArea
+                    .GetTop() - imageWidthAndHeight[1] - yPosition.GetValue(), imageWidthAndHeight[0], imageWidthAndHeight
+                    [1]);
+            }
+            else {
+                backgroundImage.GetBackgroundPosition().CalculatePositionValues(originBackgroundArea.GetWidth() - imageWidthAndHeight
+                    [0], originBackgroundArea.GetHeight() - imageWidthAndHeight[1], xPosition, yPosition);
+                imageRectangle = new Rectangle(originBackgroundArea.GetLeft() + xPosition.GetValue(), originBackgroundArea
+                    .GetTop() - imageWidthAndHeight[1] - yPosition.GetValue(), imageWidthAndHeight[0], imageWidthAndHeight
+                    [1]);
+            }
+            if (imageRectangle.GetWidth() <= 0 || imageRectangle.GetHeight() <= 0) {
+                ILogger logger = ITextLogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
+                logger.LogInformation(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.RECTANGLE_HAS_NEGATIVE_OR_ZERO_SIZES
+                    , "background-image"));
+            }
+            else {
+                Rectangle clippedBackgroundArea = ApplyBackgroundBoxProperty(backgroundArea.Clone(), backgroundImage.GetBackgroundClip
+                    ());
+                drawContext.GetCanvas().SaveState().Rectangle(clippedBackgroundArea).Clip().EndPath();
+                DrawPdfXObject(imageRectangle, backgroundImage, drawContext, backgroundXObject, backgroundArea, originBackgroundArea
+                    );
+                drawContext.GetCanvas().RestoreState();
+            }
+        }
+
+        private static void DrawPdfXObject(Rectangle imageRectangle, BackgroundImage backgroundImage, DrawContext 
+            drawContext, PdfXObject backgroundXObject, Rectangle backgroundArea, Rectangle originBackgroundArea) {
+            BlendMode blendMode = backgroundImage.GetBlendMode();
+            if (blendMode != BlendMode.NORMAL) {
+                drawContext.GetCanvas().SetExtGState(new PdfExtGState().SetBlendMode(blendMode.GetPdfRepresentation()));
+            }
+            Point whitespace = backgroundImage.GetRepeat().PrepareRectangleToDrawingAndGetWhitespace(imageRectangle, originBackgroundArea
+                , backgroundImage.GetBackgroundSize());
+            float initialX = imageRectangle.GetX();
+            int counterY = 1;
+            bool firstDraw = true;
+            bool isCurrentOverlaps;
+            bool isNextOverlaps;
+            do {
+                DrawPdfXObjectHorizontally(imageRectangle, backgroundImage, drawContext, backgroundXObject, backgroundArea
+                    , firstDraw, (float)whitespace.GetX());
+                firstDraw = false;
+                imageRectangle.SetX(initialX);
+                isCurrentOverlaps = imageRectangle.Overlaps(backgroundArea, OVERLAP_EPSILON);
+                if (counterY % 2 == 1) {
+                    isNextOverlaps = imageRectangle.MoveDown((imageRectangle.GetHeight() + (float)whitespace.GetY()) * counterY
+                        ).Overlaps(backgroundArea, OVERLAP_EPSILON);
+                }
+                else {
+                    isNextOverlaps = imageRectangle.MoveUp((imageRectangle.GetHeight() + (float)whitespace.GetY()) * counterY)
+                        .Overlaps(backgroundArea, OVERLAP_EPSILON);
+                }
+                ++counterY;
+            }
+            while (!backgroundImage.GetRepeat().IsNoRepeatOnYAxis() && (isCurrentOverlaps || isNextOverlaps));
+        }
+
+        private static void DrawPdfXObjectHorizontally(Rectangle imageRectangle, BackgroundImage backgroundImage, 
+            DrawContext drawContext, PdfXObject backgroundXObject, Rectangle backgroundArea, bool firstDraw, float
+             xWhitespace) {
+            bool isItFirstDraw = firstDraw;
+            int counterX = 1;
+            bool isCurrentOverlaps;
+            bool isNextOverlaps;
+            do {
+                if (imageRectangle.Overlaps(backgroundArea, OVERLAP_EPSILON) || isItFirstDraw) {
+                    drawContext.GetCanvas().AddXObjectFittedIntoRectangle(backgroundXObject, imageRectangle);
+                    isItFirstDraw = false;
+                }
+                isCurrentOverlaps = imageRectangle.Overlaps(backgroundArea, OVERLAP_EPSILON);
+                if (counterX % 2 == 1) {
+                    isNextOverlaps = imageRectangle.MoveRight((imageRectangle.GetWidth() + xWhitespace) * counterX).Overlaps(backgroundArea
+                        , OVERLAP_EPSILON);
+                }
+                else {
+                    isNextOverlaps = imageRectangle.MoveLeft((imageRectangle.GetWidth() + xWhitespace) * counterX).Overlaps(backgroundArea
+                        , OVERLAP_EPSILON);
+                }
+                ++counterX;
+            }
+            while (!backgroundImage.GetRepeat().IsNoRepeatOnXAxis() && (isCurrentOverlaps || isNextOverlaps));
+        }
+
+        /// <summary>
+        /// Create a
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfFormXObject"/>
+        /// with the given area and containing a linear gradient inside.
+        /// </summary>
+        /// <param name="linearGradientBuilder">the linear gradient builder</param>
+        /// <param name="xObjectArea">the result object area</param>
+        /// <param name="document">the pdf document</param>
+        /// <returns>the xObject with a specified area and a linear gradient</returns>
+        public static PdfFormXObject CreateXObject(AbstractLinearGradientBuilder linearGradientBuilder, Rectangle 
+            xObjectArea, PdfDocument document) {
+            Rectangle formBBox = new Rectangle(0, 0, xObjectArea.GetWidth(), xObjectArea.GetHeight());
+            PdfFormXObject xObject = new PdfFormXObject(formBBox);
+            if (linearGradientBuilder != null) {
+                Color gradientColor = linearGradientBuilder.BuildColor(formBBox, null, document);
+                if (gradientColor != null) {
+                    new PdfCanvas(xObject, document).SetColor(gradientColor, true).Rectangle(formBBox).Fill();
+                }
+            }
+            return xObject;
+        }
+
+        /// <summary>Evaluate the actual background</summary>
+        /// <param name="occupiedAreaWithMargins">the current occupied area with applied margins</param>
+        /// <returns>the actual background area</returns>
+        protected internal virtual Rectangle GetBackgroundArea(Rectangle occupiedAreaWithMargins) {
+            return occupiedAreaWithMargins;
         }
 
         protected internal virtual bool ClipBorderArea(DrawContext drawContext, Rectangle outerBorderBox) {
@@ -553,7 +729,6 @@ namespace iText.Layout.Renderer {
             // border widths should be considered only once
             System.Diagnostics.Debug.Assert(false == considerBordersBeforeOuterClipping || false == considerBordersBeforeInnerClipping
                 );
-            double curv = 0.4477f;
             // border widths
             float[] borderWidths = new float[] { 0, 0, 0, 0 };
             // outer box
@@ -585,7 +760,7 @@ namespace iText.Layout.Renderer {
                 }
                 // clip border area outside
                 if (clipOuter) {
-                    ClipOuterArea(canvas, curv, horizontalRadii, verticalRadii, outerBox, cornersX, cornersY);
+                    ClipOuterArea(canvas, horizontalRadii, verticalRadii, outerBox, cornersX, cornersY);
                 }
                 if (considerBordersBeforeInnerClipping) {
                     borderWidths = DecreaseBorderRadiiWithBorders(horizontalRadii, verticalRadii, outerBox, cornersX, cornersY
@@ -593,85 +768,85 @@ namespace iText.Layout.Renderer {
                 }
                 // clip border area inside
                 if (clipInner) {
-                    ClipInnerArea(canvas, curv, horizontalRadii, verticalRadii, outerBox, cornersX, cornersY, borderWidths);
+                    ClipInnerArea(canvas, horizontalRadii, verticalRadii, outerBox, cornersX, cornersY, borderWidths);
                 }
             }
             return hasNotNullRadius;
         }
 
-        private void ClipOuterArea(PdfCanvas canvas, double curv, float[] horizontalRadii, float[] verticalRadii, 
-            float[] outerBox, float[] cornersX, float[] cornersY) {
-            float top = outerBox[0];
-            float right = outerBox[1];
-            float bottom = outerBox[2];
-            float left = outerBox[3];
-            float x1 = cornersX[0];
-            float y1 = cornersY[0];
-            float x2 = cornersX[1];
-            float y2 = cornersY[1];
-            float x3 = cornersX[2];
-            float y3 = cornersY[2];
-            float x4 = cornersX[3];
-            float y4 = cornersY[3];
+        private void ClipOuterArea(PdfCanvas canvas, float[] horizontalRadii, float[] verticalRadii, float[] outerBox
+            , float[] cornersX, float[] cornersY) {
+            double top = outerBox[TOP_SIDE];
+            double right = outerBox[RIGHT_SIDE];
+            double bottom = outerBox[BOTTOM_SIDE];
+            double left = outerBox[LEFT_SIDE];
             // left top corner
             if (0 != horizontalRadii[0] || 0 != verticalRadii[0]) {
-                canvas.MoveTo(left, bottom).LineTo(left, y1).CurveTo(left, y1 + verticalRadii[0] * curv, x1 - horizontalRadii
-                    [0] * curv, top, x1, top).LineTo(right, top).LineTo(right, bottom).LineTo(left, bottom);
+                double arcBottom = ((double)cornersY[TOP_SIDE]) - verticalRadii[TOP_SIDE];
+                double arcRight = ((double)cornersX[TOP_SIDE]) + horizontalRadii[TOP_SIDE];
+                canvas.MoveTo(left, bottom).ArcContinuous(left, arcBottom, arcRight, top, ARC_LEFT_DEGREE, ARC_QUARTER_CLOCKWISE_EXTENT
+                    ).LineTo(right, top).LineTo(right, bottom).LineTo(left, bottom);
                 canvas.Clip().EndPath();
             }
             // right top corner
             if (0 != horizontalRadii[1] || 0 != verticalRadii[1]) {
-                canvas.MoveTo(left, top).LineTo(x2, top).CurveTo(x2 + horizontalRadii[1] * curv, top, right, y2 + verticalRadii
-                    [1] * curv, right, y2).LineTo(right, bottom).LineTo(left, bottom).LineTo(left, top);
+                double arcLeft = ((double)cornersX[RIGHT_SIDE]) - horizontalRadii[RIGHT_SIDE];
+                double arcBottom = ((double)cornersY[RIGHT_SIDE]) - verticalRadii[RIGHT_SIDE];
+                canvas.MoveTo(left, top).ArcContinuous(arcLeft, top, right, arcBottom, ARC_TOP_DEGREE, ARC_QUARTER_CLOCKWISE_EXTENT
+                    ).LineTo(right, bottom).LineTo(left, bottom).LineTo(left, top);
                 canvas.Clip().EndPath();
             }
             // right bottom corner
             if (0 != horizontalRadii[2] || 0 != verticalRadii[2]) {
-                canvas.MoveTo(right, top).LineTo(right, y3).CurveTo(right, y3 - verticalRadii[2] * curv, x3 + horizontalRadii
-                    [2] * curv, bottom, x3, bottom).LineTo(left, bottom).LineTo(left, top).LineTo(right, top);
+                double arcTop = ((double)cornersY[BOTTOM_SIDE]) + verticalRadii[BOTTOM_SIDE];
+                double arcLeft = ((double)cornersX[BOTTOM_SIDE]) - horizontalRadii[BOTTOM_SIDE];
+                canvas.MoveTo(right, top).ArcContinuous(right, arcTop, arcLeft, bottom, ARC_RIGHT_DEGREE, ARC_QUARTER_CLOCKWISE_EXTENT
+                    ).LineTo(left, bottom).LineTo(left, top).LineTo(right, top);
                 canvas.Clip().EndPath();
             }
             // left bottom corner
             if (0 != horizontalRadii[3] || 0 != verticalRadii[3]) {
-                canvas.MoveTo(right, bottom).LineTo(x4, bottom).CurveTo(x4 - horizontalRadii[3] * curv, bottom, left, y4 -
-                     verticalRadii[3] * curv, left, y4).LineTo(left, top).LineTo(right, top).LineTo(right, bottom);
+                double arcRight = ((double)cornersX[LEFT_SIDE]) + horizontalRadii[LEFT_SIDE];
+                double arcTop = ((double)cornersY[LEFT_SIDE]) + verticalRadii[LEFT_SIDE];
+                canvas.MoveTo(right, bottom).ArcContinuous(arcRight, bottom, left, arcTop, ARC_BOTTOM_DEGREE, ARC_QUARTER_CLOCKWISE_EXTENT
+                    ).LineTo(left, top).LineTo(right, top).LineTo(right, bottom);
                 canvas.Clip().EndPath();
             }
         }
 
-        private void ClipInnerArea(PdfCanvas canvas, double curv, float[] horizontalRadii, float[] verticalRadii, 
-            float[] outerBox, float[] cornersX, float[] cornersY, float[] borderWidths) {
-            float top = outerBox[0];
-            float right = outerBox[1];
-            float bottom = outerBox[2];
-            float left = outerBox[3];
-            float x1 = cornersX[0];
-            float y1 = cornersY[0];
-            float x2 = cornersX[1];
-            float y2 = cornersY[1];
-            float x3 = cornersX[2];
-            float y3 = cornersY[2];
-            float x4 = cornersX[3];
-            float y4 = cornersY[3];
-            float topBorderWidth = borderWidths[0];
-            float rightBorderWidth = borderWidths[1];
-            float bottomBorderWidth = borderWidths[2];
-            float leftBorderWidth = borderWidths[3];
+        private void ClipInnerArea(PdfCanvas canvas, float[] horizontalRadii, float[] verticalRadii, float[] outerBox
+            , float[] cornersX, float[] cornersY, float[] borderWidths) {
+            double top = outerBox[TOP_SIDE];
+            double right = outerBox[RIGHT_SIDE];
+            double bottom = outerBox[BOTTOM_SIDE];
+            double left = outerBox[LEFT_SIDE];
+            double x1 = cornersX[TOP_SIDE];
+            double y1 = cornersY[TOP_SIDE];
+            double x2 = cornersX[RIGHT_SIDE];
+            double y2 = cornersY[RIGHT_SIDE];
+            double x3 = cornersX[BOTTOM_SIDE];
+            double y3 = cornersY[BOTTOM_SIDE];
+            double x4 = cornersX[LEFT_SIDE];
+            double y4 = cornersY[LEFT_SIDE];
+            double topBorderWidth = borderWidths[TOP_SIDE];
+            double rightBorderWidth = borderWidths[RIGHT_SIDE];
+            double bottomBorderWidth = borderWidths[BOTTOM_SIDE];
+            double leftBorderWidth = borderWidths[LEFT_SIDE];
             // left top corner
             if (0 != horizontalRadii[0] || 0 != verticalRadii[0]) {
-                canvas.MoveTo(left, y1).CurveTo(left, y1 + verticalRadii[0] * curv, x1 - horizontalRadii[0] * curv, top, x1
-                    , top).LineTo(x2, top).LineTo(right, y2).LineTo(right, y3).LineTo(x3, bottom).LineTo(x4, bottom).LineTo
-                    (left, y4).LineTo(left, y1).LineTo(left - leftBorderWidth, y1).LineTo(left - leftBorderWidth, bottom -
-                     bottomBorderWidth).LineTo(right + rightBorderWidth, bottom - bottomBorderWidth).LineTo(right + rightBorderWidth
-                    , top + topBorderWidth).LineTo(left - leftBorderWidth, top + topBorderWidth).LineTo(left - leftBorderWidth
-                    , y1);
+                canvas.Arc(left, y1 - verticalRadii[TOP_SIDE], x1 + horizontalRadii[TOP_SIDE], top, ARC_LEFT_DEGREE, ARC_QUARTER_CLOCKWISE_EXTENT
+                    ).LineTo(x2, top).LineTo(right, y2).LineTo(right, y3).LineTo(x3, bottom).LineTo(x4, bottom).LineTo(left
+                    , y4).LineTo(left, y1).LineTo(left - leftBorderWidth, y1).LineTo(left - leftBorderWidth, bottom - bottomBorderWidth
+                    ).LineTo(right + rightBorderWidth, bottom - bottomBorderWidth).LineTo(right + rightBorderWidth, top + 
+                    topBorderWidth).LineTo(left - leftBorderWidth, top + topBorderWidth).LineTo(left - leftBorderWidth, y1
+                    );
                 canvas.Clip().EndPath();
             }
             // right top corner
             if (0 != horizontalRadii[1] || 0 != verticalRadii[1]) {
-                canvas.MoveTo(x2, top).CurveTo(x2 + horizontalRadii[1] * curv, top, right, y2 + verticalRadii[1] * curv, right
-                    , y2).LineTo(right, y3).LineTo(x3, bottom).LineTo(x4, bottom).LineTo(left, y4).LineTo(left, y1).LineTo
-                    (x1, top).LineTo(x2, top).LineTo(x2, top + topBorderWidth).LineTo(left - leftBorderWidth, top + topBorderWidth
+                canvas.Arc(x2 - horizontalRadii[RIGHT_SIDE], top, right, y2 - verticalRadii[RIGHT_SIDE], ARC_TOP_DEGREE, ARC_QUARTER_CLOCKWISE_EXTENT
+                    ).LineTo(right, y3).LineTo(x3, bottom).LineTo(x4, bottom).LineTo(left, y4).LineTo(left, y1).LineTo(x1, 
+                    top).LineTo(x2, top).LineTo(x2, top + topBorderWidth).LineTo(left - leftBorderWidth, top + topBorderWidth
                     ).LineTo(left - leftBorderWidth, bottom - bottomBorderWidth).LineTo(right + rightBorderWidth, bottom -
                      bottomBorderWidth).LineTo(right + rightBorderWidth, top + topBorderWidth).LineTo(x2, top + topBorderWidth
                     );
@@ -679,22 +854,22 @@ namespace iText.Layout.Renderer {
             }
             // right bottom corner
             if (0 != horizontalRadii[2] || 0 != verticalRadii[2]) {
-                canvas.MoveTo(right, y3).CurveTo(right, y3 - verticalRadii[2] * curv, x3 + horizontalRadii[2] * curv, bottom
-                    , x3, bottom).LineTo(x4, bottom).LineTo(left, y4).LineTo(left, y1).LineTo(x1, top).LineTo(x2, top).LineTo
-                    (right, y2).LineTo(right, y3).LineTo(right + rightBorderWidth, y3).LineTo(right + rightBorderWidth, top
-                     + topBorderWidth).LineTo(left - leftBorderWidth, top + topBorderWidth).LineTo(left - leftBorderWidth, 
-                    bottom - bottomBorderWidth).LineTo(right + rightBorderWidth, bottom - bottomBorderWidth).LineTo(right 
-                    + rightBorderWidth, y3);
+                canvas.Arc(right, y3 + verticalRadii[BOTTOM_SIDE], x3 - horizontalRadii[BOTTOM_SIDE], bottom, ARC_RIGHT_DEGREE
+                    , ARC_QUARTER_CLOCKWISE_EXTENT).LineTo(x4, bottom).LineTo(left, y4).LineTo(left, y1).LineTo(x1, top).LineTo
+                    (x2, top).LineTo(right, y2).LineTo(right, y3).LineTo(right + rightBorderWidth, y3).LineTo(right + rightBorderWidth
+                    , top + topBorderWidth).LineTo(left - leftBorderWidth, top + topBorderWidth).LineTo(left - leftBorderWidth
+                    , bottom - bottomBorderWidth).LineTo(right + rightBorderWidth, bottom - bottomBorderWidth).LineTo(right
+                     + rightBorderWidth, y3);
                 canvas.Clip().EndPath();
             }
             // left bottom corner
             if (0 != horizontalRadii[3] || 0 != verticalRadii[3]) {
-                canvas.MoveTo(x4, bottom).CurveTo(x4 - horizontalRadii[3] * curv, bottom, left, y4 - verticalRadii[3] * curv
-                    , left, y4).LineTo(left, y1).LineTo(x1, top).LineTo(x2, top).LineTo(right, y2).LineTo(right, y3).LineTo
-                    (x3, bottom).LineTo(x4, bottom).LineTo(x4, bottom - bottomBorderWidth).LineTo(right + rightBorderWidth
-                    , bottom - bottomBorderWidth).LineTo(right + rightBorderWidth, top + topBorderWidth).LineTo(left - leftBorderWidth
-                    , top + topBorderWidth).LineTo(left - leftBorderWidth, bottom - bottomBorderWidth).LineTo(x4, bottom -
-                     bottomBorderWidth);
+                canvas.Arc(x4 + horizontalRadii[LEFT_SIDE], bottom, left, y4 + verticalRadii[LEFT_SIDE], ARC_BOTTOM_DEGREE
+                    , ARC_QUARTER_CLOCKWISE_EXTENT).LineTo(left, y1).LineTo(x1, top).LineTo(x2, top).LineTo(right, y2).LineTo
+                    (right, y3).LineTo(x3, bottom).LineTo(x4, bottom).LineTo(x4, bottom - bottomBorderWidth).LineTo(right 
+                    + rightBorderWidth, bottom - bottomBorderWidth).LineTo(right + rightBorderWidth, top + topBorderWidth)
+                    .LineTo(left - leftBorderWidth, top + topBorderWidth).LineTo(left - leftBorderWidth, bottom - bottomBorderWidth
+                    ).LineTo(x4, bottom - bottomBorderWidth);
                 canvas.Clip().EndPath();
             }
         }
@@ -800,8 +975,9 @@ namespace iText.Layout.Renderer {
                 float leftWidth = borders[3] != null ? borders[3].GetWidth() : 0;
                 Rectangle bBox = GetBorderAreaBBox();
                 if (bBox.GetWidth() < 0 || bBox.GetHeight() < 0) {
-                    ILog logger = LogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
-                    logger.Error(MessageFormatUtil.Format(iText.IO.LogMessageConstant.RECTANGLE_HAS_NEGATIVE_SIZE, "border"));
+                    ILogger logger = ITextLogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
+                    logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.RECTANGLE_HAS_NEGATIVE_SIZE, "border"
+                        ));
                     return;
                 }
                 float x1 = bBox.GetX();
@@ -867,13 +1043,12 @@ namespace iText.Layout.Renderer {
             }
         }
 
-        /// <summary>Indicates whether this renderer is flushed or not, i.e.</summary>
-        /// <remarks>
+        /// <summary>
         /// Indicates whether this renderer is flushed or not, i.e. if
         /// <see cref="Draw(DrawContext)"/>
         /// has already
         /// been called.
-        /// </remarks>
+        /// </summary>
         /// <returns>whether the renderer has been flushed</returns>
         /// <seealso cref="Draw(DrawContext)"/>
         public virtual bool IsFlushed() {
@@ -893,6 +1068,12 @@ namespace iText.Layout.Renderer {
 
         /// <summary><inheritDoc/></summary>
         public virtual void Move(float dxRight, float dyUp) {
+            ILogger logger = ITextLogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
+            if (occupiedArea == null) {
+                logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.OCCUPIED_AREA_HAS_NOT_BEEN_INITIALIZED
+                    , "Moving won't be performed."));
+                return;
+            }
             occupiedArea.GetBBox().MoveRight(dxRight);
             occupiedArea.GetBBox().MoveUp(dyUp);
             foreach (IRenderer childRenderer in childRenderers) {
@@ -924,8 +1105,7 @@ namespace iText.Layout.Renderer {
         /// Gets the bounding box that contains all content written to the
         /// <see cref="DrawContext"/>
         /// by this
-        /// <see cref="IRenderer"/>
-        /// .
+        /// <see cref="IRenderer"/>.
         /// </summary>
         /// <returns>
         /// the smallest
@@ -954,6 +1134,24 @@ namespace iText.Layout.Renderer {
             ApplyMargins(rect, false);
             ApplyBorderBox(rect, false);
             ApplyPaddings(rect, false);
+            return rect;
+        }
+
+        /// <summary>Applies margins, borders and paddings of the renderer on the given rectangle.</summary>
+        /// <param name="rect">a rectangle margins, borders and paddings will be applied on.</param>
+        /// <param name="reverse">
+        /// indicates whether margins, borders and paddings will be applied
+        /// inside (in case of false) or outside (in case of true) the rectangle.
+        /// </param>
+        /// <returns>
+        /// a
+        /// <see cref="iText.Kernel.Geom.Rectangle">border box</see>
+        /// of the renderer
+        /// </returns>
+        internal virtual Rectangle ApplyMarginsBordersPaddings(Rectangle rect, bool reverse) {
+            ApplyMargins(rect, reverse);
+            ApplyBorderBox(rect, reverse);
+            ApplyPaddings(rect, reverse);
             return rect;
         }
 
@@ -1043,6 +1241,44 @@ namespace iText.Layout.Renderer {
             return rendererOverflowProperty == null || OverflowPropertyValue.FIT.Equals(rendererOverflowProperty);
         }
 
+        /// <summary>Replaces given property own value with the given value.</summary>
+        /// <param name="property">the property to be replaced</param>
+        /// <param name="replacementValue">the value with which property will be replaced</param>
+        /// <typeparam name="T">the type associated with the property</typeparam>
+        /// <returns>previous property value</returns>
+        internal virtual T ReplaceOwnProperty<T>(int property, T replacementValue) {
+            T ownProperty = this.GetOwnProperty<T>(property);
+            SetProperty(property, replacementValue);
+            return ownProperty;
+        }
+
+        /// <summary>Returns back own value of the given property.</summary>
+        /// <param name="property">the property to be returned back</param>
+        /// <param name="prevValue">the value which will be returned back</param>
+        /// <typeparam name="T">the type associated with the property</typeparam>
+        internal virtual void ReturnBackOwnProperty<T>(int property, T prevValue) {
+            if (prevValue == null) {
+                DeleteOwnProperty(property);
+            }
+            else {
+                SetProperty(property, prevValue);
+            }
+        }
+
+        /// <summary>Checks if this renderer has intrinsic aspect ratio.</summary>
+        /// <returns>true, if aspect ratio is defined for this renderer, false otherwise</returns>
+        internal virtual bool HasAspectRatio() {
+            // TODO DEVSIX-5255 This method should be changed after we support aspect-ratio property
+            return false;
+        }
+
+        /// <summary>Gets intrinsic aspect ratio for this renderer.</summary>
+        /// <returns>aspect ratio, if it is defined for this renderer, null otherwise</returns>
+        internal virtual float? GetAspectRatio() {
+            // TODO DEVSIX-5255 This method should be changed after we support aspect-ratio property
+            return null;
+        }
+
         internal static void ProcessWaitingDrawing(IRenderer child, Transform transformProp, IList<IRenderer> waitingDrawing
             ) {
             if (FloatingHelper.IsRendererFloating(child) || transformProp != null) {
@@ -1054,8 +1290,7 @@ namespace iText.Layout.Renderer {
                 if (abstractChild.IsRelativePosition()) {
                     abstractChild.ApplyRelativePositioningTranslation(false);
                 }
-                Div outlines = new Div();
-                outlines.GetAccessibilityProperties().SetRole(null);
+                Div outlines = new Div().SetNeutralRole();
                 if (transformProp != null) {
                     outlines.SetProperty(Property.TRANSFORM, transformProp);
                 }
@@ -1429,14 +1664,13 @@ namespace iText.Layout.Renderer {
         protected internal virtual float? RetrieveUnitValue(float baseValue, int property, bool pointOnly) {
             UnitValue value = this.GetProperty<UnitValue>(property);
             if (pointOnly && value.GetUnitType() == UnitValue.POINT) {
-                ILog logger = LogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
-                logger.Error(MessageFormatUtil.Format(iText.IO.LogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED, property
-                    ));
+                ILogger logger = ITextLogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
+                logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED
+                    , property));
             }
             if (value != null) {
                 if (value.GetUnitType() == UnitValue.PERCENT) {
                     // during mathematical operations the precision can be lost, so avoiding them if possible (100 / 100 == 1) is a good practice
-                    // TODO Maybe decrease the result value by AbstractRenderer.EPS ?
                     return value.GetValue() != 100 ? baseValue * value.GetValue() / 100 : baseValue;
                 }
                 else {
@@ -1449,7 +1683,6 @@ namespace iText.Layout.Renderer {
             }
         }
 
-        //TODO is behavior of copying all properties in split case common to all renderers?
         protected internal virtual IDictionary<int, Object> GetOwnProperties() {
             return properties;
         }
@@ -1506,28 +1739,28 @@ namespace iText.Layout.Renderer {
         /// of the renderer
         /// </returns>
         protected internal virtual Rectangle ApplyMargins(Rectangle rect, UnitValue[] margins, bool reverse) {
-            if (!margins[0].IsPointValue()) {
-                ILog logger = LogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
-                logger.Error(MessageFormatUtil.Format(iText.IO.LogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED, Property
-                    .MARGIN_TOP));
+            if (!margins[TOP_SIDE].IsPointValue()) {
+                ILogger logger = ITextLogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
+                logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED
+                    , Property.MARGIN_TOP));
             }
-            if (!margins[1].IsPointValue()) {
-                ILog logger = LogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
-                logger.Error(MessageFormatUtil.Format(iText.IO.LogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED, Property
-                    .MARGIN_RIGHT));
+            if (!margins[RIGHT_SIDE].IsPointValue()) {
+                ILogger logger = ITextLogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
+                logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED
+                    , Property.MARGIN_RIGHT));
             }
-            if (!margins[2].IsPointValue()) {
-                ILog logger = LogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
-                logger.Error(MessageFormatUtil.Format(iText.IO.LogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED, Property
-                    .MARGIN_BOTTOM));
+            if (!margins[BOTTOM_SIDE].IsPointValue()) {
+                ILogger logger = ITextLogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
+                logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED
+                    , Property.MARGIN_BOTTOM));
             }
-            if (!margins[3].IsPointValue()) {
-                ILog logger = LogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
-                logger.Error(MessageFormatUtil.Format(iText.IO.LogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED, Property
-                    .MARGIN_LEFT));
+            if (!margins[LEFT_SIDE].IsPointValue()) {
+                ILogger logger = ITextLogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
+                logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED
+                    , Property.MARGIN_LEFT));
             }
-            return rect.ApplyMargins(margins[0].GetValue(), margins[1].GetValue(), margins[2].GetValue(), margins[3].GetValue
-                (), reverse);
+            return rect.ApplyMargins(margins[TOP_SIDE].GetValue(), margins[RIGHT_SIDE].GetValue(), margins[BOTTOM_SIDE
+                ].GetValue(), margins[LEFT_SIDE].GetValue(), reverse);
         }
 
         /// <summary>Returns margins of the renderer</summary>
@@ -1563,28 +1796,29 @@ namespace iText.Layout.Renderer {
         /// of the renderer
         /// </returns>
         protected internal virtual Rectangle ApplyPaddings(Rectangle rect, UnitValue[] paddings, bool reverse) {
-            if (!paddings[0].IsPointValue()) {
-                ILog logger = LogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
-                logger.Error(MessageFormatUtil.Format(iText.IO.LogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED, Property
-                    .PADDING_TOP));
+            if (paddings[0] != null && !paddings[0].IsPointValue()) {
+                ILogger logger = ITextLogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
+                logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED
+                    , Property.PADDING_TOP));
             }
-            if (!paddings[1].IsPointValue()) {
-                ILog logger = LogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
-                logger.Error(MessageFormatUtil.Format(iText.IO.LogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED, Property
-                    .PADDING_RIGHT));
+            if (paddings[1] != null && !paddings[1].IsPointValue()) {
+                ILogger logger = ITextLogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
+                logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED
+                    , Property.PADDING_RIGHT));
             }
-            if (!paddings[2].IsPointValue()) {
-                ILog logger = LogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
-                logger.Error(MessageFormatUtil.Format(iText.IO.LogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED, Property
-                    .PADDING_BOTTOM));
+            if (paddings[2] != null && !paddings[2].IsPointValue()) {
+                ILogger logger = ITextLogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
+                logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED
+                    , Property.PADDING_BOTTOM));
             }
-            if (!paddings[3].IsPointValue()) {
-                ILog logger = LogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
-                logger.Error(MessageFormatUtil.Format(iText.IO.LogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED, Property
-                    .PADDING_LEFT));
+            if (paddings[3] != null && !paddings[3].IsPointValue()) {
+                ILogger logger = ITextLogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
+                logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED
+                    , Property.PADDING_LEFT));
             }
-            return rect.ApplyMargins(paddings[0].GetValue(), paddings[1].GetValue(), paddings[2].GetValue(), paddings[
-                3].GetValue(), reverse);
+            return rect.ApplyMargins(paddings[0] != null ? paddings[0].GetValue() : 0, paddings[1] != null ? paddings[
+                1].GetValue() : 0, paddings[2] != null ? paddings[2].GetValue() : 0, paddings[3] != null ? paddings[3]
+                .GetValue() : 3, reverse);
         }
 
         /// <summary>Applies the given border box (borders) on the given rectangle</summary>
@@ -1638,9 +1872,9 @@ namespace iText.Layout.Renderer {
                 }
             }
             catch (Exception) {
-                ILog logger = LogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
-                logger.Error(MessageFormatUtil.Format(iText.IO.LogMessageConstant.OCCUPIED_AREA_HAS_NOT_BEEN_INITIALIZED, 
-                    "Absolute positioning might be applied incorrectly."));
+                ILogger logger = ITextLogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
+                logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.OCCUPIED_AREA_HAS_NOT_BEEN_INITIALIZED
+                    , "Absolute positioning might be applied incorrectly."));
             }
         }
 
@@ -1662,9 +1896,9 @@ namespace iText.Layout.Renderer {
             if (destination != null) {
                 int pageNumber = occupiedArea.GetPageNumber();
                 if (pageNumber < 1 || pageNumber > document.GetNumberOfPages()) {
-                    ILog logger = LogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
+                    ILogger logger = ITextLogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
                     String logMessageArg = "Property.DESTINATION, which specifies this element location as destination, see ElementPropertyContainer.setDestination.";
-                    logger.Warn(MessageFormatUtil.Format(iText.IO.LogMessageConstant.UNABLE_TO_APPLY_PAGE_DEPENDENT_PROP_UNKNOWN_PAGE_ON_WHICH_ELEMENT_IS_DRAWN
+                    logger.LogWarning(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.UNABLE_TO_APPLY_PAGE_DEPENDENT_PROP_UNKNOWN_PAGE_ON_WHICH_ELEMENT_IS_DRAWN
                         , logMessageArg));
                     return;
                 }
@@ -1699,24 +1933,33 @@ namespace iText.Layout.Renderer {
         }
 
         protected internal virtual void ApplyLinkAnnotation(PdfDocument document) {
+            ILogger logger = ITextLogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
             PdfLinkAnnotation linkAnnotation = this.GetProperty<PdfLinkAnnotation>(Property.LINK_ANNOTATION);
             if (linkAnnotation != null) {
                 int pageNumber = occupiedArea.GetPageNumber();
                 if (pageNumber < 1 || pageNumber > document.GetNumberOfPages()) {
-                    ILog logger = LogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
                     String logMessageArg = "Property.LINK_ANNOTATION, which specifies a link associated with this element content area, see com.itextpdf.layout.element.Link.";
-                    logger.Warn(MessageFormatUtil.Format(iText.IO.LogMessageConstant.UNABLE_TO_APPLY_PAGE_DEPENDENT_PROP_UNKNOWN_PAGE_ON_WHICH_ELEMENT_IS_DRAWN
+                    logger.LogWarning(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.UNABLE_TO_APPLY_PAGE_DEPENDENT_PROP_UNKNOWN_PAGE_ON_WHICH_ELEMENT_IS_DRAWN
                         , logMessageArg));
                     return;
                 }
+                // If an element with a link annotation occupies more than two pages,
+                // then a NPE might occur, because of the annotation being partially flushed.
+                // That's why we create and use an annotation's copy.
+                PdfDictionary oldAnnotation = (PdfDictionary)linkAnnotation.GetPdfObject().Clone();
+                linkAnnotation = (PdfLinkAnnotation)PdfAnnotation.MakeAnnotation(oldAnnotation);
                 Rectangle pdfBBox = CalculateAbsolutePdfBBox();
-                if (linkAnnotation.GetPage() != null) {
-                    PdfDictionary oldAnnotation = (PdfDictionary)linkAnnotation.GetPdfObject().Clone();
-                    linkAnnotation = (PdfLinkAnnotation)PdfAnnotation.MakeAnnotation(oldAnnotation);
-                }
                 linkAnnotation.SetRectangle(new PdfArray(pdfBBox));
                 PdfPage page = document.GetPage(pageNumber);
-                page.AddAnnotation(linkAnnotation);
+                // TODO DEVSIX-1655 This check is necessary because, in some cases, our renderer's hierarchy may contain
+                //  a renderer from the different page that was already flushed
+                if (page.IsFlushed()) {
+                    logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.PAGE_WAS_FLUSHED_ACTION_WILL_NOT_BE_PERFORMED
+                        , "link annotation applying"));
+                }
+                else {
+                    page.AddAnnotation(linkAnnotation);
+                }
             }
         }
 
@@ -1767,8 +2010,8 @@ namespace iText.Layout.Renderer {
             ) {
             if (wasHeightClipped) {
                 // if height was clipped, max height exists and can be resolved
-                ILog logger = LogManager.GetLogger(typeof(BlockRenderer));
-                logger.Warn(iText.IO.LogMessageConstant.CLIP_ELEMENT);
+                ILogger logger = ITextLogManager.GetLogger(typeof(BlockRenderer));
+                logger.LogWarning(iText.IO.Logs.IoLogMessageConstant.CLIP_ELEMENT);
                 if (enlargeOccupiedAreaOnHeightWasClipped) {
                     float? maxHeight = RetrieveMaxHeight();
                     splitRenderer.occupiedArea.GetBBox().MoveDown((float)maxHeight - usedHeight).SetHeight((float)maxHeight);
@@ -1779,8 +2022,8 @@ namespace iText.Layout.Renderer {
                 return;
             }
             // Update height related properties on split or overflow
-            float? parentResolvedHeightPropertyValue = RetrieveResolvedParentDeclaredHeight();
             // For relative heights, we need the parent's resolved height declaration
+            float? parentResolvedHeightPropertyValue = RetrieveResolvedParentDeclaredHeight();
             UnitValue maxHeightUV = GetPropertyAsUnitValue(this, Property.MAX_HEIGHT);
             if (maxHeightUV != null) {
                 if (maxHeightUV.IsPointValue()) {
@@ -1840,6 +2083,11 @@ namespace iText.Layout.Renderer {
         }
 
         // If parent has no resolved height, relative height declarations can be ignored
+        /// <summary>Calculates min and max width values for current renderer.</summary>
+        /// <returns>
+        /// instance of
+        /// <see cref="iText.Layout.Minmaxwidth.MinMaxWidth"/>
+        /// </returns>
         public virtual MinMaxWidth GetMinMaxWidth() {
             return MinMaxWidthUtils.CountDefaultMinMaxWidth(this);
         }
@@ -1905,7 +2153,11 @@ namespace iText.Layout.Renderer {
         }
 
         protected internal virtual bool IsKeepTogether() {
-            return true.Equals(GetPropertyAsBoolean(Property.KEEP_TOGETHER));
+            return IsKeepTogether(null);
+        }
+
+        internal virtual bool IsKeepTogether(IRenderer causeOfNothing) {
+            return true.Equals(GetPropertyAsBoolean(Property.KEEP_TOGETHER)) && !(causeOfNothing is AreaBreakRenderer);
         }
 
         // Note! The second parameter is here on purpose. Currently occupied area is passed as a value of this parameter in
@@ -1932,9 +2184,9 @@ namespace iText.Layout.Renderer {
                         }
                     }
                     catch (NullReferenceException) {
-                        ILog logger = LogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
-                        logger.Error(MessageFormatUtil.Format(iText.IO.LogMessageConstant.OCCUPIED_AREA_HAS_NOT_BEEN_INITIALIZED, 
-                            "Some of the children might not end up aligned horizontally."));
+                        ILogger logger = ITextLogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
+                        logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.OCCUPIED_AREA_HAS_NOT_BEEN_INITIALIZED
+                            , "Some of the children might not end up aligned horizontally."));
                     }
                 }
             }
@@ -1943,8 +2195,8 @@ namespace iText.Layout.Renderer {
         /// <summary>Gets borders of the element in the specified order: top, right, bottom, left.</summary>
         /// <returns>
         /// an array of BorderDrawer objects.
-        /// In case when certain border isn't set <code>Property.BORDER</code> is used,
-        /// and if <code>Property.BORDER</code> is also not set then <code>null</code> is returned
+        /// In case when certain border isn't set <c>Property.BORDER</c> is used,
+        /// and if <c>Property.BORDER</c> is also not set then <c>null</c> is returned
         /// on position of this border
         /// </returns>
         protected internal virtual Border[] GetBorders() {
@@ -1955,8 +2207,8 @@ namespace iText.Layout.Renderer {
         ///     </summary>
         /// <returns>
         /// an array of BorderRadius objects.
-        /// In case when certain border radius isn't set <code>Property.BORDER_RADIUS</code> is used,
-        /// and if <code>Property.BORDER_RADIUS</code> is also not set then <code>null</code> is returned
+        /// In case when certain border radius isn't set <c>Property.BORDER_RADIUS</c> is used,
+        /// and if <c>Property.BORDER_RADIUS</c> is also not set then <c>null</c> is returned
         /// on position of this border radius
         /// </returns>
         protected internal virtual BorderRadius[] GetBorderRadii() {
@@ -1991,7 +2243,7 @@ namespace iText.Layout.Renderer {
 
         /// <summary>
         /// Calculates the bounding box of the content in the coordinate system of the pdf entity on which content is placed,
-        /// e.g.
+        /// e.g. document page or form xObject.
         /// </summary>
         /// <remarks>
         /// Calculates the bounding box of the content in the coordinate system of the pdf entity on which content is placed,
@@ -2032,25 +2284,11 @@ namespace iText.Layout.Renderer {
         /// <param name="points">list of the points calculated bbox will enclose.</param>
         /// <returns>array of float values which denote left, bottom, right, top lines of bbox in this specific order</returns>
         protected internal virtual Rectangle CalculateBBox(IList<Point> points) {
-            double minX = double.MaxValue;
-            double minY = double.MaxValue;
-            double maxX = -double.MaxValue;
-            double maxY = -double.MaxValue;
-            foreach (Point p in points) {
-                minX = Math.Min(p.GetX(), minX);
-                minY = Math.Min(p.GetY(), minY);
-                maxX = Math.Max(p.GetX(), maxX);
-                maxY = Math.Max(p.GetY(), maxY);
-            }
-            return new Rectangle((float)minX, (float)minY, (float)(maxX - minX), (float)(maxY - minY));
+            return Rectangle.CalculateBBox(points);
         }
 
         protected internal virtual IList<Point> RectangleToPointsList(Rectangle rect) {
-            IList<Point> points = new List<Point>();
-            points.AddAll(JavaUtil.ArraysAsList(new Point(rect.GetLeft(), rect.GetBottom()), new Point(rect.GetRight()
-                , rect.GetBottom()), new Point(rect.GetRight(), rect.GetTop()), new Point(rect.GetLeft(), rect.GetTop(
-                ))));
-            return points;
+            return JavaUtil.ArraysAsList(rect.ToPointsArray());
         }
 
         protected internal virtual IList<Point> TransformPoints(IList<Point> points, AffineTransform transform) {
@@ -2129,6 +2367,24 @@ namespace iText.Layout.Renderer {
             return isFirstOnRootArea;
         }
 
+        /// <summary>Gets pdf document from root renderers.</summary>
+        /// <returns>PdfDocument, or null if there are no document</returns>
+        internal virtual PdfDocument GetPdfDocument() {
+            RootRenderer renderer = GetRootRenderer();
+            if (renderer is DocumentRenderer) {
+                Document document = ((DocumentRenderer)renderer).document;
+                return document.GetPdfDocument();
+            }
+            else {
+                if (renderer is CanvasRenderer) {
+                    return ((CanvasRenderer)renderer).canvas.GetPdfDocument();
+                }
+                else {
+                    return null;
+                }
+            }
+        }
+
         internal virtual RootRenderer GetRootRenderer() {
             IRenderer currentRenderer = this;
             while (currentRenderer is iText.Layout.Renderer.AbstractRenderer) {
@@ -2197,30 +2453,58 @@ namespace iText.Layout.Renderer {
             return fc;
         }
 
-        // This method is intended to get first valid PdfFont in this renderer, based of font property.
-        // It is usually done for counting some layout characteristics like ascender or descender.
-        // NOTE: It neither change Font Property of renderer, nor is guarantied to contain all glyphs used in renderer.
+        /// <summary>
+        /// Gets any valid
+        /// <see cref="iText.Kernel.Font.PdfFont"/>
+        /// for this renderer, based on
+        /// <see cref="iText.Layout.Properties.Property.FONT"/>
+        /// ,
+        /// <see cref="iText.Layout.Properties.Property.FONT_PROVIDER"/>
+        /// and
+        /// <see cref="iText.Layout.Properties.Property.FONT_SET"/>
+        /// properties.
+        /// </summary>
+        /// <remarks>
+        /// Gets any valid
+        /// <see cref="iText.Kernel.Font.PdfFont"/>
+        /// for this renderer, based on
+        /// <see cref="iText.Layout.Properties.Property.FONT"/>
+        /// ,
+        /// <see cref="iText.Layout.Properties.Property.FONT_PROVIDER"/>
+        /// and
+        /// <see cref="iText.Layout.Properties.Property.FONT_SET"/>
+        /// properties.
+        /// This method will not change font property of renderer. Also it is not guarantied that returned font will contain
+        /// all glyphs used in renderer or its children.
+        /// <para />
+        /// This method is usually needed for evaluating some layout characteristics like ascender or descender.
+        /// </remarks>
+        /// <returns>
+        /// a valid
+        /// <see cref="iText.Kernel.Font.PdfFont"/>
+        /// instance based on renderer
+        /// <see cref="iText.Layout.Properties.Property.FONT"/>
+        /// property.
+        /// </returns>
         internal virtual PdfFont ResolveFirstPdfFont() {
             Object font = this.GetProperty<Object>(Property.FONT);
             if (font is PdfFont) {
                 return (PdfFont)font;
             }
             else {
-                if (font is String || font is String[]) {
-                    if (font is String) {
-                        // TODO remove this if-clause before 7.2
-                        ILog logger = LogManager.GetLogger(typeof(iText.Layout.Renderer.AbstractRenderer));
-                        logger.Warn(iText.IO.LogMessageConstant.FONT_PROPERTY_OF_STRING_TYPE_IS_DEPRECATED_USE_STRINGS_ARRAY_INSTEAD
-                            );
-                        IList<String> splitFontFamily = FontFamilySplitter.SplitFontFamily((String)font);
-                        font = splitFontFamily.ToArray(new String[splitFontFamily.Count]);
-                    }
+                if (font is String[]) {
                     FontProvider provider = this.GetProperty<FontProvider>(Property.FONT_PROVIDER);
                     if (provider == null) {
-                        throw new InvalidOperationException(PdfException.FontProviderNotSetFontFamilyNotResolved);
+                        throw new InvalidOperationException(LayoutExceptionMessageConstant.FONT_PROVIDER_NOT_SET_FONT_FAMILY_NOT_RESOLVED
+                            );
+                    }
+                    FontSet fontSet = this.GetProperty<FontSet>(Property.FONT_SET);
+                    if (provider.GetFontSet().IsEmpty() && (fontSet == null || fontSet.IsEmpty())) {
+                        throw new InvalidOperationException(LayoutExceptionMessageConstant.FONT_PROVIDER_NOT_SET_FONT_FAMILY_NOT_RESOLVED
+                            );
                     }
                     FontCharacteristics fc = CreateFontCharacteristics();
-                    return ResolveFirstPdfFont((String[])font, provider, fc);
+                    return ResolveFirstPdfFont((String[])font, provider, fc, fontSet);
                 }
                 else {
                     throw new InvalidOperationException("String[] or PdfFont expected as value of FONT property");
@@ -2228,13 +2512,31 @@ namespace iText.Layout.Renderer {
             }
         }
 
-        // This method is intended to get first valid PdfFont described in font string,
-        // with specific FontCharacteristics with the help of specified font provider.
-        // This method is intended to be called from previous method that deals with Font Property.
-        // NOTE: It neither change Font Property of renderer, nor is guarantied to contain all glyphs used in renderer.
-        // TODO this mechanism does not take text into account
-        internal virtual PdfFont ResolveFirstPdfFont(String[] font, FontProvider provider, FontCharacteristics fc) {
-            return provider.GetPdfFont(provider.GetFontSelector(JavaUtil.ArraysAsList(font), fc).BestMatch());
+        /// <summary>
+        /// Get first valid
+        /// <see cref="iText.Kernel.Font.PdfFont"/>
+        /// for this renderer, based on given font-families, font provider and font characteristics.
+        /// </summary>
+        /// <remarks>
+        /// Get first valid
+        /// <see cref="iText.Kernel.Font.PdfFont"/>
+        /// for this renderer, based on given font-families, font provider and font characteristics.
+        /// This method will not change font property of renderer. Also it is not guarantied that returned font will contain
+        /// all glyphs used in renderer or its children.
+        /// <para />
+        /// This method is usually needed for evaluating some layout characteristics like ascender or descender.
+        /// </remarks>
+        /// <returns>
+        /// a valid
+        /// <see cref="iText.Kernel.Font.PdfFont"/>
+        /// instance based on renderer
+        /// <see cref="iText.Layout.Properties.Property.FONT"/>
+        /// property.
+        /// </returns>
+        internal virtual PdfFont ResolveFirstPdfFont(String[] font, FontProvider provider, FontCharacteristics fc, 
+            FontSet additionalFonts) {
+            FontSelector fontSelector = provider.GetFontSelector(JavaUtil.ArraysAsList(font), fc, additionalFonts);
+            return provider.GetPdfFont(fontSelector.BestMatch(), additionalFonts);
         }
 
         internal static Border[] GetBorders(IRenderer renderer) {
@@ -2321,14 +2623,14 @@ namespace iText.Layout.Renderer {
             }
         }
 
-        private static float CalculatePaddingBorderWidth(iText.Layout.Renderer.AbstractRenderer renderer) {
+        internal static float CalculatePaddingBorderWidth(iText.Layout.Renderer.AbstractRenderer renderer) {
             Rectangle dummy = new Rectangle(0, 0);
             renderer.ApplyBorderBox(dummy, true);
             renderer.ApplyPaddings(dummy, true);
             return dummy.GetWidth();
         }
 
-        private static float CalculatePaddingBorderHeight(iText.Layout.Renderer.AbstractRenderer renderer) {
+        internal static float CalculatePaddingBorderHeight(iText.Layout.Renderer.AbstractRenderer renderer) {
             Rectangle dummy = new Rectangle(0, 0);
             renderer.ApplyBorderBox(dummy, true);
             renderer.ApplyPaddings(dummy, true);
@@ -2371,6 +2673,209 @@ namespace iText.Layout.Renderer {
         protected internal virtual void EndTransformationIfApplied(PdfCanvas canvas) {
             if (this.GetProperty<Transform>(Property.TRANSFORM) != null) {
                 canvas.RestoreState();
+            }
+        }
+
+        /// <summary>
+        /// Add the specified
+        /// <see cref="IRenderer">renderer</see>
+        /// to the end of children list and update its
+        /// parent link to
+        /// <c>this</c>.
+        /// </summary>
+        /// <param name="child">
+        /// the
+        /// <see cref="IRenderer">child renderer</see>
+        /// to be add
+        /// </param>
+        internal virtual void AddChildRenderer(IRenderer child) {
+            child.SetParent(this);
+            this.childRenderers.Add(child);
+        }
+
+        /// <summary>
+        /// Add the specified collection of
+        /// <see cref="IRenderer">renderers</see>
+        /// to the end of children list and
+        /// update their parent links to
+        /// <c>this</c>.
+        /// </summary>
+        /// <param name="children">
+        /// the collection of
+        /// <see cref="IRenderer">child renderers</see>
+        /// to be add
+        /// </param>
+        internal virtual void AddAllChildRenderers(IList<IRenderer> children) {
+            if (children == null) {
+                return;
+            }
+            SetThisAsParent(children);
+            this.childRenderers.AddAll(children);
+        }
+
+        /// <summary>
+        /// Inserts the specified collection of
+        /// <see cref="IRenderer">renderers</see>
+        /// at the specified space of
+        /// children list and update their parent links to
+        /// <c>this</c>.
+        /// </summary>
+        /// <param name="index">index at which to insert the first element from the specified collection</param>
+        /// <param name="children">
+        /// the collection of
+        /// <see cref="IRenderer">child renderers</see>
+        /// to be add
+        /// </param>
+        internal virtual void AddAllChildRenderers(int index, IList<IRenderer> children) {
+            SetThisAsParent(children);
+            this.childRenderers.AddAll(index, children);
+        }
+
+        /// <summary>
+        /// Set the specified collection of
+        /// <see cref="IRenderer">renderers</see>
+        /// as the children for
+        /// <c>this</c>
+        /// element.
+        /// </summary>
+        /// <remarks>
+        /// Set the specified collection of
+        /// <see cref="IRenderer">renderers</see>
+        /// as the children for
+        /// <c>this</c>
+        /// element. That meant that the old collection would be cleaned, all parent links in old
+        /// children to
+        /// <c>this</c>
+        /// would be erased (i.e. set to
+        /// <see langword="null"/>
+        /// ) and then the specified
+        /// list of children would be added similar to
+        /// <see cref="AddAllChildRenderers(System.Collections.Generic.IList{E})"/>.
+        /// </remarks>
+        /// <param name="children">
+        /// the collection of children
+        /// <see cref="IRenderer">renderers</see>
+        /// to be set
+        /// </param>
+        internal virtual void SetChildRenderers(IList<IRenderer> children) {
+            RemoveThisFromParents(this.childRenderers);
+            this.childRenderers.Clear();
+            AddAllChildRenderers(children);
+        }
+
+        /// <summary>
+        /// Remove the child
+        /// <see cref="IRenderer">renderer</see>
+        /// at the specified place.
+        /// </summary>
+        /// <remarks>
+        /// Remove the child
+        /// <see cref="IRenderer">renderer</see>
+        /// at the specified place. If the removed renderer has
+        /// the parent link set to
+        /// <c>this</c>
+        /// and it would not present in the children list after
+        /// removal, then the parent link of the removed renderer would be erased (i.e. set to
+        /// <see langword="null"/>.
+        /// </remarks>
+        /// <param name="index">the index of the renderer to be removed</param>
+        /// <returns>the removed renderer</returns>
+        internal virtual IRenderer RemoveChildRenderer(int index) {
+            IRenderer removed = this.childRenderers.JRemoveAt(index);
+            RemoveThisFromParent(removed);
+            return removed;
+        }
+
+        /// <summary>
+        /// Remove the children
+        /// <see cref="IRenderer">renderers</see>
+        /// which are contains in the specified collection.
+        /// </summary>
+        /// <remarks>
+        /// Remove the children
+        /// <see cref="IRenderer">renderers</see>
+        /// which are contains in the specified collection.
+        /// If some of the removed renderers has the parent link set to
+        /// <c>this</c>
+        /// , then
+        /// the parent link of the removed renderer would be erased (i.e. set to
+        /// <see langword="null"/>.
+        /// </remarks>
+        /// <param name="children">the collections of renderers to be removed from children list</param>
+        /// <returns>
+        /// 
+        /// <see langword="true"/>
+        /// if the children list has been changed
+        /// </returns>
+        internal virtual bool RemoveAllChildRenderers(ICollection<IRenderer> children) {
+            RemoveThisFromParents(children);
+            return this.childRenderers.RemoveAll(children);
+        }
+
+        /// <summary>
+        /// Update the child
+        /// <see cref="IRenderer">renderer</see>
+        /// at the specified place with the specified one.
+        /// </summary>
+        /// <remarks>
+        /// Update the child
+        /// <see cref="IRenderer">renderer</see>
+        /// at the specified place with the specified one.
+        /// If the removed renderer has the parent link set to
+        /// <c>this</c>
+        /// , then it would be erased
+        /// (i.e. set to
+        /// <see langword="null"/>
+        /// ).
+        /// </remarks>
+        /// <param name="index">the index of the renderer to be updated</param>
+        /// <param name="child">the renderer to be set</param>
+        /// <returns>the removed renderer</returns>
+        internal virtual IRenderer SetChildRenderer(int index, IRenderer child) {
+            if (child != null) {
+                child.SetParent(this);
+            }
+            IRenderer removedElement = this.childRenderers[index] = child;
+            RemoveThisFromParent(removedElement);
+            return removedElement;
+        }
+
+        /// <summary>
+        /// Sets current
+        /// <see cref="AbstractRenderer"/>
+        /// as parent to renderers in specified collection.
+        /// </summary>
+        /// <param name="children">the collection of renderers to set the parent renderer on</param>
+        internal virtual void SetThisAsParent(ICollection<IRenderer> children) {
+            foreach (IRenderer child in children) {
+                child.SetParent(this);
+            }
+        }
+
+        internal virtual bool LogWarningIfGetNextRendererNotOverridden(Type baseClass, Type rendererClass) {
+            if (baseClass != rendererClass) {
+                ILogger logger = ITextLogManager.GetLogger(baseClass);
+                logger.LogWarning(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.GET_NEXT_RENDERER_SHOULD_BE_OVERRIDDEN
+                    ));
+                return false;
+            }
+            else {
+                return true;
+            }
+        }
+
+        private void RemoveThisFromParent(IRenderer toRemove) {
+            // we need to be sure that the removed element has no other entries in child renderers list
+            if (toRemove != null && this == toRemove.GetParent() && !this.childRenderers.Contains(toRemove)) {
+                toRemove.SetParent(null);
+            }
+        }
+
+        private void RemoveThisFromParents(ICollection<IRenderer> children) {
+            foreach (IRenderer child in children) {
+                if (child != null && this == child.GetParent()) {
+                    child.SetParent(null);
+                }
             }
         }
 

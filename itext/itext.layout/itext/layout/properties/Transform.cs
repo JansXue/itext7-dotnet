@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -106,6 +106,10 @@ namespace iText.Layout.Properties {
         ///     </param>
         /// <param name="height">the height of available area, the point value of which is equivalent to 100% for percentage resolving
         ///     </param>
+        /// <returns>
+        /// resulting affine transformation instance, accumulated from
+        /// <see cref="Transform"/>
+        /// </returns>
         public static AffineTransform GetAffineTransform(iText.Layout.Properties.Transform t, float width, float height
             ) {
             IList<Transform.SingleTransform> multipleTransform = t.GetMultipleTransform();
@@ -177,8 +181,7 @@ namespace iText.Layout.Properties {
                 this.ty = ty;
             }
 
-            /// <summary>Gets an array of values corresponding to transformation, i.e.</summary>
-            /// <remarks>Gets an array of values corresponding to transformation, i.e. scaling and skewing.</remarks>
+            /// <summary>Gets an array of values corresponding to transformation, i.e. scaling and skewing.</summary>
             /// <returns>an array of floats</returns>
             public virtual float[] GetFloats() {
                 return new float[] { a, b, c, d };

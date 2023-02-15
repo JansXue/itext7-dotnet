@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,40 +43,48 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Common.Logging;
-using Org.BouncyCastle.Ocsp;
-using Org.BouncyCastle.Tsp;
-using Org.BouncyCastle.X509;
-using iText.IO.Util;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Bouncycastle.Asn1.Ocsp;
+using iText.Commons.Bouncycastle.Cert;
+using iText.Commons.Bouncycastle.Tsp;
+using iText.Commons.Utils;
+using iText.Signatures.Exceptions;
+using iText.Signatures.Logs;
 
 namespace iText.Signatures {
     /// <summary>This class consists of some methods that allow you to verify certificates.</summary>
     public class CertificateVerification {
+        public const String HAS_UNSUPPORTED_EXTENSIONS = "Has unsupported critical extension";
+
+        public const String CERTIFICATE_REVOKED = "Certificate revoked";
+
         /// <summary>The Logger instance.</summary>
-        private static readonly ILog LOGGER = LogManager.GetLogger(typeof(CrlClientOnline));
+        private static readonly ILogger LOGGER = ITextLogManager.GetLogger(typeof(CertificateVerification));
 
         /// <summary>Verifies a single certificate for the current date.</summary>
         /// <param name="cert">the certificate to verify</param>
-        /// <param name="crls">the certificate revocation list or <CODE>null</CODE></param>
+        /// <param name="crls">the certificate revocation list or <c>null</c></param>
         /// <returns>
-        /// a <CODE>String</CODE> with the error description or <CODE>null</CODE>
+        /// a <c>String</c> with the error description or <c>null</c>
         /// if no error
         /// </returns>
-        public static String VerifyCertificate(X509Certificate cert, ICollection<X509Crl> crls) {
+        public static String VerifyCertificate(IX509Certificate cert, ICollection<IX509Crl> crls) {
             return VerifyCertificate(cert, crls, DateTimeUtil.GetCurrentTime());
         }
 
         /// <summary>Verifies a single certificate.</summary>
         /// <param name="cert">the certificate to verify</param>
-        /// <param name="crls">the certificate revocation list or <CODE>null</CODE></param>
+        /// <param name="crls">the certificate revocation list or <c>null</c></param>
         /// <param name="calendar">the date, shall not be null</param>
         /// <returns>
-        /// a <CODE>String</CODE> with the error description or <CODE>null</CODE>
+        /// a <c>String</c> with the error description or <c>null</c>
         /// if no error
         /// </returns>
-        public static String VerifyCertificate(X509Certificate cert, ICollection<X509Crl> crls, DateTime calendar) {
+        public static String VerifyCertificate(IX509Certificate cert, ICollection<IX509Crl> crls, DateTime calendar
+            ) {
             if (SignUtils.HasUnsupportedCriticalExtension(cert)) {
-                return "Has unsupported critical extension";
+                return CertificateVerification.HAS_UNSUPPORTED_EXTENSIONS;
             }
             try {
                 cert.CheckValidity(calendar.ToUniversalTime());
@@ -85,9 +93,9 @@ namespace iText.Signatures {
                 return e.Message;
             }
             if (crls != null) {
-                foreach (X509Crl crl in crls) {
+                foreach (IX509Crl crl in crls) {
                     if (crl.IsRevoked(cert)) {
-                        return "Certificate revoked";
+                        return CertificateVerification.CERTIFICATE_REVOKED;
                     }
                 }
             }
@@ -96,39 +104,39 @@ namespace iText.Signatures {
 
         /// <summary>Verifies a certificate chain against a KeyStore for the current date.</summary>
         /// <param name="certs">the certificate chain</param>
-        /// <param name="keystore">the <CODE>KeyStore</CODE></param>
-        /// <param name="crls">the certificate revocation list or <CODE>null</CODE></param>
+        /// <param name="keystore">the <c>KeyStore</c></param>
+        /// <param name="crls">the certificate revocation list or <c>null</c></param>
         /// <returns>
         /// empty list if the certificate chain could be validated or a
-        /// <CODE>Object[]{cert,error}</CODE> where <CODE>cert</CODE> is the
-        /// failed certificate and <CODE>error</CODE> is the error message
+        /// <c>Object[]{cert,error}</c> where <c>cert</c> is the
+        /// failed certificate and <c>error</c> is the error message
         /// </returns>
-        public static IList<VerificationException> VerifyCertificates(X509Certificate[] certs, List<X509Certificate>
-             keystore, ICollection<X509Crl> crls) {
+        public static IList<VerificationException> VerifyCertificates(IX509Certificate[] certs, List<IX509Certificate>
+             keystore, ICollection<IX509Crl> crls) {
             return VerifyCertificates(certs, keystore, crls, DateTimeUtil.GetCurrentTime());
         }
 
         /// <summary>Verifies a certificate chain against a KeyStore.</summary>
         /// <param name="certs">the certificate chain</param>
-        /// <param name="keystore">the <CODE>KeyStore</CODE></param>
-        /// <param name="crls">the certificate revocation list or <CODE>null</CODE></param>
+        /// <param name="keystore">the <c>KeyStore</c></param>
+        /// <param name="crls">the certificate revocation list or <c>null</c></param>
         /// <param name="calendar">the date, shall not be null</param>
         /// <returns>
         /// empty list if the certificate chain could be validated or a
-        /// <CODE>Object[]{cert,error}</CODE> where <CODE>cert</CODE> is the
-        /// failed certificate and <CODE>error</CODE> is the error message
+        /// <c>Object[]{cert,error}</c> where <c>cert</c> is the
+        /// failed certificate and <c>error</c> is the error message
         /// </returns>
-        public static IList<VerificationException> VerifyCertificates(X509Certificate[] certs, List<X509Certificate>
-             keystore, ICollection<X509Crl> crls, DateTime calendar) {
+        public static IList<VerificationException> VerifyCertificates(IX509Certificate[] certs, List<IX509Certificate>
+             keystore, ICollection<IX509Crl> crls, DateTime calendar) {
             IList<VerificationException> result = new List<VerificationException>();
             for (int k = 0; k < certs.Length; ++k) {
-                X509Certificate cert = (X509Certificate)certs[k];
+                IX509Certificate cert = (IX509Certificate)certs[k];
                 String err = VerifyCertificate(cert, crls, calendar);
                 if (err != null) {
                     result.Add(new VerificationException(cert, err));
                 }
                 try {
-                    foreach (X509Certificate certStoreX509 in SignUtils.GetCertificates(keystore)) {
+                    foreach (IX509Certificate certStoreX509 in SignUtils.GetCertificates(keystore)) {
                         try {
                             if (VerifyCertificate(certStoreX509, crls, calendar) != null) {
                                 continue;
@@ -138,7 +146,6 @@ namespace iText.Signatures {
                                 return result;
                             }
                             catch (Exception) {
-                                continue;
                             }
                         }
                         catch (Exception) {
@@ -147,12 +154,15 @@ namespace iText.Signatures {
                 }
                 catch (Exception) {
                 }
+                // do nothing and continue
+                // Do nothing.
+                // Do nothing.
                 int j;
                 for (j = 0; j < certs.Length; ++j) {
                     if (j == k) {
                         continue;
                     }
-                    X509Certificate certNext = (X509Certificate)certs[j];
+                    IX509Certificate certNext = (IX509Certificate)certs[j];
                     try {
                         cert.Verify(certNext.GetPublicKey());
                         break;
@@ -160,13 +170,14 @@ namespace iText.Signatures {
                     catch (Exception) {
                     }
                 }
+                // Do nothing.
                 if (j == certs.Length) {
-                    result.Add(new VerificationException(cert, "Cannot be verified against the KeyStore or the certificate chain"
+                    result.Add(new VerificationException(cert, SignExceptionMessageConstant.CANNOT_BE_VERIFIED_CERTIFICATE_CHAIN
                         ));
                 }
             }
             if (result.Count == 0) {
-                result.Add(new VerificationException((X509Certificate)null, "Invalid state. Possible circular certificate chain"
+                result.Add(new VerificationException((IX509Certificate)null, SignExceptionMessageConstant.INVALID_STATE_WHILE_CHECKING_CERT_CHAIN
                     ));
             }
             return result;
@@ -174,42 +185,43 @@ namespace iText.Signatures {
 
         /// <summary>Verifies a certificate chain against a KeyStore for the current date.</summary>
         /// <param name="certs">the certificate chain</param>
-        /// <param name="keystore">the <CODE>KeyStore</CODE></param>
+        /// <param name="keystore">the <c>KeyStore</c></param>
         /// <returns>
-        /// <CODE>null</CODE> if the certificate chain could be validated or a
-        /// <CODE>Object[]{cert,error}</CODE> where <CODE>cert</CODE> is the
-        /// failed certificate and <CODE>error</CODE> is the error message
+        /// <c>null</c> if the certificate chain could be validated or a
+        /// <c>Object[]{cert,error}</c> where <c>cert</c> is the
+        /// failed certificate and <c>error</c> is the error message
         /// </returns>
-        public static IList<VerificationException> VerifyCertificates(X509Certificate[] certs, List<X509Certificate>
+        public static IList<VerificationException> VerifyCertificates(IX509Certificate[] certs, List<IX509Certificate>
              keystore) {
             return VerifyCertificates(certs, keystore, DateTimeUtil.GetCurrentTime());
         }
 
         /// <summary>Verifies a certificate chain against a KeyStore.</summary>
         /// <param name="certs">the certificate chain</param>
-        /// <param name="keystore">the <CODE>KeyStore</CODE></param>
+        /// <param name="keystore">the <c>KeyStore</c></param>
         /// <param name="calendar">the date, shall not be null</param>
         /// <returns>
-        /// <CODE>null</CODE> if the certificate chain could be validated or a
-        /// <CODE>Object[]{cert,error}</CODE> where <CODE>cert</CODE> is the
-        /// failed certificate and <CODE>error</CODE> is the error message
+        /// <c>null</c> if the certificate chain could be validated or a
+        /// <c>Object[]{cert,error}</c> where <c>cert</c> is the
+        /// failed certificate and <c>error</c> is the error message
         /// </returns>
-        public static IList<VerificationException> VerifyCertificates(X509Certificate[] certs, List<X509Certificate>
+        public static IList<VerificationException> VerifyCertificates(IX509Certificate[] certs, List<IX509Certificate>
              keystore, DateTime calendar) {
             return VerifyCertificates(certs, keystore, null, calendar);
         }
 
         /// <summary>Verifies an OCSP response against a KeyStore.</summary>
         /// <param name="ocsp">the OCSP response</param>
-        /// <param name="keystore">the <CODE>KeyStore</CODE></param>
-        /// <param name="provider">the provider or <CODE>null</CODE> to use the BouncyCastle provider</param>
-        /// <returns><CODE>true</CODE> is a certificate was found</returns>
-        public static bool VerifyOcspCertificates(BasicOcspResp ocsp, List<X509Certificate> keystore) {
+        /// <param name="keystore">the <c>KeyStore</c></param>
+        /// <returns><c>true</c> is a certificate was found</returns>
+        public static bool VerifyOcspCertificates(IBasicOCSPResponse ocsp, List<IX509Certificate> keystore) {
             IList<Exception> exceptionsThrown = new List<Exception>();
             try {
-                foreach (X509Certificate certStoreX509 in SignUtils.GetCertificates(keystore)) {
+                foreach (IX509Certificate certStoreX509 in SignUtils.GetCertificates(keystore)) {
                     try {
-                        return SignUtils.IsSignatureValid(ocsp, certStoreX509);
+                        if (SignUtils.IsSignatureValid(ocsp, certStoreX509)) {
+                            return true;
+                        }
                     }
                     catch (Exception ex) {
                         exceptionsThrown.Add(ex);
@@ -219,21 +231,18 @@ namespace iText.Signatures {
             catch (Exception e) {
                 exceptionsThrown.Add(e);
             }
-            foreach (Exception ex in exceptionsThrown) {
-                LOGGER.Error(ex.Message, ex);
-            }
+            LogExceptionMessages(exceptionsThrown);
             return false;
         }
 
         /// <summary>Verifies a time stamp against a KeyStore.</summary>
         /// <param name="ts">the time stamp</param>
-        /// <param name="keystore">the <CODE>KeyStore</CODE></param>
-        /// <param name="provider">the provider or <CODE>null</CODE> to use the BouncyCastle provider</param>
-        /// <returns><CODE>true</CODE> is a certificate was found</returns>
-        public static bool VerifyTimestampCertificates(TimeStampToken ts, List<X509Certificate> keystore) {
+        /// <param name="keystore">the <c>KeyStore</c></param>
+        /// <returns><c>true</c> is a certificate was found</returns>
+        public static bool VerifyTimestampCertificates(ITimeStampToken ts, List<IX509Certificate> keystore) {
             IList<Exception> exceptionsThrown = new List<Exception>();
             try {
-                foreach (X509Certificate certStoreX509 in SignUtils.GetCertificates(keystore)) {
+                foreach (IX509Certificate certStoreX509 in SignUtils.GetCertificates(keystore)) {
                     try {
                         SignUtils.IsSignatureValid(ts, certStoreX509);
                         return true;
@@ -246,10 +255,14 @@ namespace iText.Signatures {
             catch (Exception e) {
                 exceptionsThrown.Add(e);
             }
-            foreach (Exception ex in exceptionsThrown) {
-                LOGGER.Error(ex.Message, ex);
-            }
+            LogExceptionMessages(exceptionsThrown);
             return false;
+        }
+
+        private static void LogExceptionMessages(IList<Exception> exceptionsThrown) {
+            foreach (Exception ex in exceptionsThrown) {
+                LOGGER.LogError(ex, ex.Message == null ? SignLogMessageConstant.EXCEPTION_WITHOUT_MESSAGE : ex.Message);
+            }
         }
     }
 }

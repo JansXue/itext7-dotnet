@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -58,7 +58,17 @@ namespace iText.Svg.Dummy.Factories {
                 result = new DummyBranchSvgNodeRenderer(tag.Name());
             }
             else {
-                result = new DummySvgNodeRenderer(tag.Name());
+                if ("processable".Equals(tag.Name())) {
+                    result = new DummyProcessableSvgNodeRenderer();
+                }
+                else {
+                    if ("argumented".Equals(tag.Name())) {
+                        result = new DummyArgumentedConstructorSvgNodeRenderer(15);
+                    }
+                    else {
+                        result = new DummySvgNodeRenderer(tag.Name());
+                    }
+                }
             }
             result.SetParent(parent);
             return result;

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,7 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Org.BouncyCastle.X509;
+using iText.Commons.Bouncycastle.Cert;
 
 namespace iText.Signatures {
     /// <summary>
@@ -52,8 +52,8 @@ namespace iText.Signatures {
     /// </summary>
     /// <remarks>
     /// Superclass for a series of certificate verifiers that will typically
-    /// be used in a chain. It wraps another <code>CertificateVerifier</code>
-    /// that is the next element in the chain of which the <code>verify()</code>
+    /// be used in a chain. It wraps another <c>CertificateVerifier</c>
+    /// that is the next element in the chain of which the <c>verify()</c>
     /// method will be called.
     /// </remarks>
     public class CertificateVerifier {
@@ -83,16 +83,9 @@ namespace iText.Signatures {
         /// <param name="signCert">the certificate that needs to be checked</param>
         /// <param name="issuerCert">its issuer</param>
         /// <param name="signDate">the date the certificate needs to be valid</param>
-        /// <returns>a list of <code>VerificationOK</code> objects. The list will be empty if the certificate couldn't be verified.
+        /// <returns>a list of <c>VerificationOK</c> objects. The list will be empty if the certificate couldn't be verified.
         ///     </returns>
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException">
-        /// thrown if the certificate has expired, isn't valid yet, or if an exception has been thrown in
-        /// <see cref="Org.BouncyCastle.X509.X509Certificate.Verify(Org.BouncyCastle.Crypto.AsymmetricKeyParameter)">Certificate#verify
-        ///     </see>
-        /// .
-        /// </exception>
-        /// <exception cref="System.IO.IOException">Deprecated</exception>
-        public virtual IList<VerificationOK> Verify(X509Certificate signCert, X509Certificate issuerCert, DateTime
+        public virtual IList<VerificationOK> Verify(IX509Certificate signCert, IX509Certificate issuerCert, DateTime
              signDate) {
             // Check if the certificate is valid on the signDate
             if (signDate != null) {

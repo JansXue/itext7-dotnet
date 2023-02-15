@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,13 +44,16 @@ using System;
 using System.IO;
 using iText.IO.Source;
 using iText.Kernel.Font;
+using iText.Kernel.Logs;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas;
 using iText.Kernel.Pdf.Filespec;
 using iText.Kernel.Utils;
 using iText.Test;
+using iText.Test.Attributes;
 
 namespace iText.Kernel.Crypto {
+    [NUnit.Framework.Category("BouncyCastleIntegrationTest")]
     public class UnencryptedWrapperTest : ExtendedITextTest {
         public static readonly String destinationFolder = NUnit.Framework.TestContext.CurrentContext.TestDirectory
              + "/test/itext/kernel/crypto/UnencryptedWrapperTest/";
@@ -63,37 +66,28 @@ namespace iText.Kernel.Crypto {
             CreateOrClearDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CreateSimpleWrapperDocumentTest() {
             CreateWrapper("customEncryptedDocument.pdf", "simpleUnencryptedWrapper.pdf", "iText");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ExtractCustomEncryptedDocumentTest() {
             ExtractEncrypted("customEncryptedDocument.pdf", "simpleUnencryptedWrapper.pdf", null);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CreateWrapperForStandardEncryptedTest() {
             CreateWrapper("standardEncryptedDocument.pdf", "standardUnencryptedWrapper.pdf", "Standard");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void ExtractStandardEncryptedDocumentTest() {
-            ExtractEncrypted("standardEncryptedDocument.pdf", "standardUnencryptedWrapper.pdf", "World".GetBytes(iText.IO.Util.EncodingUtil.ISO_8859_1
+            ExtractEncrypted("standardEncryptedDocument.pdf", "standardUnencryptedWrapper.pdf", "World".GetBytes(iText.Commons.Utils.EncodingUtil.ISO_8859_1
                 ));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         private void CreateWrapper(String encryptedName, String wrapperName, String cryptoFilter) {
             String inPath = sourceFolder + "cmp_" + encryptedName;
             String cmpPath = sourceFolder + "cmp_" + wrapperName;
@@ -114,8 +108,6 @@ namespace iText.Kernel.Crypto {
                 ));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         private void ExtractEncrypted(String encryptedName, String wrapperName, byte[] password) {
             String inPath = sourceFolder + "cmp_" + wrapperName;
             String cmpPath = sourceFolder + "cmp_" + encryptedName;

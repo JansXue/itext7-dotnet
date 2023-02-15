@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,10 +43,12 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
 using iText.IO.Font;
+using iText.IO.Font.Constants;
 using iText.IO.Font.Otf;
-using iText.Kernel;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf;
 
 namespace iText.Kernel.Font {
@@ -77,20 +79,37 @@ namespace iText.Kernel.Font {
         internal PdfTrueTypeFont(PdfDictionary fontDictionary)
             : base(fontDictionary) {
             newFont = false;
-            fontEncoding = DocFontEncoding.CreateDocFontEncoding(fontDictionary.Get(PdfName.Encoding), toUnicode);
-            fontProgram = DocTrueTypeFont.CreateFontProgram(fontDictionary, fontEncoding, toUnicode);
-            embedded = ((IDocFontProgram)fontProgram).GetFontFile() != null;
             subset = false;
+            fontEncoding = DocFontEncoding.CreateDocFontEncoding(fontDictionary.Get(PdfName.Encoding), toUnicode);
+            PdfName baseFontName = fontDictionary.GetAsName(PdfName.BaseFont);
+            // Section 9.6.3 (ISO-32000-1): A TrueType font dictionary may contain the same entries as a Type 1 font
+            // dictionary (see Table 111), with these differences...
+            // Section 9.6.2.2. (ISO-32000-1) associate standard fonts with Type1 fonts but there does not
+            // seem to be a strict requirement on the subtype
+            // Cases when a font with /TrueType subtype has base font which is one of the Standard 14 fonts
+            // does not seem to be forbidden and it's handled by many PDF tools, so we handle it here as well
+            if (baseFontName != null && StandardFonts.IsStandardFont(baseFontName.GetValue()) && !fontDictionary.ContainsKey
+                (PdfName.FontDescriptor) && !fontDictionary.ContainsKey(PdfName.Widths)) {
+                try {
+                    fontProgram = FontProgramFactory.CreateFont(baseFontName.GetValue(), true);
+                }
+                catch (System.IO.IOException e) {
+                    throw new PdfException(KernelExceptionMessageConstant.IO_EXCEPTION_WHILE_CREATING_FONT, e);
+                }
+            }
+            else {
+                fontProgram = DocTrueTypeFont.CreateFontProgram(fontDictionary, fontEncoding, toUnicode);
+            }
+            embedded = fontProgram is IDocFontProgram && ((IDocFontProgram)fontProgram).GetFontFile() != null;
         }
 
         public override Glyph GetGlyph(int unicode) {
             if (fontEncoding.CanEncode(unicode)) {
                 Glyph glyph = GetFontProgram().GetGlyph(fontEncoding.GetUnicodeDifference(unicode));
-                //TODO TrueType what if font is specific?
                 if (glyph == null && (glyph = notdefGlyphs.Get(unicode)) == null) {
                     Glyph notdef = GetFontProgram().GetGlyphByCode(0);
                     if (notdef != null) {
-                        glyph = new Glyph(GetFontProgram().GetGlyphByCode(0), unicode);
+                        glyph = new Glyph(notdef, unicode);
                         notdefGlyphs.Put(unicode, glyph);
                     }
                 }
@@ -114,7 +133,6 @@ namespace iText.Kernel.Font {
                 return;
             }
             EnsureUnderlyingObjectHasIndirectReference();
-            //TODO make subtype class member and simplify this method
             if (newFont) {
                 PdfName subtype;
                 String fontName;
@@ -131,10 +149,10 @@ namespace iText.Kernel.Font {
             base.Flush();
         }
 
-        [System.ObsoleteAttribute(@"use iText.IO.Font.TrueTypeFont.UpdateUsedGlyphs(Java.Util.SortedSet{E}, bool, System.Collections.Generic.IList{E})"
-            )]
-        protected internal virtual void AddRangeUni(ICollection<int> longTag) {
-            ((TrueTypeFont)GetFontProgram()).UpdateUsedGlyphs((SortedSet<int>)longTag, subset, subsetRanges);
+        public override bool IsBuiltWith(String fontProgram, String encoding) {
+            // Now Identity-H is default for true type fonts. However, in case of Identity-H the method from
+            // PdfType0Font would be triggered, hence we need to return false there.
+            return null != encoding && !"".Equals(encoding) && base.IsBuiltWith(fontProgram, encoding);
         }
 
         protected internal override void AddFontStream(PdfDictionary fontDescriptor) {
@@ -154,16 +172,16 @@ namespace iText.Kernel.Font {
                             fontStream.Put(PdfName.Subtype, new PdfName("Type1C"));
                         }
                         catch (PdfException e) {
-                            ILog logger = LogManager.GetLogger(typeof(iText.Kernel.Font.PdfTrueTypeFont));
-                            logger.Error(e.Message);
+                            ILogger logger = ITextLogManager.GetLogger(typeof(iText.Kernel.Font.PdfTrueTypeFont));
+                            logger.LogError(e.Message);
                             fontStream = null;
                         }
                     }
                     else {
                         fontFileName = PdfName.FontFile2;
                         SortedSet<int> glyphs = new SortedSet<int>();
-                        for (int k = 0; k < shortTag.Length; k++) {
-                            if (shortTag[k] != 0) {
+                        for (int k = 0; k < usedGlyphs.Length; k++) {
+                            if (usedGlyphs[k] != 0) {
                                 int uni = fontEncoding.GetUnicode(k);
                                 Glyph glyph = uni > -1 ? fontProgram.GetGlyph(uni) : fontProgram.GetGlyphByCode(k);
                                 if (glyph != null) {
@@ -184,8 +202,8 @@ namespace iText.Kernel.Font {
                             fontStream = GetPdfFontStream(fontStreamBytes, new int[] { fontStreamBytes.Length });
                         }
                         catch (PdfException e) {
-                            ILog logger = LogManager.GetLogger(typeof(iText.Kernel.Font.PdfTrueTypeFont));
-                            logger.Error(e.Message);
+                            ILogger logger = ITextLogManager.GetLogger(typeof(iText.Kernel.Font.PdfTrueTypeFont));
+                            logger.LogError(e.Message);
                             fontStream = null;
                         }
                     }
@@ -197,6 +215,11 @@ namespace iText.Kernel.Font {
                     }
                 }
             }
+        }
+
+        /// <summary><inheritDoc/></summary>
+        protected internal override bool IsBuiltInFont() {
+            return fontProgram is Type1Font && ((Type1Font)fontProgram).IsBuiltInFont();
         }
     }
 }

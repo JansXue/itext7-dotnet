@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -49,17 +49,22 @@ namespace iText.Layout.Element {
     /// A TabStop is the closest location on a line of text that the text will jump
     /// to if a
     /// <see cref="Tab"/>
+    /// is inserted.
+    /// </summary>
+    /// <remarks>
+    /// A TabStop is the closest location on a line of text that the text will jump
+    /// to if a
+    /// <see cref="Tab"/>
     /// is inserted. At least one TabStop must be defined on an
     /// element if you want to use
-    /// <see cref="Tab">Tabs</see>
-    /// .
+    /// <see cref="Tab">Tabs</see>.
     /// This object can be added to a
     /// <see cref="Paragraph"/>
     /// with the method
-    /// <see cref="Paragraph.AddTabStops(TabStop[])"/>
-    /// .
-    /// </summary>
+    /// <see cref="Paragraph.AddTabStops(TabStop[])"/>.
+    /// </remarks>
     public class TabStop {
+        // tabPosition here is absolute value
         private float tabPosition;
 
         private TabAlignment tabAlignment;
@@ -69,7 +74,7 @@ namespace iText.Layout.Element {
         private ILineDrawer tabLeader;
 
         /// <summary>Creates a TabStop at the appropriate position.</summary>
-        /// <param name="tabPosition">a <code>float</code>, measured in points</param>
+        /// <param name="tabPosition">a <c>float</c>, measured in absolute points</param>
         public TabStop(float tabPosition)
             : this(tabPosition, TabAlignment.LEFT) {
         }
@@ -83,7 +88,7 @@ namespace iText.Layout.Element {
         /// alignment. A tab alignment defines the way the textual content should be
         /// positioned with regards to this tab stop.
         /// </remarks>
-        /// <param name="tabPosition">a <code>float</code>, measured in points</param>
+        /// <param name="tabPosition">a <c>float</c>, measured in absolute points</param>
         /// <param name="tabAlignment">
         /// a
         /// <see cref="iText.Layout.Properties.TabAlignment"/>
@@ -105,7 +110,7 @@ namespace iText.Layout.Element {
         /// the TabStop is reached. If null, the space leading up to the TabStop will
         /// be empty.
         /// </remarks>
-        /// <param name="tabPosition">a <code>float</code>, measured in points</param>
+        /// <param name="tabPosition">a <c>float</c>, measured in absolute points</param>
         /// <param name="tabAlignment">
         /// a
         /// <see cref="iText.Layout.Properties.TabAlignment"/>
@@ -123,30 +128,80 @@ namespace iText.Layout.Element {
             this.tabAnchor = '.';
         }
 
+        /// <summary>Returns the position of a tab stop.</summary>
+        /// <returns>tabPosition, measured in absolute points</returns>
         public virtual float GetTabPosition() {
             return tabPosition;
         }
 
+        /// <summary>
+        /// Returns the alignment of a tab stop, which defines the way the textual content
+        /// should be positioned in regard to this tab stop.
+        /// </summary>
+        /// <returns>
+        /// a
+        /// <see cref="iText.Layout.Properties.TabAlignment"/>
+        /// value
+        /// </returns>
         public virtual TabAlignment GetTabAlignment() {
             return tabAlignment;
         }
 
+        /// <summary>
+        /// Sets the alignment, which defines the way the textual content
+        /// should be positioned in regard to this tab stop.
+        /// </summary>
+        /// <param name="tabAlignment">
+        /// a
+        /// <see cref="iText.Layout.Properties.TabAlignment"/>
+        /// value
+        /// </param>
         public virtual void SetTabAlignment(TabAlignment tabAlignment) {
             this.tabAlignment = tabAlignment;
         }
 
+        /// <summary>Returns the anchor of a tab stop.</summary>
+        /// <returns>
+        /// a
+        /// <see cref="char?"/>
+        /// value
+        /// </returns>
         public virtual char? GetTabAnchor() {
             return tabAnchor;
         }
 
+        /// <summary>Sets the anchor of a tab stop.</summary>
+        /// <param name="tabAnchor">
+        /// a
+        /// <see cref="char?"/>
+        /// value
+        /// </param>
         public virtual void SetTabAnchor(char? tabAnchor) {
             this.tabAnchor = tabAnchor;
         }
 
+        /// <summary>
+        /// Returns the tab leader of a tab stop, which defines a pattern that
+        /// should be repeated until the TabStop is reached.
+        /// </summary>
+        /// <returns>
+        /// a
+        /// <see cref="iText.Kernel.Pdf.Canvas.Draw.ILineDrawer"/>
+        /// value, a pattern drawing object
+        /// </returns>
         public virtual ILineDrawer GetTabLeader() {
             return tabLeader;
         }
 
+        /// <summary>
+        /// Sets the tab leader of a tab stop, which defines a pattern that
+        /// should be repeated until the TabStop is reached.
+        /// </summary>
+        /// <param name="tabLeader">
+        /// a
+        /// <see cref="iText.Kernel.Pdf.Canvas.Draw.ILineDrawer"/>
+        /// value
+        /// </param>
         public virtual void SetTabLeader(ILineDrawer tabLeader) {
             this.tabLeader = tabLeader;
         }

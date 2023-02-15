@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,6 +45,7 @@ using System.Collections.Generic;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas.Parser.Listener;
+using iText.Test;
 
 namespace iText.Kernel.Pdf.Canvas.Parser {
     /// <summary>This class tests the LocationExtractionStrategy framework.</summary>
@@ -53,11 +54,11 @@ namespace iText.Kernel.Pdf.Canvas.Parser {
     /// It uses RegexBasedLocationExtractionStrategy, and searches for the word "Alice" in the book
     /// "Alice in Wonderland" by Lewis Caroll on page 1.
     /// </remarks>
-    public class LocationExtractTest {
+    [NUnit.Framework.Category("IntegrationTest")]
+    public class LocationExtractTest : ExtendedITextTest {
         private static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/kernel/parser/LocationExtractionTest/";
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void TestLocationExtraction() {
             String inputFile = sourceFolder + "aliceInWonderland.pdf";

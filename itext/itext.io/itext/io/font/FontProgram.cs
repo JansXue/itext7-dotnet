@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -48,10 +48,30 @@ using iText.IO.Font.Otf;
 
 namespace iText.IO.Font {
     public abstract class FontProgram {
+        public const int HORIZONTAL_SCALING_FACTOR = 100;
+
         public const int DEFAULT_WIDTH = 1000;
 
         public const int UNITS_NORMALIZATION = 1000;
 
+        public static float ConvertTextSpaceToGlyphSpace(float value) {
+            return value / UNITS_NORMALIZATION;
+        }
+
+        public static float ConvertGlyphSpaceToTextSpace(float value) {
+            return value * UNITS_NORMALIZATION;
+        }
+
+        public static double ConvertGlyphSpaceToTextSpace(double value) {
+            return value * UNITS_NORMALIZATION;
+        }
+
+        public static int ConvertGlyphSpaceToTextSpace(int value) {
+            return value * UNITS_NORMALIZATION;
+        }
+
+        // In case Type1: char code to glyph.
+        // In case TrueType: glyph index to glyph.
         protected internal IDictionary<int, Glyph> codeToGlyph = new Dictionary<int, Glyph>();
 
         protected internal IDictionary<int, Glyph> unicodeToGlyph = new Dictionary<int, Glyph>();
@@ -69,14 +89,13 @@ namespace iText.IO.Font {
         /// <summary>The font's encoding name.</summary>
         /// <remarks>
         /// The font's encoding name. This encoding is 'StandardEncoding' or 'AdobeStandardEncoding' for a font
-        /// that can be totally encoded according to the characters names. For all other names the font is treated as symbolic.
+        /// that can be totally encoded according to the characters names. For all other names the font is treated as
+        /// symbolic.
         /// </remarks>
         protected internal String encodingScheme = FontEncoding.FONT_SPECIFIC;
 
         protected internal String registry;
 
-        // In case Type1: char code to glyph.
-        // In case TrueType: glyph index to glyph.
         public virtual int CountOfGlyphs() {
             return Math.Max(codeToGlyph.Count, unicodeToGlyph.Count);
         }
@@ -154,8 +173,13 @@ namespace iText.IO.Font {
         /// Checks whether the
         /// <see cref="FontProgram"/>
         /// was built with corresponding fontName.
-        /// Default value is false unless overridden.
         /// </summary>
+        /// <remarks>
+        /// Checks whether the
+        /// <see cref="FontProgram"/>
+        /// was built with corresponding fontName.
+        /// Default value is false unless overridden.
+        /// </remarks>
         /// <param name="fontName">a font name or path to a font program</param>
         /// <returns>true, if the FontProgram was built with the fontProgram. Otherwise false.</returns>
         public virtual bool IsBuiltWith(String fontName) {
@@ -191,14 +215,32 @@ namespace iText.IO.Font {
             }
         }
 
+        /// <summary>Sets typo ascender.</summary>
+        /// <remarks>
+        /// Sets typo ascender. See also
+        /// <see cref="FontMetrics.SetTypoAscender(int)"/>.
+        /// </remarks>
+        /// <param name="ascender">typo ascender value in 1000-units</param>
         protected internal virtual void SetTypoAscender(int ascender) {
             fontMetrics.SetTypoAscender(ascender);
         }
 
+        /// <summary>Sets typo descender.</summary>
+        /// <remarks>
+        /// Sets typo descender. See also
+        /// <see cref="FontMetrics.SetTypoDescender(int)"/>.
+        /// </remarks>
+        /// <param name="descender">typo descender value in 1000-units</param>
         protected internal virtual void SetTypoDescender(int descender) {
             fontMetrics.SetTypoDescender(descender);
         }
 
+        /// <summary>Sets the capital letters height.</summary>
+        /// <remarks>
+        /// Sets the capital letters height. See also
+        /// <see cref="FontMetrics.SetCapHeight(int)"/>.
+        /// </remarks>
+        /// <param name="capHeight">cap height in 1000-units</param>
         protected internal virtual void SetCapHeight(int capHeight) {
             fontMetrics.SetCapHeight(capHeight);
         }
@@ -207,11 +249,12 @@ namespace iText.IO.Font {
             fontMetrics.SetXHeight(xHeight);
         }
 
-        /// <summary>Sets the PostScript italic angel.</summary>
+        /// <summary>Sets the PostScript italic angle.</summary>
         /// <remarks>
-        /// Sets the PostScript italic angel.
-        /// <p>
-        /// Italic angle in counter-clockwise degrees from the vertical. Zero for upright text, negative for text that leans to the right (forward).
+        /// Sets the PostScript italic angle.
+        /// <para />
+        /// Italic angle in counter-clockwise degrees from the vertical. Zero for upright text, negative for text that leans
+        /// to the right (forward).
         /// </remarks>
         /// <param name="italicAngle">in counter-clockwise degrees from the vertical</param>
         protected internal virtual void SetItalicAngle(int italicAngle) {
@@ -229,8 +272,7 @@ namespace iText.IO.Font {
         /// <summary>Sets font weight.</summary>
         /// <param name="fontWeight">
         /// integer form 100 to 900. See
-        /// <see cref="iText.IO.Font.Constants.FontWeights"/>
-        /// .
+        /// <see cref="iText.IO.Font.Constants.FontWeights"/>.
         /// </param>
         protected internal virtual void SetFontWeight(int fontWeight) {
             fontNames.SetFontWeight(fontWeight);
@@ -239,8 +281,7 @@ namespace iText.IO.Font {
         /// <summary>Sets font width in css notation (font-stretch property)</summary>
         /// <param name="fontWidth">
         /// 
-        /// <see cref="iText.IO.Font.Constants.FontStretches"/>
-        /// .
+        /// <see cref="iText.IO.Font.Constants.FontStretches"/>.
         /// </param>
         protected internal virtual void SetFontStretch(String fontWidth) {
             fontNames.SetFontStretch(fontWidth);
@@ -272,7 +313,7 @@ namespace iText.IO.Font {
         /// <summary>Sets the PostScript name of the font.</summary>
         /// <remarks>
         /// Sets the PostScript name of the font.
-        /// <p>
+        /// <para />
         /// If full name is null, it will be set as well.
         /// </remarks>
         /// <param name="fontName">the PostScript name of the font, shall not be null or empty.</param>
@@ -292,7 +333,7 @@ namespace iText.IO.Font {
 
         public override String ToString() {
             String name = GetFontNames().GetFontName();
-            return name.Length > 0 ? name : base.ToString();
+            return name != null && name.Length > 0 ? name : base.ToString();
         }
     }
 }

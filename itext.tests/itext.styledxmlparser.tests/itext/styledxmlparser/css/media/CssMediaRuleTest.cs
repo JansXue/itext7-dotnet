@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -53,6 +53,7 @@ using iText.StyledXmlParser.Node.Impl.Jsoup.Node;
 using iText.Test;
 
 namespace iText.StyledXmlParser.Css.Media {
+    [NUnit.Framework.Category("UnitTest")]
     public class CssMediaRuleTest : ExtendedITextTest {
         private static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/styledxmlparser/css/media/MediaRuleTest/";
@@ -61,7 +62,6 @@ namespace iText.StyledXmlParser.Css.Media {
         public static void BeforeClass() {
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void Test01() {
             String htmlFileName = sourceFolder + "html01.html";
@@ -80,7 +80,6 @@ namespace iText.StyledXmlParser.Css.Media {
             NUnit.Framework.Assert.AreEqual("font-size: 20pt", declarations[2].ToString());
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void Test02() {
             String htmlFileName = sourceFolder + "html02.html";
@@ -102,7 +101,6 @@ namespace iText.StyledXmlParser.Css.Media {
             NUnit.Framework.Assert.AreEqual("font-weight: bold", declarations1[0].ToString());
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void Test03() {
             String htmlFileName = sourceFolder + "html03.html";
@@ -120,7 +118,6 @@ namespace iText.StyledXmlParser.Css.Media {
             NUnit.Framework.Assert.AreEqual("color: black", declarations[0].ToString());
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void Test04() {
             String htmlFileName = sourceFolder + "html04.html";
@@ -138,7 +135,6 @@ namespace iText.StyledXmlParser.Css.Media {
             NUnit.Framework.Assert.AreEqual("font-size: 20em", declarations[1].ToString());
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void Test05() {
             String htmlFileName = sourceFolder + "html05.html";
@@ -160,7 +156,6 @@ namespace iText.StyledXmlParser.Css.Media {
             NUnit.Framework.Assert.AreEqual("color: red", declarations2[0].ToString());
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void Test06() {
             String htmlFileName = sourceFolder + "html06.html";

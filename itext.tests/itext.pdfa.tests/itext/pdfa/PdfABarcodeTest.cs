@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -52,7 +52,8 @@ using iText.Layout.Element;
 using iText.Test;
 
 namespace iText.Pdfa {
-    public class PdfABarcodeTest : ITextTest {
+    [NUnit.Framework.Category("IntegrationTest")]
+    public class PdfABarcodeTest : ExtendedITextTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/pdfa/";
 
@@ -66,14 +67,13 @@ namespace iText.Pdfa {
             CreateOrClearDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void BarcodeMSITest() {
             String outPdf = destinationFolder + "barcodeMSITest.pdf";
             String cmpPdf = cmpFolder + "cmp_barcodeMSITest.pdf";
             Document doc = CreatePdfATaggedDocument(outPdf);
-            PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", "WinAnsi", true);
+            PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", "WinAnsi", PdfFontFactory.EmbeddingStrategy
+                .FORCE_EMBEDDED);
             font.SetSubset(true);
             BarcodeMSI codeMSI = new BarcodeMSI(doc.GetPdfDocument(), font);
             FillBarcode1D(codeMSI, "1234567");
@@ -85,14 +85,13 @@ namespace iText.Pdfa {
             CompareResult(outPdf, cmpPdf);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void BarcodeInter25Test() {
             String outPdf = destinationFolder + "barcodeInter25Test.pdf";
             String cmpPdf = cmpFolder + "cmp_barcodeInter25Test.pdf";
             Document doc = CreatePdfATaggedDocument(outPdf);
-            PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", "WinAnsi", true);
+            PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", "WinAnsi", PdfFontFactory.EmbeddingStrategy
+                .FORCE_EMBEDDED);
             font.SetSubset(true);
             BarcodeInter25 codeInter25 = new BarcodeInter25(doc.GetPdfDocument(), font);
             FillBarcode1D(codeInter25, "1234567");
@@ -104,14 +103,13 @@ namespace iText.Pdfa {
             CompareResult(outPdf, cmpPdf);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void BarcodeEANTest() {
             String outPdf = destinationFolder + "barcodeEANTest.pdf";
             String cmpPdf = cmpFolder + "cmp_barcodeEANTest.pdf";
             Document doc = CreatePdfATaggedDocument(outPdf);
-            PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", "WinAnsi", true);
+            PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", "WinAnsi", PdfFontFactory.EmbeddingStrategy
+                .FORCE_EMBEDDED);
             font.SetSubset(true);
             BarcodeEAN codeEAN = new BarcodeEAN(doc.GetPdfDocument(), font);
             FillBarcode1D(codeEAN, "9781935182610");
@@ -123,14 +121,13 @@ namespace iText.Pdfa {
             CompareResult(outPdf, cmpPdf);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void BarcodeCodabarTest() {
             String outPdf = destinationFolder + "barcodeCodabarTest.pdf";
             String cmpPdf = cmpFolder + "cmp_barcodeCodabarTest.pdf";
             Document doc = CreatePdfATaggedDocument(outPdf);
-            PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", "WinAnsi", true);
+            PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", "WinAnsi", PdfFontFactory.EmbeddingStrategy
+                .FORCE_EMBEDDED);
             font.SetSubset(true);
             BarcodeCodabar codeCodabar = new BarcodeCodabar(doc.GetPdfDocument(), font);
             FillBarcode1D(codeCodabar, "A123A");
@@ -142,14 +139,13 @@ namespace iText.Pdfa {
             CompareResult(outPdf, cmpPdf);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void Barcode39Test() {
             String outPdf = destinationFolder + "barcode39Test.pdf";
             String cmpPdf = cmpFolder + "cmp_barcode39Test.pdf";
             Document doc = CreatePdfATaggedDocument(outPdf);
-            PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", "WinAnsi", true);
+            PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", "WinAnsi", PdfFontFactory.EmbeddingStrategy
+                .FORCE_EMBEDDED);
             font.SetSubset(true);
             Barcode39 code39 = new Barcode39(doc.GetPdfDocument(), font);
             FillBarcode1D(code39, "1234567");
@@ -161,14 +157,13 @@ namespace iText.Pdfa {
             CompareResult(outPdf, cmpPdf);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void Barcode128Test() {
             String outPdf = destinationFolder + "barcode128Test.pdf";
             String cmpPdf = cmpFolder + "cmp_barcode128Test.pdf";
             Document doc = CreatePdfATaggedDocument(outPdf);
-            PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", "WinAnsi", true);
+            PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", "WinAnsi", PdfFontFactory.EmbeddingStrategy
+                .FORCE_EMBEDDED);
             font.SetSubset(true);
             Barcode128 code128 = new Barcode128(doc.GetPdfDocument(), font);
             FillBarcode1D(code128, "1234567");
@@ -192,7 +187,6 @@ namespace iText.Pdfa {
             barcode1D.SetChecksumText(false);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private Document CreatePdfATaggedDocument(String outPdf) {
             PdfWriter writer = new PdfWriter(outPdf);
             Stream @is = new FileStream(sourceFolder + "sRGB Color Space Profile.icm", FileMode.Open, FileAccess.Read);
@@ -203,8 +197,6 @@ namespace iText.Pdfa {
             return doc;
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         private void CompareResult(String outFile, String cmpFile) {
             String differences = new CompareTool().CompareByContent(outFile, cmpFile, destinationFolder, "diff_");
             if (differences != null) {

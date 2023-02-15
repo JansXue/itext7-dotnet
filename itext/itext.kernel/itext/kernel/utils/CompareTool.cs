@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,35 +44,37 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Xml;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Actions.Contexts;
+using iText.Commons.Utils;
 using iText.IO.Font;
 using iText.IO.Util;
-using iText.Kernel.Counter.Event;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Annot;
 using iText.Kernel.Pdf.Canvas;
+using iText.Kernel.Utils.Objectpathitems;
 using iText.Kernel.XMP;
 using iText.Kernel.XMP.Options;
 
 namespace iText.Kernel.Utils {
     /// <summary>
     /// This class provides means to compare two PDF files both by content and visually
-    /// and gives the report of their differences.
+    /// and gives the report on their differences.
     /// </summary>
     /// <remarks>
     /// This class provides means to compare two PDF files both by content and visually
-    /// and gives the report of their differences.
-    /// <br /><br />
+    /// and gives the report on their differences.
+    /// <para />
     /// For visual comparison it uses external tools: Ghostscript and ImageMagick, which
     /// should be installed on your machine. To allow CompareTool to use them, you need
-    /// to pass either java properties or environment variables with names "gsExec" and
-    /// "compareExec", which would contain the paths to the executables of correspondingly
+    /// to pass either java properties or environment variables with names "ITEXT_GS_EXEC" and
+    /// "ITEXT_MAGICK_COMPARE_EXEC", which would contain the commands to execute the
     /// Ghostscript and ImageMagick tools.
-    /// <br /><br />
+    /// <para />
     /// CompareTool class was mainly designed for the testing purposes of iText in order to
     /// ensure that the same code produces the same PDF document. For this reason you will
     /// often encounter such parameter names as "outDoc" and "cmpDoc" which stand for output
@@ -83,43 +85,33 @@ namespace iText.Kernel.Utils {
     /// for the content of the cmpDoc and "but was" part stands for the content of the outDoc.
     /// </remarks>
     public class CompareTool {
-        private const String cannotOpenOutputDirectory = "Cannot open output directory for <filename>.";
+        private const String FILE_PROTOCOL = "file://";
 
-        private const String gsFailed = "GhostScript failed for <filename>.";
+        private const String UNEXPECTED_NUMBER_OF_PAGES = "Unexpected number of pages for <filename>.";
 
-        private const String unexpectedNumberOfPages = "Unexpected number of pages for <filename>.";
+        private const String DIFFERENT_PAGES = "File " + FILE_PROTOCOL + "<filename> differs on page <pagenumber>.";
 
-        private const String differentPages = "File file:///<filename> differs on page <pagenumber>.";
+        private const String IGNORED_AREAS_PREFIX = "ignored_areas_";
 
-        private const String undefinedGsPath = "Path to GhostScript is not specified. Please use -DgsExec=<path_to_ghostscript> (e.g. -DgsExec=\"C:/Program Files/gs/gs9.14/bin/gswin32c.exe\")";
+        private const String VERSION_REGEXP = "(\\d+\\.)+\\d+(-SNAPSHOT)?";
 
-        private const String ignoredAreasPrefix = "ignored_areas_";
+        private const String VERSION_REPLACEMENT = "<version>";
 
-        private const String gsParams = " -dSAFER -dNOPAUSE -dBATCH -sDEVICE=png16m -r150 -sOutputFile='<outputfile>' '<inputfile>'";
+        private const String COPYRIGHT_REGEXP = "\u00a9\\d+-\\d+ iText Group NV";
 
-        private const String compareParams = " '<image1>' '<image2>' '<difference>'";
+        private const String COPYRIGHT_REPLACEMENT = "\u00a9<copyright years> iText Group NV";
 
-        private const String versionRegexp = "(iText\u00ae( pdfX(FA|fa)| DITO)?|iTextSharp\u2122) (\\d+\\.)+\\d+(-SNAPSHOT)?";
-
-        private const String versionReplacement = "iText\u00ae <version>";
-
-        private const String copyrightRegexp = "\u00a9\\d+-\\d+ iText Group NV";
-
-        private const String copyrightReplacement = "\u00a9<copyright years> iText Group NV";
-
-        private String gsExec;
-
-        private String compareExec;
-
-        private String cmpPdf;
+        private const String NEW_LINES = "\\r|\\n";
 
         private String cmpPdfName;
+
+        private String outPdfName;
+
+        private String cmpPdf;
 
         private String cmpImage;
 
         private String outPdf;
-
-        private String outPdfName;
 
         private String outImage;
 
@@ -141,10 +133,16 @@ namespace iText.Kernel.Utils {
 
         private IMetaInfo metaInfo;
 
-        /// <summary>Creates an instance of the CompareTool.</summary>
+        private String gsExec;
+
+        private String compareExec;
+
         public CompareTool() {
-            gsExec = SystemUtil.GetEnvironmentVariable("gsExec");
-            compareExec = SystemUtil.GetEnvironmentVariable("compareExec");
+        }
+
+        internal CompareTool(String gsExec, String compareExec) {
+            this.gsExec = gsExec;
+            this.compareExec = compareExec;
         }
 
         /// <summary>
@@ -155,34 +153,41 @@ namespace iText.Kernel.Utils {
         /// Compares two PDF documents by content starting from Catalog dictionary and then recursively comparing
         /// corresponding objects which are referenced from it. You can roughly imagine it as depth-first traversal
         /// of the two trees that represent pdf objects structure of the documents.
-        /// <br /><br />
+        /// <para />
         /// The main difference between this method and the
         /// <see cref="CompareByContent(System.String, System.String, System.String, System.String)"/>
         /// methods is the return value. This method returns a
         /// <see cref="CompareResult"/>
         /// class instance, which could be used
-        /// in code, however compareByContent methods in case of the differences simply return String value, which could
+        /// in code, whilst compareByContent methods in case of the differences simply return String value, which could
         /// only be printed. Also, keep in mind that this method doesn't perform visual comparison of the documents.
-        /// <br /><br />
-        /// For more explanations about what is outDoc and cmpDoc see last paragraph of the
+        /// <para />
+        /// For more explanations about what outDoc and cmpDoc are see last paragraph of the
         /// <see cref="CompareTool"/>
         /// class description.
         /// </remarks>
-        /// <param name="outDocument">the absolute path to the output file, which is to be compared to cmp-file.</param>
-        /// <param name="cmpDocument">the absolute path to the cmp-file, which is to be compared to output file.</param>
+        /// <param name="outDocument">
+        /// a
+        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
+        /// corresponding to the output file, which is to be compared with cmp-file.
+        /// </param>
+        /// <param name="cmpDocument">
+        /// a
+        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
+        /// corresponding to the cmp-file, which is to be compared with output file.
+        /// </param>
         /// <returns>
-        /// the report of comparison of two files in the form of the custom class instance.
-        /// See
+        /// the report on comparison of two files in the form of the custom class
         /// <see cref="CompareResult"/>
-        /// for more info.
+        /// instance.
         /// </returns>
-        /// <exception cref="System.IO.IOException"/>
+        /// <seealso cref="CompareResult"/>
         public virtual CompareTool.CompareResult CompareByCatalog(PdfDocument outDocument, PdfDocument cmpDocument
             ) {
             CompareTool.CompareResult compareResult = null;
-            compareResult = new CompareTool.CompareResult(this, compareByContentErrorsLimit);
-            CompareTool.ObjectPath catalogPath = new CompareTool.ObjectPath(cmpDocument.GetCatalog().GetPdfObject().GetIndirectReference
-                (), outDocument.GetCatalog().GetPdfObject().GetIndirectReference());
+            compareResult = new CompareTool.CompareResult(compareByContentErrorsLimit);
+            ObjectPath catalogPath = new ObjectPath(cmpDocument.GetCatalog().GetPdfObject().GetIndirectReference(), outDocument
+                .GetCatalog().GetPdfObject().GetIndirectReference());
             ICollection<PdfName> ignoredCatalogEntries = new LinkedHashSet<PdfName>(JavaUtil.ArraysAsList(PdfName.Metadata
                 ));
             CompareDictionariesExtended(outDocument.GetCatalog().GetPdfObject(), cmpDocument.GetCatalog().GetPdfObject
@@ -199,7 +204,7 @@ namespace iText.Kernel.Utils {
                 if (compareResult.IsMessageLimitReached()) {
                     break;
                 }
-                CompareTool.ObjectPath currentPath = new CompareTool.ObjectPath(cmpPagesRef[i], outPagesRef[i]);
+                ObjectPath currentPath = new ObjectPath(cmpPagesRef[i], outPagesRef[i]);
                 PdfDictionary outPageDict = (PdfDictionary)outPagesRef[i].GetRefersTo();
                 PdfDictionary cmpPageDict = (PdfDictionary)cmpPagesRef[i].GetRefersTo();
                 CompareDictionariesExtended(outPageDict, cmpPageDict, currentPath, compareResult);
@@ -213,15 +218,15 @@ namespace iText.Kernel.Utils {
         /// This option makes sense only for
         /// <see cref="CompareByCatalog(iText.Kernel.Pdf.PdfDocument, iText.Kernel.Pdf.PdfDocument)"/>
         /// method.
-        /// <p>
+        /// <para />
         /// By default, pages are treated as special objects and if they are met in the process of comparison, then they are
-        /// not checked as objects, but rather simply checked that they has same page numbers in both documents.
+        /// not checked as objects, but rather simply checked that they have same page numbers in both documents.
         /// This behaviour is intended for the
         /// <see cref="CompareByContent(System.String, System.String, System.String)"/>
         /// set of methods, because in them documents are compared in page by page basis. Thus, we don't need to check if pages
         /// are of the same content when they are met in comparison process, we are sure that we will compare their content or
         /// we have already compared them.
-        /// <p>
+        /// <para />
         /// However, if you would use
         /// <see cref="CompareByCatalog(iText.Kernel.Pdf.PdfDocument, iText.Kernel.Pdf.PdfDocument)"/>
         /// with default behaviour
@@ -249,11 +254,11 @@ namespace iText.Kernel.Utils {
             return this;
         }
 
-        /// <summary>Enables or disables the generation of the comparison report in the form of the xml document.</summary>
+        /// <summary>Enables or disables the generation of the comparison report in the form of an xml document.</summary>
         /// <remarks>
-        /// Enables or disables the generation of the comparison report in the form of the xml document.
-        /// <br />
-        /// IMPORTANT NOTE: this flag affect only the comparison made by compareByContent methods!
+        /// Enables or disables the generation of the comparison report in the form of an xml document.
+        /// <para />
+        /// IMPORTANT NOTE: this flag affects only the comparison performed by compareByContent methods!
         /// </remarks>
         /// <param name="generateCompareByContentXmlReport">true to enable xml report generation, false - to disable.</param>
         /// <returns>this CompareTool instance.</returns>
@@ -265,7 +270,7 @@ namespace iText.Kernel.Utils {
 
         /// <summary>
         /// Sets
-        /// <see cref="iText.Kernel.Counter.Event.IMetaInfo"/>
+        /// <see cref="iText.Commons.Actions.Contexts.IMetaInfo"/>
         /// info that will be used for both read and written documents creation.
         /// </summary>
         /// <param name="metaInfo">meta info to set</param>
@@ -277,8 +282,11 @@ namespace iText.Kernel.Utils {
         /// <remarks>
         /// Enables the comparison of the encryption properties of the documents. Encryption properties comparison
         /// results are returned along with all other comparison results.
-        /// <br />
-        /// IMPORTANT NOTE: this flag affect only the comparison made by compareByContent methods!
+        /// <para />
+        /// IMPORTANT NOTE: this flag affects only the comparison performed by compareByContent methods!
+        /// <see cref="CompareByCatalog(iText.Kernel.Pdf.PdfDocument, iText.Kernel.Pdf.PdfDocument)"/>
+        /// doesn't compare encryption properties
+        /// because encryption properties aren't part of the document's Catalog.
         /// </remarks>
         /// <returns>this CompareTool instance.</returns>
         public virtual iText.Kernel.Utils.CompareTool EnableEncryptionCompare() {
@@ -286,22 +294,34 @@ namespace iText.Kernel.Utils {
             return this;
         }
 
-        /// <summary>Documents for comparison are opened in reader mode.</summary>
+        /// <summary>
+        /// Gets
+        /// <see cref="iText.Kernel.Pdf.ReaderProperties"/>
+        /// to be passed later to the
+        /// <see cref="iText.Kernel.Pdf.PdfReader"/>
+        /// of the output document.
+        /// </summary>
         /// <remarks>
+        /// Gets
+        /// <see cref="iText.Kernel.Pdf.ReaderProperties"/>
+        /// to be passed later to the
+        /// <see cref="iText.Kernel.Pdf.PdfReader"/>
+        /// of the output document.
+        /// <para />
         /// Documents for comparison are opened in reader mode. This method is intended to alter
         /// <see cref="iText.Kernel.Pdf.ReaderProperties"/>
-        /// which are used to open output document. This is particularly useful for comparison of encrypted documents.
-        /// <p>
-        /// For more explanations about what is outDoc and cmpDoc see last paragraph of the
+        /// which are used to open the output document. This is particularly useful for comparison of encrypted documents.
+        /// <para />
+        /// For more explanations about what outDoc and cmpDoc are see last paragraph of the
         /// <see cref="CompareTool"/>
         /// class description.
         /// </remarks>
         /// <returns>
         /// 
         /// <see cref="iText.Kernel.Pdf.ReaderProperties"/>
-        /// instance which will be later passed to the output document
+        /// instance to be passed later to the
         /// <see cref="iText.Kernel.Pdf.PdfReader"/>
-        /// .
+        /// of the output document.
         /// </returns>
         public virtual ReaderProperties GetOutReaderProperties() {
             if (outProps == null) {
@@ -310,22 +330,34 @@ namespace iText.Kernel.Utils {
             return outProps;
         }
 
-        /// <summary>Documents for comparison are opened in reader mode.</summary>
+        /// <summary>
+        /// Gets
+        /// <see cref="iText.Kernel.Pdf.ReaderProperties"/>
+        /// to be passed later to the
+        /// <see cref="iText.Kernel.Pdf.PdfReader"/>
+        /// of the cmp document.
+        /// </summary>
         /// <remarks>
+        /// Gets
+        /// <see cref="iText.Kernel.Pdf.ReaderProperties"/>
+        /// to be passed later to the
+        /// <see cref="iText.Kernel.Pdf.PdfReader"/>
+        /// of the cmp document.
+        /// <para />
         /// Documents for comparison are opened in reader mode. This method is intended to alter
         /// <see cref="iText.Kernel.Pdf.ReaderProperties"/>
-        /// which are used to open cmp document. This is particularly useful for comparison of encrypted documents.
-        /// <p>
-        /// For more explanations about what is outDoc and cmpDoc see last paragraph of the
+        /// which are used to open the cmp document. This is particularly useful for comparison of encrypted documents.
+        /// <para />
+        /// For more explanations about what outDoc and cmpDoc are see last paragraph of the
         /// <see cref="CompareTool"/>
         /// class description.
         /// </remarks>
         /// <returns>
         /// 
         /// <see cref="iText.Kernel.Pdf.ReaderProperties"/>
-        /// instance which will be later passed to the cmp document
+        /// instance to be passed later to the
         /// <see cref="iText.Kernel.Pdf.PdfReader"/>
-        /// .
+        /// of the cmp document.
         /// </returns>
         public virtual ReaderProperties GetCmpReaderProperties() {
             if (cmpProps == null) {
@@ -340,9 +372,9 @@ namespace iText.Kernel.Utils {
         /// For more info about needed configuration for visual comparison process see
         /// <see cref="CompareTool"/>
         /// class description.
-        /// <br />
-        /// During comparison for every page of two documents an image file will be created in the folder specified by
-        /// outPath absolute path. Then those page images will be compared and if there are any differences for some pages,
+        /// <para />
+        /// During comparison for every page of the two documents an image file will be created in the folder specified by
+        /// outPath parameter. Then those page images will be compared and if there are any differences for some pages,
         /// another image file will be created with marked differences on it.
         /// </remarks>
         /// <param name="outPdf">the absolute path to the output file, which is to be compared to cmp-file.</param>
@@ -353,8 +385,6 @@ namespace iText.Kernel.Utils {
         ///     </param>
         /// <returns>string containing list of the pages that are visually different, or null if there are no visual differences.
         ///     </returns>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         public virtual String CompareVisually(String outPdf, String cmpPdf, String outPath, String differenceImagePrefix
             ) {
             return CompareVisually(outPdf, cmpPdf, outPath, differenceImagePrefix, null);
@@ -366,11 +396,11 @@ namespace iText.Kernel.Utils {
         /// For more info about needed configuration for visual comparison process see
         /// <see cref="CompareTool"/>
         /// class description.
-        /// <br />
+        /// <para />
         /// During comparison for every page of two documents an image file will be created in the folder specified by
-        /// outPath absolute path. Then those page images will be compared and if there are any differences for some pages,
+        /// outPath parameter. Then those page images will be compared and if there are any differences for some pages,
         /// another image file will be created with marked differences on it.
-        /// <br />
+        /// <para />
         /// It is possible to ignore certain areas of the document pages during visual comparison. This is useful for example
         /// in case if documents should be the same except certain page area with date on it. In this case, in the folder
         /// specified by the outPath, new pdf documents will be created with the black rectangles at the specified ignored
@@ -386,13 +416,11 @@ namespace iText.Kernel.Utils {
         ///     </param>
         /// <returns>string containing list of the pages that are visually different, or null if there are no visual differences.
         ///     </returns>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         public virtual String CompareVisually(String outPdf, String cmpPdf, String outPath, String differenceImagePrefix
             , IDictionary<int, IList<Rectangle>> ignoredAreas) {
             Init(outPdf, cmpPdf);
-            System.Console.Out.WriteLine("Out pdf: file:///" + UrlUtil.ToNormalizedURI(outPdf).AbsolutePath);
-            System.Console.Out.WriteLine("Cmp pdf: file:///" + UrlUtil.ToNormalizedURI(cmpPdf).AbsolutePath + "\n");
+            System.Console.Out.WriteLine("Out pdf: " + UrlUtil.GetNormalizedFileUriString(outPdf));
+            System.Console.Out.WriteLine("Cmp pdf: " + UrlUtil.GetNormalizedFileUriString(cmpPdf) + "\n");
             return CompareVisually(outPath, differenceImagePrefix, ignoredAreas);
         }
 
@@ -404,19 +432,11 @@ namespace iText.Kernel.Utils {
         /// Compares two PDF documents by content starting from page dictionaries and then recursively comparing
         /// corresponding objects which are referenced from them. You can roughly imagine it as depth-first traversal
         /// of the two trees that represent pdf objects structure of the documents.
-        /// <p>
-        /// Unlike
-        /// <see cref="CompareByCatalog(iText.Kernel.Pdf.PdfDocument, iText.Kernel.Pdf.PdfDocument)"/>
-        /// this method performs content comparison page by page
-        /// and doesn't compare the tag structure, acroforms and all other things that doesn't belong to specific pages.
-        /// <br />
+        /// <para />
         /// When comparison by content is finished, if any differences were found, visual comparison is automatically started.
-        /// For more info see
-        /// <see cref="CompareVisually(System.String, System.String, System.String, System.String)"/>
-        /// .
         /// For this overload, differenceImagePrefix value is generated using diff_%outPdfFileName%_ format.
-        /// <p>
-        /// For more explanations about what is outPdf and cmpPdf see last paragraph of the
+        /// <para />
+        /// For more explanations about what outPdf and cmpPdf are see last paragraph of the
         /// <see cref="CompareTool"/>
         /// class description.
         /// </remarks>
@@ -425,19 +445,10 @@ namespace iText.Kernel.Utils {
         /// <param name="outPath">the absolute path to the folder, which will be used to store image files for visual comparison.
         ///     </param>
         /// <returns>
-        /// string containing text report of the encountered content differences and also list of the pages that are
+        /// string containing text report on the encountered content differences and also list of the pages that are
         /// visually different, or null if there are no content and therefore no visual differences.
         /// </returns>
-        /// <exception cref="System.Exception">
-        /// if the current thread is interrupted by another thread while it is waiting
-        /// for ghostscript or imagemagic processes, then the wait is ended and an
-        /// <see cref="System.Exception"/>
-        /// is thrown.
-        /// </exception>
-        /// <exception cref="System.IO.IOException">
-        /// is thrown if any of the input files are missing or any of the auxiliary files
-        /// that are created during comparison process wasn't possible to be created.
-        /// </exception>
+        /// <seealso cref="CompareVisually(System.String, System.String, System.String, System.String)"/>
         public virtual String CompareByContent(String outPdf, String cmpPdf, String outPath) {
             return CompareByContent(outPdf, cmpPdf, outPath, null, null, null, null);
         }
@@ -450,18 +461,10 @@ namespace iText.Kernel.Utils {
         /// Compares two PDF documents by content starting from page dictionaries and then recursively comparing
         /// corresponding objects which are referenced from them. You can roughly imagine it as depth-first traversal
         /// of the two trees that represent pdf objects structure of the documents.
-        /// <br /><br />
-        /// Unlike
-        /// <see cref="CompareByCatalog(iText.Kernel.Pdf.PdfDocument, iText.Kernel.Pdf.PdfDocument)"/>
-        /// this method performs content comparison page by page
-        /// and doesn't compare the tag structure, acroforms and all other things that doesn't belong to specific pages.
-        /// <br />
+        /// <para />
         /// When comparison by content is finished, if any differences were found, visual comparison is automatically started.
-        /// For more info see
-        /// <see cref="CompareVisually(System.String, System.String, System.String, System.String)"/>
-        /// .
-        /// <br /><br />
-        /// For more explanations about what is outPdf and cmpPdf see last paragraph of the
+        /// <para />
+        /// For more explanations about what outPdf and cmpPdf are see last paragraph of the
         /// <see cref="CompareTool"/>
         /// class description.
         /// </remarks>
@@ -470,23 +473,14 @@ namespace iText.Kernel.Utils {
         /// <param name="outPath">the absolute path to the folder, which will be used to store image files for visual comparison.
         ///     </param>
         /// <param name="differenceImagePrefix">
-        /// file name prefix for image files with marked visual differences if there is any;
+        /// file name prefix for image files with marked visual differences if there are any;
         /// if it's set to null the prefix defaults to diff_%outPdfFileName%_ format.
         /// </param>
         /// <returns>
-        /// string containing text report of the encountered content differences and also list of the pages that are
+        /// string containing text report on the encountered content differences and also list of the pages that are
         /// visually different, or null if there are no content and therefore no visual differences.
         /// </returns>
-        /// <exception cref="System.Exception">
-        /// if the current thread is interrupted by another thread while it is waiting
-        /// for ghostscript or imagemagic processes, then the wait is ended and an
-        /// <see cref="System.Exception"/>
-        /// is thrown.
-        /// </exception>
-        /// <exception cref="System.IO.IOException">
-        /// is thrown if any of the input files are missing or any of the auxiliary files
-        /// that are created during comparison process wasn't possible to be created.
-        /// </exception>
+        /// <seealso cref="CompareVisually(System.String, System.String, System.String, System.String)"/>
         public virtual String CompareByContent(String outPdf, String cmpPdf, String outPath, String differenceImagePrefix
             ) {
             return CompareByContent(outPdf, cmpPdf, outPath, differenceImagePrefix, null, null, null);
@@ -496,22 +490,16 @@ namespace iText.Kernel.Utils {
         /// <remarks>
         /// This method overload is used to compare two encrypted PDF documents. Document passwords are passed with
         /// outPass and cmpPass parameters.
-        /// <br /><br />
+        /// <para />
         /// Compares two PDF documents by content starting from page dictionaries and then recursively comparing
         /// corresponding objects which are referenced from them. You can roughly imagine it as depth-first traversal
         /// of the two trees that represent pdf objects structure of the documents.
-        /// <br /><br />
-        /// Unlike
-        /// <see cref="CompareByCatalog(iText.Kernel.Pdf.PdfDocument, iText.Kernel.Pdf.PdfDocument)"/>
-        /// this method performs content comparison page by page
-        /// and doesn't compare the tag structure, acroforms and all other things that doesn't belong to specific pages.
-        /// <br />
+        /// <para />
         /// When comparison by content is finished, if any differences were found, visual comparison is automatically started.
         /// For more info see
-        /// <see cref="CompareVisually(System.String, System.String, System.String, System.String)"/>
-        /// .
-        /// <br /><br />
-        /// For more explanations about what is outPdf and cmpPdf see last paragraph of the
+        /// <see cref="CompareVisually(System.String, System.String, System.String, System.String)"/>.
+        /// <para />
+        /// For more explanations about what outPdf and cmpPdf are see last paragraph of the
         /// <see cref="CompareTool"/>
         /// class description.
         /// </remarks>
@@ -526,11 +514,10 @@ namespace iText.Kernel.Utils {
         /// <param name="outPass">password for the encrypted document specified by the outPdf absolute path.</param>
         /// <param name="cmpPass">password for the encrypted document specified by the cmpPdf absolute path.</param>
         /// <returns>
-        /// string containing text report of the encountered content differences and also list of the pages that are
+        /// string containing text report on the encountered content differences and also list of the pages that are
         /// visually different, or null if there are no content and therefore no visual differences.
         /// </returns>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
+        /// <seealso cref="CompareVisually(System.String, System.String, System.String, System.String)"/>
         public virtual String CompareByContent(String outPdf, String cmpPdf, String outPath, String differenceImagePrefix
             , byte[] outPass, byte[] cmpPass) {
             return CompareByContent(outPdf, cmpPdf, outPath, differenceImagePrefix, null, outPass, cmpPass);
@@ -544,19 +531,10 @@ namespace iText.Kernel.Utils {
         /// Compares two PDF documents by content starting from page dictionaries and then recursively comparing
         /// corresponding objects which are referenced from them. You can roughly imagine it as depth-first traversal
         /// of the two trees that represent pdf objects structure of the documents.
-        /// <br /><br />
-        /// Unlike
-        /// <see cref="CompareByCatalog(iText.Kernel.Pdf.PdfDocument, iText.Kernel.Pdf.PdfDocument)"/>
-        /// this method performs content comparison page by page
-        /// and doesn't compare the tag structure, acroforms and all other things that doesn't belong to specific pages.
-        /// <br />
+        /// <para />
         /// When comparison by content is finished, if any differences were found, visual comparison is automatically started.
-        /// For more info see
-        /// <see cref="CompareVisually(System.String, System.String, System.String, System.String, System.Collections.Generic.IDictionary{K, V})
-        ///     "/>
-        /// .
-        /// <br /><br />
-        /// For more explanations about what is outPdf and cmpPdf see last paragraph of the
+        /// <para />
+        /// For more explanations about what outPdf and cmpPdf are see last paragraph of the
         /// <see cref="CompareTool"/>
         /// class description.
         /// </remarks>
@@ -565,44 +543,33 @@ namespace iText.Kernel.Utils {
         /// <param name="outPath">the absolute path to the folder, which will be used to store image files for visual comparison.
         ///     </param>
         /// <param name="differenceImagePrefix">
-        /// file name prefix for image files with marked visual differences if there is any;
+        /// file name prefix for image files with marked visual differences if there are any;
         /// if it's set to null the prefix defaults to diff_%outPdfFileName%_ format.
         /// </param>
         /// <param name="ignoredAreas">a map with one-based page numbers as keys and lists of ignored rectangles as values.
         ///     </param>
         /// <returns>
-        /// string containing text report of the encountered content differences and also list of the pages that are
+        /// string containing text report on the encountered content differences and also list of the pages that are
         /// visually different, or null if there are no content and therefore no visual differences.
         /// </returns>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
+        /// <seealso cref="CompareVisually(System.String, System.String, System.String, System.String)"/>
         public virtual String CompareByContent(String outPdf, String cmpPdf, String outPath, String differenceImagePrefix
             , IDictionary<int, IList<Rectangle>> ignoredAreas) {
-            Init(outPdf, cmpPdf);
-            return CompareByContent(outPath, differenceImagePrefix, ignoredAreas);
+            return CompareByContent(outPdf, cmpPdf, outPath, differenceImagePrefix, ignoredAreas, null, null);
         }
 
         /// <summary>This method overload is used to compare two encrypted PDF documents.</summary>
         /// <remarks>
         /// This method overload is used to compare two encrypted PDF documents. Document passwords are passed with
         /// outPass and cmpPass parameters.
-        /// <br /><br />
+        /// <para />
         /// Compares two PDF documents by content starting from page dictionaries and then recursively comparing
         /// corresponding objects which are referenced from them. You can roughly imagine it as depth-first traversal
         /// of the two trees that represent pdf objects structure of the documents.
-        /// <br /><br />
-        /// Unlike
-        /// <see cref="CompareByCatalog(iText.Kernel.Pdf.PdfDocument, iText.Kernel.Pdf.PdfDocument)"/>
-        /// this method performs content comparison page by page
-        /// and doesn't compare the tag structure, acroforms and all other things that doesn't belong to specific pages.
-        /// <br />
+        /// <para />
         /// When comparison by content is finished, if any differences were found, visual comparison is automatically started.
-        /// For more info see
-        /// <see cref="CompareVisually(System.String, System.String, System.String, System.String, System.Collections.Generic.IDictionary{K, V})
-        ///     "/>
-        /// .
-        /// <br /><br />
-        /// For more explanations about what is outPdf and cmpPdf see last paragraph of the
+        /// <para />
+        /// For more explanations about what outPdf and cmpPdf are see last paragraph of the
         /// <see cref="CompareTool"/>
         /// class description.
         /// </remarks>
@@ -611,7 +578,7 @@ namespace iText.Kernel.Utils {
         /// <param name="outPath">the absolute path to the folder, which will be used to store image files for visual comparison.
         ///     </param>
         /// <param name="differenceImagePrefix">
-        /// file name prefix for image files with marked visual differences if there is any;
+        /// file name prefix for image files with marked visual differences if there are any;
         /// if it's set to null the prefix defaults to diff_%outPdfFileName%_ format.
         /// </param>
         /// <param name="ignoredAreas">a map with one-based page numbers as keys and lists of ignored rectangles as values.
@@ -619,24 +586,15 @@ namespace iText.Kernel.Utils {
         /// <param name="outPass">password for the encrypted document specified by the outPdf absolute path.</param>
         /// <param name="cmpPass">password for the encrypted document specified by the cmpPdf absolute path.</param>
         /// <returns>
-        /// string containing text report of the encountered content differences and also list of the pages that are
+        /// string containing text report on the encountered content differences and also list of the pages that are
         /// visually different, or null if there are no content and therefore no visual differences.
         /// </returns>
-        /// <exception cref="System.Exception">
-        /// if the current thread is interrupted by another thread while it is waiting
-        /// for ghostscript or imagemagic processes, then the wait is ended and an
-        /// <see cref="System.Exception"/>
-        /// is thrown.
-        /// </exception>
-        /// <exception cref="System.IO.IOException">
-        /// is thrown if any of the input files are missing or any of the auxiliary files
-        /// that are created during comparison process wasn't possible to be created.
-        /// </exception>
+        /// <seealso cref="CompareVisually(System.String, System.String, System.String, System.String)"/>
         public virtual String CompareByContent(String outPdf, String cmpPdf, String outPath, String differenceImagePrefix
             , IDictionary<int, IList<Rectangle>> ignoredAreas, byte[] outPass, byte[] cmpPass) {
             Init(outPdf, cmpPdf);
-            System.Console.Out.WriteLine("Out pdf: file:///" + UrlUtil.ToNormalizedURI(outPdf).AbsolutePath);
-            System.Console.Out.WriteLine("Cmp pdf: file:///" + UrlUtil.ToNormalizedURI(cmpPdf).AbsolutePath + "\n");
+            System.Console.Out.WriteLine("Out pdf: " + UrlUtil.GetNormalizedFileUriString(outPdf));
+            System.Console.Out.WriteLine("Cmp pdf: " + UrlUtil.GetNormalizedFileUriString(cmpPdf) + "\n");
             SetPassword(outPass, cmpPass);
             return CompareByContent(outPath, differenceImagePrefix, ignoredAreas);
         }
@@ -649,9 +607,151 @@ namespace iText.Kernel.Utils {
         /// <param name="outDict">dictionary to compare.</param>
         /// <param name="cmpDict">dictionary to compare.</param>
         /// <returns>true if dictionaries are equal by content, otherwise false.</returns>
-        /// <exception cref="System.IO.IOException"/>
         public virtual bool CompareDictionaries(PdfDictionary outDict, PdfDictionary cmpDict) {
             return CompareDictionariesExtended(outDict, cmpDict, null, null);
+        }
+
+        /// <summary>Recursively compares structures of two corresponding dictionaries from out and cmp PDF documents.
+        ///     </summary>
+        /// <remarks>
+        /// Recursively compares structures of two corresponding dictionaries from out and cmp PDF documents. You can roughly
+        /// imagine it as depth-first traversal of the two trees that represent pdf objects structure of the documents.
+        /// <para />
+        /// Both out and cmp
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// shall have indirect references.
+        /// <para />
+        /// By default page dictionaries are excluded from the comparison when met and are instead compared in a special manner,
+        /// simply comparing their page numbers. This behavior can be disabled by calling
+        /// <see cref="DisableCachedPagesComparison()"/>.
+        /// <para />
+        /// For more explanations about what outPdf and cmpPdf are see last paragraph of the
+        /// <see cref="CompareTool"/>
+        /// class description.
+        /// </remarks>
+        /// <param name="outDict">
+        /// an indirect
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// from the output file, which is to be compared to cmp-file dictionary.
+        /// </param>
+        /// <param name="cmpDict">
+        /// an indirect
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// from the cmp-file file, which is to be compared to output file dictionary.
+        /// </param>
+        /// <returns>
+        /// 
+        /// <see cref="CompareResult"/>
+        /// instance containing differences between the two dictionaries,
+        /// or
+        /// <see langword="null"/>
+        /// if dictionaries are equal.
+        /// </returns>
+        public virtual CompareTool.CompareResult CompareDictionariesStructure(PdfDictionary outDict, PdfDictionary
+             cmpDict) {
+            return CompareDictionariesStructure(outDict, cmpDict, null);
+        }
+
+        /// <summary>Recursively compares structures of two corresponding dictionaries from out and cmp PDF documents.
+        ///     </summary>
+        /// <remarks>
+        /// Recursively compares structures of two corresponding dictionaries from out and cmp PDF documents. You can roughly
+        /// imagine it as depth-first traversal of the two trees that represent pdf objects structure of the documents.
+        /// <para />
+        /// Both out and cmp
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// shall have indirect references.
+        /// <para />
+        /// By default page dictionaries are excluded from the comparison when met and are instead compared in a special manner,
+        /// simply comparing their page numbers. This behavior can be disabled by calling
+        /// <see cref="DisableCachedPagesComparison()"/>.
+        /// <para />
+        /// For more explanations about what outPdf and cmpPdf are see last paragraph of the
+        /// <see cref="CompareTool"/>
+        /// class description.
+        /// </remarks>
+        /// <param name="outDict">
+        /// an indirect
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// from the output file, which is to be compared to cmp-file dictionary.
+        /// </param>
+        /// <param name="cmpDict">
+        /// an indirect
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// from the cmp-file file, which is to be compared to output file dictionary.
+        /// </param>
+        /// <param name="excludedKeys">
+        /// a
+        /// <see cref="Java.Util.Set{E}"/>
+        /// of names that designate entries from
+        /// <paramref name="outDict"/>
+        /// and
+        /// <paramref name="cmpDict"/>
+        /// dictionaries
+        /// which are to be skipped during comparison.
+        /// </param>
+        /// <returns>
+        /// 
+        /// <see cref="CompareResult"/>
+        /// instance containing differences between the two dictionaries,
+        /// or
+        /// <see langword="null"/>
+        /// if dictionaries are equal.
+        /// </returns>
+        public virtual CompareTool.CompareResult CompareDictionariesStructure(PdfDictionary outDict, PdfDictionary
+             cmpDict, ICollection<PdfName> excludedKeys) {
+            if (outDict.GetIndirectReference() == null || cmpDict.GetIndirectReference() == null) {
+                throw new ArgumentException("The 'outDict' and 'cmpDict' objects shall have indirect references.");
+            }
+            CompareTool.CompareResult compareResult = new CompareTool.CompareResult(compareByContentErrorsLimit);
+            ObjectPath currentPath = new ObjectPath(cmpDict.GetIndirectReference(), outDict.GetIndirectReference());
+            if (!CompareDictionariesExtended(outDict, cmpDict, currentPath, compareResult, excludedKeys)) {
+                System.Diagnostics.Debug.Assert(!compareResult.IsOk());
+                System.Console.Out.WriteLine(compareResult.GetReport());
+                return compareResult;
+            }
+            System.Diagnostics.Debug.Assert(compareResult.IsOk());
+            return null;
+        }
+
+        /// <summary>Compares structures of two corresponding streams from out and cmp PDF documents.</summary>
+        /// <remarks>
+        /// Compares structures of two corresponding streams from out and cmp PDF documents. You can roughly
+        /// imagine it as depth-first traversal of the two trees that represent pdf objects structure of the documents.
+        /// <para />
+        /// For more explanations about what outPdf and cmpPdf are see last paragraph of the
+        /// <see cref="CompareTool"/>
+        /// class description.
+        /// </remarks>
+        /// <param name="outStream">
+        /// a
+        /// <see cref="iText.Kernel.Pdf.PdfStream"/>
+        /// from the output file, which is to be compared to cmp-file stream.
+        /// </param>
+        /// <param name="cmpStream">
+        /// a
+        /// <see cref="iText.Kernel.Pdf.PdfStream"/>
+        /// from the cmp-file file, which is to be compared to output file stream.
+        /// </param>
+        /// <returns>
+        /// 
+        /// <see cref="CompareResult"/>
+        /// instance containing differences between the two streams,
+        /// or
+        /// <see langword="null"/>
+        /// if streams are equal.
+        /// </returns>
+        public virtual CompareTool.CompareResult CompareStreamsStructure(PdfStream outStream, PdfStream cmpStream) {
+            CompareTool.CompareResult compareResult = new CompareTool.CompareResult(compareByContentErrorsLimit);
+            ObjectPath currentPath = new ObjectPath(cmpStream.GetIndirectReference(), outStream.GetIndirectReference()
+                );
+            if (!CompareStreamsExtended(outStream, cmpStream, currentPath, compareResult)) {
+                System.Diagnostics.Debug.Assert(!compareResult.IsOk());
+                System.Console.Out.WriteLine(compareResult.GetReport());
+                return compareResult;
+            }
+            System.Diagnostics.Debug.Assert(compareResult.IsOk());
+            return null;
         }
 
         /// <summary>Simple method that compares two given PdfStreams by content.</summary>
@@ -662,7 +762,6 @@ namespace iText.Kernel.Utils {
         /// <param name="outStream">stream to compare.</param>
         /// <param name="cmpStream">stream to compare.</param>
         /// <returns>true if stream are equal by content, otherwise false.</returns>
-        /// <exception cref="System.IO.IOException"/>
         public virtual bool CompareStreams(PdfStream outStream, PdfStream cmpStream) {
             return CompareStreamsExtended(outStream, cmpStream, null, null);
         }
@@ -675,7 +774,6 @@ namespace iText.Kernel.Utils {
         /// <param name="outArray">array to compare.</param>
         /// <param name="cmpArray">array to compare.</param>
         /// <returns>true if arrays are equal by content, otherwise false.</returns>
-        /// <exception cref="System.IO.IOException"/>
         public virtual bool CompareArrays(PdfArray outArray, PdfArray cmpArray) {
             return CompareArraysExtended(outArray, cmpArray, null, null);
         }
@@ -715,7 +813,7 @@ namespace iText.Kernel.Utils {
         /// <summary>Compares xmp metadata of the two given PDF documents.</summary>
         /// <param name="outPdf">the absolute path to the output file, which xmp is to be compared to cmp-file.</param>
         /// <param name="cmpPdf">the absolute path to the cmp-file, which xmp is to be compared to output file.</param>
-        /// <returns>text report of the xmp differences, or null if there are no differences.</returns>
+        /// <returns>text report on the xmp differences, or null if there are no differences.</returns>
         public virtual String CompareXmp(String outPdf, String cmpPdf) {
             return CompareXmp(outPdf, cmpPdf, false);
         }
@@ -727,46 +825,42 @@ namespace iText.Kernel.Utils {
         /// true, if to ignore differences in date or producer xmp metadata
         /// properties.
         /// </param>
-        /// <returns>text report of the xmp differences, or null if there are no differences.</returns>
+        /// <returns>text report on the xmp differences, or null if there are no differences.</returns>
         public virtual String CompareXmp(String outPdf, String cmpPdf, bool ignoreDateAndProducerProperties) {
             Init(outPdf, cmpPdf);
-            PdfDocument cmpDocument = null;
-            PdfDocument outDocument = null;
             try {
-                cmpDocument = new PdfDocument(new PdfReader(this.cmpPdf), new DocumentProperties().SetEventCountingMetaInfo
-                    (metaInfo));
-                outDocument = new PdfDocument(new PdfReader(this.outPdf), new DocumentProperties().SetEventCountingMetaInfo
-                    (metaInfo));
-                byte[] cmpBytes = cmpDocument.GetXmpMetadata();
-                byte[] outBytes = outDocument.GetXmpMetadata();
-                if (ignoreDateAndProducerProperties) {
-                    XMPMeta xmpMeta = XMPMetaFactory.ParseFromBuffer(cmpBytes, new ParseOptions().SetOmitNormalization(true));
-                    XMPUtils.RemoveProperties(xmpMeta, XMPConst.NS_XMP, PdfConst.CreateDate, true, true);
-                    XMPUtils.RemoveProperties(xmpMeta, XMPConst.NS_XMP, PdfConst.ModifyDate, true, true);
-                    XMPUtils.RemoveProperties(xmpMeta, XMPConst.NS_XMP, PdfConst.MetadataDate, true, true);
-                    XMPUtils.RemoveProperties(xmpMeta, XMPConst.NS_PDF, PdfConst.Producer, true, true);
-                    cmpBytes = XMPMetaFactory.SerializeToBuffer(xmpMeta, new SerializeOptions(SerializeOptions.SORT));
-                    xmpMeta = XMPMetaFactory.ParseFromBuffer(outBytes, new ParseOptions().SetOmitNormalization(true));
-                    XMPUtils.RemoveProperties(xmpMeta, XMPConst.NS_XMP, PdfConst.CreateDate, true, true);
-                    XMPUtils.RemoveProperties(xmpMeta, XMPConst.NS_XMP, PdfConst.ModifyDate, true, true);
-                    XMPUtils.RemoveProperties(xmpMeta, XMPConst.NS_XMP, PdfConst.MetadataDate, true, true);
-                    XMPUtils.RemoveProperties(xmpMeta, XMPConst.NS_PDF, PdfConst.Producer, true, true);
-                    outBytes = XMPMetaFactory.SerializeToBuffer(xmpMeta, new SerializeOptions(SerializeOptions.SORT));
-                }
-                if (!CompareXmls(cmpBytes, outBytes)) {
-                    return "The XMP packages different!";
+                using (PdfReader readerCmp = new PdfReader(this.cmpPdf)) {
+                    using (PdfDocument cmpDocument = new PdfDocument(readerCmp, new DocumentProperties().SetEventCountingMetaInfo
+                        (metaInfo))) {
+                        using (PdfReader readerOut = new PdfReader(this.outPdf)) {
+                            using (PdfDocument outDocument = new PdfDocument(readerOut, new DocumentProperties().SetEventCountingMetaInfo
+                                (metaInfo))) {
+                                byte[] cmpBytes = cmpDocument.GetXmpMetadata();
+                                byte[] outBytes = outDocument.GetXmpMetadata();
+                                if (ignoreDateAndProducerProperties) {
+                                    XMPMeta xmpMeta = XMPMetaFactory.ParseFromBuffer(cmpBytes, new ParseOptions().SetOmitNormalization(true));
+                                    XMPUtils.RemoveProperties(xmpMeta, XMPConst.NS_XMP, PdfConst.CreateDate, true, true);
+                                    XMPUtils.RemoveProperties(xmpMeta, XMPConst.NS_XMP, PdfConst.ModifyDate, true, true);
+                                    XMPUtils.RemoveProperties(xmpMeta, XMPConst.NS_XMP, PdfConst.MetadataDate, true, true);
+                                    XMPUtils.RemoveProperties(xmpMeta, XMPConst.NS_PDF, PdfConst.Producer, true, true);
+                                    cmpBytes = XMPMetaFactory.SerializeToBuffer(xmpMeta, new SerializeOptions(SerializeOptions.SORT));
+                                    xmpMeta = XMPMetaFactory.ParseFromBuffer(outBytes, new ParseOptions().SetOmitNormalization(true));
+                                    XMPUtils.RemoveProperties(xmpMeta, XMPConst.NS_XMP, PdfConst.CreateDate, true, true);
+                                    XMPUtils.RemoveProperties(xmpMeta, XMPConst.NS_XMP, PdfConst.ModifyDate, true, true);
+                                    XMPUtils.RemoveProperties(xmpMeta, XMPConst.NS_XMP, PdfConst.MetadataDate, true, true);
+                                    XMPUtils.RemoveProperties(xmpMeta, XMPConst.NS_PDF, PdfConst.Producer, true, true);
+                                    outBytes = XMPMetaFactory.SerializeToBuffer(xmpMeta, new SerializeOptions(SerializeOptions.SORT));
+                                }
+                                if (!CompareXmls(cmpBytes, outBytes)) {
+                                    return "The XMP packages different!";
+                                }
+                            }
+                        }
+                    }
                 }
             }
             catch (Exception) {
                 return "XMP parsing failure!";
-            }
-            finally {
-                if (cmpDocument != null) {
-                    cmpDocument.Close();
-                }
-                if (outDocument != null) {
-                    outDocument.Close();
-                }
             }
             return null;
         }
@@ -775,9 +869,6 @@ namespace iText.Kernel.Utils {
         /// <param name="xml1">first xml file data to compare.</param>
         /// <param name="xml2">second xml file data to compare.</param>
         /// <returns>true if xml structures are identical, false otherwise.</returns>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
-        /// <exception cref="System.IO.IOException"/>
         public virtual bool CompareXmls(byte[] xml1, byte[] xml2) {
             return XmlUtils.CompareXmls(new MemoryStream(xml1), new MemoryStream(xml2));
         }
@@ -786,49 +877,51 @@ namespace iText.Kernel.Utils {
         /// <param name="outXmlFile">absolute path to the out xml file to compare.</param>
         /// <param name="cmpXmlFile">absolute path to the cmp xml file to compare.</param>
         /// <returns>true if xml structures are identical, false otherwise.</returns>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
-        /// <exception cref="System.IO.IOException"/>
         public virtual bool CompareXmls(String outXmlFile, String cmpXmlFile) {
-            System.Console.Out.WriteLine("Out xml: file:///" + UrlUtil.ToNormalizedURI(outXmlFile).AbsolutePath);
-            System.Console.Out.WriteLine("Cmp xml: file:///" + UrlUtil.ToNormalizedURI(cmpXmlFile).AbsolutePath + "\n"
-                );
-            return XmlUtils.CompareXmls(new FileStream(outXmlFile, FileMode.Open, FileAccess.Read), new FileStream(cmpXmlFile
-                , FileMode.Open, FileAccess.Read));
+            System.Console.Out.WriteLine("Out xml: " + UrlUtil.GetNormalizedFileUriString(outXmlFile));
+            System.Console.Out.WriteLine("Cmp xml: " + UrlUtil.GetNormalizedFileUriString(cmpXmlFile) + "\n");
+            using (Stream outXmlStream = FileUtil.GetInputStreamForFile(outXmlFile)) {
+                using (Stream cmpXmlStream = FileUtil.GetInputStreamForFile(cmpXmlFile)) {
+                    return XmlUtils.CompareXmls(outXmlStream, cmpXmlStream);
+                }
+            }
         }
 
-        /// <summary>This method overload is used to compare two encrypted PDF documents.</summary>
+        /// <summary>Compares document info dictionaries of two pdf documents.</summary>
         /// <remarks>
+        /// Compares document info dictionaries of two pdf documents.
+        /// <para />
         /// This method overload is used to compare two encrypted PDF documents. Document passwords are passed with
         /// outPass and cmpPass parameters.
-        /// <br /><br />
-        /// Compares document info dictionaries of two pdf documents.
         /// </remarks>
         /// <param name="outPdf">the absolute path to the output file, which info is to be compared to cmp-file info.</param>
         /// <param name="cmpPdf">the absolute path to the cmp-file, which info is to be compared to output file info.</param>
         /// <param name="outPass">password for the encrypted document specified by the outPdf absolute path.</param>
         /// <param name="cmpPass">password for the encrypted document specified by the cmpPdf absolute path.</param>
-        /// <returns>text report of the differences in documents infos.</returns>
-        /// <exception cref="System.IO.IOException"/>
+        /// <returns>text report on the differences in documents infos.</returns>
         public virtual String CompareDocumentInfo(String outPdf, String cmpPdf, byte[] outPass, byte[] cmpPass) {
             System.Console.Out.Write("[itext] INFO  Comparing document info.......");
             String message = null;
             SetPassword(outPass, cmpPass);
-            PdfDocument outDocument = new PdfDocument(new PdfReader(outPdf, GetOutReaderProperties()), new DocumentProperties
-                ().SetEventCountingMetaInfo(metaInfo));
-            PdfDocument cmpDocument = new PdfDocument(new PdfReader(cmpPdf, GetCmpReaderProperties()), new DocumentProperties
-                ().SetEventCountingMetaInfo(metaInfo));
-            String[] cmpInfo = ConvertInfo(cmpDocument.GetDocumentInfo());
-            String[] outInfo = ConvertInfo(outDocument.GetDocumentInfo());
-            for (int i = 0; i < cmpInfo.Length; ++i) {
-                if (!cmpInfo[i].Equals(outInfo[i])) {
-                    message = MessageFormatUtil.Format("Document info fail. Expected: \"{0}\", actual: \"{1}\"", cmpInfo[i], outInfo
-                        [i]);
-                    break;
+            using (PdfReader readerOut = new PdfReader(outPdf, GetOutReaderProperties())) {
+                using (PdfDocument outDocument = new PdfDocument(readerOut, new DocumentProperties().SetEventCountingMetaInfo
+                    (metaInfo))) {
+                    using (PdfReader readerCmp = new PdfReader(cmpPdf, GetCmpReaderProperties())) {
+                        using (PdfDocument cmpDocument = new PdfDocument(readerCmp, new DocumentProperties().SetEventCountingMetaInfo
+                            (metaInfo))) {
+                            String[] cmpInfo = ConvertDocInfoToStrings(cmpDocument.GetDocumentInfo());
+                            String[] outInfo = ConvertDocInfoToStrings(outDocument.GetDocumentInfo());
+                            for (int i = 0; i < cmpInfo.Length; ++i) {
+                                if (!cmpInfo[i].Equals(outInfo[i])) {
+                                    message = MessageFormatUtil.Format("Document info fail. Expected: \"{0}\", actual: \"{1}\"", cmpInfo[i], outInfo
+                                        [i]);
+                                    break;
+                                }
+                            }
+                        }
+                    }
                 }
             }
-            outDocument.Close();
-            cmpDocument.Close();
             if (message == null) {
                 System.Console.Out.WriteLine("OK");
             }
@@ -842,43 +935,45 @@ namespace iText.Kernel.Utils {
         /// <summary>Compares document info dictionaries of two pdf documents.</summary>
         /// <param name="outPdf">the absolute path to the output file, which info is to be compared to cmp-file info.</param>
         /// <param name="cmpPdf">the absolute path to the cmp-file, which info is to be compared to output file info.</param>
-        /// <returns>text report of the differences in documents infos.</returns>
-        /// <exception cref="System.IO.IOException"/>
+        /// <returns>text report on the differences in documents infos.</returns>
         public virtual String CompareDocumentInfo(String outPdf, String cmpPdf) {
             return CompareDocumentInfo(outPdf, cmpPdf, null, null);
         }
 
-        /// <summary>Compares if two documents has identical link annotations on corresponding pages.</summary>
+        /// <summary>Checks if two documents have identical link annotations on corresponding pages.</summary>
         /// <param name="outPdf">the absolute path to the output file, which links are to be compared to cmp-file links.
         ///     </param>
         /// <param name="cmpPdf">the absolute path to the cmp-file, which links are to be compared to output file links.
         ///     </param>
-        /// <returns>text report of the differences in documents links.</returns>
-        /// <exception cref="System.IO.IOException"/>
+        /// <returns>text report on the differences in documents links.</returns>
         public virtual String CompareLinkAnnotations(String outPdf, String cmpPdf) {
             System.Console.Out.Write("[itext] INFO  Comparing link annotations....");
             String message = null;
-            PdfDocument outDocument = new PdfDocument(new PdfReader(outPdf), new DocumentProperties().SetEventCountingMetaInfo
-                (metaInfo));
-            PdfDocument cmpDocument = new PdfDocument(new PdfReader(cmpPdf), new DocumentProperties().SetEventCountingMetaInfo
-                (metaInfo));
-            for (int i = 0; i < outDocument.GetNumberOfPages() && i < cmpDocument.GetNumberOfPages(); i++) {
-                IList<PdfLinkAnnotation> outLinks = GetLinkAnnotations(i + 1, outDocument);
-                IList<PdfLinkAnnotation> cmpLinks = GetLinkAnnotations(i + 1, cmpDocument);
-                if (cmpLinks.Count != outLinks.Count) {
-                    message = MessageFormatUtil.Format("Different number of links on page {0}.", i + 1);
-                    break;
-                }
-                for (int j = 0; j < cmpLinks.Count; j++) {
-                    if (!CompareLinkAnnotations(cmpLinks[j], outLinks[j], cmpDocument, outDocument)) {
-                        message = MessageFormatUtil.Format("Different links on page {0}.\n{1}\n{2}", i + 1, cmpLinks[j].ToString()
-                            , outLinks[j].ToString());
-                        break;
+            using (PdfReader readerOut = new PdfReader(outPdf)) {
+                using (PdfDocument outDocument = new PdfDocument(readerOut, new DocumentProperties().SetEventCountingMetaInfo
+                    (metaInfo))) {
+                    using (PdfReader readerCmp = new PdfReader(cmpPdf)) {
+                        using (PdfDocument cmpDocument = new PdfDocument(readerCmp, new DocumentProperties().SetEventCountingMetaInfo
+                            (metaInfo))) {
+                            for (int i = 0; i < outDocument.GetNumberOfPages() && i < cmpDocument.GetNumberOfPages(); i++) {
+                                IList<PdfLinkAnnotation> outLinks = GetLinkAnnotations(i + 1, outDocument);
+                                IList<PdfLinkAnnotation> cmpLinks = GetLinkAnnotations(i + 1, cmpDocument);
+                                if (cmpLinks.Count != outLinks.Count) {
+                                    message = MessageFormatUtil.Format("Different number of links on page {0}.", i + 1);
+                                    break;
+                                }
+                                for (int j = 0; j < cmpLinks.Count; j++) {
+                                    if (!CompareLinkAnnotations(cmpLinks[j], outLinks[j], cmpDocument, outDocument)) {
+                                        message = MessageFormatUtil.Format("Different links on page {0}.\n{1}\n{2}", i + 1, cmpLinks[j].ToString()
+                                            , outLinks[j].ToString());
+                                        break;
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
-            outDocument.Close();
-            cmpDocument.Close();
             if (message == null) {
                 System.Console.Out.WriteLine("OK");
             }
@@ -892,7 +987,7 @@ namespace iText.Kernel.Utils {
         /// <summary>Compares tag structures of the two PDF documents.</summary>
         /// <remarks>
         /// Compares tag structures of the two PDF documents.
-        /// <br />
+        /// <para />
         /// This method creates xml files in the same folder with outPdf file. These xml files contain documents tag structures
         /// converted into the xml structure. These xml files are compared if they are equal.
         /// </remarks>
@@ -901,28 +996,27 @@ namespace iText.Kernel.Utils {
         /// <param name="cmpPdf">the absolute path to the cmp-file, which tags are to be compared to output file tags.
         ///     </param>
         /// <returns>text report of the differences in documents tags.</returns>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
         public virtual String CompareTagStructures(String outPdf, String cmpPdf) {
             System.Console.Out.Write("[itext] INFO  Comparing tag structures......");
             String outXmlPath = outPdf.Replace(".pdf", ".xml");
             String cmpXmlPath = outPdf.Replace(".pdf", ".cmp.xml");
             String message = null;
-            PdfReader readerOut = new PdfReader(outPdf);
-            PdfDocument docOut = new PdfDocument(readerOut, new DocumentProperties().SetEventCountingMetaInfo(metaInfo
-                ));
-            FileStream xmlOut = new FileStream(outXmlPath, FileMode.Create);
-            new TaggedPdfReaderTool(docOut).SetRootTag("root").ConvertToXml(xmlOut);
-            docOut.Close();
-            xmlOut.Dispose();
-            PdfReader readerCmp = new PdfReader(cmpPdf);
-            PdfDocument docCmp = new PdfDocument(readerCmp, new DocumentProperties().SetEventCountingMetaInfo(metaInfo
-                ));
-            FileStream xmlCmp = new FileStream(cmpXmlPath, FileMode.Create);
-            new TaggedPdfReaderTool(docCmp).SetRootTag("root").ConvertToXml(xmlCmp);
-            docCmp.Close();
-            xmlCmp.Dispose();
+            using (PdfReader readerOut = new PdfReader(outPdf)) {
+                using (PdfDocument docOut = new PdfDocument(readerOut, new DocumentProperties().SetEventCountingMetaInfo(metaInfo
+                    ))) {
+                    using (FileStream xmlOut = new FileStream(outXmlPath, FileMode.Create)) {
+                        new TaggedPdfReaderTool(docOut).SetRootTag("root").ConvertToXml(xmlOut);
+                    }
+                }
+            }
+            using (PdfReader readerCmp = new PdfReader(cmpPdf)) {
+                using (PdfDocument docCmp = new PdfDocument(readerCmp, new DocumentProperties().SetEventCountingMetaInfo(metaInfo
+                    ))) {
+                    using (FileStream xmlCmp = new FileStream(cmpXmlPath, FileMode.Create)) {
+                        new TaggedPdfReaderTool(docCmp).SetRootTag("root").ConvertToXml(xmlCmp);
+                    }
+                }
+            }
             if (!CompareXmls(outXmlPath, cmpXmlPath)) {
                 message = "The tag structures are different.";
             }
@@ -936,7 +1030,16 @@ namespace iText.Kernel.Utils {
             return message;
         }
 
-        internal virtual String[] ConvertInfo(PdfDocumentInfo info) {
+        /// <summary>Converts document info into a string array.</summary>
+        /// <remarks>
+        /// Converts document info into a string array.
+        /// <para />
+        /// Converts document info into a string array. It can be used to compare PdfDocumentInfo later on.
+        /// Default implementation retrieves title, author, subject, keywords and producer.
+        /// </remarks>
+        /// <param name="info">an instance of PdfDocumentInfo to be converted.</param>
+        /// <returns>String array with all the document info tester is interested in.</returns>
+        protected internal virtual String[] ConvertDocInfoToStrings(PdfDocumentInfo info) {
             String[] convertedInfo = new String[] { "", "", "", "", "" };
             String infoValue = info.GetTitle();
             if (infoValue != null) {
@@ -962,8 +1065,8 @@ namespace iText.Kernel.Utils {
         }
 
         internal virtual String ConvertProducerLine(String producer) {
-            return iText.IO.Util.StringUtil.ReplaceAll(iText.IO.Util.StringUtil.ReplaceAll(producer, versionRegexp, versionReplacement
-                ), copyrightRegexp, copyrightReplacement);
+            return iText.Commons.Utils.StringUtil.ReplaceAll(iText.Commons.Utils.StringUtil.ReplaceAll(producer, VERSION_REGEXP
+                , VERSION_REPLACEMENT), COPYRIGHT_REGEXP, COPYRIGHT_REPLACEMENT);
         }
 
         private void Init(String outPdf, String cmpPdf) {
@@ -971,12 +1074,12 @@ namespace iText.Kernel.Utils {
             this.cmpPdf = cmpPdf;
             outPdfName = new FileInfo(outPdf).Name;
             cmpPdfName = new FileInfo(cmpPdf).Name;
-            outImage = outPdfName + "-%03d.png";
+            outImage = outPdfName;
             if (cmpPdfName.StartsWith("cmp_")) {
-                cmpImage = cmpPdfName + "-%03d.png";
+                cmpImage = cmpPdfName;
             }
             else {
-                cmpImage = "cmp_" + cmpPdfName + "-%03d.png";
+                cmpImage = "cmp_" + cmpPdfName;
             }
         }
 
@@ -989,24 +1092,13 @@ namespace iText.Kernel.Utils {
             }
         }
 
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         private String CompareVisually(String outPath, String differenceImagePrefix, IDictionary<int, IList<Rectangle
             >> ignoredAreas) {
             return CompareVisually(outPath, differenceImagePrefix, ignoredAreas, null);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         private String CompareVisually(String outPath, String differenceImagePrefix, IDictionary<int, IList<Rectangle
             >> ignoredAreas, IList<int> equalPages) {
-            if (gsExec == null) {
-                throw new CompareTool.CompareToolExecutionException(this, undefinedGsPath);
-            }
-            if (!(new FileInfo(gsExec).CanExecute())) {
-                throw new CompareTool.CompareToolExecutionException(this, new FileInfo(gsExec).FullName + " is not an executable program"
-                    );
-            }
             if (!outPath.EndsWith("/")) {
                 outPath = outPath + "/";
             }
@@ -1023,41 +1115,56 @@ namespace iText.Kernel.Utils {
             if (ignoredAreas != null && !ignoredAreas.IsEmpty()) {
                 CreateIgnoredAreasPdfs(outPath, ignoredAreas);
             }
-            RunGhostScriptImageGeneration(outPath);
+            GhostscriptHelper ghostscriptHelper = null;
+            try {
+                ghostscriptHelper = new GhostscriptHelper(gsExec);
+            }
+            catch (ArgumentException e) {
+                throw new CompareTool.CompareToolExecutionException(e.Message);
+            }
+            ghostscriptHelper.RunGhostScriptImageGeneration(outPdf, outPath, outImage);
+            ghostscriptHelper.RunGhostScriptImageGeneration(cmpPdf, outPath, cmpImage);
             return CompareImagesOfPdfs(outPath, differenceImagePrefix, equalPages);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         private String CompareImagesOfPdfs(String outPath, String differenceImagePrefix, IList<int> equalPages) {
-            FileInfo[] imageFiles = FileUtil.ListFilesInDirectoryByFilter(outPath, new CompareTool.PngFileFilter(this)
-                );
+            FileInfo[] imageFiles = FileUtil.ListFilesInDirectoryByFilter(outPath, new CompareTool.PngFileFilter(outPdfName
+                ));
             FileInfo[] cmpImageFiles = FileUtil.ListFilesInDirectoryByFilter(outPath, new CompareTool.CmpPngFileFilter
-                (this));
+                (cmpPdfName));
             bool bUnexpectedNumberOfPages = false;
             if (imageFiles.Length != cmpImageFiles.Length) {
                 bUnexpectedNumberOfPages = true;
             }
             int cnt = Math.Min(imageFiles.Length, cmpImageFiles.Length);
             if (cnt < 1) {
-                throw new CompareTool.CompareToolExecutionException(this, "No files for comparing. The result or sample pdf file is not processed by GhostScript."
+                throw new CompareTool.CompareToolExecutionException("No files for comparing. The result or sample pdf file is not processed by GhostScript."
                     );
             }
-            JavaUtil.Sort(imageFiles, new CompareTool.ImageNameComparator(this));
-            JavaUtil.Sort(cmpImageFiles, new CompareTool.ImageNameComparator(this));
-            String differentPagesFail = null;
-            bool compareExecIsOk = compareExec != null && new FileInfo(compareExec).CanExecute();
-            if (compareExec != null && !compareExecIsOk) {
-                throw new CompareTool.CompareToolExecutionException(this, new FileInfo(compareExec).FullName + " is not an executable program"
-                    );
+            JavaUtil.Sort(imageFiles, new CompareTool.ImageNameComparator());
+            JavaUtil.Sort(cmpImageFiles, new CompareTool.ImageNameComparator());
+            bool compareExecIsOk;
+            String imageMagickInitError = null;
+            ImageMagickHelper imageMagickHelper = null;
+            try {
+                imageMagickHelper = new ImageMagickHelper(compareExec);
+                compareExecIsOk = true;
+            }
+            catch (ArgumentException e) {
+                compareExecIsOk = false;
+                imageMagickInitError = e.Message;
+                ITextLogManager.GetLogger(typeof(iText.Kernel.Utils.CompareTool)).LogWarning(e.Message);
             }
             IList<int> diffPages = new List<int>();
+            String differentPagesFail = null;
             for (int i = 0; i < cnt; i++) {
                 if (equalPages != null && equalPages.Contains(i)) {
                     continue;
                 }
-                System.Console.Out.WriteLine("Comparing page " + JavaUtil.IntegerToString(i + 1) + ": file:///" + UrlUtil.
-                    ToNormalizedURI(imageFiles[i]).AbsolutePath + " ...");
+                System.Console.Out.WriteLine("Comparing page " + JavaUtil.IntegerToString(i + 1) + ": " + UrlUtil.GetNormalizedFileUriString
+                    (imageFiles[i].Name) + " ...");
+                System.Console.Out.WriteLine("Comparing page " + JavaUtil.IntegerToString(i + 1) + ": " + UrlUtil.GetNormalizedFileUriString
+                    (imageFiles[i].Name) + " ...");
                 FileStream is1 = new FileStream(imageFiles[i].FullName, FileMode.Open, FileAccess.Read);
                 FileStream is2 = new FileStream(cmpImageFiles[i].FullName, FileMode.Open, FileAccess.Read);
                 bool cmpResult = CompareStreams(is1, is2);
@@ -1067,12 +1174,12 @@ namespace iText.Kernel.Utils {
                     differentPagesFail = "Page is different!";
                     diffPages.Add(i + 1);
                     if (compareExecIsOk) {
-                        String currCompareParams = compareParams.Replace("<image1>", imageFiles[i].FullName).Replace("<image2>", cmpImageFiles
-                            [i].FullName).Replace("<difference>", outPath + differenceImagePrefix + JavaUtil.IntegerToString(i + 1
-                            ) + ".png");
-                        if (!SystemUtil.RunProcessAndWait(compareExec, currCompareParams)) {
-                            differentPagesFail += "\nPlease, examine " + outPath + differenceImagePrefix + JavaUtil.IntegerToString(i 
-                                + 1) + ".png for more details.";
+                        String diffName = outPath + differenceImagePrefix + JavaUtil.IntegerToString(i + 1) + ".png";
+                        if (!imageMagickHelper.RunImageMagickImageCompare(imageFiles[i].FullName, cmpImageFiles[i].FullName, diffName
+                            )) {
+                            FileInfo diffFile = new FileInfo(diffName);
+                            differentPagesFail += "\nPlease, examine " + FILE_PROTOCOL + UrlUtil.ToNormalizedURI(diffFile).AbsolutePath
+                                 + " for more details.";
                         }
                     }
                     System.Console.Out.WriteLine(differentPagesFail);
@@ -1082,16 +1189,16 @@ namespace iText.Kernel.Utils {
                 }
             }
             if (differentPagesFail != null) {
-                String errorMessage = differentPages.Replace("<filename>", UrlUtil.ToNormalizedURI(outPdf).AbsolutePath).Replace
-                    ("<pagenumber>", ListDiffPagesAsString(diffPages));
+                String errorMessage = DIFFERENT_PAGES.Replace("<filename>", UrlUtil.ToNormalizedURI(outPdf).AbsolutePath).
+                    Replace("<pagenumber>", ListDiffPagesAsString(diffPages));
                 if (!compareExecIsOk) {
-                    errorMessage += "\nYou can optionally specify path to ImageMagick compare tool (e.g. -DcompareExec=\"C:/Program Files/ImageMagick-6.5.4-2/compare.exe\") to visualize differences.";
+                    errorMessage += "\n" + imageMagickInitError;
                 }
                 return errorMessage;
             }
             else {
                 if (bUnexpectedNumberOfPages) {
-                    return unexpectedNumberOfPages.Replace("<filename>", outPdf);
+                    return UNEXPECTED_NUMBER_OF_PAGES.Replace("<filename>", outPdf);
                 }
             }
             return null;
@@ -1109,33 +1216,38 @@ namespace iText.Kernel.Utils {
             return sb.ToString();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private void CreateIgnoredAreasPdfs(String outPath, IDictionary<int, IList<Rectangle>> ignoredAreas) {
-            PdfWriter outWriter = new PdfWriter(outPath + ignoredAreasPrefix + outPdfName);
-            PdfWriter cmpWriter = new PdfWriter(outPath + ignoredAreasPrefix + cmpPdfName);
             StampingProperties properties = new StampingProperties();
             properties.SetEventCountingMetaInfo(metaInfo);
-            PdfDocument pdfOutDoc = new PdfDocument(new PdfReader(outPdf), outWriter, properties);
-            PdfDocument pdfCmpDoc = new PdfDocument(new PdfReader(cmpPdf), cmpWriter, properties);
-            foreach (KeyValuePair<int, IList<Rectangle>> entry in ignoredAreas) {
-                int pageNumber = entry.Key;
-                IList<Rectangle> rectangles = entry.Value;
-                if (rectangles != null && !rectangles.IsEmpty()) {
-                    PdfCanvas outCanvas = new PdfCanvas(pdfOutDoc.GetPage(pageNumber));
-                    PdfCanvas cmpCanvas = new PdfCanvas(pdfCmpDoc.GetPage(pageNumber));
-                    outCanvas.SaveState();
-                    cmpCanvas.SaveState();
-                    foreach (Rectangle rect in rectangles) {
-                        outCanvas.Rectangle(rect).Fill();
-                        cmpCanvas.Rectangle(rect).Fill();
+            using (PdfWriter outWriter = new PdfWriter(outPath + IGNORED_AREAS_PREFIX + outPdfName)) {
+                using (PdfReader readerOut = new PdfReader(outPdf)) {
+                    using (PdfDocument pdfOutDoc = new PdfDocument(readerOut, outWriter, properties)) {
+                        using (PdfWriter cmpWriter = new PdfWriter(outPath + IGNORED_AREAS_PREFIX + cmpPdfName)) {
+                            using (PdfReader readerCmp = new PdfReader(cmpPdf)) {
+                                using (PdfDocument pdfCmpDoc = new PdfDocument(readerCmp, cmpWriter, properties)) {
+                                    foreach (KeyValuePair<int, IList<Rectangle>> entry in ignoredAreas) {
+                                        int pageNumber = entry.Key;
+                                        IList<Rectangle> rectangles = entry.Value;
+                                        if (rectangles != null && !rectangles.IsEmpty()) {
+                                            PdfCanvas outCanvas = new PdfCanvas(pdfOutDoc.GetPage(pageNumber));
+                                            PdfCanvas cmpCanvas = new PdfCanvas(pdfCmpDoc.GetPage(pageNumber));
+                                            outCanvas.SaveState();
+                                            cmpCanvas.SaveState();
+                                            foreach (Rectangle rect in rectangles) {
+                                                outCanvas.Rectangle(rect).Fill();
+                                                cmpCanvas.Rectangle(rect).Fill();
+                                            }
+                                            outCanvas.RestoreState();
+                                            cmpCanvas.RestoreState();
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
-                    outCanvas.RestoreState();
-                    cmpCanvas.RestoreState();
                 }
             }
-            pdfOutDoc.Close();
-            pdfCmpDoc.Close();
-            Init(outPath + ignoredAreasPrefix + outPdfName, outPath + ignoredAreasPrefix + cmpPdfName);
+            Init(outPath + IGNORED_AREAS_PREFIX + outPdfName, outPath + IGNORED_AREAS_PREFIX + cmpPdfName);
         }
 
         private void PrepareOutputDirs(String outPath, String differenceImagePrefix) {
@@ -1146,15 +1258,16 @@ namespace iText.Kernel.Utils {
                 FileUtil.CreateDirectories(outPath);
             }
             else {
-                imageFiles = FileUtil.ListFilesInDirectoryByFilter(outPath, new CompareTool.PngFileFilter(this));
+                imageFiles = FileUtil.ListFilesInDirectoryByFilter(outPath, new CompareTool.PngFileFilter(cmpPdfName));
                 foreach (FileInfo file in imageFiles) {
                     file.Delete();
                 }
-                cmpImageFiles = FileUtil.ListFilesInDirectoryByFilter(outPath, new CompareTool.CmpPngFileFilter(this));
+                cmpImageFiles = FileUtil.ListFilesInDirectoryByFilter(outPath, new CompareTool.CmpPngFileFilter(cmpPdfName
+                    ));
                 foreach (FileInfo file in cmpImageFiles) {
                     file.Delete();
                 }
-                diffFiles = FileUtil.ListFilesInDirectoryByFilter(outPath, new CompareTool.DiffPngFileFilter(this, differenceImagePrefix
+                diffFiles = FileUtil.ListFilesInDirectoryByFilter(outPath, new CompareTool.DiffPngFileFilter(differenceImagePrefix
                     ));
                 foreach (FileInfo file in diffFiles) {
                     file.Delete();
@@ -1162,111 +1275,79 @@ namespace iText.Kernel.Utils {
             }
         }
 
-        /// <summary>Runs ghostscript to create images of pdfs.</summary>
-        /// <param name="outPath">Path to the output folder.</param>
-        /// <exception cref="CompareToolExecutionException"/>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        private void RunGhostScriptImageGeneration(String outPath) {
-            if (!FileUtil.DirectoryExists(outPath)) {
-                throw new CompareTool.CompareToolExecutionException(this, cannotOpenOutputDirectory.Replace("<filename>", 
-                    outPdf));
-            }
-            String currGsParams = gsParams.Replace("<outputfile>", outPath + cmpImage).Replace("<inputfile>", cmpPdf);
-            if (!SystemUtil.RunProcessAndWait(gsExec, currGsParams)) {
-                throw new CompareTool.CompareToolExecutionException(this, gsFailed.Replace("<filename>", cmpPdf));
-            }
-            currGsParams = gsParams.Replace("<outputfile>", outPath + outImage).Replace("<inputfile>", outPdf);
-            if (!SystemUtil.RunProcessAndWait(gsExec, currGsParams)) {
-                throw new CompareTool.CompareToolExecutionException(this, gsFailed.Replace("<filename>", outPdf));
-            }
-        }
-
         private void PrintOutCmpDirectories() {
-            System.Console.Out.WriteLine("Out file folder: file:///" + UrlUtil.ToNormalizedURI(new FileInfo(outPdf).DirectoryName
-                ).AbsolutePath);
-            System.Console.Out.WriteLine("Cmp file folder: file:///" + UrlUtil.ToNormalizedURI(new FileInfo(cmpPdf).DirectoryName
-                ).AbsolutePath);
+            System.Console.Out.WriteLine("Out file folder: " + FILE_PROTOCOL + UrlUtil.ToNormalizedURI(new FileInfo(outPdf
+                ).DirectoryName).AbsolutePath);
+            System.Console.Out.WriteLine("Cmp file folder: " + FILE_PROTOCOL + UrlUtil.ToNormalizedURI(new FileInfo(cmpPdf
+                ).DirectoryName).AbsolutePath);
         }
 
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         private String CompareByContent(String outPath, String differenceImagePrefix, IDictionary<int, IList<Rectangle
             >> ignoredAreas) {
             PrintOutCmpDirectories();
             System.Console.Out.Write("Comparing by content..........");
-            PdfDocument outDocument;
-            try {
-                outDocument = new PdfDocument(new PdfReader(outPdf, GetOutReaderProperties()), new DocumentProperties().SetEventCountingMetaInfo
-                    (metaInfo));
-            }
-            catch (System.IO.IOException e) {
-                throw new System.IO.IOException("File \"" + outPdf + "\" not found", e);
-            }
-            IList<PdfDictionary> outPages = new List<PdfDictionary>();
-            outPagesRef = new List<PdfIndirectReference>();
-            LoadPagesFromReader(outDocument, outPages, outPagesRef);
-            PdfDocument cmpDocument;
-            try {
-                cmpDocument = new PdfDocument(new PdfReader(cmpPdf, GetCmpReaderProperties()), new DocumentProperties().SetEventCountingMetaInfo
-                    (metaInfo));
-            }
-            catch (System.IO.IOException e) {
-                throw new System.IO.IOException("File \"" + cmpPdf + "\" not found", e);
-            }
-            IList<PdfDictionary> cmpPages = new List<PdfDictionary>();
-            cmpPagesRef = new List<PdfIndirectReference>();
-            LoadPagesFromReader(cmpDocument, cmpPages, cmpPagesRef);
-            if (outPages.Count != cmpPages.Count) {
-                return CompareVisuallyAndCombineReports("Documents have different numbers of pages.", outPath, differenceImagePrefix
-                    , ignoredAreas, null);
-            }
-            CompareTool.CompareResult compareResult = new CompareTool.CompareResult(this, compareByContentErrorsLimit);
-            IList<int> equalPages = new List<int>(cmpPages.Count);
-            for (int i = 0; i < cmpPages.Count; i++) {
-                CompareTool.ObjectPath currentPath = new CompareTool.ObjectPath(cmpPagesRef[i], outPagesRef[i]);
-                if (CompareDictionariesExtended(outPages[i], cmpPages[i], currentPath, compareResult)) {
-                    equalPages.Add(i);
+            using (PdfReader readerOut = new PdfReader(outPdf, GetOutReaderProperties())) {
+                using (PdfDocument outDocument = new PdfDocument(readerOut, new DocumentProperties().SetEventCountingMetaInfo
+                    (metaInfo))) {
+                    using (PdfReader readerCmp = new PdfReader(cmpPdf, GetCmpReaderProperties())) {
+                        using (PdfDocument cmpDocument = new PdfDocument(readerCmp, new DocumentProperties().SetEventCountingMetaInfo
+                            (metaInfo))) {
+                            IList<PdfDictionary> outPages = new List<PdfDictionary>();
+                            outPagesRef = new List<PdfIndirectReference>();
+                            LoadPagesFromReader(outDocument, outPages, outPagesRef);
+                            IList<PdfDictionary> cmpPages = new List<PdfDictionary>();
+                            cmpPagesRef = new List<PdfIndirectReference>();
+                            LoadPagesFromReader(cmpDocument, cmpPages, cmpPagesRef);
+                            if (outPages.Count != cmpPages.Count) {
+                                return CompareVisuallyAndCombineReports("Documents have different numbers of pages.", outPath, differenceImagePrefix
+                                    , ignoredAreas, null);
+                            }
+                            CompareTool.CompareResult compareResult = new CompareTool.CompareResult(compareByContentErrorsLimit);
+                            IList<int> equalPages = new List<int>(cmpPages.Count);
+                            for (int i = 0; i < cmpPages.Count; i++) {
+                                ObjectPath currentPath = new ObjectPath(cmpPagesRef[i], outPagesRef[i]);
+                                if (CompareDictionariesExtended(outPages[i], cmpPages[i], currentPath, compareResult)) {
+                                    equalPages.Add(i);
+                                }
+                            }
+                            ObjectPath catalogPath = new ObjectPath(cmpDocument.GetCatalog().GetPdfObject().GetIndirectReference(), outDocument
+                                .GetCatalog().GetPdfObject().GetIndirectReference());
+                            ICollection<PdfName> ignoredCatalogEntries = new LinkedHashSet<PdfName>(JavaUtil.ArraysAsList(PdfName.Pages
+                                , PdfName.Metadata));
+                            CompareDictionariesExtended(outDocument.GetCatalog().GetPdfObject(), cmpDocument.GetCatalog().GetPdfObject
+                                (), catalogPath, compareResult, ignoredCatalogEntries);
+                            if (encryptionCompareEnabled) {
+                                CompareDocumentsEncryption(outDocument, cmpDocument, compareResult);
+                            }
+                            if (generateCompareByContentXmlReport) {
+                                String outPdfName = new FileInfo(outPdf).Name;
+                                FileStream xml = new FileStream(outPath + "/" + outPdfName.JSubstring(0, outPdfName.Length - 3) + "report.xml"
+                                    , FileMode.Create);
+                                try {
+                                    compareResult.WriteReportToXml(xml);
+                                }
+                                catch (Exception e) {
+                                    throw new Exception(e.Message, e);
+                                }
+                                finally {
+                                    xml.Dispose();
+                                }
+                            }
+                            if (equalPages.Count == cmpPages.Count && compareResult.IsOk()) {
+                                System.Console.Out.WriteLine("OK");
+                                System.Console.Out.Flush();
+                                return null;
+                            }
+                            else {
+                                return CompareVisuallyAndCombineReports(compareResult.GetReport(), outPath, differenceImagePrefix, ignoredAreas
+                                    , equalPages);
+                            }
+                        }
+                    }
                 }
-            }
-            CompareTool.ObjectPath catalogPath = new CompareTool.ObjectPath(cmpDocument.GetCatalog().GetPdfObject().GetIndirectReference
-                (), outDocument.GetCatalog().GetPdfObject().GetIndirectReference());
-            ICollection<PdfName> ignoredCatalogEntries = new LinkedHashSet<PdfName>(JavaUtil.ArraysAsList(PdfName.Pages
-                , PdfName.Metadata));
-            CompareDictionariesExtended(outDocument.GetCatalog().GetPdfObject(), cmpDocument.GetCatalog().GetPdfObject
-                (), catalogPath, compareResult, ignoredCatalogEntries);
-            if (encryptionCompareEnabled) {
-                CompareDocumentsEncryption(outDocument, cmpDocument, compareResult);
-            }
-            outDocument.Close();
-            cmpDocument.Close();
-            if (generateCompareByContentXmlReport) {
-                String outPdfName = new FileInfo(outPdf).Name;
-                FileStream xml = new FileStream(outPath + "/" + outPdfName.JSubstring(0, outPdfName.Length - 3) + "report.xml"
-                    , FileMode.Create);
-                try {
-                    compareResult.WriteReportToXml(xml);
-                }
-                catch (Exception e) {
-                    throw new Exception(e.Message, e);
-                }
-                finally {
-                    xml.Dispose();
-                }
-            }
-            if (equalPages.Count == cmpPages.Count && compareResult.IsOk()) {
-                System.Console.Out.WriteLine("OK");
-                System.Console.Out.Flush();
-                return null;
-            }
-            else {
-                return CompareVisuallyAndCombineReports(compareResult.GetReport(), outPath, differenceImagePrefix, ignoredAreas
-                    , equalPages);
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         private String CompareVisuallyAndCombineReports(String compareByFailContentReason, String outPath, String 
             differenceImagePrefix, IDictionary<int, IList<Rectangle>> ignoredAreas, IList<int> equalPages) {
             System.Console.Out.WriteLine("Fail");
@@ -1297,7 +1378,7 @@ namespace iText.Kernel.Utils {
             if (outEncrypt == null && cmpEncrypt == null) {
                 return;
             }
-            CompareTool.TrailerPath trailerPath = new CompareTool.TrailerPath(cmpDocument, outDocument);
+            TrailerPath trailerPath = new TrailerPath(cmpDocument, outDocument);
             if (outEncrypt == null) {
                 compareResult.AddError(trailerPath, "Expected encrypted document.");
                 return;
@@ -1308,8 +1389,8 @@ namespace iText.Kernel.Utils {
             }
             ICollection<PdfName> ignoredEncryptEntries = new LinkedHashSet<PdfName>(JavaUtil.ArraysAsList(PdfName.O, PdfName
                 .U, PdfName.OE, PdfName.UE, PdfName.Perms, PdfName.CF, PdfName.Recipients));
-            CompareTool.ObjectPath objectPath = new CompareTool.ObjectPath(outEncrypt.GetIndirectReference(), cmpEncrypt
-                .GetIndirectReference());
+            ObjectPath objectPath = new ObjectPath(outEncrypt.GetIndirectReference(), cmpEncrypt.GetIndirectReference(
+                ));
             CompareDictionariesExtended(outEncrypt, cmpEncrypt, objectPath, compareResult, ignoredEncryptEntries);
             PdfDictionary outCfDict = outEncrypt.GetAsDictionary(PdfName.CF);
             PdfDictionary cmpCfDict = cmpEncrypt.GetAsDictionary(PdfName.CF);
@@ -1332,7 +1413,6 @@ namespace iText.Kernel.Utils {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private bool CompareStreams(Stream is1, Stream is2) {
             byte[] buffer1 = new byte[64 * 1024];
             byte[] buffer2 = new byte[64 * 1024];
@@ -1354,13 +1434,13 @@ namespace iText.Kernel.Utils {
             return true;
         }
 
-        private bool CompareDictionariesExtended(PdfDictionary outDict, PdfDictionary cmpDict, CompareTool.ObjectPath
-             currentPath, CompareTool.CompareResult compareResult) {
+        private bool CompareDictionariesExtended(PdfDictionary outDict, PdfDictionary cmpDict, ObjectPath currentPath
+            , CompareTool.CompareResult compareResult) {
             return CompareDictionariesExtended(outDict, cmpDict, currentPath, compareResult, null);
         }
 
-        private bool CompareDictionariesExtended(PdfDictionary outDict, PdfDictionary cmpDict, CompareTool.ObjectPath
-             currentPath, CompareTool.CompareResult compareResult, ICollection<PdfName> excludedKeys) {
+        private bool CompareDictionariesExtended(PdfDictionary outDict, PdfDictionary cmpDict, ObjectPath currentPath
+            , CompareTool.CompareResult compareResult, ICollection<PdfName> excludedKeys) {
             if (cmpDict != null && outDict == null || outDict != null && cmpDict == null) {
                 compareResult.AddError(currentPath, "One of the dictionaries is null, the other is not.");
                 return false;
@@ -1422,8 +1502,8 @@ namespace iText.Kernel.Utils {
                     PdfNumber outLeftover = FlattenNumTree(outNumTree, null, outItems);
                     PdfNumber cmpLeftover = FlattenNumTree(cmpNumTree, null, cmpItems);
                     if (outLeftover != null) {
-                        LogManager.GetLogger(typeof(iText.Kernel.Utils.CompareTool)).Warn(iText.IO.LogMessageConstant.NUM_TREE_SHALL_NOT_END_WITH_KEY
-                            );
+                        ITextLogManager.GetLogger(typeof(iText.Kernel.Utils.CompareTool)).LogWarning(iText.IO.Logs.IoLogMessageConstant
+                            .NUM_TREE_SHALL_NOT_END_WITH_KEY);
                         if (cmpLeftover == null) {
                             if (compareResult != null && currentPath != null) {
                                 compareResult.AddError(currentPath, "Number tree unexpectedly ends with a key");
@@ -1432,8 +1512,8 @@ namespace iText.Kernel.Utils {
                         }
                     }
                     if (cmpLeftover != null) {
-                        LogManager.GetLogger(typeof(iText.Kernel.Utils.CompareTool)).Warn(iText.IO.LogMessageConstant.NUM_TREE_SHALL_NOT_END_WITH_KEY
-                            );
+                        ITextLogManager.GetLogger(typeof(iText.Kernel.Utils.CompareTool)).LogWarning(iText.IO.Logs.IoLogMessageConstant
+                            .NUM_TREE_SHALL_NOT_END_WITH_KEY);
                         if (outLeftover == null) {
                             if (compareResult != null && currentPath != null) {
                                 compareResult.AddError(currentPath, "Number tree was expected to end with a key (although it is invalid according to the specification), but ended with a value"
@@ -1508,8 +1588,8 @@ namespace iText.Kernel.Utils {
             return null;
         }
 
-        private bool CompareObjects(PdfObject outObj, PdfObject cmpObj, CompareTool.ObjectPath currentPath, CompareTool.CompareResult
-             compareResult) {
+        protected internal virtual bool CompareObjects(PdfObject outObj, PdfObject cmpObj, ObjectPath currentPath, 
+            CompareTool.CompareResult compareResult) {
             PdfObject outDirectObj = null;
             PdfObject cmpDirectObj = null;
             if (outObj != null) {
@@ -1582,7 +1662,7 @@ namespace iText.Kernel.Utils {
                         outPagesRef.Add(outRefKey.GetDocument().GetPage(i).GetPdfObject().GetIndirectReference());
                     }
                 }
-                // If at least on of the page dictionaries is in the document's page tree, we don't proceed with deep comparison,
+                // If at least one of the page dictionaries is in the document's page tree, we don't proceed with deep comparison,
                 // because pages are compared at different level, so we compare only their index.
                 // However only if both page dictionaries are not in the document's page trees, we continue to comparing them as normal dictionaries.
                 if (cmpPagesRef.Contains(cmpRefKey) || outPagesRef.Contains(outRefKey)) {
@@ -1597,50 +1677,40 @@ namespace iText.Kernel.Utils {
                 }
             }
             if (cmpDirectObj.IsDictionary()) {
-                if (!CompareDictionariesExtended((PdfDictionary)outDirectObj, (PdfDictionary)cmpDirectObj, currentPath, compareResult
-                    )) {
-                    return false;
-                }
+                return CompareDictionariesExtended((PdfDictionary)outDirectObj, (PdfDictionary)cmpDirectObj, currentPath, 
+                    compareResult);
             }
             else {
                 if (cmpDirectObj.IsStream()) {
-                    if (!CompareStreamsExtended((PdfStream)outDirectObj, (PdfStream)cmpDirectObj, currentPath, compareResult)) {
-                        return false;
-                    }
+                    return CompareStreamsExtended((PdfStream)outDirectObj, (PdfStream)cmpDirectObj, currentPath, compareResult
+                        );
                 }
                 else {
                     if (cmpDirectObj.IsArray()) {
-                        if (!CompareArraysExtended((PdfArray)outDirectObj, (PdfArray)cmpDirectObj, currentPath, compareResult)) {
-                            return false;
-                        }
+                        return CompareArraysExtended((PdfArray)outDirectObj, (PdfArray)cmpDirectObj, currentPath, compareResult);
                     }
                     else {
                         if (cmpDirectObj.IsName()) {
-                            if (!CompareNamesExtended((PdfName)outDirectObj, (PdfName)cmpDirectObj, currentPath, compareResult)) {
-                                return false;
-                            }
+                            return CompareNamesExtended((PdfName)outDirectObj, (PdfName)cmpDirectObj, currentPath, compareResult);
                         }
                         else {
                             if (cmpDirectObj.IsNumber()) {
-                                if (!CompareNumbersExtended((PdfNumber)outDirectObj, (PdfNumber)cmpDirectObj, currentPath, compareResult)) {
-                                    return false;
-                                }
+                                return CompareNumbersExtended((PdfNumber)outDirectObj, (PdfNumber)cmpDirectObj, currentPath, compareResult
+                                    );
                             }
                             else {
                                 if (cmpDirectObj.IsString()) {
-                                    if (!CompareStringsExtended((PdfString)outDirectObj, (PdfString)cmpDirectObj, currentPath, compareResult)) {
-                                        return false;
-                                    }
+                                    return CompareStringsExtended((PdfString)outDirectObj, (PdfString)cmpDirectObj, currentPath, compareResult
+                                        );
                                 }
                                 else {
                                     if (cmpDirectObj.IsBoolean()) {
-                                        if (!CompareBooleansExtended((PdfBoolean)outDirectObj, (PdfBoolean)cmpDirectObj, currentPath, compareResult
-                                            )) {
-                                            return false;
-                                        }
+                                        return CompareBooleansExtended((PdfBoolean)outDirectObj, (PdfBoolean)cmpDirectObj, currentPath, compareResult
+                                            );
                                     }
                                     else {
                                         if (outDirectObj.IsNull() && cmpDirectObj.IsNull()) {
+                                            return true;
                                         }
                                         else {
                                             throw new NotSupportedException();
@@ -1652,11 +1722,10 @@ namespace iText.Kernel.Utils {
                     }
                 }
             }
-            return true;
         }
 
-        private bool CompareStreamsExtended(PdfStream outStream, PdfStream cmpStream, CompareTool.ObjectPath currentPath
-            , CompareTool.CompareResult compareResult) {
+        private bool CompareStreamsExtended(PdfStream outStream, PdfStream cmpStream, ObjectPath currentPath, CompareTool.CompareResult
+             compareResult) {
             bool toDecode = PdfName.FlateDecode.Equals(outStream.Get(PdfName.Filter));
             byte[] outStreamBytes = outStream.GetBytes(toDecode);
             byte[] cmpStreamBytes = cmpStream.GetBytes(toDecode);
@@ -1703,14 +1772,14 @@ namespace iText.Kernel.Utils {
                 int rCmp = Math.Min(cmpStreamBytes.Length, firstDifferenceOffset + diffBytesAreaR);
                 int lOut = Math.Max(0, firstDifferenceOffset - diffBytesAreaL);
                 int rOut = Math.Min(outStreamBytes.Length, firstDifferenceOffset + diffBytesAreaR);
-                String cmpByte = iText.IO.Util.JavaUtil.GetStringForBytes(new byte[] { cmpStreamBytes[firstDifferenceOffset
-                    ] });
-                String cmpByteNeighbours = iText.IO.Util.StringUtil.ReplaceAll(iText.IO.Util.JavaUtil.GetStringForBytes(cmpStreamBytes
-                    , lCmp, rCmp - lCmp), "\\r|\\n", " ");
-                String outByte = iText.IO.Util.JavaUtil.GetStringForBytes(new byte[] { outStreamBytes[firstDifferenceOffset
-                    ] });
-                String outBytesNeighbours = iText.IO.Util.StringUtil.ReplaceAll(iText.IO.Util.JavaUtil.GetStringForBytes(outStreamBytes
-                    , lOut, rOut - lOut), "\\r|\\n", " ");
+                String cmpByte = iText.Commons.Utils.JavaUtil.GetStringForBytes(new byte[] { cmpStreamBytes[firstDifferenceOffset
+                    ] }, iText.Commons.Utils.EncodingUtil.ISO_8859_1);
+                String cmpByteNeighbours = iText.Commons.Utils.StringUtil.ReplaceAll(iText.Commons.Utils.JavaUtil.GetStringForBytes
+                    (cmpStreamBytes, lCmp, rCmp - lCmp, iText.Commons.Utils.EncodingUtil.ISO_8859_1), NEW_LINES, " ");
+                String outByte = iText.Commons.Utils.JavaUtil.GetStringForBytes(new byte[] { outStreamBytes[firstDifferenceOffset
+                    ] }, iText.Commons.Utils.EncodingUtil.ISO_8859_1);
+                String outBytesNeighbours = iText.Commons.Utils.StringUtil.ReplaceAll(iText.Commons.Utils.JavaUtil.GetStringForBytes
+                    (outStreamBytes, lOut, rOut - lOut, iText.Commons.Utils.EncodingUtil.ISO_8859_1), NEW_LINES, " ");
                 bytesDifference = MessageFormatUtil.Format("First bytes difference is encountered at index {0}. Expected: {1} ({2}). Found: {3} ({4}). Total number of different bytes: {5}"
                     , JavaUtil.IntegerToString(Convert.ToInt32(firstDifferenceOffset)), cmpByte, cmpByteNeighbours, outByte
                     , outBytesNeighbours, numberOfDifferentBytes);
@@ -1725,8 +1794,8 @@ namespace iText.Kernel.Utils {
             return firstDifferenceOffset;
         }
 
-        private bool CompareArraysExtended(PdfArray outArray, PdfArray cmpArray, CompareTool.ObjectPath currentPath
-            , CompareTool.CompareResult compareResult) {
+        private bool CompareArraysExtended(PdfArray outArray, PdfArray cmpArray, ObjectPath currentPath, CompareTool.CompareResult
+             compareResult) {
             if (outArray == null) {
                 if (compareResult != null && currentPath != null) {
                     compareResult.AddError(currentPath, "Found null. Expected PdfArray.");
@@ -1760,7 +1829,7 @@ namespace iText.Kernel.Utils {
             return arraysAreEqual;
         }
 
-        private bool CompareNamesExtended(PdfName outName, PdfName cmpName, CompareTool.ObjectPath currentPath, CompareTool.CompareResult
+        private bool CompareNamesExtended(PdfName outName, PdfName cmpName, ObjectPath currentPath, CompareTool.CompareResult
              compareResult) {
             if (cmpName.Equals(outName)) {
                 return true;
@@ -1774,8 +1843,8 @@ namespace iText.Kernel.Utils {
             }
         }
 
-        private bool CompareNumbersExtended(PdfNumber outNumber, PdfNumber cmpNumber, CompareTool.ObjectPath currentPath
-            , CompareTool.CompareResult compareResult) {
+        private bool CompareNumbersExtended(PdfNumber outNumber, PdfNumber cmpNumber, ObjectPath currentPath, CompareTool.CompareResult
+             compareResult) {
             if (cmpNumber.GetValue() == outNumber.GetValue()) {
                 return true;
             }
@@ -1788,8 +1857,8 @@ namespace iText.Kernel.Utils {
             }
         }
 
-        private bool CompareStringsExtended(PdfString outString, PdfString cmpString, CompareTool.ObjectPath currentPath
-            , CompareTool.CompareResult compareResult) {
+        private bool CompareStringsExtended(PdfString outString, PdfString cmpString, ObjectPath currentPath, CompareTool.CompareResult
+             compareResult) {
             if (JavaUtil.ArraysEquals(ConvertPdfStringToBytes(cmpString), ConvertPdfStringToBytes(outString))) {
                 return true;
             }
@@ -1835,10 +1904,10 @@ namespace iText.Kernel.Utils {
                 int lOut = Math.Max(0, firstDifferenceOffset - diffBytesAreaL);
                 int rOut = Math.Min(outString.Length, firstDifferenceOffset + diffBytesAreaR);
                 String cmpByte = cmpString[firstDifferenceOffset].ToString();
-                String cmpByteNeighbours = iText.IO.Util.StringUtil.ReplaceAll(cmpString.JSubstring(lCmp, rCmp), "\\r|\\n"
+                String cmpByteNeighbours = iText.Commons.Utils.StringUtil.ReplaceAll(cmpString.JSubstring(lCmp, rCmp), NEW_LINES
                     , " ");
                 String outByte = outString[firstDifferenceOffset].ToString();
-                String outBytesNeighbours = iText.IO.Util.StringUtil.ReplaceAll(outString.JSubstring(lOut, rOut), "\\r|\\n"
+                String outBytesNeighbours = iText.Commons.Utils.StringUtil.ReplaceAll(outString.JSubstring(lOut, rOut), NEW_LINES
                     , " ");
                 stringDifference = MessageFormatUtil.Format("First characters difference is encountered at index {0}.\nExpected: {1} ({2}).\nFound: {3} ({4}).\nTotal number of different characters: {5}"
                     , JavaUtil.IntegerToString(Convert.ToInt32(firstDifferenceOffset)), cmpByte, cmpByteNeighbours, outByte
@@ -1858,7 +1927,7 @@ namespace iText.Kernel.Utils {
             byte[] bytes;
             String value = pdfString.GetValue();
             String encoding = pdfString.GetEncoding();
-            if (encoding != null && encoding.Equals(PdfEncodings.UNICODE_BIG) && PdfEncodings.IsPdfDocEncoding(value)) {
+            if (encoding != null && PdfEncodings.UNICODE_BIG.Equals(encoding) && PdfEncodings.IsPdfDocEncoding(value)) {
                 bytes = PdfEncodings.ConvertToBytes(value, PdfEncodings.PDF_DOC_ENCODING);
             }
             else {
@@ -1867,8 +1936,8 @@ namespace iText.Kernel.Utils {
             return bytes;
         }
 
-        private bool CompareBooleansExtended(PdfBoolean outBoolean, PdfBoolean cmpBoolean, CompareTool.ObjectPath 
-            currentPath, CompareTool.CompareResult compareResult) {
+        private bool CompareBooleansExtended(PdfBoolean outBoolean, PdfBoolean cmpBoolean, ObjectPath currentPath, 
+            CompareTool.CompareResult compareResult) {
             if (cmpBoolean.GetValue() == outBoolean.GetValue()) {
                 return true;
             }
@@ -1904,10 +1973,8 @@ namespace iText.Kernel.Utils {
                 else {
                     PdfArray explicitCmpDest = null;
                     PdfArray explicitOutDest = null;
-                    IDictionary<String, PdfObject> cmpNamedDestinations = cmpDocument.GetCatalog().GetNameTree(PdfName.Dests).
-                        GetNames();
-                    IDictionary<String, PdfObject> outNamedDestinations = outDocument.GetCatalog().GetNameTree(PdfName.Dests).
-                        GetNames();
+                    PdfNameTree cmpNamedDestinations = cmpDocument.GetCatalog().GetNameTree(PdfName.Dests);
+                    PdfNameTree outNamedDestinations = outDocument.GetCatalog().GetNameTree(PdfName.Dests);
                     switch (cmpDestObject.GetObjectType()) {
                         case PdfObject.ARRAY: {
                             explicitCmpDest = (PdfArray)cmpDestObject;
@@ -1916,14 +1983,16 @@ namespace iText.Kernel.Utils {
                         }
 
                         case PdfObject.NAME: {
-                            explicitCmpDest = (PdfArray)cmpNamedDestinations.Get(((PdfName)cmpDestObject).GetValue());
-                            explicitOutDest = (PdfArray)outNamedDestinations.Get(((PdfName)outDestObject).GetValue());
+                            String cmpDestName = ((PdfName)cmpDestObject).GetValue();
+                            explicitCmpDest = (PdfArray)cmpNamedDestinations.GetEntry(cmpDestName);
+                            String outDestName = ((PdfName)outDestObject).GetValue();
+                            explicitOutDest = (PdfArray)outNamedDestinations.GetEntry(outDestName);
                             break;
                         }
 
                         case PdfObject.STRING: {
-                            explicitCmpDest = (PdfArray)cmpNamedDestinations.Get(((PdfString)cmpDestObject).ToUnicodeString());
-                            explicitOutDest = (PdfArray)outNamedDestinations.Get(((PdfString)outDestObject).ToUnicodeString());
+                            explicitCmpDest = (PdfArray)cmpNamedDestinations.GetEntry((PdfString)cmpDestObject);
+                            explicitOutDest = (PdfArray)outNamedDestinations.GetEntry((PdfString)outDestObject);
                             break;
                         }
 
@@ -1983,52 +2052,49 @@ namespace iText.Kernel.Utils {
             throw new ArgumentException("PdfLinkAnnotation comparison: Page not found.");
         }
 
-        private class PngFileFilter : iText.IO.Util.FileUtil.IFileFilter {
+        private class PngFileFilter : iText.Commons.Utils.FileUtil.IFileFilter {
+            private String currentOutPdfName;
+
+            public PngFileFilter(String currentOutPdfName) {
+                this.currentOutPdfName = currentOutPdfName;
+            }
+
             public virtual bool Accept(FileInfo pathname) {
                 String ap = pathname.Name;
                 bool b1 = ap.EndsWith(".png");
                 bool b2 = ap.Contains("cmp_");
-                return b1 && !b2 && ap.Contains(this._enclosing.outPdfName);
+                return b1 && !b2 && ap.Contains(currentOutPdfName);
             }
-
-            internal PngFileFilter(CompareTool _enclosing) {
-                this._enclosing = _enclosing;
-            }
-
-            private readonly CompareTool _enclosing;
         }
 
-        private class CmpPngFileFilter : iText.IO.Util.FileUtil.IFileFilter {
+        private class CmpPngFileFilter : iText.Commons.Utils.FileUtil.IFileFilter {
+            private String currentCmpPdfName;
+
+            public CmpPngFileFilter(String currentCmpPdfName) {
+                this.currentCmpPdfName = currentCmpPdfName;
+            }
+
             public virtual bool Accept(FileInfo pathname) {
                 String ap = pathname.Name;
                 bool b1 = ap.EndsWith(".png");
                 bool b2 = ap.Contains("cmp_");
-                return b1 && b2 && ap.Contains(this._enclosing.cmpPdfName);
+                return b1 && b2 && ap.Contains(currentCmpPdfName);
             }
-
-            internal CmpPngFileFilter(CompareTool _enclosing) {
-                this._enclosing = _enclosing;
-            }
-
-            private readonly CompareTool _enclosing;
         }
 
-        private class DiffPngFileFilter : iText.IO.Util.FileUtil.IFileFilter {
+        private class DiffPngFileFilter : iText.Commons.Utils.FileUtil.IFileFilter {
             private String differenceImagePrefix;
 
-            public DiffPngFileFilter(CompareTool _enclosing, String differenceImagePrefix) {
-                this._enclosing = _enclosing;
+            public DiffPngFileFilter(String differenceImagePrefix) {
                 this.differenceImagePrefix = differenceImagePrefix;
             }
 
             public virtual bool Accept(FileInfo pathname) {
                 String ap = pathname.Name;
                 bool b1 = ap.EndsWith(".png");
-                bool b2 = ap.StartsWith(this.differenceImagePrefix);
+                bool b2 = ap.StartsWith(differenceImagePrefix);
                 return b1 && b2;
             }
-
-            private readonly CompareTool _enclosing;
         }
 
         private class ImageNameComparator : IComparer<FileInfo> {
@@ -2037,51 +2103,44 @@ namespace iText.Kernel.Utils {
                 String f2Name = f2.Name;
                 return string.CompareOrdinal(f1Name, f2Name);
             }
-
-            internal ImageNameComparator(CompareTool _enclosing) {
-                this._enclosing = _enclosing;
-            }
-
-            private readonly CompareTool _enclosing;
         }
 
         /// <summary>Class containing results of the comparison of two documents.</summary>
         public class CompareResult {
-            protected internal IDictionary<CompareTool.ObjectPath, String> differences = new LinkedDictionary<CompareTool.ObjectPath
-                , String>();
+            // LinkedHashMap to retain order. HashMap has different order in Java6/7 and Java8
+            protected internal IDictionary<ObjectPath, String> differences = new LinkedDictionary<ObjectPath, String>(
+                );
 
             protected internal int messageLimit = 1;
 
             /// <summary>Creates new empty instance of CompareResult with given limit of difference messages.</summary>
-            /// <param name="messageLimit">maximum number of difference messages handled by this CompareResult.</param>
-            public CompareResult(CompareTool _enclosing, int messageLimit) {
-                this._enclosing = _enclosing;
-                // LinkedHashMap to retain order. HashMap has different order in Java6/7 and Java8
+            /// <param name="messageLimit">maximum number of difference messages to be handled by this CompareResult.</param>
+            public CompareResult(int messageLimit) {
                 this.messageLimit = messageLimit;
             }
 
-            /// <summary>Is used to define if documents are considered equal after comparison.</summary>
+            /// <summary>Verifies if documents are considered equal after comparison.</summary>
             /// <returns>true if documents are equal, false otherwise.</returns>
             public virtual bool IsOk() {
-                return this.differences.Count == 0;
+                return differences.Count == 0;
             }
 
-            /// <summary>Returns number of differences between two documents met during comparison.</summary>
+            /// <summary>Returns number of differences between two documents detected during comparison.</summary>
             /// <returns>number of differences.</returns>
             public virtual int GetErrorCount() {
-                return this.differences.Count;
+                return differences.Count;
             }
 
             /// <summary>Converts this CompareResult into text form.</summary>
-            /// <returns>text report of the differences between two documents.</returns>
+            /// <returns>text report on the differences between two documents.</returns>
             public virtual String GetReport() {
                 StringBuilder sb = new StringBuilder();
                 bool firstEntry = true;
-                foreach (KeyValuePair<CompareTool.ObjectPath, String> entry in this.differences) {
+                foreach (KeyValuePair<ObjectPath, String> entry in differences) {
                     if (!firstEntry) {
                         sb.Append("-----------------------------").Append("\n");
                     }
-                    CompareTool.ObjectPath diffPath = entry.Key;
+                    ObjectPath diffPath = entry.Key;
                     sb.Append(entry.Value).Append("\n").Append(diffPath.ToString()).Append("\n");
                     firstEntry = false;
                 }
@@ -2090,25 +2149,23 @@ namespace iText.Kernel.Utils {
 
             /// <summary>
             /// Returns map with
-            /// <see cref="ObjectPath"/>
+            /// <see cref="iText.Kernel.Utils.Objectpathitems.ObjectPath"/>
             /// as keys and difference descriptions as values.
             /// </summary>
-            /// <returns>differences map which could be used to find in the document objects that are different.</returns>
-            public virtual IDictionary<CompareTool.ObjectPath, String> GetDifferences() {
-                return this.differences;
+            /// <returns>differences map which could be used to find in the document the objects that are different.</returns>
+            public virtual IDictionary<ObjectPath, String> GetDifferences() {
+                return differences;
             }
 
             /// <summary>Converts this CompareResult into xml form.</summary>
             /// <param name="stream">output stream to which xml report will be written.</param>
-            /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-            /// <exception cref="Javax.Xml.Transform.TransformerException"/>
             public virtual void WriteReportToXml(Stream stream) {
-                XmlDocument xmlReport = XmlUtils.InitNewXmlDocument();
+                XmlDocument xmlReport = XmlUtil.InitNewXmlDocument();
                 XmlElement root = xmlReport.CreateElement("report");
                 XmlElement errors = xmlReport.CreateElement("errors");
-                errors.SetAttribute("count", this.differences.Count.ToString());
+                errors.SetAttribute("count", differences.Count.ToString());
                 root.AppendChild(errors);
-                foreach (KeyValuePair<CompareTool.ObjectPath, String> entry in this.differences) {
+                foreach (KeyValuePair<ObjectPath, String> entry in differences) {
                     XmlNode errorNode = xmlReport.CreateElement("error");
                     XmlNode message = xmlReport.CreateElement("message");
                     message.AppendChild(xmlReport.CreateTextNode(entry.Value));
@@ -2122,534 +2179,29 @@ namespace iText.Kernel.Utils {
             }
 
             protected internal virtual bool IsMessageLimitReached() {
-                return this.differences.Count >= this.messageLimit;
+                return differences.Count >= messageLimit;
             }
 
-            protected internal virtual void AddError(CompareTool.ObjectPath path, String message) {
-                if (this.differences.Count < this.messageLimit) {
-                    this.differences.Put(((CompareTool.ObjectPath)path.Clone()), message);
+            protected internal virtual void AddError(ObjectPath path, String message) {
+                if (differences.Count < messageLimit) {
+                    differences.Put(new ObjectPath(path), message);
                 }
             }
-
-            private readonly CompareTool _enclosing;
         }
 
         /// <summary>
-        /// Class that helps to find two corresponding objects in the comparing documents and also keeps track of the
-        /// already met in comparing process parent indirect objects.
+        /// Exceptions thrown when errors occur during generation and comparison of images obtained on the basis of pdf
+        /// files.
         /// </summary>
-        /// <remarks>
-        /// Class that helps to find two corresponding objects in the comparing documents and also keeps track of the
-        /// already met in comparing process parent indirect objects.
-        /// <p>
-        /// You could say that ObjectPath instance consists of two parts: direct path and indirect path. Direct path defines
-        /// path to the currently comparing objects in relation to base objects. It could be empty, which would mean that
-        /// currently comparing objects are base objects themselves. Base objects are the two indirect objects from the comparing
-        /// documents which are in the same position in the pdf trees. Another part, indirect path, defines which indirect
-        /// objects were met during comparison process to get to the current base objects. Indirect path is needed to avoid
-        /// infinite loops during comparison.
-        /// </remarks>
-        public class ObjectPath {
-            protected internal PdfIndirectReference baseCmpObject;
-
-            protected internal PdfIndirectReference baseOutObject;
-
-            protected internal Stack<CompareTool.ObjectPath.LocalPathItem> path = new Stack<CompareTool.ObjectPath.LocalPathItem
-                >();
-
-            protected internal Stack<CompareTool.ObjectPath.IndirectPathItem> indirects = new Stack<CompareTool.ObjectPath.IndirectPathItem
-                >();
-
-            /// <summary>Creates empty ObjectPath.</summary>
-            public ObjectPath() {
-            }
-
-            /// <summary>Creates ObjectPath with corresponding base objects in two documents.</summary>
-            /// <param name="baseCmpObject">base object in cmp document.</param>
-            /// <param name="baseOutObject">base object in out document.</param>
-            protected internal ObjectPath(PdfIndirectReference baseCmpObject, PdfIndirectReference baseOutObject) {
-                this.baseCmpObject = baseCmpObject;
-                this.baseOutObject = baseOutObject;
-                indirects.Push(new CompareTool.ObjectPath.IndirectPathItem(this, baseCmpObject, baseOutObject));
-            }
-
-            private ObjectPath(PdfIndirectReference baseCmpObject, PdfIndirectReference baseOutObject, Stack<CompareTool.ObjectPath.LocalPathItem
-                > path, Stack<CompareTool.ObjectPath.IndirectPathItem> indirects) {
-                this.baseCmpObject = baseCmpObject;
-                this.baseOutObject = baseOutObject;
-                this.path = path;
-                this.indirects = indirects;
-            }
-
-            /// <summary>
-            /// Creates a new ObjectPath instance with two new given base objects, which are supposed to be nested in the base
-            /// objects of the current instance of the ObjectPath.
-            /// </summary>
-            /// <remarks>
-            /// Creates a new ObjectPath instance with two new given base objects, which are supposed to be nested in the base
-            /// objects of the current instance of the ObjectPath. This method is used to avoid infinite loop in case of
-            /// circular references in pdf documents objects structure.
-            /// <br />
-            /// Basically, this method creates copy of the current ObjectPath instance, but resets information of the direct
-            /// paths, and also adds current ObjectPath instance base objects to the indirect references chain that denotes
-            /// a path to the new base objects.
-            /// </remarks>
-            /// <param name="baseCmpObject">new base object in cmp document.</param>
-            /// <param name="baseOutObject">new base object in out document.</param>
-            /// <returns>
-            /// new ObjectPath instance, which stores chain of the indirect references which were already met to get
-            /// to the new base objects.
-            /// </returns>
-            public virtual CompareTool.ObjectPath ResetDirectPath(PdfIndirectReference baseCmpObject, PdfIndirectReference
-                 baseOutObject) {
-                CompareTool.ObjectPath newPath = new CompareTool.ObjectPath(baseCmpObject, baseOutObject, new Stack<CompareTool.ObjectPath.LocalPathItem
-                    >(), (Stack<CompareTool.ObjectPath.IndirectPathItem>)indirects.Clone());
-                newPath.indirects.Push(new CompareTool.ObjectPath.IndirectPathItem(this, baseCmpObject, baseOutObject));
-                return newPath;
-            }
-
-            /// <summary>This method is used to define if given objects were already met in the path to the current base objects.
-            ///     </summary>
-            /// <remarks>
-            /// This method is used to define if given objects were already met in the path to the current base objects.
-            /// If this method returns true it basically means that we found a loop in the objects structure and that we
-            /// already compared these objects.
-            /// </remarks>
-            /// <param name="cmpObject">cmp object to check if it was already met in base objects path.</param>
-            /// <param name="outObject">out object to check if it was already met in base objects path.</param>
-            /// <returns>true if given objects are contained in the path and therefore were already compared.</returns>
-            public virtual bool IsComparing(PdfIndirectReference cmpObject, PdfIndirectReference outObject) {
-                return indirects.Contains(new CompareTool.ObjectPath.IndirectPathItem(this, cmpObject, outObject));
-            }
-
-            /// <summary>Adds array item to the direct path.</summary>
-            /// <remarks>
-            /// Adds array item to the direct path. See
-            /// <see cref="ArrayPathItem"/>
-            /// .
-            /// </remarks>
-            /// <param name="index">index in the array of the direct object to be compared.</param>
-            public virtual void PushArrayItemToPath(int index) {
-                path.Push(new CompareTool.ObjectPath.ArrayPathItem(index));
-            }
-
-            /// <summary>Adds dictionary item to the direct path.</summary>
-            /// <remarks>
-            /// Adds dictionary item to the direct path. See
-            /// <see cref="DictPathItem"/>
-            /// .
-            /// </remarks>
-            /// <param name="key">key in the dictionary to which corresponds direct object to be compared.</param>
-            public virtual void PushDictItemToPath(PdfName key) {
-                path.Push(new CompareTool.ObjectPath.DictPathItem(key));
-            }
-
-            /// <summary>Adds offset item to the direct path.</summary>
-            /// <remarks>
-            /// Adds offset item to the direct path. See
-            /// <see cref="OffsetPathItem"/>
-            /// .
-            /// </remarks>
-            /// <param name="offset">offset to the specific byte in the stream that is compared.</param>
-            public virtual void PushOffsetToPath(int offset) {
-                path.Push(new CompareTool.ObjectPath.OffsetPathItem(offset));
-            }
-
-            /// <summary>Removes the last path item from the direct path.</summary>
-            public virtual void Pop() {
-                path.Pop();
-            }
-
-            /// <summary>
-            /// Gets local (or direct) path that denotes sequence of the path items from base object to the comparing
-            /// direct object.
-            /// </summary>
-            /// <returns>direct path to the comparing object.</returns>
-            public virtual Stack<CompareTool.ObjectPath.LocalPathItem> GetLocalPath() {
-                return path;
-            }
-
-            /// <summary>
-            /// Gets indirect path which denotes sequence of the indirect references that were passed in comparing process
-            /// to get to the current base objects.
-            /// </summary>
-            /// <returns>indirect path to the current base objects.</returns>
-            public virtual Stack<CompareTool.ObjectPath.IndirectPathItem> GetIndirectPath() {
-                return indirects;
-            }
-
-            /// <returns>current base object in the cmp document.</returns>
-            public virtual PdfIndirectReference GetBaseCmpObject() {
-                return baseCmpObject;
-            }
-
-            /// <returns>current base object in the out document.</returns>
-            public virtual PdfIndirectReference GetBaseOutObject() {
-                return baseOutObject;
-            }
-
-            /// <summary>Creates an xml node that describes a direct path stored in this ObjectPath instance.</summary>
-            /// <param name="document">xml document, to which this xml node will be added.</param>
-            /// <returns>an xml node describing direct path.</returns>
-            public virtual XmlElement ToXmlNode(XmlDocument document) {
-                XmlElement element = document.CreateElement("path");
-                XmlElement baseNode = document.CreateElement("base");
-                baseNode.SetAttribute("cmp", MessageFormatUtil.Format("{0} {1} obj", baseCmpObject.GetObjNumber(), baseCmpObject
-                    .GetGenNumber()));
-                baseNode.SetAttribute("out", MessageFormatUtil.Format("{0} {1} obj", baseOutObject.GetObjNumber(), baseOutObject
-                    .GetGenNumber()));
-                element.AppendChild(baseNode);
-                Stack<CompareTool.ObjectPath.LocalPathItem> pathClone = (Stack<CompareTool.ObjectPath.LocalPathItem>)path.
-                    Clone();
-                IList<CompareTool.ObjectPath.LocalPathItem> localPathItems = new List<CompareTool.ObjectPath.LocalPathItem
-                    >(path.Count);
-                for (int i = 0; i < path.Count; ++i) {
-                    localPathItems.Add(pathClone.Pop());
-                }
-                for (int i = localPathItems.Count - 1; i >= 0; --i) {
-                    element.AppendChild(localPathItems[i].ToXmlNode(document));
-                }
-                return element;
-            }
-
-            /// <returns>string representation of the direct path stored in this ObjectPath instance.</returns>
-            public override String ToString() {
-                StringBuilder sb = new StringBuilder();
-                sb.Append(MessageFormatUtil.Format("Base cmp object: {0} obj. Base out object: {1} obj", baseCmpObject, baseOutObject
-                    ));
-                Stack<CompareTool.ObjectPath.LocalPathItem> pathClone = (Stack<CompareTool.ObjectPath.LocalPathItem>)path.
-                    Clone();
-                IList<CompareTool.ObjectPath.LocalPathItem> localPathItems = new List<CompareTool.ObjectPath.LocalPathItem
-                    >(path.Count);
-                for (int i = 0; i < path.Count; ++i) {
-                    localPathItems.Add(pathClone.Pop());
-                }
-                for (int i = localPathItems.Count - 1; i >= 0; --i) {
-                    sb.Append("\n");
-                    sb.Append(localPathItems[i].ToString());
-                }
-                return sb.ToString();
-            }
-
-            public override int GetHashCode() {
-                int hashCode = (baseCmpObject != null ? baseCmpObject.GetHashCode() : 0) * 31 + (baseOutObject != null ? baseOutObject
-                    .GetHashCode() : 0);
-                foreach (CompareTool.ObjectPath.LocalPathItem pathItem in path) {
-                    hashCode *= 31;
-                    hashCode += pathItem.GetHashCode();
-                }
-                return hashCode;
-            }
-
-            public override bool Equals(Object obj) {
-                return obj.GetType() == GetType() && baseCmpObject.Equals(((CompareTool.ObjectPath)obj).baseCmpObject) && 
-                    baseOutObject.Equals(((CompareTool.ObjectPath)obj).baseOutObject) && Enumerable.SequenceEqual(path, ((
-                    CompareTool.ObjectPath)obj).path);
-            }
-
-            protected internal virtual Object Clone() {
-                return new CompareTool.ObjectPath(baseCmpObject, baseOutObject, (Stack<CompareTool.ObjectPath.LocalPathItem
-                    >)path.Clone(), (Stack<CompareTool.ObjectPath.IndirectPathItem>)indirects.Clone());
-            }
-
-            /// <summary>
-            /// An item in the indirect path (see
-            /// <see cref="ObjectPath"/>
-            /// . It encapsulates two corresponding objects from the two
-            /// comparing documents that were met to get to the path base objects during comparing process.
-            /// </summary>
-            public class IndirectPathItem {
-                private PdfIndirectReference cmpObject;
-
-                private PdfIndirectReference outObject;
-
-                /// <summary>Creates IndirectPathItem instance for two corresponding objects from two comparing documents.</summary>
-                /// <param name="cmpObject">an object from the cmp document.</param>
-                /// <param name="outObject">an object from the out document.</param>
-                public IndirectPathItem(ObjectPath _enclosing, PdfIndirectReference cmpObject, PdfIndirectReference outObject
-                    ) {
-                    this._enclosing = _enclosing;
-                    this.cmpObject = cmpObject;
-                    this.outObject = outObject;
-                }
-
-                /// <returns>an object from the cmp object that was met to get to the path base objects during comparing process.
-                ///     </returns>
-                public virtual PdfIndirectReference GetCmpObject() {
-                    return this.cmpObject;
-                }
-
-                /// <returns>an object from the out object that was met to get to the path base objects during comparing process.
-                ///     </returns>
-                public virtual PdfIndirectReference GetOutObject() {
-                    return this.outObject;
-                }
-
-                public override int GetHashCode() {
-                    return this.cmpObject.GetHashCode() * 31 + this.outObject.GetHashCode();
-                }
-
-                public override bool Equals(Object obj) {
-                    return (obj.GetType() == this.GetType() && this.cmpObject.Equals(((CompareTool.ObjectPath.IndirectPathItem
-                        )obj).cmpObject) && this.outObject.Equals(((CompareTool.ObjectPath.IndirectPathItem)obj).outObject));
-                }
-
-                private readonly ObjectPath _enclosing;
-            }
-
-            /// <summary>
-            /// An abstract class for the items in the direct path (see
-            /// <see cref="ObjectPath"/>
-            /// .
-            /// </summary>
-            public abstract class LocalPathItem {
-                /// <summary>Creates an xml node that describes this direct path item.</summary>
-                /// <param name="document">xml document, to which this xml node will be added.</param>
-                /// <returns>an xml node describing direct path item.</returns>
-                protected internal abstract XmlElement ToXmlNode(XmlDocument document);
-            }
-
-            /// <summary>
-            /// Direct path item (see
-            /// <see cref="ObjectPath"/>
-            /// , which describes transition to the
-            /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
-            /// entry which value is now a currently comparing direct object.
-            /// </summary>
-            public class DictPathItem : CompareTool.ObjectPath.LocalPathItem {
-                internal PdfName key;
-
-                /// <summary>
-                /// Creates an instance of the
-                /// <see cref="DictPathItem"/>
-                /// .
-                /// </summary>
-                /// <param name="key">
-                /// the key which defines to which entry of the
-                /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
-                /// the transition was performed.
-                /// </param>
-                public DictPathItem(PdfName key) {
-                    this.key = key;
-                }
-
-                public override String ToString() {
-                    return "Dict key: " + key;
-                }
-
-                public override int GetHashCode() {
-                    return key.GetHashCode();
-                }
-
-                public override bool Equals(Object obj) {
-                    return obj.GetType() == GetType() && key.Equals(((CompareTool.ObjectPath.DictPathItem)obj).key);
-                }
-
-                /// <summary>
-                /// The key which defines to which entry of the
-                /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
-                /// the transition was performed.
-                /// See
-                /// <see cref="DictPathItem"/>
-                /// for more info.
-                /// </summary>
-                /// <returns>
-                /// a
-                /// <see cref="iText.Kernel.Pdf.PdfName"/>
-                /// which is the key which defines to which entry of the dictionary
-                /// the transition was performed.
-                /// </returns>
-                public virtual PdfName GetKey() {
-                    return key;
-                }
-
-                protected internal override XmlElement ToXmlNode(XmlDocument document) {
-                    XmlElement element = document.CreateElement("dictKey");
-                    element.AppendChild(document.CreateTextNode(key.ToString()));
-                    return element;
-                }
-            }
-
-            /// <summary>
-            /// Direct path item (see
-            /// <see cref="ObjectPath"/>
-            /// , which describes transition to the
-            /// <see cref="iText.Kernel.Pdf.PdfArray"/>
-            /// element which is now a currently comparing direct object.
-            /// </summary>
-            public class ArrayPathItem : CompareTool.ObjectPath.LocalPathItem {
-                internal int index;
-
-                /// <summary>
-                /// Creates an instance of the
-                /// <see cref="ArrayPathItem"/>
-                /// .
-                /// </summary>
-                /// <param name="index">
-                /// the index which defines element of the
-                /// <see cref="iText.Kernel.Pdf.PdfArray"/>
-                /// to which
-                /// the transition was performed.
-                /// </param>
-                public ArrayPathItem(int index) {
-                    this.index = index;
-                }
-
-                public override String ToString() {
-                    return "Array index: " + index.ToString();
-                }
-
-                public override int GetHashCode() {
-                    return index;
-                }
-
-                public override bool Equals(Object obj) {
-                    return obj.GetType() == GetType() && index == ((CompareTool.ObjectPath.ArrayPathItem)obj).index;
-                }
-
-                /// <summary>
-                /// The index which defines element of the
-                /// <see cref="iText.Kernel.Pdf.PdfArray"/>
-                /// to which the transition was performed.
-                /// See
-                /// <see cref="ArrayPathItem"/>
-                /// for more info.
-                /// </summary>
-                /// <returns>the index which defines element of the array to which the transition was performed</returns>
-                public virtual int GetIndex() {
-                    return index;
-                }
-
-                protected internal override XmlElement ToXmlNode(XmlDocument document) {
-                    XmlElement element = document.CreateElement("arrayIndex");
-                    element.AppendChild(document.CreateTextNode(index.ToString()));
-                    return element;
-                }
-            }
-
-            /// <summary>
-            /// Direct path item (see
-            /// <see cref="ObjectPath"/>
-            /// , which describes transition to the
-            /// specific position in
-            /// <see cref="iText.Kernel.Pdf.PdfStream"/>
-            /// .
-            /// </summary>
-            public class OffsetPathItem : CompareTool.ObjectPath.LocalPathItem {
-                internal int offset;
-
-                /// <summary>
-                /// Creates an instance of the
-                /// <see cref="OffsetPathItem"/>
-                /// .
-                /// </summary>
-                /// <param name="offset">
-                /// bytes offset to the specific position in
-                /// <see cref="iText.Kernel.Pdf.PdfStream"/>
-                /// .
-                /// </param>
-                public OffsetPathItem(int offset) {
-                    this.offset = offset;
-                }
-
-                /// <summary>
-                /// The bytes offset of the stream which defines specific position in the
-                /// <see cref="iText.Kernel.Pdf.PdfStream"/>
-                /// , to which transition
-                /// was performed.
-                /// </summary>
-                /// <returns>an integer defining bytes offset to the specific position in stream.</returns>
-                public virtual int GetOffset() {
-                    return offset;
-                }
-
-                public override String ToString() {
-                    return "Offset: " + offset.ToString();
-                }
-
-                public override int GetHashCode() {
-                    return offset;
-                }
-
-                public override bool Equals(Object obj) {
-                    return obj.GetType() == GetType() && offset == ((CompareTool.ObjectPath.OffsetPathItem)obj).offset;
-                }
-
-                protected internal override XmlElement ToXmlNode(XmlDocument document) {
-                    XmlElement element = document.CreateElement("offset");
-                    element.AppendChild(document.CreateTextNode(offset.ToString()));
-                    return element;
-                }
-            }
-        }
-
-        private class TrailerPath : CompareTool.ObjectPath {
-            private PdfDocument outDocument;
-
-            private PdfDocument cmpDocument;
-
-            public TrailerPath(PdfDocument cmpDoc, PdfDocument outDoc) {
-                outDocument = outDoc;
-                cmpDocument = cmpDoc;
-            }
-
-            public TrailerPath(PdfDocument cmpDoc, PdfDocument outDoc, Stack<CompareTool.ObjectPath.LocalPathItem> path
-                ) {
-                this.outDocument = outDoc;
-                this.cmpDocument = cmpDoc;
-                this.path = path;
-            }
-
-            public override XmlElement ToXmlNode(XmlDocument document) {
-                XmlElement element = document.CreateElement("path");
-                XmlElement baseNode = document.CreateElement("base");
-                baseNode.SetAttribute("cmp", "trailer");
-                baseNode.SetAttribute("out", "trailer");
-                element.AppendChild(baseNode);
-                foreach (CompareTool.ObjectPath.LocalPathItem pathItem in path) {
-                    element.AppendChild(pathItem.ToXmlNode(document));
-                }
-                return element;
-            }
-
-            public override String ToString() {
-                StringBuilder sb = new StringBuilder();
-                sb.Append("Base cmp object: trailer. Base out object: trailer");
-                foreach (CompareTool.ObjectPath.LocalPathItem pathItem in path) {
-                    sb.Append("\n");
-                    sb.Append(pathItem.ToString());
-                }
-                return sb.ToString();
-            }
-
-            public override int GetHashCode() {
-                int hashCode = outDocument.GetHashCode() * 31 + cmpDocument.GetHashCode();
-                foreach (CompareTool.ObjectPath.LocalPathItem pathItem in path) {
-                    hashCode *= 31;
-                    hashCode += pathItem.GetHashCode();
-                }
-                return hashCode;
-            }
-
-            public override bool Equals(Object obj) {
-                return obj.GetType() == GetType() && outDocument.Equals(((CompareTool.TrailerPath)obj).outDocument) && cmpDocument
-                    .Equals(((CompareTool.TrailerPath)obj).cmpDocument) && Enumerable.SequenceEqual(path, ((CompareTool.ObjectPath
-                    )obj).path);
-            }
-
-            protected internal override Object Clone() {
-                return new CompareTool.TrailerPath(cmpDocument, outDocument, (Stack<CompareTool.ObjectPath.LocalPathItem>)
-                    path.Clone());
-            }
-        }
-
         public class CompareToolExecutionException : Exception {
-            public CompareToolExecutionException(CompareTool _enclosing, String msg)
+            /// <summary>
+            /// Creates a new
+            /// <see cref="CompareToolExecutionException"/>.
+            /// </summary>
+            /// <param name="msg">the detail message.</param>
+            public CompareToolExecutionException(String msg)
                 : base(msg) {
-                this._enclosing = _enclosing;
             }
-
-            private readonly CompareTool _enclosing;
         }
     }
 }

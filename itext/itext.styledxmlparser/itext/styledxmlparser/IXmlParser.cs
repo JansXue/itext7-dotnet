@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -59,13 +59,11 @@ namespace iText.StyledXmlParser {
         /// then parser should detect encoding from stream.
         /// </param>
         /// <returns>a document node</returns>
-        /// <exception cref="System.IO.IOException">Signals that an I/O exception has occurred.</exception>
         IDocumentNode Parse(Stream XmlStream, String charset);
 
         /// <summary>
         /// Parses XML provided as a
-        /// <c>String</c>
-        /// .
+        /// <c>String</c>.
         /// </summary>
         /// <param name="Xml">the Xml string</param>
         /// <returns>a document node</returns>

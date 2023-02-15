@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -67,9 +67,9 @@ namespace iText.Svg.Renderers.Impl {
         public virtual void SetParent(ISvgNodeRenderer parent) {
         }
 
-        // TODO RND-986
+        // TODO DEVSIX-2283
         public virtual ISvgNodeRenderer GetParent() {
-            // TODO RND-986
+            // TODO DEVSIX-2283
             return null;
         }
 
@@ -96,6 +96,10 @@ namespace iText.Svg.Renderers.Impl {
             return null;
         }
 
+        public virtual Rectangle GetObjectBoundingBox(SvgDrawContext context) {
+            return null;
+        }
+
         internal virtual AffineTransform CalculateTransformation(SvgDrawContext context) {
             Rectangle viewPort = context.GetCurrentViewPort();
             float horizontal = viewPort.GetX();
@@ -115,7 +119,7 @@ namespace iText.Svg.Renderers.Impl {
             float portHeight = 0f;
             PdfStream contentStream = context.GetCurrentCanvas().GetContentStream();
             if (!contentStream.ContainsKey(PdfName.BBox)) {
-                throw new SvgProcessingException(SvgLogMessageConstant.ROOT_SVG_NO_BBOX);
+                throw new SvgProcessingException(SvgExceptionMessageConstant.ROOT_SVG_NO_BBOX);
             }
             PdfArray bboxArray = contentStream.GetAsArray(PdfName.BBox);
             portX = bboxArray.GetAsNumber(0).FloatValue();

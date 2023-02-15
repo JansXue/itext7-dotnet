@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,7 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.Kernel.Pdf.Colorspace;
 using iText.Kernel.Pdf.Function;
 
@@ -57,7 +57,23 @@ namespace iText.Kernel.Colors {
             : base(cs, value) {
         }
 
+        /// <summary>Creates a color in new DeviceN color space.</summary>
+        /// <param name="names">the names oif the components</param>
+        /// <param name="alternateCs">the alternate color space</param>
+        /// <param name="tintTransform">the function to transform color to the alternate color space</param>
+        /// <param name="value">the values for the components of this color</param>
+        [System.ObsoleteAttribute(@"Use constructor DeviceN(System.Collections.Generic.IList{E}, iText.Kernel.Pdf.Colorspace.PdfColorSpace, iText.Kernel.Pdf.Function.IPdfFunction, float[]) DeviceN} instead."
+            )]
         public DeviceN(IList<String> names, PdfColorSpace alternateCs, PdfFunction tintTransform, float[] value)
+            : this(new PdfSpecialCs.DeviceN(names, alternateCs, tintTransform), value) {
+        }
+
+        /// <summary>Creates a color in a new DeviceN color space.</summary>
+        /// <param name="names">the names oif the components</param>
+        /// <param name="alternateCs">the alternate color space</param>
+        /// <param name="tintTransform">the function to transform color to the alternate color space</param>
+        /// <param name="value">the values for the components of this color</param>
+        public DeviceN(IList<String> names, PdfColorSpace alternateCs, IPdfFunction tintTransform, float[] value)
             : this(new PdfSpecialCs.DeviceN(names, alternateCs, tintTransform), value) {
         }
 

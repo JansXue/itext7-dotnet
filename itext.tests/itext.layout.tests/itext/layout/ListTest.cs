@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -51,11 +51,13 @@ using iText.Kernel.Pdf.Xobject;
 using iText.Kernel.Utils;
 using iText.Layout.Borders;
 using iText.Layout.Element;
+using iText.Layout.Logs;
 using iText.Layout.Properties;
 using iText.Test;
 using iText.Test.Attributes;
 
 namespace iText.Layout {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class ListTest : ExtendedITextTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/layout/ListTest/";
@@ -68,8 +70,6 @@ namespace iText.Layout {
             CreateDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void NestedListTest01() {
             String outFileName = destinationFolder + "nestedListTest01.pdf";
@@ -89,8 +89,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void NestedListTest02() {
             String outFileName = destinationFolder + "nestedListTest02.pdf";
@@ -106,8 +104,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ListNestedInTableTest01() {
             String outFileName = destinationFolder + "listNestedInTableTest01.pdf";
@@ -124,8 +120,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ListNumberingTest01() {
             String outFileName = destinationFolder + "listNumberingTest01.pdf";
@@ -153,10 +147,8 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA, Count = 8)]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA, Count = 8)]
         public virtual void AddListOnShortPage1() {
             String outFileName = destinationFolder + "addListOnShortPage1.pdf";
             String cmpFileName = sourceFolder + "cmp_addListOnShortPage1.pdf";
@@ -181,11 +173,9 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA, Count = 3)]
-        [LogMessage(iText.IO.LogMessageConstant.ATTEMPT_TO_CREATE_A_TAG_FOR_FINISHED_HINT, Count = 6)]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA, Count = 3)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.ATTEMPT_TO_CREATE_A_TAG_FOR_FINISHED_HINT, Count = 6)]
         public virtual void AddListOnShortPage2() {
             String outFileName = destinationFolder + "addListOnShortPage2.pdf";
             String cmpFileName = sourceFolder + "cmp_addListOnShortPage2.pdf";
@@ -211,8 +201,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void DivInListItemTest01() {
             String outFileName = destinationFolder + "divInListItemTest01.pdf";
@@ -227,8 +215,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ListOverflowTest01() {
             String outFileName = destinationFolder + "listOverflowTest01.pdf";
@@ -247,8 +233,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ListOverflowTest02() {
             String outFileName = destinationFolder + "listOverflowTest02.pdf";
@@ -268,8 +252,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ListOverflowTest03() {
             String outFileName = destinationFolder + "listOverflowTest03.pdf";
@@ -288,8 +270,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ListEmptyItemTest01() {
             String outFileName = destinationFolder + "listEmptyItemTest01.pdf";
@@ -305,8 +285,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ImageInListTest01() {
             String outFileName = destinationFolder + "imageInListTest01.pdf";
@@ -324,8 +302,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ListItemAlignmentTest01() {
             String outFileName = destinationFolder + "listItemAlignmentTest01.pdf";
@@ -342,8 +318,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ListItemTest01() {
             String outFileName = destinationFolder + "listItemTest01.pdf";
@@ -361,8 +335,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ListItemTest02() {
             String outFileName = destinationFolder + "listItemTest02.pdf";
@@ -384,9 +356,82 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        [LogMessage(iText.IO.LogMessageConstant.CLIP_ELEMENT, Count = 4)]
+        [NUnit.Framework.Test]
+        public virtual void ListItemWithoutMarginsTest() {
+            String outFileName = destinationFolder + "listItemWithoutMarginsTest.pdf";
+            String cmpFileName = sourceFolder + "cmp_listItemWithoutMarginsTest.pdf";
+            PdfDocument pdf = new PdfDocument(new PdfWriter(outFileName));
+            Document document = new Document(pdf);
+            document.SetMargins(0, 0, 0, 0);
+            List list = new List();
+            list.SetListSymbol(ListNumberingType.DECIMAL);
+            list.Add(new ListItem("list item 1"));
+            list.Add(new ListItem("list item 2"));
+            document.Add(list);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
+                , "diff"));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ListItemBigMarginsTest() {
+            String outFileName = destinationFolder + "listItemBigMarginsTest.pdf";
+            String cmpFileName = sourceFolder + "cmp_listItemBigMarginsTest.pdf";
+            PdfDocument pdf = new PdfDocument(new PdfWriter(outFileName));
+            Document document = new Document(pdf);
+            int margin = 100;
+            document.SetMargins(margin, margin, margin, margin);
+            List list = new List();
+            list.SetListSymbol(ListNumberingType.DECIMAL);
+            list.Add(new ListItem("list item 1"));
+            list.Add(new ListItem("list item 2"));
+            document.Add(list);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
+                , "diff"));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void MaxMarginWidthWhereTheBulletIsNotDrawnTest() {
+            String outFileName = destinationFolder + "maxMarginWidthWhereTheBulletIsNotDrawn.pdf";
+            String cmpFileName = sourceFolder + "cmp_maxMarginWidthWhereTheBulletIsNotDrawn.pdf";
+            PdfDocument pdf = new PdfDocument(new PdfWriter(outFileName));
+            Document document = new Document(pdf);
+            int margin = 50;
+            document.SetMargins(margin, margin, margin, margin);
+            List list = new List();
+            list.SetListSymbol(ListNumberingType.DECIMAL);
+            list.Add(new ListItem("list item 1"));
+            list.Add(new ListItem("list item 2"));
+            float? marginLeft = document.GetDefaultProperty<float>(Property.MARGIN_LEFT);
+            list.SetFixedPosition((float)marginLeft, 780, 200);
+            document.Add(list);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
+                , "diff"));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void InitialMarginWidthWhereTheBulletIsDrawnTest() {
+            String outFileName = destinationFolder + "initialMarginWidthWhereTheBulletIsDrawn.pdf";
+            String cmpFileName = sourceFolder + "cmp_initialMarginWidthWhereTheBulletIsDrawn.pdf";
+            PdfDocument pdf = new PdfDocument(new PdfWriter(outFileName));
+            Document document = new Document(pdf);
+            int margin = 49;
+            document.SetMargins(margin, margin, margin, margin);
+            List list = new List();
+            list.SetListSymbol(ListNumberingType.DECIMAL);
+            list.Add(new ListItem("list item 1"));
+            list.Add(new ListItem("list item 2"));
+            float? marginLeft = document.GetDefaultProperty<float>(Property.MARGIN_LEFT);
+            list.SetFixedPosition((float)marginLeft, 780, 200);
+            document.Add(list);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
+                , "diff"));
+        }
+
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.CLIP_ELEMENT, Count = 4)]
         [NUnit.Framework.Test]
         public virtual void ListWithSetHeightProperties01() {
             String outFileName = destinationFolder + "listWithSetHeightProperties01.pdf";
@@ -462,12 +507,10 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ListSetSymbol() {
             List list = new List();
-            //Assert.assertEquals("- ", ((Text) list.getProperty(Property.LIST_SYMBOL)).getText());
-            NUnit.Framework.Assert.AreEqual(null, list.GetProperty<Object>(Property.LIST_SYMBOL));
+            NUnit.Framework.Assert.IsNull(list.GetProperty<Object>(Property.LIST_SYMBOL));
             list.SetListSymbol("* ");
             NUnit.Framework.Assert.AreEqual("* ", ((Text)list.GetProperty<Object>(Property.LIST_SYMBOL)).GetText());
             list = new List();
@@ -477,7 +520,6 @@ namespace iText.Layout {
             NUnit.Framework.Assert.AreEqual("* ", ((Text)list.GetProperty<Object>(Property.LIST_SYMBOL)).GetText());
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ListItemNullSymbol() {
             String outFileName = destinationFolder + "listItemNullSymbol.pdf";
@@ -499,9 +541,8 @@ namespace iText.Layout {
                 , "diff_"));
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
         public virtual void ListSymbolForcedPlacement01() {
             String outFileName = destinationFolder + "listSymbolForcedPlacement01.pdf";
             String cmpFileName = sourceFolder + "cmp_listSymbolForcedPlacement01.pdf";
@@ -517,9 +558,107 @@ namespace iText.Layout {
             document.Add(l);
             document.Add(new Paragraph("After list."));
             document.Close();
-            // TODO DEVSIX-1001: partially not fitting list symbol not shown at all, however this might be improved
+            // TODO DEVSIX-1655: partially not fitting list symbol not shown at all, however this might be improved
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
                 , "diff_"));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void BothSymbolIndentAndMarginAreSetTest() {
+            // There is no symbol indent in html: one uses margins for such a purpose.
+            String outFileName = destinationFolder + "bothSymbolIndentAndMarginAreSetTest.pdf";
+            String cmpFileName = sourceFolder + "cmp_bothSymbolIndentAndMarginAreSetTest.pdf";
+            PdfDocument pdf = new PdfDocument(new PdfWriter(outFileName));
+            Document document = new Document(pdf);
+            List l = CreateTestList();
+            ListItem li = new ListItem("Only symbol indent: 50pt");
+            li.SetBackgroundColor(ColorConstants.BLUE);
+            l.Add(li);
+            li = new ListItem("Symbol indent: 50pt and margin-left: 50pt = 100pt");
+            li.SetMarginLeft(50);
+            li.SetBackgroundColor(ColorConstants.YELLOW);
+            l.Add(li);
+            document.Add(l);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
+                , "diff_"));
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED)]
+        public virtual void ListItemMarginInPercentTest() {
+            String outFileName = destinationFolder + "listItemMarginInPercentTest.pdf";
+            String cmpFileName = sourceFolder + "cmp_listItemMarginInPercentTest.pdf";
+            PdfDocument pdf = new PdfDocument(new PdfWriter(outFileName));
+            Document document = new Document(pdf);
+            List l = CreateTestList();
+            ListItem li = new ListItem("Left margin in percent: 50%");
+            li.SetProperty(Property.MARGIN_LEFT, UnitValue.CreatePercentValue(50));
+            li.SetBackgroundColor(ColorConstants.BLUE);
+            l.Add(li);
+            document.Add(l);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
+                , "diff_"));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ListItemWithImageSymbolPositionTest() {
+            String outFileName = destinationFolder + "listItemWithImageSymbolPositionTest.pdf";
+            String cmpFileName = sourceFolder + "cmp_listItemWithImageSymbolPositionTest.pdf";
+            PdfDocument pdf = new PdfDocument(new PdfWriter(outFileName));
+            Document document = new Document(pdf);
+            List l = new List();
+            l.SetMarginLeft(50);
+            l.SetSymbolIndent(20);
+            l.SetListSymbol("\u2022");
+            l.SetBackgroundColor(ColorConstants.GREEN);
+            ImageData img = ImageDataFactory.Create(sourceFolder + "red.png");
+            PdfImageXObject xObject = new PdfImageXObject(img);
+            ListItem listItemImg1 = new ListItem();
+            listItemImg1.Add(new iText.Layout.Element.Image(xObject).SetHeight(30));
+            listItemImg1.SetProperty(Property.LIST_SYMBOL_POSITION, ListSymbolPosition.INSIDE);
+            l.Add(listItemImg1);
+            ListItem listItemImg2 = new ListItem();
+            listItemImg2.Add(new iText.Layout.Element.Image(xObject).SetHeight(30));
+            listItemImg2.SetProperty(Property.LIST_SYMBOL_POSITION, ListSymbolPosition.OUTSIDE);
+            l.Add(listItemImg2);
+            document.Add(l);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
+                , "diff_"));
+        }
+
+        // TODO DEVSIX-6877 wrapping list item content in a div causes the bullet to be misaligned
+        [NUnit.Framework.Test]
+        public virtual void ListItemWrappedDivSymbolInside() {
+            String outFileName = destinationFolder + "listItemWrappedDivSymbolInside.pdf";
+            String cmpFileName = sourceFolder + "cmp_listItemWrappedDivSymbolInside.pdf";
+            PdfDocument pdf = new PdfDocument(new PdfWriter(outFileName));
+            Document document = new Document(pdf);
+            List l = new List();
+            l.SetMarginLeft(50);
+            l.SetListSymbol("\u2022");
+            l.SetBackgroundColor(ColorConstants.GREEN);
+            l.Add("Regular item 1");
+            ListItem listItem = new ListItem();
+            listItem.Add(new Div().Add(new Paragraph("Wrapped text")));
+            listItem.SetProperty(Property.LIST_SYMBOL_POSITION, ListSymbolPosition.INSIDE);
+            l.Add(listItem);
+            l.Add("Regular item 2");
+            document.Add(l);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
+                , "diff_"));
+        }
+
+        private static List CreateTestList() {
+            List l = new List();
+            l.SetWidth(300);
+            l.SetBackgroundColor(ColorConstants.RED);
+            l.SetSymbolIndent(50);
+            l.SetListSymbol("\u2022");
+            return l;
         }
     }
 }

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -51,6 +51,7 @@ using iText.Kernel.Utils;
 using iText.Test;
 
 namespace iText.Kernel.Pdf {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class EncodingTest : ExtendedITextTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/kernel/pdf/EncodingTest/";
@@ -62,8 +63,6 @@ namespace iText.Kernel.Pdf {
             CreateDestinationFolder(outputFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void SurrogatePairTest() {
             String fileName = "surrogatePairTest.pdf";
@@ -79,26 +78,22 @@ namespace iText.Kernel.Pdf {
                  + fileName, outputFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CustomSimpleEncodingTimesRomanTest() {
             String fileName = "customSimpleEncodingTimesRomanTest.pdf";
             PdfWriter writer = new PdfWriter(outputFolder + fileName);
             PdfDocument doc = new PdfDocument(writer);
             PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", "# simple 1 0020 041c 0456 0440 044a 0050 0065 0061 0063"
-                , true);
+                , PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED);
             PdfCanvas canvas = new PdfCanvas(doc.AddNewPage());
-            canvas.SaveState().BeginText().MoveText(36, 806).SetFontAndSize(font, 12).ShowText("\u041C\u0456\u0440\u044A Peace"
-                ).EndText().RestoreState();
-            // Міръ Peace
+            canvas.SaveState().BeginText().MoveText(36, 806).SetFontAndSize(font, 12)
+                        // Міръ Peace
+                        .ShowText("\u041C\u0456\u0440\u044A Peace").EndText().RestoreState();
             doc.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outputFolder + fileName, sourceFolder + "cmp_"
                  + fileName, outputFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CustomFullEncodingTimesRomanTest() {
             String fileName = "customFullEncodingTimesRomanTest.pdf";
@@ -114,8 +109,6 @@ namespace iText.Kernel.Pdf {
                  + fileName, outputFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void NotdefInStandardFontTest() {
             String fileName = "notdefInStandardFontTest.pdf";
@@ -134,19 +127,18 @@ namespace iText.Kernel.Pdf {
                  + fileName, outputFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void NotdefInTrueTypeFontTest() {
             String fileName = "notdefInTrueTypeFontTest.pdf";
             PdfWriter writer = new PdfWriter(outputFolder + fileName);
             PdfDocument doc = new PdfDocument(writer);
-            PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", "# simple 32 0020 00C5 1987", true
-                );
+            PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", "# simple 32 0020 00C5 1987", PdfFontFactory.EmbeddingStrategy
+                .PREFER_EMBEDDED);
             PdfCanvas canvas = new PdfCanvas(doc.AddNewPage());
             canvas.SaveState().BeginText().MoveText(36, 786).SetFontAndSize(font, 36).ShowText("\u00C5 \u1987").EndText
                 ().RestoreState();
-            font = PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", PdfEncodings.WINANSI, true);
+            font = PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", PdfEncodings.WINANSI, PdfFontFactory.EmbeddingStrategy
+                .PREFER_EMBEDDED);
             canvas.SaveState().BeginText().MoveText(36, 756).SetFontAndSize(font, 36).ShowText("\u1987").EndText().RestoreState
                 ();
             doc.Close();
@@ -154,8 +146,6 @@ namespace iText.Kernel.Pdf {
                  + fileName, outputFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void NotdefInType0Test() {
             String fileName = "notdefInType0Test.pdf";
@@ -170,8 +160,6 @@ namespace iText.Kernel.Pdf {
                  + fileName, outputFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void SymbolDefaultFontTest() {
             String fileName = "symbolDefaultFontTest.pdf";
@@ -208,14 +196,13 @@ namespace iText.Kernel.Pdf {
             canvas.BeginText().MoveText(36, 766).ShowText(builder.ToString()).EndText().RestoreState();
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void SymbolTrueTypeFontWinAnsiTest() {
             String fileName = "symbolTrueTypeFontWinAnsiTest.pdf";
             PdfWriter writer = new PdfWriter(outputFolder + fileName);
             PdfDocument doc = new PdfDocument(writer);
-            PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "Symbols1.ttf", true);
+            PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "Symbols1.ttf", PdfEncodings.WINANSI, PdfFontFactory.EmbeddingStrategy
+                .PREFER_EMBEDDED);
             PdfCanvas canvas = new PdfCanvas(doc.AddNewPage());
             StringBuilder str = new StringBuilder();
             for (int i = 32; i <= 65; i++) {
@@ -240,8 +227,6 @@ namespace iText.Kernel.Pdf {
                  + fileName, outputFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void SymbolTrueTypeFontIdentityTest() {
             String fileName = "symbolTrueTypeFontIdentityTest.pdf";
@@ -273,8 +258,6 @@ namespace iText.Kernel.Pdf {
                  + fileName, outputFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void SymbolTrueTypeFontSameCharsIdentityTest() {
             String fileName = "symbolTrueTypeFontSameCharsIdentityTest.pdf";
@@ -290,7 +273,6 @@ namespace iText.Kernel.Pdf {
                  + fileName, outputFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void EncodingStreamExtractionTest() {
             String fileName = sourceFolder + "encodingStream01.pdf";
@@ -299,7 +281,6 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.AreEqual("abc", extractedText);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void DifferentCodeSpaceRangeLengthsExtractionTest() {
             String fileName = sourceFolder + "differentCodeSpaceRangeLengths01.pdf";

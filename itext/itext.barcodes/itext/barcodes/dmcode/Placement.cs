@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,7 @@ address: sales@itextpdf.com
 */
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using iText.IO.Util;
+using iText.Commons.Utils;
 
 namespace iText.Barcodes.Dmcode {
     public class Placement {
@@ -172,8 +172,8 @@ namespace iText.Barcodes.Dmcode {
                 if (row == nrow + 4 && col == 2 && ncol % 8 == 0) {
                     Corner4(chr++);
                 }
+                /* sweep upward diagonally, inserting successive characters,... */
                 do {
-                    /* sweep upward diagonally, inserting successive characters,... */
                     if (row < nrow && col >= 0 && array[row * ncol + col] == 0) {
                         Utah(row, col, chr++);
                     }
@@ -183,8 +183,8 @@ namespace iText.Barcodes.Dmcode {
                 while (row >= 0 && col < ncol);
                 row += 1;
                 col += 3;
+                /* & then sweep downward diagonally, inserting successive characters,... */
                 do {
-                    /* & then sweep downward diagonally, inserting successive characters,... */
                     if (row >= 0 && col < ncol && array[row * ncol + col] == 0) {
                         Utah(row, col, chr++);
                     }
@@ -195,8 +195,8 @@ namespace iText.Barcodes.Dmcode {
                 row += 3;
                 col += 1;
             }
-            while (row < nrow || col < ncol);
             /* ... until the entire array is scanned */
+            while (row < nrow || col < ncol);
             /* Lastly, if the lower righthand corner is untouched, fill in fixed pattern */
             if (array[nrow * ncol - 1] == 0) {
                 array[nrow * ncol - 1] = array[nrow * ncol - ncol - 2] = 1;

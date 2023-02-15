@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,8 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
 
 namespace iText.IO.Image {
     public class Jpeg2000ImageData : ImageData {
@@ -98,8 +99,8 @@ namespace iText.IO.Image {
         }
 
         public override bool CanImageBeInline() {
-            ILog logger = LogManager.GetLogger(typeof(ImageData));
-            logger.Warn(iText.IO.LogMessageConstant.IMAGE_HAS_JPXDECODE_FILTER);
+            ILogger logger = ITextLogManager.GetLogger(typeof(ImageData));
+            logger.LogWarning(iText.IO.Logs.IoLogMessageConstant.IMAGE_HAS_JPXDECODE_FILTER);
             return false;
         }
 

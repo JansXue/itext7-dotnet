@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,13 +42,15 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using System.Text;
-using iText.IO.Util;
+using iText.Commons.Utils;
+using iText.Kernel.Logs;
 using iText.Kernel.Pdf;
 using iText.Kernel.Utils;
 using iText.Test;
+using iText.Test.Attributes;
 
 namespace iText.Kernel.Crypto {
+    [NUnit.Framework.Category("BouncyCastleIntegrationTest")]
     public class UnicodeBasedPasswordEncryptionTest : ExtendedITextTest {
         public static readonly String destinationFolder = NUnit.Framework.TestContext.CurrentContext.TestDirectory
              + "/test/itext/kernel/crypto/UnicodeBasedPasswordEncryptionTest/";
@@ -105,9 +107,9 @@ namespace iText.Kernel.Crypto {
                 , "user"));
             nameToSaslPrepared.Put("rfc4013Example03", new UnicodeBasedPasswordEncryptionTest.SaslPreparedString("\u00AA"
                 , "a"));
+            // match rfc4013Example01
             nameToSaslPrepared.Put("rfc4013Example04", new UnicodeBasedPasswordEncryptionTest.SaslPreparedString("\u2168"
                 , "IX"));
-            // match rfc4013Example01
             nameToSaslPrepared.Put("nonAsciiSpace01", new UnicodeBasedPasswordEncryptionTest.SaslPreparedString("\u2008 \u2009 \u200A \u200B"
                 , "       "));
             // normalization tests
@@ -123,27 +125,27 @@ namespace iText.Kernel.Crypto {
                 , "\u964B"));
         }
 
+        /*
+        
+        // Arabic
+        bidirectional check fail:  "\u0627\u0644\u0631\u0651\u064E\u200C\u062D\u0652\u0645\u064E\u0640\u0670\u0646\u0650"
+        bidirectional check fail:  "1\u0627\u0644\u0631\u062D\u064A\u06452"
+        
+        // RFC4013 examples
+        bidirectional check fail:  "\u0627\u0031"
+        prohibited character fail: "\u0007"
+        
+        // unassigned code point for Unicode 3.2
+        "\uD83E\uDD14"
+        "\u038Ba\u038Db\u03A2c\u03CF"
+        
+        */
         private class SaslPreparedString {
             internal String unicodeInputString;
 
             internal String preparedString;
 
             internal SaslPreparedString(String unicodeInputString, String preparedString) {
-                /*
-                
-                // Arabic
-                bidirectional check fail:  "\u0627\u0644\u0631\u0651\u064E\u200C\u062D\u0652\u0645\u064E\u0640\u0670\u0646\u0650"
-                bidirectional check fail:  "1\u0627\u0644\u0631\u062D\u064A\u06452"
-                
-                // RFC4013 examples
-                bidirectional check fail:  "\u0627\u0031"
-                prohibited character fail: "\u0007"
-                
-                // unassigned code point for Unicode 3.2
-                "\uD83E\uDD14"
-                "\u038Ba\u038Db\u03A2c\u03CF"
-                
-                */
                 this.unicodeInputString = unicodeInputString;
                 this.preparedString = preparedString;
             }
@@ -154,15 +156,14 @@ namespace iText.Kernel.Crypto {
             CreateOrClearDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void Aes256EncryptedPdfWithUnicodeBasedPassword() {
             String fileNameTemplate = "unicodePassword_";
             foreach (KeyValuePair<String, UnicodeBasedPasswordEncryptionTest.SaslPreparedString> entry in nameToSaslPrepared
                 ) {
                 String filename = fileNameTemplate + entry.Key + ".pdf";
-                byte[] ownerPassword = entry.Value.preparedString.GetBytes(Encoding.UTF8);
+                byte[] ownerPassword = entry.Value.preparedString.GetBytes(System.Text.Encoding.UTF8);
                 EncryptAes256AndCheck(filename, ownerPassword);
             }
         }
@@ -172,8 +173,6 @@ namespace iText.Kernel.Crypto {
         // 1.1 Check opening both of these documents with both strings.
         // 2.  Try encrypt document with invalid input string.
         // 3.  Try open encrypted document with password that contains unassigned code points and ensure error is due to wrong password instead of the invalid input string.
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         private void EncryptAes256AndCheck(String filename, byte[] ownerPassword) {
             int permissions = EncryptionConstants.ALLOW_SCREENREADERS;
             WriterProperties writerProperties = new WriterProperties().SetStandardEncryption(PdfEncryptionTest.USER, ownerPassword

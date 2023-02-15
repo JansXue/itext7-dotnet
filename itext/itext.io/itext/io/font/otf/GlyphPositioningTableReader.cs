@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,29 +45,21 @@ using System.Collections.Generic;
 using iText.IO.Source;
 
 namespace iText.IO.Font.Otf {
-    /// <summary>
-    /// <p>
-    /// Parses an OpenTypeFont file and reads the Glyph Substitution Table.
-    /// </summary>
+    /// <summary>Parses an OpenTypeFont file and reads the Glyph Substitution Table.</summary>
     /// <remarks>
-    /// <p>
     /// Parses an OpenTypeFont file and reads the Glyph Substitution Table. This table governs how two or more Glyphs should be merged
     /// to a single Glyph. This is especially useful for Asian languages like Bangla, Hindi, etc.
-    /// </p>
-    /// <p>
+    /// <para />
     /// This has been written according to the OPenTypeFont specifications. This may be found <a href="http://www.microsoft.com/typography/otspec/gsub.htm">here</a>.
-    /// </p>
     /// </remarks>
     /// <author><a href="mailto:paawak@gmail.com">Palash Ray</a></author>
     public class GlyphPositioningTableReader : OpenTypeFontTableReader {
-        /// <exception cref="System.IO.IOException"/>
         public GlyphPositioningTableReader(RandomAccessFileOrArray rf, int gposTableLocation, OpenTypeGdefTableReader
              gdef, IDictionary<int, Glyph> indexGlyphMap, int unitsPerEm)
             : base(rf, gposTableLocation, gdef, indexGlyphMap, unitsPerEm) {
             StartReadingTable();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         protected internal override OpenTableLookup ReadLookupTable(int lookupType, int lookupFlag, int[] subTableLocations
             ) {
             if (lookupType == 9) {
@@ -81,6 +73,10 @@ namespace iText.IO.Font.Otf {
                 }
             }
             switch (lookupType) {
+                case 1: {
+                    return new GposLookupType1(this, lookupFlag, subTableLocations);
+                }
+
                 case 2: {
                     return new GposLookupType2(this, lookupFlag, subTableLocations);
                 }
@@ -95,6 +91,14 @@ namespace iText.IO.Font.Otf {
 
                 case 6: {
                     return new GposLookupType6(this, lookupFlag, subTableLocations);
+                }
+
+                case 7: {
+                    return new GposLookupType7(this, lookupFlag, subTableLocations);
+                }
+
+                case 8: {
+                    return new GposLookupType8(this, lookupFlag, subTableLocations);
                 }
 
                 default: {

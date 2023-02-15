@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -49,11 +49,16 @@ using iText.Layout.Layout;
 
 namespace iText.Layout.Renderer {
     /// <summary>
-    /// Renderer object for the
+    /// Renderer for the
+    /// <see cref="iText.Layout.Element.AreaBreak"/>
+    /// layout element.
+    /// </summary>
+    /// <remarks>
+    /// Renderer for the
     /// <see cref="iText.Layout.Element.AreaBreak"/>
     /// layout element. Will terminate the
     /// current content area and initialize a new one.
-    /// </summary>
+    /// </remarks>
     public class AreaBreakRenderer : IRenderer {
         protected internal AreaBreak areaBreak;
 
@@ -67,18 +72,42 @@ namespace iText.Layout.Renderer {
             this.areaBreak = areaBreak;
         }
 
+        /// <summary>
+        /// Throws an UnsupportedOperationException because instances of this
+        /// class are only used for terminating the current content area.
+        /// </summary>
+        /// <param name="renderer">
+        /// 
+        /// <inheritDoc/>
+        /// </param>
         public virtual void AddChild(IRenderer renderer) {
-            throw new Exception();
+            throw new NotSupportedException();
         }
 
         public virtual LayoutResult Layout(LayoutContext layoutContext) {
             return new LayoutResult(LayoutResult.NOTHING, null, null, null, this).SetAreaBreak(areaBreak);
         }
 
+        /// <summary>
+        /// Throws an UnsupportedOperationException because instances of this
+        /// class are only used for terminating the current content area.
+        /// </summary>
+        /// <param name="drawContext">
+        /// 
+        /// <inheritDoc/>
+        /// </param>
         public virtual void Draw(DrawContext drawContext) {
             throw new NotSupportedException();
         }
 
+        /// <summary>
+        /// Throws an UnsupportedOperationException because instances of this
+        /// class are only used for terminating the current content area.
+        /// </summary>
+        /// <returns>
+        /// 
+        /// <inheritDoc/>
+        /// </returns>
         public virtual LayoutArea GetOccupiedArea() {
             throw new NotSupportedException();
         }
@@ -103,10 +132,42 @@ namespace iText.Layout.Renderer {
             return (T1)(Object)null;
         }
 
+        /// <summary>
+        /// Throws an UnsupportedOperationException because instances of this
+        /// class are only used for terminating the current content area.
+        /// </summary>
+        /// <param name="property">
+        /// 
+        /// <inheritDoc/>
+        /// </param>
+        /// <param name="defaultValue">
+        /// 
+        /// <inheritDoc/>
+        /// </param>
+        /// <typeparam name="T1">
+        /// 
+        /// <inheritDoc/>
+        /// </typeparam>
+        /// <returns>
+        /// 
+        /// <inheritDoc/>
+        /// </returns>
         public virtual T1 GetProperty<T1>(int property, T1 defaultValue) {
             throw new NotSupportedException();
         }
 
+        /// <summary>
+        /// Throws an UnsupportedOperationException because instances of this
+        /// class are only used for terminating the current content area.
+        /// </summary>
+        /// <param name="property">
+        /// 
+        /// <inheritDoc/>
+        /// </param>
+        /// <param name="value">
+        /// 
+        /// <inheritDoc/>
+        /// </param>
         public virtual void SetProperty(int property, Object value) {
             throw new NotSupportedException();
         }
@@ -134,6 +195,18 @@ namespace iText.Layout.Renderer {
             return false;
         }
 
+        /// <summary>
+        /// Throws an UnsupportedOperationException because instances of this
+        /// class are only used for terminating the current content area.
+        /// </summary>
+        /// <param name="dx">
+        /// 
+        /// <inheritDoc/>
+        /// </param>
+        /// <param name="dy">
+        /// 
+        /// <inheritDoc/>
+        /// </param>
         public virtual void Move(float dx, float dy) {
             throw new NotSupportedException();
         }

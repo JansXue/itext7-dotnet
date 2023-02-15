@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,8 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using iText.IO.Util;
+using iText.Commons.Utils;
+using iText.IO.Font;
 
 namespace iText.Layout.Font {
     /// <summary>Sort given set of fonts according to font name and style.</summary>
@@ -52,6 +53,10 @@ namespace iText.Layout.Font {
         private const int EXPECTED_FONT_IS_BOLD_AWARD = 5;
 
         private const int EXPECTED_FONT_IS_NOT_BOLD_AWARD = 3;
+
+        private const int EXPECTED_FONT_WEIGHT_IS_EQUALS_AWARD = 1;
+
+        private const int EXPECTED_FONT_WEIGHT_IS_FAR_AWARD = 1;
 
         private const int EXPECTED_FONT_IS_ITALIC_AWARD = 5;
 
@@ -64,9 +69,12 @@ namespace iText.Layout.Font {
         private const int FONT_FAMILY_EQUALS_AWARD = 13;
 
         /// <summary>Create new FontSelector instance.</summary>
-        /// <param name="allFonts">Unsorted set of all available fonts.</param>
-        /// <param name="fontFamilies">Sorted list of preferred font families.</param>
-        /// <param name="fc"/>
+        /// <param name="allFonts">unsorted set of all available fonts.</param>
+        /// <param name="fontFamilies">sorted list of preferred font families.</param>
+        /// <param name="fc">
+        /// instance of
+        /// <see cref="FontCharacteristics"/>.
+        /// </param>
         public FontSelector(ICollection<FontInfo> allFonts, IList<String> fontFamilies, FontCharacteristics fc) {
             this.fonts = new List<FontInfo>(allFonts);
             //Possible issue in .NET, virtual protected member in constructor.
@@ -82,10 +90,10 @@ namespace iText.Layout.Font {
         /// </remarks>
         /// <returns>the best matched font</returns>
         public FontInfo BestMatch() {
+            // fonts is sorted best to worst, get(0) returns the best matched FontInfo
             return fonts[0];
         }
 
-        // fonts is sorted best to worst, get(0) returns the best matched FontInfo
         /// <summary>Sorted set of fonts.</summary>
         /// <returns>sorted set of fonts</returns>
         public IEnumerable<FontInfo> GetFonts() {
@@ -124,7 +132,7 @@ namespace iText.Layout.Font {
                 for (int i = 0; i < fontFamilies.Count && res == 0; i++) {
                     FontCharacteristics fc = fontStyles[i];
                     String fontFamily = fontFamilies[i];
-                    if (fontFamily.EqualsIgnoreCase("monospace")) {
+                    if ("monospace".EqualsIgnoreCase(fontFamily)) {
                         fc.SetMonospaceFlag(true);
                     }
                     bool isLastFontFamilyToBeProcessed = i == fontFamilies.Count - 1;
@@ -157,11 +165,13 @@ namespace iText.Layout.Font {
             /// This method is used to compare two fonts (the required one which is described by fontInfo and
             /// the one to be examined which is described by fc and fontFamily) and measure their similarity.
             /// The more the fonts are similar the higher the score is.
+            /// <para />
             /// Firstly we check if the font-family described by fontInfo equals to the required one.
             /// If it's not true the examination fails, it continues otherwise.
             /// If the required font-family is monospace, serif or sans serif we check whether
             /// the font under examination is monospace, serif or sans serif resp. Its font-family is not
             /// taking into considerations.
+            /// <para />
             /// If font-family is respected, we consider the next font-style characteristics to select the required font
             /// of the respected font-family:
             /// a) bold
@@ -170,9 +180,10 @@ namespace iText.Layout.Font {
             private static int CharacteristicsSimilarity(String fontFamily, FontCharacteristics fc, FontInfo fontInfo, 
                 bool isLastFontFamilyToBeProcessed) {
                 // TODO DEVSIX-2120 Update javadoc if necessary
-                bool isFontBold = fontInfo.GetDescriptor().IsBold() || fontInfo.GetDescriptor().GetFontWeight() > 500;
-                bool isFontItalic = fontInfo.GetDescriptor().IsItalic() || fontInfo.GetDescriptor().GetItalicAngle() < 0;
-                bool isFontMonospace = fontInfo.GetDescriptor().IsMonospace();
+                FontProgramDescriptor fontDescriptor = fontInfo.GetDescriptor();
+                bool isFontBold = fontDescriptor.IsBold() || fontDescriptor.GetFontWeight() > 500;
+                bool isFontItalic = fontDescriptor.IsItalic() || fontDescriptor.GetItalicAngle() < 0;
+                bool isFontMonospace = fontDescriptor.IsMonospace();
                 int score = 0;
                 // if font-family is monospace, serif or sans-serif, actual font's name shouldn't be checked
                 bool fontFamilySetByCharacteristics = false;
@@ -193,9 +204,9 @@ namespace iText.Layout.Font {
                 }
                 if (!fontFamilySetByCharacteristics) {
                     // if alias is set, fontInfo's descriptor should not be checked
-                    if (!"".Equals(fontFamily) && (null == fontInfo.GetAlias() && fontInfo.GetDescriptor().GetFamilyNameLowerCase
-                        ().Equals(fontFamily) || (null != fontInfo.GetAlias() && fontInfo.GetAlias().ToLowerInvariant().Equals
-                        (fontFamily)))) {
+                    if (!"".Equals(fontFamily) && (null == fontInfo.GetAlias() && null != fontDescriptor.GetFamilyNameLowerCase
+                        () && fontDescriptor.GetFamilyNameLowerCase().Equals(fontFamily) || (null != fontInfo.GetAlias() && fontInfo
+                        .GetAlias().ToLowerInvariant().Equals(fontFamily)))) {
                         score += FONT_FAMILY_EQUALS_AWARD;
                     }
                     else {
@@ -205,6 +216,16 @@ namespace iText.Layout.Font {
                     }
                 }
                 // calculate style characteristics
+                int maxWeight = Math.Max(fontDescriptor.GetFontWeight(), fc.GetFontWeight());
+                int minWeight = Math.Min(fontDescriptor.GetFontWeight(), fc.GetFontWeight());
+                if (maxWeight == minWeight) {
+                    score += EXPECTED_FONT_WEIGHT_IS_EQUALS_AWARD;
+                }
+                else {
+                    if (maxWeight - minWeight >= 300) {
+                        score -= EXPECTED_FONT_WEIGHT_IS_FAR_AWARD;
+                    }
+                }
                 if (fc.IsBold()) {
                     if (isFontBold) {
                         score += EXPECTED_FONT_IS_BOLD_AWARD;

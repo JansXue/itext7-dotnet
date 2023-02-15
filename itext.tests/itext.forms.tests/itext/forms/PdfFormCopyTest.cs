@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -48,22 +48,21 @@ using iText.Test;
 using iText.Test.Attributes;
 
 namespace iText.Forms {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class PdfFormCopyTest : ExtendedITextTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
-            .CurrentContext.TestDirectory) + "/resources/itext/forms/PdfFormFieldsCopyTest/";
+            .CurrentContext.TestDirectory) + "/resources/itext/forms/PdfFormCopyTest/";
 
         public static readonly String destinationFolder = NUnit.Framework.TestContext.CurrentContext.TestDirectory
-             + "/test/itext/forms/PdfFormFieldsCopyTest/";
+             + "/test/itext/forms/PdfFormCopyTest/";
 
         [NUnit.Framework.OneTimeSetUp]
         public static void BeforeClass() {
             CreateDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 13)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 32)]
         public virtual void CopyFieldsTest01() {
             String srcFilename1 = sourceFolder + "appearances1.pdf";
             String srcFilename2 = sourceFolder + "fieldsOn2-sPage.pdf";
@@ -82,8 +81,6 @@ namespace iText.Forms {
                 , destinationFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CopyFieldsTest02() {
             String srcFilename = sourceFolder + "hello_with_comments.pdf";
@@ -97,8 +94,6 @@ namespace iText.Forms {
                 , destinationFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CopyFieldsTest03() {
             String srcFilename = sourceFolder + "hello2_with_comments.pdf";
@@ -112,8 +107,6 @@ namespace iText.Forms {
                 , destinationFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void LargeFileTest() {
             String srcFilename1 = sourceFolder + "frontpage.pdf";
@@ -131,10 +124,8 @@ namespace iText.Forms {
                 , destinationFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD)]
         public virtual void CopyFieldsTest04() {
             String srcFilename = sourceFolder + "srcFile1.pdf";
             PdfDocument srcDoc = new PdfDocument(new PdfReader(srcFilename));
@@ -145,12 +136,9 @@ namespace iText.Forms {
             PdfAcroForm form = PdfAcroForm.GetAcroForm(destDoc, false);
             NUnit.Framework.Assert.AreEqual(1, form.GetFields().Size());
             NUnit.Framework.Assert.IsNotNull(form.GetField("Name1"));
-            NUnit.Framework.Assert.IsNotNull(form.GetField("Name1.1"));
             destDoc.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CopyFieldsTest05() {
             String srcFilename = sourceFolder + "srcFile1.pdf";
@@ -163,10 +151,8 @@ namespace iText.Forms {
                 , destinationFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 12)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 12)]
         public virtual void CopyMultipleSubfieldsTest01() {
             String srcFilename = sourceFolder + "copyMultipleSubfieldsTest01.pdf";
             String destFilename = destinationFolder + "copyMultipleSubfieldsTest01.pdf";
@@ -188,10 +174,8 @@ namespace iText.Forms {
                 , destinationFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 2)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 2)]
         public virtual void CopyMultipleSubfieldsTest02() {
             String srcFilename = sourceFolder + "copyMultipleSubfieldsTest02.pdf";
             String destFilename = destinationFolder + "copyMultipleSubfieldsTest02.pdf";
@@ -210,10 +194,8 @@ namespace iText.Forms {
                 , destinationFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 2)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 2)]
         public virtual void CopyMultipleSubfieldsTest03() {
             String srcFilename = sourceFolder + "copyMultipleSubfieldsTest03.pdf";
             String destFilename = destinationFolder + "copyMultipleSubfieldsTest03.pdf";
@@ -232,10 +214,8 @@ namespace iText.Forms {
                 , destinationFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 12)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 12)]
         public virtual void CopyMultipleSubfieldsSmartModeTest01() {
             String srcFilename = sourceFolder + "copyMultipleSubfieldsSmartModeTest01.pdf";
             String destFilename = destinationFolder + "copyMultipleSubfieldsSmartModeTest01.pdf";
@@ -257,10 +237,8 @@ namespace iText.Forms {
                 , destinationFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 13)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 13)]
         public virtual void CopyFieldsTest06() {
             String srcFilename = sourceFolder + "datasheet.pdf";
             String destFilename = destinationFolder + "copyFields06.pdf";
@@ -277,10 +255,8 @@ namespace iText.Forms {
                 , destinationFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 13)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 32)]
         public virtual void CopyFieldsTest07() {
             String srcFilename = sourceFolder + "datasheet.pdf";
             String destFilename = destinationFolder + "copyFields07.pdf";
@@ -297,10 +273,8 @@ namespace iText.Forms {
                 , destinationFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 13)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 32)]
         public virtual void CopyFieldsTest08() {
             String srcFilename1 = sourceFolder + "appearances1.pdf";
             String srcFilename2 = sourceFolder + "fieldsOn2-sPage.pdf";
@@ -321,10 +295,10 @@ namespace iText.Forms {
                 , destinationFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 26)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 64)]
+        //TODO DEVSIX-6345 Equal form fields full names
+        [NUnit.Framework.Ignore("DEVSIX-6345")]
         public virtual void CopyFieldsTest09() {
             String srcFilename = sourceFolder + "datasheet.pdf";
             String destFilename = destinationFolder + "copyFields09.pdf";
@@ -342,8 +316,6 @@ namespace iText.Forms {
                 , destinationFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CopyFieldsTest10() {
             String srcFilename = sourceFolder + "datasheet.pdf";
@@ -361,8 +333,6 @@ namespace iText.Forms {
                 , destinationFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CopyFieldsTest11() {
             String srcFilename1 = sourceFolder + "datasheet.pdf";
@@ -382,8 +352,6 @@ namespace iText.Forms {
                 , destinationFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CopyFieldsTest12() {
             String srcFilename1 = sourceFolder + "datasheet.pdf";
@@ -403,10 +371,8 @@ namespace iText.Forms {
                 , destinationFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 1)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 1)]
         public virtual void CopyFieldsTest13() {
             String srcFilename = sourceFolder + "copyFields13.pdf";
             String destFilename = destinationFolder + "copyFields13.pdf";
@@ -424,8 +390,6 @@ namespace iText.Forms {
                 , destinationFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CopyPagesWithInheritedResources() {
             String sourceFile = sourceFolder + "AnnotationSampleStandard.pdf";
@@ -439,8 +403,6 @@ namespace iText.Forms {
                 , destinationFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void UnnamedFieldsHierarchyTest() {
             String srcFilename = sourceFolder + "unnamedFields.pdf";
@@ -451,6 +413,186 @@ namespace iText.Forms {
             merged.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destFilename, sourceFolder + "cmp_unnamedFieldsHierarchyTest.pdf"
                 , destinationFolder, "diff_"));
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 51)]
+        public virtual void CopyAndEditTextFields() {
+            //TODO: update after DEVSIX-2354
+            String srcFileName = sourceFolder + "checkPdfFormCopy_Source.pdf";
+            String destFilename = destinationFolder + "copyAndEditTextFields.pdf";
+            String cmpFileName = sourceFolder + "cmp_copyAndEditTextFields.pdf";
+            PdfDocument srcDoc = new PdfDocument(new PdfReader(srcFileName));
+            PdfDocument destDoc = new PdfDocument(new PdfWriter(destFilename));
+            PdfPageFormCopier pdfPageFormCopier = new PdfPageFormCopier();
+            for (int i = 0; i < 4; i++) {
+                srcDoc.CopyPagesTo(1, 1, destDoc, pdfPageFormCopier);
+            }
+            PdfAcroForm acroForm = PdfAcroForm.GetAcroForm(destDoc, false);
+            acroForm.GetField("text_1").SetValue("text_1");
+            acroForm.GetField("NumberField_text.2").SetValue("-100.00");
+            acroForm.GetField("NumberField_text.2_1").SetValue("3.00");
+            acroForm.GetField("text.3_1<!").SetValue("text.3_1<!");
+            acroForm.GetField("text.4___#1+1").SetValue("CHANGEDtext");
+            destDoc.Close();
+            srcDoc.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destFilename, cmpFileName, destinationFolder
+                , "diff_"));
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 51)]
+        public virtual void CopyAndEditCheckboxes() {
+            //TODO: update after DEVSIX-2354
+            String srcFileName = sourceFolder + "checkPdfFormCopy_Source.pdf";
+            String destFilename = destinationFolder + "copyAndEditCheckboxes.pdf";
+            String cmpFileName = sourceFolder + "cmp_copyAndEditCheckboxes.pdf";
+            PdfDocument srcDoc = new PdfDocument(new PdfReader(srcFileName));
+            PdfDocument destDoc = new PdfDocument(new PdfWriter(destFilename));
+            PdfPageFormCopier pdfPageFormCopier = new PdfPageFormCopier();
+            for (int i = 0; i < 4; i++) {
+                srcDoc.CopyPagesTo(1, 1, destDoc, pdfPageFormCopier);
+            }
+            PdfAcroForm acroForm = PdfAcroForm.GetAcroForm(destDoc, false);
+            acroForm.GetField("CheckBox_1").SetValue("On");
+            acroForm.GetField("Check Box.2").SetValue("Off");
+            acroForm.GetField("CheckBox4.1#1").SetValue("Off");
+            destDoc.Close();
+            srcDoc.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destFilename, cmpFileName, destinationFolder
+                , "diff_"));
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 51)]
+        public virtual void CopyAndEditRadioButtons() {
+            //TODO: update after DEVSIX-2354
+            String srcFileName = sourceFolder + "checkPdfFormCopy_Source.pdf";
+            String destFilename = destinationFolder + "copyAndEditRadioButtons.pdf";
+            String cmpFileName = sourceFolder + "cmp_copyAndEditRadioButtons.pdf";
+            PdfDocument srcDoc = new PdfDocument(new PdfReader(srcFileName));
+            PdfDocument destDoc = new PdfDocument(new PdfWriter(destFilename));
+            PdfPageFormCopier pdfPageFormCopier = new PdfPageFormCopier();
+            for (int i = 0; i < 4; i++) {
+                srcDoc.CopyPagesTo(1, 1, destDoc, pdfPageFormCopier);
+            }
+            PdfAcroForm acroForm = PdfAcroForm.GetAcroForm(destDoc, false);
+            acroForm.GetField("Group.4").SetValue("Choice_3!<>3.3.3");
+            destDoc.Close();
+            srcDoc.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destFilename, cmpFileName, destinationFolder
+                , "diff_"));
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD)]
+        public virtual void MergeMergedFieldAndMergedFieldTest() {
+            String srcFileName1 = sourceFolder + "fieldMergedWithWidget.pdf";
+            String destFilename = destinationFolder + "mergeMergedFieldAndMergedFieldTest.pdf";
+            String cmpFileName = sourceFolder + "cmp_mergeMergedFieldAndMergedFieldTest.pdf";
+            using (PdfWriter writer = new PdfWriter(destFilename)) {
+                using (PdfDocument resultPdfDocument = new PdfDocument(writer)) {
+                    using (PdfReader reader1 = new PdfReader(srcFileName1)) {
+                        using (PdfDocument sourceDoc1 = new PdfDocument(reader1)) {
+                            PdfAcroForm.GetAcroForm(resultPdfDocument, true);
+                            PdfPageFormCopier formCopier = new PdfPageFormCopier();
+                            sourceDoc1.CopyPagesTo(1, sourceDoc1.GetNumberOfPages(), resultPdfDocument, formCopier);
+                            sourceDoc1.CopyPagesTo(1, sourceDoc1.GetNumberOfPages(), resultPdfDocument, formCopier);
+                        }
+                    }
+                }
+            }
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destFilename, cmpFileName, destinationFolder
+                , "diff_"));
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 2)]
+        public virtual void MergeMergedFieldAndTwoWidgetsTest() {
+            String srcFileName1 = sourceFolder + "fieldMergedWithWidget.pdf";
+            String srcFileName2 = sourceFolder + "fieldTwoWidgets.pdf";
+            String destFilename = destinationFolder + "mergeMergedFieldAndTwoWidgetsTest.pdf";
+            String cmpFileName = sourceFolder + "cmp_mergeMergedFieldAndTwoWidgetsTest.pdf";
+            using (PdfWriter writer = new PdfWriter(destFilename)) {
+                using (PdfDocument resultPdfDocument = new PdfDocument(writer)) {
+                    using (PdfReader reader1 = new PdfReader(srcFileName1)) {
+                        using (PdfDocument sourceDoc1 = new PdfDocument(reader1)) {
+                            using (PdfReader reader2 = new PdfReader(srcFileName2)) {
+                                using (PdfDocument sourceDoc2 = new PdfDocument(reader2)) {
+                                    PdfAcroForm.GetAcroForm(resultPdfDocument, true);
+                                    PdfPageFormCopier formCopier = new PdfPageFormCopier();
+                                    sourceDoc1.CopyPagesTo(1, sourceDoc1.GetNumberOfPages(), resultPdfDocument, formCopier);
+                                    sourceDoc2.CopyPagesTo(1, sourceDoc2.GetNumberOfPages(), resultPdfDocument, formCopier);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destFilename, cmpFileName, destinationFolder
+                , "diff_"));
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD)]
+        public virtual void MergeTwoWidgetsAndMergedFieldTest() {
+            String srcFileName1 = sourceFolder + "fieldMergedWithWidget.pdf";
+            String srcFileName2 = sourceFolder + "fieldTwoWidgets.pdf";
+            String destFilename = destinationFolder + "mergeTwoWidgetsAndMergedFieldTest.pdf";
+            String cmpFileName = sourceFolder + "cmp_mergeTwoWidgetsAndMergedFieldTest.pdf";
+            using (PdfWriter writer = new PdfWriter(destFilename)) {
+                using (PdfDocument resultPdfDocument = new PdfDocument(writer)) {
+                    using (PdfReader reader1 = new PdfReader(srcFileName1)) {
+                        using (PdfDocument sourceDoc1 = new PdfDocument(reader1)) {
+                            using (PdfReader reader2 = new PdfReader(srcFileName2)) {
+                                using (PdfDocument sourceDoc2 = new PdfDocument(reader2)) {
+                                    PdfAcroForm.GetAcroForm(resultPdfDocument, true);
+                                    PdfPageFormCopier formCopier = new PdfPageFormCopier();
+                                    sourceDoc2.CopyPagesTo(1, sourceDoc2.GetNumberOfPages(), resultPdfDocument, formCopier);
+                                    sourceDoc1.CopyPagesTo(1, sourceDoc1.GetNumberOfPages(), resultPdfDocument, formCopier);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destFilename, cmpFileName, destinationFolder
+                , "diff_"));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void MergeTwoWidgetsAndTwoWidgetsTest() {
+            String srcFileName2 = sourceFolder + "fieldTwoWidgets.pdf";
+            String destFilename = destinationFolder + "mergeTwoWidgetsAndTwoWidgetsTest.pdf";
+            String cmpFileName = sourceFolder + "cmp_mergeTwoWidgetsAndTwoWidgetsTest.pdf";
+            using (PdfWriter writer = new PdfWriter(destFilename)) {
+                using (PdfDocument resultPdfDocument = new PdfDocument(writer)) {
+                    using (PdfReader reader2 = new PdfReader(srcFileName2)) {
+                        using (PdfDocument sourceDoc2 = new PdfDocument(reader2)) {
+                            PdfAcroForm.GetAcroForm(resultPdfDocument, true);
+                            PdfPageFormCopier formCopier = new PdfPageFormCopier();
+                            sourceDoc2.CopyPagesTo(1, sourceDoc2.GetNumberOfPages(), resultPdfDocument, formCopier);
+                            sourceDoc2.CopyPagesTo(1, sourceDoc2.GetNumberOfPages(), resultPdfDocument, formCopier);
+                        }
+                    }
+                }
+            }
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destFilename, cmpFileName, destinationFolder
+                , "diff_"));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void WidgetContainsNoTEntryTest() {
+            String sourceFileName = sourceFolder + "fieldThreeWidgets.pdf";
+            String destFileName = destinationFolder + "widgetContainsNoTEntryTest.pdf";
+            String cmpFileName = sourceFolder + "cmp_widgetContainsNoTEntryTest.pdf";
+            PdfDocument sourcePdfDocument = new PdfDocument(new PdfReader(sourceFileName));
+            PdfDocument resultPdfDocument = new PdfDocument(new PdfWriter(destFileName));
+            sourcePdfDocument.CopyPagesTo(1, sourcePdfDocument.GetNumberOfPages(), resultPdfDocument, new PdfPageFormCopier
+                ());
+            resultPdfDocument.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destFileName, cmpFileName, destinationFolder
+                , "diff_"));
         }
     }
 }

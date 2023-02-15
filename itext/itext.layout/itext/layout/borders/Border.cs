@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,8 +42,9 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-using Common.Logging;
-using iText.IO.Util;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
 using iText.Kernel.Colors;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf.Canvas;
@@ -52,12 +53,8 @@ using iText.Layout.Properties;
 namespace iText.Layout.Borders {
     /// <summary>Represents a border.</summary>
     public abstract class Border {
-        /// <summary>The null Border, i.e.</summary>
-        /// <remarks>The null Border, i.e. the presence of such border is equivalent to the absence of the border</remarks>
+        /// <summary>The null Border, i.e. the presence of such border is equivalent to the absence of the border</summary>
         public static readonly iText.Layout.Borders.Border NO_BORDER = null;
-
-        /// <summary>Value used by discontinuous borders during the drawing process</summary>
-        private const float CURV = 0.447f;
 
         /// <summary>The solid border.</summary>
         /// <seealso cref="SolidBorder"/>
@@ -95,6 +92,20 @@ namespace iText.Layout.Borders {
         /// <seealso cref="RidgeBorder"/>
         public const int _3D_RIDGE = 8;
 
+        /// <summary>The fixed dashed border.</summary>
+        /// <seealso cref="FixedDashedBorder"/>
+        public const int DASHED_FIXED = 9;
+
+        private const int ARC_RIGHT_DEGREE = 0;
+
+        private const int ARC_TOP_DEGREE = 90;
+
+        private const int ARC_LEFT_DEGREE = 180;
+
+        private const int ARC_BOTTOM_DEGREE = 270;
+
+        private const int ARC_QUARTER_CLOCKWISE_EXTENT = -90;
+
         /// <summary>The color of the border.</summary>
         /// <seealso cref="iText.Layout.Properties.TransparentColor"/>
         protected internal TransparentColor transparentColor;
@@ -112,10 +123,15 @@ namespace iText.Layout.Borders {
         /// Creates a
         /// <see cref="Border">border</see>
         /// with the given width.
+        /// </summary>
+        /// <remarks>
+        /// Creates a
+        /// <see cref="Border">border</see>
+        /// with the given width.
         /// The
         /// <see cref="iText.Kernel.Colors.Color">color</see>
         /// to be set by default is black
-        /// </summary>
+        /// </remarks>
         /// <param name="width">the width which the border should have</param>
         protected internal Border(float width)
             : this(ColorConstants.BLACK, width) {
@@ -125,8 +141,7 @@ namespace iText.Layout.Borders {
         /// Creates a
         /// <see cref="Border">border</see>
         /// with given width and
-        /// <see cref="iText.Kernel.Colors.Color">color</see>
-        /// .
+        /// <see cref="iText.Kernel.Colors.Color">color</see>.
         /// </summary>
         /// <param name="color">the color which the border should have</param>
         /// <param name="width">the width which the border should have</param>
@@ -152,26 +167,21 @@ namespace iText.Layout.Borders {
         }
 
         /// <summary>
-        /// <p>
         /// All borders are supposed to be drawn in such way, that inner content of the element is on the right from the
         /// drawing direction.
         /// </summary>
         /// <remarks>
-        /// <p>
         /// All borders are supposed to be drawn in such way, that inner content of the element is on the right from the
         /// drawing direction. Borders are drawn in this order: top, right, bottom, left.
-        /// </p>
-        /// <p>
+        /// <para />
         /// Given points specify the line which lies on the border of the content area,
         /// therefore the border itself should be drawn to the left from the drawing direction.
-        /// </p>
-        /// <p>
-        /// <code>borderWidthBefore</code> and <code>borderWidthAfter</code> parameters are used to
+        /// <para />
+        /// <c>borderWidthBefore</c> and <c>borderWidthAfter</c> parameters are used to
         /// define the widths of the borders that are before and after the current border, e.g. for
-        /// the bottom border, <code>borderWidthBefore</code> specifies width of the right border and
-        /// <code>borderWidthAfter</code> - width of the left border. Those width are used to handle areas
+        /// the bottom border, <c>borderWidthBefore</c> specifies width of the right border and
+        /// <c>borderWidthAfter</c> - width of the left border. Those width are used to handle areas
         /// of border joins.
-        /// </p>
         /// </remarks>
         /// <param name="canvas">PdfCanvas to be written to</param>
         /// <param name="x1">x coordinate of the beginning point of the element side, that should be bordered</param>
@@ -188,30 +198,38 @@ namespace iText.Layout.Borders {
         public abstract void Draw(PdfCanvas canvas, float x1, float y1, float x2, float y2, Border.Side defaultSide
             , float borderWidthBefore, float borderWidthAfter);
 
+        /// <summary>Draw borders around the target rectangle.</summary>
+        /// <param name="canvas">PdfCanvas to be written to</param>
+        /// <param name="rectangle">border positions rectangle</param>
+        public virtual void Draw(PdfCanvas canvas, Rectangle rectangle) {
+            float left = rectangle.GetX();
+            float bottom = rectangle.GetY();
+            float right = rectangle.GetX() + rectangle.GetWidth();
+            float top = rectangle.GetY() + rectangle.GetHeight();
+            Draw(canvas, left, top, right, top, Border.Side.TOP, width, width);
+            Draw(canvas, right, top, right, bottom, Border.Side.RIGHT, width, width);
+            Draw(canvas, right, bottom, left, bottom, Border.Side.BOTTOM, width, width);
+            Draw(canvas, left, bottom, left, top, Border.Side.LEFT, width, width);
+        }
+
         /// <summary>
-        /// <p>
         /// All borders are supposed to be drawn in such way, that inner content of the element is on the right from the
         /// drawing direction.
         /// </summary>
         /// <remarks>
-        /// <p>
         /// All borders are supposed to be drawn in such way, that inner content of the element is on the right from the
         /// drawing direction. Borders are drawn in this order: top, right, bottom, left.
-        /// </p>
-        /// <p>
+        /// <para />
         /// Given points specify the line which lies on the border of the content area,
         /// therefore the border itself should be drawn to the left from the drawing direction.
-        /// </p>
-        /// <p>
-        /// <code>borderWidthBefore</code> and <code>borderWidthAfter</code> parameters are used to
+        /// <para />
+        /// <c>borderWidthBefore</c> and <c>borderWidthAfter</c> parameters are used to
         /// define the widths of the borders that are before and after the current border, e.g. for
-        /// the bottom border, <code>borderWidthBefore</code> specifies width of the right border and
-        /// <code>borderWidthAfter</code> - width of the left border. Those width are used to handle areas
+        /// the bottom border, <c>borderWidthBefore</c> specifies width of the right border and
+        /// <c>borderWidthAfter</c> - width of the left border. Those width are used to handle areas
         /// of border joins.
-        /// </p>
-        /// <p>
-        /// <code>borderRadius</code> is used to draw rounded borders.
-        /// </p>
+        /// <para />
+        /// <c>borderRadius</c> is used to draw rounded borders.
         /// </remarks>
         /// <param name="canvas">PdfCanvas to be written to</param>
         /// <param name="x1">x coordinate of the beginning point of the element side, that should be bordered</param>
@@ -233,30 +251,24 @@ namespace iText.Layout.Borders {
         }
 
         /// <summary>
-        /// <p>
         /// All borders are supposed to be drawn in such way, that inner content of the element is on the right from the
         /// drawing direction.
         /// </summary>
         /// <remarks>
-        /// <p>
         /// All borders are supposed to be drawn in such way, that inner content of the element is on the right from the
         /// drawing direction. Borders are drawn in this order: top, right, bottom, left.
-        /// </p>
-        /// <p>
+        /// <para />
         /// Given points specify the line which lies on the border of the content area,
         /// therefore the border itself should be drawn to the left from the drawing direction.
-        /// </p>
-        /// <p>
-        /// <code>borderWidthBefore</code> and <code>borderWidthAfter</code> parameters are used to
+        /// <para />
+        /// <c>borderWidthBefore</c> and <c>borderWidthAfter</c> parameters are used to
         /// define the widths of the borders that are before and after the current border, e.g. for
-        /// the bottom border, <code>borderWidthBefore</code> specifies width of the right border and
-        /// <code>borderWidthAfter</code> - width of the left border. Those width are used to handle areas
+        /// the bottom border, <c>borderWidthBefore</c> specifies width of the right border and
+        /// <c>borderWidthAfter</c> - width of the left border. Those width are used to handle areas
         /// of border joins.
-        /// </p>
-        /// <p>
-        /// <code>horizontalRadius1</code>, <code>verticalRadius1</code>, <code>horizontalRadius2</code>
-        /// and <code>verticalRadius2</code> are used to draw rounded borders.
-        /// </p>
+        /// <para />
+        /// <c>horizontalRadius1</c>, <c>verticalRadius1</c>, <c>horizontalRadius2</c>
+        /// and <c>verticalRadius2</c> are used to draw rounded borders.
         /// </remarks>
         /// <param name="canvas">PdfCanvas to be written to</param>
         /// <param name="x1">x coordinate of the beginning point of the element side, that should be bordered</param>
@@ -277,8 +289,8 @@ namespace iText.Layout.Borders {
         public virtual void Draw(PdfCanvas canvas, float x1, float y1, float x2, float y2, float horizontalRadius1
             , float verticalRadius1, float horizontalRadius2, float verticalRadius2, Border.Side defaultSide, float
              borderWidthBefore, float borderWidthAfter) {
-            ILog logger = LogManager.GetLogger(typeof(iText.Layout.Borders.Border));
-            logger.Warn(MessageFormatUtil.Format(iText.IO.LogMessageConstant.METHOD_IS_NOT_IMPLEMENTED_BY_DEFAULT_OTHER_METHOD_WILL_BE_USED
+            ILogger logger = ITextLogManager.GetLogger(typeof(iText.Layout.Borders.Border));
+            logger.LogWarning(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.METHOD_IS_NOT_IMPLEMENTED_BY_DEFAULT_OTHER_METHOD_WILL_BE_USED
                 , "Border#draw(PdfCanvas, float, float, float, float, float, float, float, float, Side, float, float", 
                 "Border#draw(PdfCanvas, float, float, float, float, Side, float, float)"));
             Draw(canvas, x1, y1, x2, y2, defaultSide, borderWidthBefore, borderWidthAfter);
@@ -396,9 +408,14 @@ namespace iText.Layout.Borders {
         /// Returns the
         /// <see cref="Side">side</see>
         /// corresponded to the line between two points.
+        /// </summary>
+        /// <remarks>
+        /// Returns the
+        /// <see cref="Side">side</see>
+        /// corresponded to the line between two points.
         /// Notice that we consider the rectangle traversal to be clockwise.
         /// In case side couldn't be detected we will fallback to default side
-        /// </summary>
+        /// </remarks>
         /// <param name="x1">the abscissa of the left-bottom point</param>
         /// <param name="y1">the ordinate of the left-bottom point</param>
         /// <param name="x2">the abscissa of the right-top point</param>
@@ -457,6 +474,35 @@ namespace iText.Layout.Borders {
             LEFT
         }
 
+        /// <summary>
+        /// Gets a
+        /// <see cref="iText.Kernel.Geom.Point"/>
+        /// in which two lines intersect.
+        /// </summary>
+        /// <param name="lineBeg">
+        /// a
+        /// <see cref="iText.Kernel.Geom.Point"/>
+        /// which defines some point on the first line
+        /// </param>
+        /// <param name="lineEnd">
+        /// a
+        /// <see cref="iText.Kernel.Geom.Point"/>
+        /// which defines another point on the first line
+        /// </param>
+        /// <param name="clipLineBeg">
+        /// a
+        /// <see cref="iText.Kernel.Geom.Point"/>
+        /// which defines some point on the second line
+        /// </param>
+        /// <param name="clipLineEnd">
+        /// a
+        /// <see cref="iText.Kernel.Geom.Point"/>
+        /// which defines another point on the second line
+        /// </param>
+        /// <returns>
+        /// the intersection
+        /// <see cref="iText.Kernel.Geom.Point"/>
+        /// </returns>
         protected internal virtual Point GetIntersectionPoint(Point lineBeg, Point lineEnd, Point clipLineBeg, Point
              clipLineEnd) {
             double A1 = lineBeg.GetY() - lineEnd.GetY();
@@ -492,8 +538,7 @@ namespace iText.Layout.Borders {
         /// ,
         /// <see cref="DottedBorder"/>
         /// and
-        /// <see cref="RoundDotsBorder"/>
-        /// .
+        /// <see cref="RoundDotsBorder"/>.
         /// </remarks>
         /// <param name="canvas">canvas to draw on</param>
         /// <param name="boundingRectangle">rectangle representing the bounding box of the drawing operations</param>
@@ -509,28 +554,28 @@ namespace iText.Layout.Borders {
         protected internal virtual void DrawDiscontinuousBorders(PdfCanvas canvas, Rectangle boundingRectangle, float
             [] horizontalRadii, float[] verticalRadii, Border.Side defaultSide, float borderWidthBefore, float borderWidthAfter
             ) {
-            float x1 = boundingRectangle.GetX();
-            float y1 = boundingRectangle.GetY();
-            float x2 = boundingRectangle.GetRight();
-            float y2 = boundingRectangle.GetTop();
-            float horizontalRadius1 = horizontalRadii[0];
-            float horizontalRadius2 = horizontalRadii[1];
-            float verticalRadius1 = verticalRadii[0];
-            float verticalRadius2 = verticalRadii[1];
+            double x1 = boundingRectangle.GetX();
+            double y1 = boundingRectangle.GetY();
+            double x2 = boundingRectangle.GetRight();
+            double y2 = boundingRectangle.GetTop();
+            double horizontalRadius1 = horizontalRadii[0];
+            double horizontalRadius2 = horizontalRadii[1];
+            double verticalRadius1 = verticalRadii[0];
+            double verticalRadius2 = verticalRadii[1];
             // Points (x0, y0) and (x3, y3) are used to produce Bezier curve
-            float x0 = boundingRectangle.GetX();
-            float y0 = boundingRectangle.GetY();
-            float x3 = boundingRectangle.GetRight();
-            float y3 = boundingRectangle.GetTop();
-            float innerRadiusBefore;
-            float innerRadiusFirst;
-            float innerRadiusSecond;
-            float innerRadiusAfter;
-            float widthHalf = width / 2;
+            double x0 = boundingRectangle.GetX();
+            double y0 = boundingRectangle.GetY();
+            double x3 = boundingRectangle.GetRight();
+            double y3 = boundingRectangle.GetTop();
+            double innerRadiusBefore;
+            double innerRadiusFirst;
+            double innerRadiusSecond;
+            double innerRadiusAfter;
+            double widthHalf = width / 2.0;
             Point clipPoint1;
             Point clipPoint2;
             Point clipPoint;
-            Border.Side borderSide = GetBorderSide(x1, y1, x2, y2, defaultSide);
+            Border.Side borderSide = GetBorderSide((float)x1, (float)y1, (float)x2, (float)y2, defaultSide);
             switch (borderSide) {
                 case Border.Side.TOP: {
                     innerRadiusBefore = Math.Max(0, horizontalRadius1 - borderWidthBefore);
@@ -560,8 +605,9 @@ namespace iText.Layout.Borders {
                     y1 += widthHalf;
                     x2 -= innerRadiusAfter;
                     y2 += widthHalf;
-                    canvas.MoveTo(x0, y0).CurveTo(x0, y0 + innerRadiusFirst * CURV, x1 - innerRadiusBefore * CURV, y1, x1, y1)
-                        .LineTo(x2, y2).CurveTo(x2 + innerRadiusAfter * CURV, y2, x3, y3 + innerRadiusSecond * CURV, x3, y3);
+                    canvas.Arc(x0, y0 - innerRadiusFirst, x1 + innerRadiusBefore, y1, ARC_LEFT_DEGREE, ARC_QUARTER_CLOCKWISE_EXTENT
+                        ).ArcContinuous(x2 - innerRadiusAfter, y2, x3, y3 - innerRadiusSecond, ARC_TOP_DEGREE, ARC_QUARTER_CLOCKWISE_EXTENT
+                        );
                     break;
                 }
 
@@ -594,8 +640,9 @@ namespace iText.Layout.Borders {
                     y1 -= innerRadiusBefore;
                     x2 += widthHalf;
                     y2 += innerRadiusAfter;
-                    canvas.MoveTo(x0, y0).CurveTo(x0 + innerRadiusFirst * CURV, y0, x1, y1 + innerRadiusBefore * CURV, x1, y1)
-                        .LineTo(x2, y2).CurveTo(x2, y2 - innerRadiusAfter * CURV, x3 + innerRadiusSecond * CURV, y3, x3, y3);
+                    canvas.Arc(x0 - innerRadiusFirst, y0, x1, y1 - innerRadiusBefore, ARC_TOP_DEGREE, ARC_QUARTER_CLOCKWISE_EXTENT
+                        ).ArcContinuous(x2, y2 + innerRadiusAfter, x3 - innerRadiusSecond, y3, ARC_RIGHT_DEGREE, ARC_QUARTER_CLOCKWISE_EXTENT
+                        );
                     break;
                 }
 
@@ -627,8 +674,9 @@ namespace iText.Layout.Borders {
                     y1 -= widthHalf;
                     x2 += innerRadiusAfter;
                     y2 -= widthHalf;
-                    canvas.MoveTo(x0, y0).CurveTo(x0, y0 - innerRadiusFirst * CURV, x1 + innerRadiusBefore * CURV, y1, x1, y1)
-                        .LineTo(x2, y2).CurveTo(x2 - innerRadiusAfter * CURV, y2, x3, y3 - innerRadiusSecond * CURV, x3, y3);
+                    canvas.Arc(x0, y0 + innerRadiusFirst, x1 - innerRadiusBefore, y1, ARC_RIGHT_DEGREE, ARC_QUARTER_CLOCKWISE_EXTENT
+                        ).ArcContinuous(x2 + innerRadiusAfter, y2, x3, y3 + innerRadiusSecond, ARC_BOTTOM_DEGREE, ARC_QUARTER_CLOCKWISE_EXTENT
+                        );
                     break;
                 }
 
@@ -660,8 +708,9 @@ namespace iText.Layout.Borders {
                     y1 += innerRadiusBefore;
                     x2 -= widthHalf;
                     y2 -= innerRadiusAfter;
-                    canvas.MoveTo(x0, y0).CurveTo(x0 - innerRadiusFirst * CURV, y0, x1, y1 - innerRadiusBefore * CURV, x1, y1)
-                        .LineTo(x2, y2).CurveTo(x2, y2 + innerRadiusAfter * CURV, x3 - innerRadiusSecond * CURV, y3, x3, y3);
+                    canvas.Arc(x0 + innerRadiusFirst, y0, x1, y1 + innerRadiusBefore, ARC_BOTTOM_DEGREE, ARC_QUARTER_CLOCKWISE_EXTENT
+                        ).ArcContinuous(x2, y2 - innerRadiusAfter, x3 + innerRadiusSecond, y3, ARC_LEFT_DEGREE, ARC_QUARTER_CLOCKWISE_EXTENT
+                        );
                     break;
                 }
 

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -49,8 +49,7 @@ using iText.StyledXmlParser.Css.Selector;
 namespace iText.StyledXmlParser.Css.Page {
     /// <summary>
     /// Class for a non standard
-    /// <see cref="iText.StyledXmlParser.Css.CssRuleSet"/>
-    /// .
+    /// <see cref="iText.StyledXmlParser.Css.CssRuleSet"/>.
     /// </summary>
     internal class CssNonStandardRuleSet : CssRuleSet {
         /// <summary>

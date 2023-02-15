@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,32 +43,32 @@ address: sales@itextpdf.com
 */
 using System.IO;
 using iText.IO.Source;
-using iText.Kernel;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf;
 
 namespace iText.Kernel.Pdf.Filters {
     /// <summary>Handles ASCII85Decode filter</summary>
     public class ASCII85DecodeFilter : MemoryLimitsAwareFilter {
-        /// <summary><inheritDoc/></summary>
-        public override byte[] Decode(byte[] b, PdfName filterName, PdfObject decodeParams, PdfDictionary streamDictionary
-            ) {
-            MemoryStream outputStream = EnableMemoryLimitsAwareHandler(streamDictionary);
-            b = ASCII85Decode(b, outputStream);
-            return b;
-        }
-
         /// <summary>Decodes the input bytes according to ASCII85.</summary>
         /// <param name="in">the byte[] to be decoded</param>
         /// <returns>the decoded byte[]</returns>
         public static byte[] ASCII85Decode(byte[] @in) {
-            return ASCII85Decode(@in, new MemoryStream());
+            return ASCII85DecodeInternal(@in, new MemoryStream());
+        }
+
+        /// <summary><inheritDoc/></summary>
+        public override byte[] Decode(byte[] b, PdfName filterName, PdfObject decodeParams, PdfDictionary streamDictionary
+            ) {
+            MemoryStream outputStream = EnableMemoryLimitsAwareHandler(streamDictionary);
+            b = ASCII85DecodeInternal(b, outputStream);
+            return b;
         }
 
         /// <summary>Decodes the input bytes according to ASCII85.</summary>
         /// <param name="in">the byte[] to be decoded</param>
         /// <param name="out">the out stream which will be used to write the bytes.</param>
         /// <returns>the decoded byte[]</returns>
-        private static byte[] ASCII85Decode(byte[] @in, MemoryStream @out) {
+        private static byte[] ASCII85DecodeInternal(byte[] @in, MemoryStream @out) {
             int state = 0;
             int[] chn = new int[5];
             for (int k = 0; k < @in.Length; ++k) {
@@ -87,7 +87,7 @@ namespace iText.Kernel.Pdf.Filters {
                     continue;
                 }
                 if (ch < '!' || ch > 'u') {
-                    throw new PdfException(PdfException.IllegalCharacterInAscii85decode);
+                    throw new PdfException(KernelExceptionMessageConstant.ILLEGAL_CHARACTER_IN_ASCII85DECODE);
                 }
                 chn[state] = ch - '!';
                 ++state;

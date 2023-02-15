@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,7 +45,7 @@ using System;
 using System.Collections.Generic;
 
 namespace iText.Barcodes.Qrcode {
-    /// <summary><p>Implements Reed-Solomon encoding, as the name implies.</p></summary>
+    /// <summary>Implements Reed-Solomon encoding, as the name implies.</summary>
     /// <author>Sean Owen</author>
     /// <author>William Rucklidge</author>
     internal sealed class ReedSolomonEncoder {
@@ -57,8 +57,13 @@ namespace iText.Barcodes.Qrcode {
         /// Creates a SolomonEncoder object based on a
         /// <see cref="GF256"/>
         /// object.
-        /// Only QR codes are supported at the moment.
         /// </summary>
+        /// <remarks>
+        /// Creates a SolomonEncoder object based on a
+        /// <see cref="GF256"/>
+        /// object.
+        /// Only QR codes are supported at the moment.
+        /// </remarks>
         /// <param name="field">the galois field</param>
         public ReedSolomonEncoder(GF256 field) {
             if (!GF256.QR_CODE_FIELD.Equals(field)) {

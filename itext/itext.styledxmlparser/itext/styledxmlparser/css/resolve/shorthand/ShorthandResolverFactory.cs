@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -54,6 +54,7 @@ namespace iText.StyledXmlParser.Css.Resolve.Shorthand {
         static ShorthandResolverFactory() {
             shorthandResolvers = new Dictionary<String, IShorthandResolver>();
             shorthandResolvers.Put(CommonCssConstants.BACKGROUND, new BackgroundShorthandResolver());
+            shorthandResolvers.Put(CommonCssConstants.BACKGROUND_POSITION, new BackgroundPositionShorthandResolver());
             shorthandResolvers.Put(CommonCssConstants.BORDER, new BorderShorthandResolver());
             shorthandResolvers.Put(CommonCssConstants.BORDER_BOTTOM, new BorderBottomShorthandResolver());
             shorthandResolvers.Put(CommonCssConstants.BORDER_COLOR, new BorderColorShorthandResolver());
@@ -68,9 +69,13 @@ namespace iText.StyledXmlParser.Css.Resolve.Shorthand {
             shorthandResolvers.Put(CommonCssConstants.MARGIN, new MarginShorthandResolver());
             shorthandResolvers.Put(CommonCssConstants.OUTLINE, new OutlineShorthandResolver());
             shorthandResolvers.Put(CommonCssConstants.PADDING, new PaddingShorthandResolver());
+            shorthandResolvers.Put(CommonCssConstants.TEXT_DECORATION, new TextDecorationShorthandResolver());
+            shorthandResolvers.Put(CommonCssConstants.FLEX, new FlexShorthandResolver());
+            shorthandResolvers.Put(CommonCssConstants.FLEX_FLOW, new FlexFlowShorthandResolver());
+            shorthandResolvers.Put(CommonCssConstants.GAP, new GapShorthandResolver());
+            shorthandResolvers.Put(CommonCssConstants.PLACE_ITEMS, new PlaceItemsShorthandResolver());
         }
 
-        // TODO text-decoration is a shorthand in CSS3, however it is not yet supported in any major browsers
         /// <summary>Gets a shorthand resolver.</summary>
         /// <param name="shorthandProperty">the property</param>
         /// <returns>the shorthand resolver</returns>

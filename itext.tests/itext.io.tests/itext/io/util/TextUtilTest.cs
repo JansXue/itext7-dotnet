@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -40,10 +40,13 @@ source product.
 For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
+using iText.Commons.Utils;
 using iText.IO.Font.Otf;
+using iText.Test;
 
 namespace iText.IO.Util {
-    public class TextUtilTest {
+    [NUnit.Framework.Category("UnitTest")]
+    public class TextUtilTest : ExtendedITextTest {
         private Glyph carriageReturn;
 
         private Glyph lineFeed;
@@ -82,6 +85,37 @@ namespace iText.IO.Util {
         [NUnit.Framework.Test]
         public virtual void CarriageReturnPrecededByTextFollowedByLineFeedTest() {
             Helper(true, 1, new Glyph(0, 0, 'a'), carriageReturn, lineFeed);
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void IsLetterPositiveTest() {
+            Glyph glyph = new Glyph(0, 0, 'a');
+            NUnit.Framework.Assert.IsTrue(iText.IO.Util.TextUtil.IsLetterOrDigit(glyph));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void IsDigitPositiveTest() {
+            Glyph glyph = new Glyph(0, 0, '8');
+            NUnit.Framework.Assert.IsTrue(iText.IO.Util.TextUtil.IsLetterOrDigit(glyph));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void IsLetterOrDigitNegativeTest() {
+            Glyph glyph = new Glyph(0, 0, '-');
+            NUnit.Framework.Assert.IsFalse(iText.IO.Util.TextUtil.IsLetterOrDigit(glyph));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void IsMarkPositiveTest() {
+            // TAI THAM SIGN KHUEN TONE-3
+            Glyph glyph = new Glyph(0, 0, 0x1A77);
+            NUnit.Framework.Assert.IsTrue(iText.IO.Util.TextUtil.IsMark(glyph));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void IsMarkNegativeTest() {
+            Glyph glyph = new Glyph(0, 0, '-');
+            NUnit.Framework.Assert.IsFalse(iText.IO.Util.TextUtil.IsMark(glyph));
         }
 
         private void Helper(bool expected, int currentCRPosition, params Glyph[] glyphs) {

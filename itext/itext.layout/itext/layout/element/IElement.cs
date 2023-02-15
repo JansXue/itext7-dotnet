@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,7 +45,10 @@ using iText.Layout;
 using iText.Layout.Renderer;
 
 namespace iText.Layout.Element {
-    /// <summary>This class represents a layout element, i.e.</summary>
+    /// <summary>
+    /// This class represents a layout element, i.e. a piece of content that will
+    /// take up 'physical' space on a canvas or document.
+    /// </summary>
     /// <remarks>
     /// This class represents a layout element, i.e. a piece of content that will
     /// take up 'physical' space on a canvas or document. Its presence and positioning
@@ -58,8 +61,7 @@ namespace iText.Layout.Element {
         /// Overrides the
         /// <see cref="iText.Layout.Renderer.IRenderer"/>
         /// instance which will be returned by the next call to the
-        /// <see cref="GetRenderer()"/>
-        /// .
+        /// <see cref="GetRenderer()"/>.
         /// </summary>
         /// <param name="renderer">the renderer instance</param>
         void SetNextRenderer(IRenderer renderer);

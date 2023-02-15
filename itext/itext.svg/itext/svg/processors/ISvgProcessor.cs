@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -65,10 +65,6 @@ namespace iText.Svg.Processors {
         /// <see cref="ISvgProcessorResult"/>
         /// }
         /// </returns>
-        /// <exception cref="iText.Svg.Exceptions.SvgProcessingException">
-        /// throws an exception if the root
-        /// node is null or if the child node being processed is null
-        /// </exception>
         ISvgProcessorResult Process(INode root, ISvgConverterProperties converterProps);
     }
 }

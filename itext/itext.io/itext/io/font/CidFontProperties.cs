@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,6 +44,7 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.IO;
+using iText.Commons.Utils;
 using iText.IO.Font.Constants;
 using iText.IO.Util;
 
@@ -111,7 +112,6 @@ namespace iText.IO.Font {
             return registryNames;
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private static void LoadRegistry() {
             Stream resource = ResourceUtil.GetResourceStream(FontResources.CMAPS + "cjk_registry.properties");
             Properties p = new Properties();
@@ -119,7 +119,7 @@ namespace iText.IO.Font {
             resource.Dispose();
             foreach (Object key in p.Keys) {
                 String value = p.GetProperty((String)key);
-                String[] sp = iText.IO.Util.StringUtil.Split(value, " ");
+                String[] sp = iText.Commons.Utils.StringUtil.Split(value, " ");
                 ICollection<String> hs = new HashSet<String>();
                 foreach (String s in sp) {
                     if (s.Length > 0) {
@@ -130,7 +130,6 @@ namespace iText.IO.Font {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private static IDictionary<String, Object> ReadFontProperties(String name) {
             name += ".properties";
             Stream resource = ResourceUtil.GetResourceStream(FontResources.CMAPS + name);
@@ -154,8 +153,8 @@ namespace iText.IO.Font {
             IntHashtable h = new IntHashtable();
             StringTokenizer tk = new StringTokenizer(s);
             while (tk.HasMoreTokens()) {
-                int n1 = Convert.ToInt32(tk.NextToken());
-                h.Put(n1, Convert.ToInt32(tk.NextToken()));
+                int n1 = Convert.ToInt32(tk.NextToken(), System.Globalization.CultureInfo.InvariantCulture);
+                h.Put(n1, Convert.ToInt32(tk.NextToken(), System.Globalization.CultureInfo.InvariantCulture));
             }
             return h;
         }

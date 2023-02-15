@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,9 +43,11 @@ address: sales@itextpdf.com
 using System;
 using iText.Svg;
 using iText.Svg.Renderers.Impl;
+using iText.Test;
 
 namespace iText.Svg.Utils {
-    public class SvgTextUtilTest {
+    [NUnit.Framework.Category("UnitTest")]
+    public class SvgTextUtilTest : ExtendedITextTest {
         public static float EPS = 0.0001f;
 
         //Trim leading tests
@@ -290,6 +292,42 @@ namespace iText.Svg.Utils {
             // Parent's font-size doesn't impact the result in this test
             float actual = SvgTextUtil.ResolveFontSize(root, 10);
             NUnit.Framework.Assert.AreEqual(expected, actual, EPS);
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void TestFilterReferenceValueMarkerReference() {
+            NUnit.Framework.Assert.AreEqual("MarkerCircle", SvgTextUtil.FilterReferenceValue("url(#MarkerCircle)"));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void TestFilterReferenceValueMarkerFullEntry() {
+            NUnit.Framework.Assert.AreEqual("marker-end: MarkerArrow;", SvgTextUtil.FilterReferenceValue("marker-end: url(#MarkerArrow);"
+                ));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void TestFilterReferenceValueSimpleReference() {
+            NUnit.Framework.Assert.AreEqual("figure11", SvgTextUtil.FilterReferenceValue("#figure11"));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void TestFilterReferenceValueNoFilter() {
+            NUnit.Framework.Assert.AreEqual("circle", SvgTextUtil.FilterReferenceValue("circle"));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void TestFilterReferenceValueEmptyString() {
+            NUnit.Framework.Assert.AreEqual("", SvgTextUtil.FilterReferenceValue(""));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void TestFilterReferenceValueNumberString() {
+            NUnit.Framework.Assert.AreEqual("16554245", SvgTextUtil.FilterReferenceValue("16554245"));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void TestFilterReferenceValueFilteredValues() {
+            NUnit.Framework.Assert.AreEqual("", SvgTextUtil.FilterReferenceValue("))url(####)"));
         }
     }
 }

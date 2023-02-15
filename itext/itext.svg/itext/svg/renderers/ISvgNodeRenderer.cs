@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,6 +42,7 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
+using iText.Kernel.Geom;
 
 namespace iText.Svg.Renderers {
     /// <summary>
@@ -102,5 +103,18 @@ namespace iText.Svg.Renderers {
         /// <summary>Creates a deep copy of this renderer, including it's subtree of children</summary>
         /// <returns>deep copy of this renderer</returns>
         ISvgNodeRenderer CreateDeepCopy();
+
+        /// <summary>Calculates the current object bounding box.</summary>
+        /// <param name="context">
+        /// the current context, for instance it contains current viewport and available
+        /// font data
+        /// </param>
+        /// <returns>
+        /// the
+        /// <see cref="iText.Kernel.Geom.Rectangle"/>
+        /// representing the current object's bounding box, or null
+        /// if bounding box is undefined
+        /// </returns>
+        Rectangle GetObjectBoundingBox(SvgDrawContext context);
     }
 }

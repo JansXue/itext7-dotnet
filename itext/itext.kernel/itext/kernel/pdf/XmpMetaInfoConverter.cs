@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -99,7 +99,6 @@ namespace iText.Kernel.Pdf {
             }
         }
 
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
         internal static void AppendDocumentInfoToMetadata(PdfDocumentInfo info, XMPMeta xmpMeta) {
             PdfDictionary docInfo = info.GetPdfObject();
             if (docInfo != null) {
@@ -128,7 +127,7 @@ namespace iText.Kernel.Pdf {
                     }
                     else {
                         if (PdfName.Author.Equals(key)) {
-                            foreach (String v in iText.IO.Util.StringUtil.Split(value, ",|;")) {
+                            foreach (String v in iText.Commons.Utils.StringUtil.Split(value, ",|;")) {
                                 if (v.Trim().Length > 0) {
                                     AppendArrayItemIfDoesNotExist(xmpMeta, XMPConst.NS_DC, PdfConst.Creator, v.Trim(), PropertyOptions.ARRAY_ORDERED
                                         );
@@ -142,7 +141,7 @@ namespace iText.Kernel.Pdf {
                             }
                             else {
                                 if (PdfName.Keywords.Equals(key)) {
-                                    foreach (String v in iText.IO.Util.StringUtil.Split(value, ",|;")) {
+                                    foreach (String v in iText.Commons.Utils.StringUtil.Split(value, ",|;")) {
                                         if (v.Trim().Length > 0) {
                                             AppendArrayItemIfDoesNotExist(xmpMeta, XMPConst.NS_DC, PdfConst.Subject, v.Trim(), PropertyOptions.ARRAY);
                                         }
@@ -181,7 +180,6 @@ namespace iText.Kernel.Pdf {
             }
         }
 
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
         private static void AppendArrayItemIfDoesNotExist(XMPMeta meta, String ns, String arrayName, String value, 
             int arrayOption) {
             int currentCnt = meta.CountArrayItems(ns, arrayName);
@@ -194,7 +192,6 @@ namespace iText.Kernel.Pdf {
             meta.AppendArrayItem(ns, arrayName, new PropertyOptions(arrayOption), value, null);
         }
 
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
         private static String FetchArrayIntoString(XMPMeta meta, String ns, String arrayName) {
             int keywordsCnt = meta.CountArrayItems(ns, arrayName);
             StringBuilder sb = null;

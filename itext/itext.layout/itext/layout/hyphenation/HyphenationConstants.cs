@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,6 +43,7 @@ address: sales@itextpdf.com
 using System;
 
 namespace iText.Layout.Hyphenation {
+    /// <summary>Class containing constants to be used in hyphenation on layout level.</summary>
     public class HyphenationConstants {
         public const String HYPHENATION_DEFAULT_RESOURCE = "iText.Hyph.";
     }

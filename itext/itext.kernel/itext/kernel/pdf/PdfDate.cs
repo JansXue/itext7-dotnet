@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-    Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -50,15 +50,17 @@ namespace iText.Kernel.Pdf {
     /// <summary>
     /// <c>PdfDate</c>
     /// is the PDF date object.
-    /// <P>
+    /// <para/>
     /// PDF defines a standard date format. The PDF date format closely follows the format
     /// defined by the international standard ASN.1 (Abstract Syntax Notation One, defined
     /// in CCITT X.208 or ISO/IEC 8824). A date is a
     /// <c>PdfString</c>
     /// of the form:
-    /// <P><BLOCKQUOTE>
+    /// <para/>
+    /// <c>
     /// (D:YYYYMMDDHHmmSSOHH'mm')
-    /// </BLOCKQUOTE><P>
+    /// </c>
+    /// <para/>
     /// See also ISO-320001 7.9.4, "Dates".
     /// </summary>
     /// <seealso cref="PdfString"/>
@@ -108,40 +110,40 @@ namespace iText.Kernel.Pdf {
             if (d.Length < 4) {
                 return "0000";
             }
-            sb.Append(d.JSubstring(0, 4));
             //year
+            sb.Append(d.JSubstring(0, 4));
             d = d.Substring(4);
             if (d.Length < 2) {
                 return sb.ToString();
             }
-            sb.Append('-').Append(d.JSubstring(0, 2));
             //month
-            d = d.Substring(2);
-            if (d.Length < 2) {
-                return sb.ToString();
-            }
             sb.Append('-').Append(d.JSubstring(0, 2));
-            //day
             d = d.Substring(2);
             if (d.Length < 2) {
                 return sb.ToString();
             }
-            sb.Append('T').Append(d.JSubstring(0, 2));
+            //day
+            sb.Append('-').Append(d.JSubstring(0, 2));
+            d = d.Substring(2);
+            if (d.Length < 2) {
+                return sb.ToString();
+            }
             //hour
+            sb.Append('T').Append(d.JSubstring(0, 2));
             d = d.Substring(2);
             if (d.Length < 2) {
                 sb.Append(":00Z");
                 return sb.ToString();
             }
-            sb.Append(':').Append(d.JSubstring(0, 2));
             //minute
+            sb.Append(':').Append(d.JSubstring(0, 2));
             d = d.Substring(2);
             if (d.Length < 2) {
                 sb.Append('Z');
                 return sb.ToString();
             }
-            sb.Append(':').Append(d.JSubstring(0, 2));
             //second
+            sb.Append(':').Append(d.JSubstring(0, 2));
             d = d.Substring(2);
             if (d.StartsWith("-") || d.StartsWith("+")) {
                 String sign = d.JSubstring(0, 1);

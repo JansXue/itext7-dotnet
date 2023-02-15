@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,7 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf.Canvas;
 
@@ -54,28 +54,27 @@ namespace iText.Kernel.Pdf.Canvas.Parser.ClipperLib {
     /// <remarks>
     /// This class contains variety of methods allowing to convert iText
     /// abstractions into the abstractions of the Clipper library and vise versa.
-    /// <p>
+    /// <para />
     /// For example:
-    /// <ul>
-    /// <li>
+    /// <list type="bullet">
+    /// <item><description>
     /// <see cref="PolyTree"/>
     /// to
     /// <see cref="iText.Kernel.Geom.Path"/>
-    /// </li>
-    /// <li>
+    /// </description></item>
+    /// <item><description>
     /// <see cref="iText.Kernel.Geom.Point"/>
     /// to
     /// <see cref="IntPoint"/>
-    /// </li>
-    /// <li>
+    /// </description></item>
+    /// <item><description>
     /// <see cref="IntPoint"/>
     /// to
     /// <see cref="iText.Kernel.Geom.Point"/>
-    /// </li>
-    /// </ul>
-    /// <p>
+    /// </description></item>
+    /// </list>
     /// </remarks>
-    public class ClipperBridge {
+    public sealed class ClipperBridge {
         /// <summary>
         /// Since the clipper library uses integer coordinates, we should convert
         /// our floating point numbers into fixed point numbers by multiplying by
@@ -86,8 +85,14 @@ namespace iText.Kernel.Pdf.Canvas.Parser.ClipperLib {
         /// our floating point numbers into fixed point numbers by multiplying by
         /// this coefficient. Vary it to adjust the preciseness of the calculations.
         /// </remarks>
-        public static double floatMultiplier = Math.Pow(10, 14);
+        public static double floatMultiplier = Math
+                //TODO DEVSIX-5770 make this constant a single non-static configuration
+                .Pow(10, 14);
 
+        private ClipperBridge() {
+        }
+
+        //empty constructor
         /// <summary>
         /// Converts Clipper library
         /// <see cref="PolyTree"/>
@@ -95,6 +100,16 @@ namespace iText.Kernel.Pdf.Canvas.Parser.ClipperLib {
         /// <see cref="iText.Kernel.Geom.Path"/>
         /// object.
         /// </summary>
+        /// <param name="result">
+        /// 
+        /// <see cref="PolyTree"/>
+        /// object to convert
+        /// </param>
+        /// <returns>
+        /// resultant
+        /// <see cref="iText.Kernel.Geom.Path"/>
+        /// object
+        /// </returns>
         public static Path ConvertToPath(PolyTree result) {
             Path path = new Path();
             PolyNode node = result.GetFirst();
@@ -107,7 +122,7 @@ namespace iText.Kernel.Pdf.Canvas.Parser.ClipperLib {
 
         /// <summary>
         /// Adds iText
-        /// <see cref="List<IntPoint>"/>
+        /// <see cref="iText.Kernel.Geom.Path"/>
         /// to the given
         /// <see cref="Clipper"/>
         /// object.
@@ -121,13 +136,11 @@ namespace iText.Kernel.Pdf.Canvas.Parser.ClipperLib {
         /// The
         /// <see cref="iText.Kernel.Geom.Path"/>
         /// object to be added to the
-        /// <see cref="Clipper"/>
-        /// .
+        /// <see cref="Clipper"/>.
         /// </param>
         /// <param name="polyType">
         /// See
-        /// <see cref="PolyType"/>
-        /// .
+        /// <see cref="PolyType"/>.
         /// </param>
         public static void AddPath(Clipper clipper, Path path, PolyType polyType) {
             foreach (Subpath subpath in path.GetSubpaths()) {
@@ -142,12 +155,50 @@ namespace iText.Kernel.Pdf.Canvas.Parser.ClipperLib {
         /// Adds all iText
         /// <see cref="iText.Kernel.Geom.Subpath"/>
         /// s of the iText
-        /// <see cref="List<IntPoint>"/>
+        /// <see cref="iText.Kernel.Geom.Path"/>
         /// to the
         /// <see cref="ClipperOffset"/>
         /// object with one
         /// note: it doesn't add degenerate subpaths.
         /// </summary>
+        /// <param name="offset">
+        /// the
+        /// <see cref="ClipperOffset"/>
+        /// object to add all iText
+        /// <see cref="iText.Kernel.Geom.Subpath"/>
+        /// s that are not degenerated.
+        /// </param>
+        /// <param name="path">
+        /// 
+        /// <see cref="iText.Kernel.Geom.Path"/>
+        /// object, containing the required
+        /// <see cref="iText.Kernel.Geom.Subpath"/>
+        /// s
+        /// </param>
+        /// <param name="joinType">
+        /// 
+        /// <see cref="Clipper"/>
+        /// join type. The value could be
+        /// <see cref="JoinType.BEVEL"/>
+        /// ,
+        /// <see cref="JoinType.ROUND"/>
+        /// ,
+        /// <see cref="JoinType.MITER"/>
+        /// </param>
+        /// <param name="endType">
+        /// 
+        /// <see cref="Clipper"/>
+        /// end type. The value could be
+        /// <see cref="EndType.CLOSED_POLYGON"/>
+        /// ,
+        /// <see cref="EndType.CLOSED_LINE"/>
+        /// ,
+        /// <see cref="EndType.OPEN_BUTT"/>
+        /// ,
+        /// <see cref="EndType.OPEN_SQUARE"/>
+        /// ,
+        /// <see cref="EndType.OPEN_ROUND"/>
+        /// </param>
         /// <returns>
         /// 
         /// <see cref="System.Collections.IList{E}"/>
@@ -185,6 +236,16 @@ namespace iText.Kernel.Pdf.Canvas.Parser.ClipperLib {
         /// <see cref="iText.Kernel.Geom.Point"/>
         /// objects.
         /// </summary>
+        /// <param name="points">
+        /// the list of
+        /// <see cref="IntPoint"/>
+        /// objects to convert
+        /// </param>
+        /// <returns>
+        /// the resultant list of
+        /// <see cref="iText.Kernel.Geom.Point"/>
+        /// objects.
+        /// </returns>
         public static IList<Point> ConvertToFloatPoints(IList<IntPoint> points) {
             IList<Point> convertedPoints = new List<Point>(points.Count);
             foreach (IntPoint point in points) {
@@ -200,6 +261,16 @@ namespace iText.Kernel.Pdf.Canvas.Parser.ClipperLib {
         /// <see cref="IntPoint"/>
         /// objects.
         /// </summary>
+        /// <param name="points">
+        /// the list of
+        /// <see cref="iText.Kernel.Geom.Point"/>
+        /// objects to convert
+        /// </param>
+        /// <returns>
+        /// the resultant list of
+        /// <see cref="IntPoint"/>
+        /// objects.
+        /// </returns>
         public static IList<IntPoint> ConvertToLongPoints(IList<Point> points) {
             IList<IntPoint> convertedPoints = new List<IntPoint>(points.Count);
             foreach (Point point in points) {
@@ -260,8 +331,7 @@ namespace iText.Kernel.Pdf.Canvas.Parser.ClipperLib {
         /// Either
         /// <see cref="iText.Kernel.Pdf.Canvas.PdfCanvasConstants.FillingRule.NONZERO_WINDING"/>
         /// or
-        /// <see cref="iText.Kernel.Pdf.Canvas.PdfCanvasConstants.FillingRule.EVEN_ODD"/>
-        /// .
+        /// <see cref="iText.Kernel.Pdf.Canvas.PdfCanvasConstants.FillingRule.EVEN_ODD"/>.
         /// </param>
         /// <returns>Clipper fill type constant.</returns>
         public static PolyFillType GetFillType(int fillingRule) {
@@ -273,9 +343,7 @@ namespace iText.Kernel.Pdf.Canvas.Parser.ClipperLib {
         }
 
         /// <summary>
-        /// Builds a
-        /// <see cref="List<IntPoint>"/>
-        /// instance based on array of
+        /// Adds polygon path based on array of
         /// <see cref="iText.Kernel.Geom.Point"/>
         /// (internally converting
         /// them by
@@ -284,13 +352,26 @@ namespace iText.Kernel.Pdf.Canvas.Parser.ClipperLib {
         /// <see cref="Clipper"/>
         /// instance, treating the path as
         /// a closed polygon.
-        /// <p>
-        /// The return value will be false if the path is invalid for clipping. A path is invalid for clipping when:
-        /// <ul>
-        /// <li>it has less than 3 vertices;</li>
-        /// <li>the vertices are all co-linear.</li>
-        /// </ul>
         /// </summary>
+        /// <remarks>
+        /// Adds polygon path based on array of
+        /// <see cref="iText.Kernel.Geom.Point"/>
+        /// (internally converting
+        /// them by
+        /// <see cref="ConvertToLongPoints(System.Collections.Generic.IList{E})"/>
+        /// ) and adds this path to
+        /// <see cref="Clipper"/>
+        /// instance, treating the path as
+        /// a closed polygon.
+        /// <para />
+        /// The return value will be false if the path is invalid for clipping. A path is invalid for clipping when:
+        /// <list type="bullet">
+        /// <item><description>it has less than 3 vertices;
+        /// </description></item>
+        /// <item><description>the vertices are all co-linear.
+        /// </description></item>
+        /// </list>
+        /// </remarks>
         /// <param name="clipper">
         /// 
         /// <see cref="Clipper"/>
@@ -300,9 +381,7 @@ namespace iText.Kernel.Pdf.Canvas.Parser.ClipperLib {
         /// an array of
         /// <see cref="iText.Kernel.Geom.Point"/>
         /// which will be internally converted
-        /// to
-        /// <see cref="List<IntPoint>"/>
-        /// and added to the clipper instance.
+        /// to clipper path and added to the clipper instance.
         /// </param>
         /// <param name="polyType">
         /// either
@@ -319,9 +398,18 @@ namespace iText.Kernel.Pdf.Canvas.Parser.ClipperLib {
         }
 
         /// <summary>
-        /// Builds a
-        /// <see cref="List<IntPoint>"/>
-        /// instance based on array of
+        /// Adds polyline path based on array of
+        /// <see cref="iText.Kernel.Geom.Point"/>
+        /// (internally converting
+        /// them by
+        /// <see cref="ConvertToLongPoints(System.Collections.Generic.IList{E})"/>
+        /// ) and adds this path to
+        /// <see cref="Clipper"/>
+        /// instance, treating the path as
+        /// a polyline (an open path in terms of clipper library).
+        /// </summary>
+        /// <remarks>
+        /// Adds polyline path based on array of
         /// <see cref="iText.Kernel.Geom.Point"/>
         /// (internally converting
         /// them by
@@ -331,12 +419,13 @@ namespace iText.Kernel.Pdf.Canvas.Parser.ClipperLib {
         /// instance, treating the path as
         /// a polyline (an open path in terms of clipper library). This path is added to the subject of future clipping.
         /// Polylines cannot be part of clipping polygon.
-        /// <p>
+        /// <para />
         /// The return value will be false if the path is invalid for clipping. A path is invalid for clipping when:
-        /// <ul>
-        /// <li>it has less than 2 vertices;</li>
-        /// </ul>
-        /// </summary>
+        /// <list type="bullet">
+        /// <item><description>it has less than 2 vertices;
+        /// </description></item>
+        /// </list>
+        /// </remarks>
         /// <param name="clipper">
         /// 
         /// <see cref="Clipper"/>
@@ -346,9 +435,7 @@ namespace iText.Kernel.Pdf.Canvas.Parser.ClipperLib {
         /// an array of
         /// <see cref="iText.Kernel.Geom.Point"/>
         /// which will be internally converted
-        /// to
-        /// <see cref="List<IntPoint>"/>
-        /// and added to the clipper instance.
+        /// to clipper path and added to the clipper instance.
         /// </param>
         /// <returns>true if polyline path was successfully added, false otherwise.</returns>
         public static bool AddPolylineSubjectToClipper(Clipper clipper, Point[] lineVertices) {
@@ -367,13 +454,6 @@ namespace iText.Kernel.Pdf.Canvas.Parser.ClipperLib {
             if (close) {
                 path.CloseSubpath();
             }
-        }
-
-        [System.ObsoleteAttribute(@"use AddPolygonToClipper(Clipper, iText.Kernel.Geom.Point[], PolyType) instead."
-            )]
-        public static void AddRectToClipper(Clipper clipper, Point[] rectVertices, PolyType polyType) {
-            clipper.AddPath(new List<IntPoint>(ConvertToLongPoints(new List<Point>(JavaUtil.ArraysAsList(rectVertices)
-                ))), polyType, true);
         }
     }
 }

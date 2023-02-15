@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,13 +42,11 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using iText.IO.Util;
-using iText.StyledXmlParser;
-using iText.StyledXmlParser.Node;
 
 namespace iText.Svg.Utils {
     /// <summary>Utility class that facilitates parsing values from CSS.</summary>
     public sealed class SvgCssUtils {
+        // TODO DEVSIX-2266
         private SvgCssUtils() {
         }
 
@@ -63,46 +61,28 @@ namespace iText.Svg.Utils {
             IList<String> result = new List<String>();
             if (value != null && value.Length > 0) {
                 value = value.Trim();
-                String[] list = iText.IO.Util.StringUtil.Split(value, "\\s*(,|\\s)\\s*");
-                result.AddAll(JavaUtil.ArraysAsList(list));
+                String[] list = iText.Commons.Utils.StringUtil.Split(value, "[,|\\s]");
+                foreach (String element in list) {
+                    if (!String.IsNullOrEmpty(element)) {
+                        result.Add(element);
+                    }
+                }
             }
             return result;
         }
 
-        ///<summary>Converts a float pts values to pixels </summary>
-        ///<param name="v"> the value to be converted pixels</param>
-        ///<returns>float converted value pts*0.75f</returns>
-        public static float ConvertPtsToPx(float v)
-        {
-            return v * 0.75f;
-        }
-       
-        ///<summary>Converts a float to a String.</summary>
-        ///<param name="value">to be converted float value</param>
-        ///<returns>the value in a String representation</returns>   
-        public static string ConvertFloatToString(float value)
-        {
-            return value.ToString("G", System.Globalization.CultureInfo.InvariantCulture); ;
-        }
-       
-        ///<summary>Converts a double to a String.</summary>
-        ///<param name="value">to be converted double value</param>
-        ///<returns>the value in a String representation</returns>   
-        public static string ConvertDoubleToString(double value)
-        {
-            return value.ToString("G", System.Globalization.CultureInfo.InvariantCulture); ;
+        /// <summary>Converts a float to a String.</summary>
+        /// <param name="value">to be converted float value</param>
+        /// <returns>the value in a String representation</returns>
+        public static String ConvertFloatToString(float value) {
+            return value.ToString(System.Globalization.CultureInfo.InvariantCulture);
         }
 
-        /// <summary>
-        /// Checks if an
-        /// <see cref="iText.StyledXmlParser.Node.IElementNode"/>
-        /// represents a style sheet link.
-        /// </summary>
-        /// <param name="headChildElement">the head child element</param>
-        /// <returns>true, if the element node represents a style sheet link</returns>
-        public static bool IsStyleSheetLink(IElementNode headChildElement) {
-            return headChildElement.Name().Equals(SvgConstants.Tags.LINK) && SvgConstants.Attributes.STYLESHEET.Equals(headChildElement
-                .GetAttribute(SvgConstants.Attributes.REL));
+        /// <summary>Converts a double to a String.</summary>
+        /// <param name="value">to be converted double value</param>
+        /// <returns>the value in a String representation</returns>
+        public static String ConvertDoubleToString(double value) {
+            return value.ToString(System.Globalization.CultureInfo.InvariantCulture);
         }
     }
 }

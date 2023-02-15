@@ -96,8 +96,6 @@ namespace iText.Kernel.XMP.Impl
 		/// </remarks>
 		/// <param name="xmlRoot">the XML root node</param>
 		/// <returns>Returns an XMP metadata object (not normalized)</returns>
-		/// <exception cref="iText.Kernel.XMP.XMPException">Occurs if the parsing fails for any reason.
-		/// 	</exception>
 		internal static XMPMetaImpl Parse(XmlNode xmlRoot)
 		{
 			XMPMetaImpl xmp = new XMPMetaImpl();
@@ -116,7 +114,6 @@ namespace iText.Kernel.XMP.Impl
 		/// </remarks>
 		/// <param name="xmp">the xmp metadata object that is generated</param>
 		/// <param name="rdfRdfNode">the top-level xml node</param>
-		/// <exception cref="iText.Kernel.XMP.XMPException">thown on parsing errors</exception>
 		internal static void Rdf_RDF(XMPMetaImpl xmp, XmlNode rdfRdfNode)
 		{
 			if (rdfRdfNode.Attributes != null && rdfRdfNode.Attributes.Count > 0) {
@@ -134,7 +131,6 @@ namespace iText.Kernel.XMP.Impl
 		/// <param name="xmp">the xmp metadata object that is generated</param>
 		/// <param name="xmpParent">the parent xmp node</param>
 		/// <param name="rdfRdfNode">the top-level xml node</param>
-		/// <exception cref="iText.Kernel.XMP.XMPException">thown on parsing errors</exception>
 		private static void Rdf_NodeElementList(XMPMetaImpl xmp, XMPNode xmpParent, XmlNode 
 			rdfRdfNode)
 		{
@@ -162,7 +158,6 @@ namespace iText.Kernel.XMP.Impl
 		/// <param name="xmpParent">the parent xmp node</param>
 		/// <param name="xmlNode">the currently processed XML node</param>
 		/// <param name="isTopLevel">Flag if the node is a top-level node</param>
-		/// <exception cref="iText.Kernel.XMP.XMPException">thown on parsing errors</exception>
 		private static void Rdf_NodeElement(XMPMetaImpl xmp, XMPNode xmpParent, XmlNode xmlNode
 			, bool isTopLevel)
 		{
@@ -212,7 +207,6 @@ namespace iText.Kernel.XMP.Impl
 		/// <param name="xmpParent">the parent xmp node</param>
 		/// <param name="xmlNode">the currently processed XML node</param>
 		/// <param name="isTopLevel">Flag if the node is a top-level node</param>
-		/// <exception cref="iText.Kernel.XMP.XMPException">thown on parsing errors</exception>
 		private static void Rdf_NodeElementAttrs(XMPMetaImpl xmp, XMPNode xmpParent, XmlNode
 			 xmlNode, bool isTopLevel)
 		{
@@ -278,7 +272,6 @@ namespace iText.Kernel.XMP.Impl
 		/// <param name="xmpParent">the parent xmp node</param>
 		/// <param name="xmlParent">the currently processed XML node</param>
 		/// <param name="isTopLevel">Flag if the node is a top-level node</param>
-		/// <exception cref="iText.Kernel.XMP.XMPException">thown on parsing errors</exception>
 		private static void Rdf_PropertyElementList(XMPMetaImpl xmp, XMPNode xmpParent, XmlNode
 			 xmlParent, bool isTopLevel)
 		{
@@ -381,7 +374,6 @@ namespace iText.Kernel.XMP.Impl
 		/// <param name="xmpParent">the parent xmp node</param>
 		/// <param name="xmlNode">the currently processed XML node</param>
 		/// <param name="isTopLevel">Flag if the node is a top-level node</param>
-		/// <exception cref="iText.Kernel.XMP.XMPException">thown on parsing errors</exception>
 		private static void Rdf_PropertyElement(XMPMetaImpl xmp, XMPNode xmpParent, XmlNode 
 			xmlNode, bool isTopLevel)
 		{
@@ -491,7 +483,6 @@ namespace iText.Kernel.XMP.Impl
 		/// <param name="xmpParent">the parent xmp node</param>
 		/// <param name="xmlNode">the currently processed XML node</param>
 		/// <param name="isTopLevel">Flag if the node is a top-level node</param>
-		/// <exception cref="iText.Kernel.XMP.XMPException">thown on parsing errors</exception>
 		private static void Rdf_ResourcePropertyElement(XMPMetaImpl xmp, XMPNode xmpParent
 			, XmlNode xmlNode, bool isTopLevel)
 		{
@@ -597,7 +588,6 @@ namespace iText.Kernel.XMP.Impl
 		/// <param name="xmpParent">the parent xmp node</param>
 		/// <param name="xmlNode">the currently processed XML node</param>
 		/// <param name="isTopLevel">Flag if the node is a top-level node</param>
-		/// <exception cref="iText.Kernel.XMP.XMPException">thown on parsing errors</exception>
 		private static void Rdf_LiteralPropertyElement(XMPMetaImpl xmp, XMPNode xmpParent
 			, XmlNode xmlNode, bool isTopLevel)
 		{
@@ -639,7 +629,6 @@ namespace iText.Kernel.XMP.Impl
 		/// literal
 		/// end-element()
 		/// </summary>
-		/// <exception cref="iText.Kernel.XMP.XMPException">thown on parsing errors</exception>
 		private static void Rdf_ParseTypeLiteralPropertyElement()
 		{
 			throw new XMPException("ParseTypeLiteral property element not allowed", XMPError.BADXMP);
@@ -666,7 +655,6 @@ namespace iText.Kernel.XMP.Impl
 		/// <param name="xmpParent">the parent xmp node</param>
 		/// <param name="xmlNode">the currently processed XML node</param>
 		/// <param name="isTopLevel">Flag if the node is a top-level node</param>
-		/// <exception cref="iText.Kernel.XMP.XMPException">thown on parsing errors</exception>
 		private static void Rdf_ParseTypeResourcePropertyElement(XMPMetaImpl xmp, XMPNode
 			 xmpParent, XmlNode xmlNode, bool isTopLevel)
 		{
@@ -708,7 +696,6 @@ namespace iText.Kernel.XMP.Impl
 		/// nodeElementList
 		/// end-element()
 		/// </summary>
-		/// <exception cref="iText.Kernel.XMP.XMPException">thown on parsing errors</exception>
 		private static void Rdf_ParseTypeCollectionPropertyElement()
 		{
 			throw new XMPException("ParseTypeCollection property element not allowed", XMPError.BADXMP
@@ -721,7 +708,6 @@ namespace iText.Kernel.XMP.Impl
 		/// propertyEltList
 		/// end-element()
 		/// </summary>
-		/// <exception cref="iText.Kernel.XMP.XMPException">thown on parsing errors</exception>
 		private static void Rdf_ParseTypeOtherPropertyElement()
 		{
 			throw new XMPException("ParseTypeOther property element not allowed", XMPError.BADXMP);
@@ -733,12 +719,6 @@ namespace iText.Kernel.XMP.Impl
 		/// attributes == set (
 		/// idAttr?, ( resourceAttr | nodeIdAttr )?, propertyAttr* ) )
 		/// end-element()
-		/// <ns:Prop1/>  <!-- a simple property with an empty value -->
-		/// <ns:Prop2 rdf:resource="http: *www.adobe.com/"/> <!-- a URI value -->
-		/// <ns:Prop3 rdf:value="..." ns:Qual="..."/> <!-- a simple qualified property -->
-		/// <ns:Prop4 ns:Field1="..." ns:Field2="..."/> <!-- a struct with simple fields -->
-		/// An emptyPropertyElt is an element with no contained content, just a possibly empty set of
-		/// attributes.
 		/// </summary>
 		/// <remarks>
 		/// 7.2.21 emptyPropertyElt
@@ -746,39 +726,43 @@ namespace iText.Kernel.XMP.Impl
 		/// attributes == set (
 		/// idAttr?, ( resourceAttr | nodeIdAttr )?, propertyAttr* ) )
 		/// end-element()
-		/// <ns:Prop1/>  <!-- a simple property with an empty value -->
-		/// <ns:Prop2 rdf:resource="http: *www.adobe.com/"/> <!-- a URI value -->
-		/// <ns:Prop3 rdf:value="..." ns:Qual="..."/> <!-- a simple qualified property -->
-		/// <ns:Prop4 ns:Field1="..." ns:Field2="..."/> <!-- a struct with simple fields -->
+		/// <br/>
+		/// &lt;ns:Prop1/&gt;  &lt;!-- a simple property with an empty value --&gt;<br/>
+		/// &lt;ns:Prop2 rdf:resource="http: *www.adobe.com/"/&gt; &lt;!-- a URI value --&gt;<br/>
+		/// &lt;ns:Prop3 rdf:value="..." ns:Qual="..."/&gt; &lt;!-- a simple qualified property --&gt;<br/>
+		/// &lt;ns:Prop4 ns:Field1="..." ns:Field2="..."/&gt; &lt;!-- a struct with simple fields --&gt;<br/>
+		/// An emptyPropertyElt is an element with no contained content, just a possibly empty set of
+		/// attributes. 
 		/// An emptyPropertyElt is an element with no contained content, just a possibly empty set of
 		/// attributes. An emptyPropertyElt can represent three special cases of simple XMP properties: a
 		/// simple property with an empty value (ns:Prop1), a simple property whose value is a URI
 		/// (ns:Prop2), or a simple property with simple qualifiers (ns:Prop3).
 		/// An emptyPropertyElt can also represent an XMP struct whose fields are all simple and
 		/// unqualified (ns:Prop4).
+		/// <para/>
 		/// It is an error to use both rdf:value and rdf:resource - that can lead to invalid  RDF in the
 		/// verbose form written using a literalPropertyElt.
+		/// <para/>
 		/// The XMP mapping for an emptyPropertyElt is a bit different from generic RDF, partly for
 		/// design reasons and partly for historical reasons. The XMP mapping rules are:
-		/// <ol>
-		/// <li> If there is an rdf:value attribute then this is a simple property
+		/// <list type="number">
+		/// <item><description> If there is an rdf:value attribute then this is a simple property 
 		/// with a text value.
-		/// All other attributes are qualifiers.
-		/// <li> If there is an rdf:resource attribute then this is a simple property
+		/// All other attributes are qualifiers.</description></item>
+		/// <item><description> If there is an rdf:resource attribute then this is a simple property
 		/// with a URI value.
-		/// All other attributes are qualifiers.
-		/// <li> If there are no attributes other than xml:lang, rdf:ID, or rdf:nodeID
+		/// All other attributes are qualifiers.</description></item>
+		/// <item><description> If there are no attributes other than xml:lang, rdf:ID, or rdf:nodeID
 		/// then this is a simple
-		/// property with an empty value.
-		/// <li> Otherwise this is a struct, the attributes other than xml:lang, rdf:ID,
-		/// or rdf:nodeID are fields.
-		/// </ol>
+		/// property with an empty value.</description></item>
+		/// <item><description> Otherwise this is a struct, the attributes other than xml:lang, rdf:ID,
+		/// or rdf:nodeID are fields.</description></item>
+		/// </list>
 		/// </remarks>
 		/// <param name="xmp">the xmp metadata object that is generated</param>
 		/// <param name="xmpParent">the parent xmp node</param>
 		/// <param name="xmlNode">the currently processed XML node</param>
 		/// <param name="isTopLevel">Flag if the node is a top-level node</param>
-		/// <exception cref="iText.Kernel.XMP.XMPException">thown on parsing errors</exception>
 		private static void Rdf_EmptyPropertyElement(XMPMetaImpl xmp, XMPNode xmpParent, 
 			XmlNode xmlNode, bool isTopLevel)
 		{
@@ -924,7 +908,6 @@ namespace iText.Kernel.XMP.Impl
 		/// <param name="value">Node value</param>
 		/// <param name="isTopLevel">Flag if the node is a top-level node</param>
 		/// <returns>Returns the newly created child node.</returns>
-		/// <exception cref="iText.Kernel.XMP.XMPException">thown on parsing errors</exception>
 		private static XMPNode AddChildNode(XMPMetaImpl xmp, XMPNode xmpParent, XmlNode xmlNode
 			, String value, bool isTopLevel)
 		{
@@ -1013,7 +996,6 @@ namespace iText.Kernel.XMP.Impl
 		/// </param>
 		/// <param name="value">the value of the qualifier</param>
 		/// <returns>Returns the newly created child node.</returns>
-		/// <exception cref="iText.Kernel.XMP.XMPException">thown on parsing errors</exception>
 		private static XMPNode AddQualifierNode(XMPNode xmpParent, String name, String value
 			)
 		{
@@ -1035,7 +1017,6 @@ namespace iText.Kernel.XMP.Impl
 		/// the others.
 		/// </remarks>
 		/// <param name="xmpParent">the parent xmp node</param>
-		/// <exception cref="iText.Kernel.XMP.XMPException">thown on parsing errors</exception>
 		private static void FixupQualifiedNode(XMPNode xmpParent)
 		{
 			System.Diagnostics.Debug.Assert(xmpParent.GetOptions().IsStruct() && xmpParent.HasChildren

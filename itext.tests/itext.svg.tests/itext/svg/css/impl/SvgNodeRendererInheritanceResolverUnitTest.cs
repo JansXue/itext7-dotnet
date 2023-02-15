@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,9 +43,11 @@ address: sales@itextpdf.com
 using System;
 using iText.Svg;
 using iText.Svg.Renderers.Impl;
+using iText.Test;
 
 namespace iText.Svg.Css.Impl {
-    public class SvgNodeRendererInheritanceResolverUnitTest {
+    [NUnit.Framework.Category("UnitTest")]
+    public class SvgNodeRendererInheritanceResolverUnitTest : ExtendedITextTest {
         [NUnit.Framework.Test]
         public virtual void ApplyInheritanceToSubTreeFillTest() {
             String expectedFillAttribute = "blue";
@@ -56,15 +58,10 @@ namespace iText.Svg.Css.Impl {
             CircleSvgNodeRenderer circle = new CircleSvgNodeRenderer();
             subTree.AddChild(rect);
             subTree.AddChild(circle);
-            SvgNodeRendererInheritanceResolver sru = new SvgNodeRendererInheritanceResolver();
-            sru.ApplyInheritanceToSubTree(newRoot, subTree);
+            SvgNodeRendererInheritanceResolver.ApplyInheritanceToSubTree(newRoot, subTree, null);
             NUnit.Framework.Assert.AreEqual(expectedFillAttribute, subTree.GetAttribute(SvgConstants.Attributes.FILL));
             NUnit.Framework.Assert.AreEqual(expectedFillAttribute, rect.GetAttribute(SvgConstants.Attributes.FILL));
             NUnit.Framework.Assert.AreEqual(expectedFillAttribute, circle.GetAttribute(SvgConstants.Attributes.FILL));
-        }
-
-        [NUnit.Framework.Test]
-        public virtual void ApplyInheritanceToSubTreeFillDoNotOverwriteTest() {
         }
     }
 }

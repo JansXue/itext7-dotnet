@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,40 +45,32 @@ using iText.Svg.Renderers;
 using iText.Test;
 
 namespace iText.Svg.Googlecharts {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class SteppedAreaChartTest : SvgIntegrationTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
-            .CurrentContext.TestDirectory) + "/resources/itext/svg/googlecharts/stepped_area_charts/";
+            .CurrentContext.TestDirectory) + "/resources/itext/svg/googlecharts/SteppedAreaChartsTest/";
 
         public static readonly String destinationFolder = NUnit.Framework.TestContext.CurrentContext.TestDirectory
-             + "/test/itext/svg/googlecharts/stepped_area_charts/";
+             + "/test/itext/svg/googlecharts/SteppedAreaChartsTest/";
 
         [NUnit.Framework.OneTimeSetUp]
         public static void BeforeClass() {
             ITextTest.CreateDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        public virtual void Stepped_area_chart() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "stepped_area_chart");
+        public virtual void SteppedAreaChart() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "steppedAreaChart");
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        public virtual void Stepped_area2_chart() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "stepped_area2_chart");
+        public virtual void SteppedArea2Chart() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "steppedArea2Chart");
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        public virtual void Stepped_area3_chart() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "stepped_area3_chart");
+        public virtual void SteppedArea3Chart() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "steppedArea3Chart");
         }
     }
 }

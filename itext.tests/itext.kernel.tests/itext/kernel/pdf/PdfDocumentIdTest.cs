@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,16 +42,16 @@ address: sales@itextpdf.com
 */
 using System;
 using System.IO;
-using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.Security;
+using iText.Commons.Bouncycastle.Crypto;
 using iText.IO.Source;
-using iText.Kernel;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf.Canvas;
 using iText.Test;
 using iText.Test.Attributes;
 
 namespace iText.Kernel.Pdf {
     /// <author>Michael Demey</author>
+    [NUnit.Framework.Category("IntegrationTest")]
     public class PdfDocumentIdTest : ExtendedITextTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/kernel/pdf/PdfDocumentTestID/";
@@ -64,7 +64,6 @@ namespace iText.Kernel.Pdf {
             CreateOrClearDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void ChangeIdTest() {
             MemoryStream baos = new MemoryStream();
@@ -86,13 +85,12 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.AreEqual(value, extractedValue);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void ChangeIdTest02() {
             MemoryStream baos = new MemoryStream();
-            IDigest md5;
+            IIDigest md5;
             try {
-                md5 = DigestUtilities.GetDigest("MD5");
+                md5 = iText.Bouncycastleconnector.BouncyCastleFactoryCreator.GetFactory().CreateIDigest("MD5");
             }
             catch (Exception e) {
                 throw new PdfException(e);
@@ -113,14 +111,13 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.AreEqual(initialId, extractedString);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void ChangeIdTest03() {
             MemoryStream baosInitial = new MemoryStream();
             MemoryStream baosModified = new MemoryStream();
-            IDigest md5;
+            IIDigest md5;
             try {
-                md5 = DigestUtilities.GetDigest("MD5");
+                md5 = iText.Bouncycastleconnector.BouncyCastleFactoryCreator.GetFactory().CreateIDigest("MD5");
             }
             catch (Exception e) {
                 throw new PdfException(e);
@@ -159,13 +156,12 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.AreNotEqual(modifiedId, extractedModifiedValue);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void FetchReaderIdTest() {
             MemoryStream baos = new MemoryStream();
-            IDigest md5;
+            IIDigest md5;
             try {
-                md5 = DigestUtilities.GetDigest("MD5");
+                md5 = iText.Bouncycastleconnector.BouncyCastleFactoryCreator.GetFactory().CreateIDigest("MD5");
             }
             catch (Exception e) {
                 throw new PdfException(e);
@@ -179,21 +175,20 @@ namespace iText.Kernel.Pdf {
             baos.Dispose();
             PdfReader reader = new PdfReader(new MemoryStream(documentBytes));
             pdfDocument = new PdfDocument(reader);
-            String firstOriginalId = iText.IO.Util.JavaUtil.GetStringForBytes(reader.GetOriginalFileId());
-            String secondOriginalId = iText.IO.Util.JavaUtil.GetStringForBytes(reader.GetOriginalFileId());
-            String firstModifiedId = iText.IO.Util.JavaUtil.GetStringForBytes(reader.GetModifiedFileId());
-            String secondModifiedId = iText.IO.Util.JavaUtil.GetStringForBytes(reader.GetModifiedFileId());
+            String firstOriginalId = iText.Commons.Utils.JavaUtil.GetStringForBytes(reader.GetOriginalFileId());
+            String secondOriginalId = iText.Commons.Utils.JavaUtil.GetStringForBytes(reader.GetOriginalFileId());
+            String firstModifiedId = iText.Commons.Utils.JavaUtil.GetStringForBytes(reader.GetModifiedFileId());
+            String secondModifiedId = iText.Commons.Utils.JavaUtil.GetStringForBytes(reader.GetModifiedFileId());
             NUnit.Framework.Assert.AreEqual(firstOriginalId, secondOriginalId);
             NUnit.Framework.Assert.AreEqual(firstModifiedId, secondModifiedId);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void WriterPropertiesPriorityTest() {
             MemoryStream baos = new MemoryStream();
-            IDigest md5;
+            IIDigest md5;
             try {
-                md5 = DigestUtilities.GetDigest("MD5");
+                md5 = iText.Bouncycastleconnector.BouncyCastleFactoryCreator.GetFactory().CreateIDigest("MD5");
             }
             catch (Exception e) {
                 throw new PdfException(e);
@@ -220,7 +215,6 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.AreEqual(extractedModifiedId, newModifiedId.GetValue());
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void ReadPdfWithTwoStringIdsTest() {
             PdfDocument pdfDocument = new PdfDocument(new PdfReader(sourceFolder + "pdfWithTwoStringIds.pdf"));
@@ -237,9 +231,8 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.IsNotNull(modifiedId);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.DOCUMENT_IDS_ARE_CORRUPTED)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_IDS_ARE_CORRUPTED)]
         public virtual void ReadPdfWithTwoNumberIdsTest() {
             PdfDocument pdfDocument = new PdfDocument(new PdfReader(sourceFolder + "pdfWithTwoNumberIds.pdf"));
             String originalId = null;
@@ -255,9 +248,8 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.IsNull(modifiedId);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.DOCUMENT_IDS_ARE_CORRUPTED)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_IDS_ARE_CORRUPTED)]
         public virtual void ReadPdfWithOneNumberOneStringIdsTest() {
             PdfDocument pdfDocument = new PdfDocument(new PdfReader(sourceFolder + "pdfWithOneNumberOneStringIds.pdf")
                 );
@@ -274,9 +266,8 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.IsNotNull(modifiedId);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.DOCUMENT_IDS_ARE_CORRUPTED)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_IDS_ARE_CORRUPTED)]
         public virtual void ReadPdfWithOneStringIdValueTest() {
             PdfDocument pdfDocument = new PdfDocument(new PdfReader(sourceFolder + "pdfWithOneStringId.pdf"));
             String originalId = null;
@@ -292,9 +283,8 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.IsNull(modifiedId);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.DOCUMENT_IDS_ARE_CORRUPTED)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_IDS_ARE_CORRUPTED)]
         public virtual void ReadPdfWithOneNumberIdValueTest() {
             PdfDocument pdfDocument = new PdfDocument(new PdfReader(sourceFolder + "pdfWithOneNumberId.pdf"));
             String originalId = null;
@@ -310,9 +300,8 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.IsNull(modifiedId);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.DOCUMENT_IDS_ARE_CORRUPTED)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_IDS_ARE_CORRUPTED)]
         public virtual void ReadPdfWithNoIdTest() {
             PdfReader reader = new PdfReader(sourceFolder + "pdfWithNoId.pdf");
             PdfDocument pdfDocument = new PdfDocument(reader);
@@ -329,6 +318,15 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.IsNull(modifiedId);
             NUnit.Framework.Assert.AreEqual(0, reader.GetOriginalFileId().Length);
             NUnit.Framework.Assert.AreEqual(0, reader.GetModifiedFileId().Length);
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ReadPdfWithNoIdAndConservativeReadingTest() {
+            using (PdfReader reader = new PdfReader(sourceFolder + "pdfWithNoId.pdf").SetStrictnessLevel(PdfReader.StrictnessLevel
+                .CONSERVATIVE)) {
+                Exception e = NUnit.Framework.Assert.Catch(typeof(PdfException), () => new PdfDocument(reader));
+                NUnit.Framework.Assert.AreEqual(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_IDS_ARE_CORRUPTED, e.Message);
+            }
         }
         //    @Test
         //    public void appendModeTest() {

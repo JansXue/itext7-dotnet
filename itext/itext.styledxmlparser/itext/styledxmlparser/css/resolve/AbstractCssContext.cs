@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -47,8 +47,7 @@ namespace iText.StyledXmlParser.Css.Resolve {
     /// This class only contains properties relevant for any generic XML+CSS combo:
     /// specific properties must be implemented in a project-specific subclass.
     /// Used by
-    /// <see cref="iText.StyledXmlParser.Css.ICssResolver"/>
-    /// .
+    /// <see cref="iText.StyledXmlParser.Css.ICssResolver"/>.
     /// </remarks>
     public abstract class AbstractCssContext {
         /// <summary>The quotes depth.</summary>

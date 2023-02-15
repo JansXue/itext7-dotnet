@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,19 +42,20 @@ address: sales@itextpdf.com
 */
 using System;
 using System.IO;
-using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.Security;
-using Org.BouncyCastle.X509;
+using iText.Commons.Bouncycastle.Cert;
+using iText.Commons.Bouncycastle.Crypto;
+using iText.Commons.Bouncycastle.Security;
 using iText.Forms;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using iText.Kernel.Utils;
 using iText.Signatures;
+using iText.Signatures.Exceptions;
 using iText.Signatures.Testutils;
 using iText.Test;
-using iText.Test.Signutils;
 
 namespace iText.Signatures.Sign {
+    [NUnit.Framework.Category("BouncyCastleIntegrationTest")]
     public class SignDeferredTest : ExtendedITextTest {
         private static readonly String certsSrc = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/signatures/certs/";
@@ -65,7 +66,7 @@ namespace iText.Signatures.Sign {
         private static readonly String destinationFolder = NUnit.Framework.TestContext.CurrentContext.TestDirectory
              + "/test/itext/signatures/sign/SignDeferredTest/";
 
-        private static readonly char[] password = "testpass".ToCharArray();
+        private static readonly char[] password = "testpassphrase".ToCharArray();
 
         private const String HASH_ALGORITHM = DigestAlgorithms.SHA256;
 
@@ -74,8 +75,6 @@ namespace iText.Signatures.Sign {
             CreateOrClearDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
         [NUnit.Framework.Test]
         public virtual void PrepareDocForSignDeferredTest() {
             String input = sourceFolder + "helloWorldDoc.pdf";
@@ -97,17 +96,55 @@ namespace iText.Signatures.Sign {
             ValidateTemplateForSignedDeferredResult(output, sigFieldName, filter, subFilter, estimatedSize);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
-        /// <exception cref="System.Exception"/>
+        [NUnit.Framework.Test]
+        public virtual void PrepareDocForSignDeferredNotEnoughSizeTest() {
+            String input = sourceFolder + "helloWorldDoc.pdf";
+            String sigFieldName = "DeferredSignature1";
+            PdfName filter = PdfName.Adobe_PPKLite;
+            PdfName subFilter = PdfName.Adbe_pkcs7_detached;
+            PdfReader reader = new PdfReader(input);
+            PdfSigner signer = new PdfSigner(reader, new MemoryStream(), new StampingProperties());
+            PdfSignatureAppearance appearance = signer.GetSignatureAppearance();
+            appearance.SetLayer2Text("Signature field which signing is deferred.").SetPageRect(new Rectangle(36, 600, 
+                200, 100)).SetPageNumber(1);
+            signer.SetFieldName(sigFieldName);
+            IExternalSignatureContainer external = new ExternalBlankSignatureContainer(filter, subFilter);
+            // This size is definitely not enough
+            int estimatedSize = -1;
+            Exception e = NUnit.Framework.Assert.Catch(typeof(System.IO.IOException), () => signer.SignExternalContainer
+                (external, estimatedSize));
+            NUnit.Framework.Assert.AreEqual(SignExceptionMessageConstant.NOT_ENOUGH_SPACE, e.Message);
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void PrepareDocForSignDeferredLittleSpaceTest() {
+            String input = sourceFolder + "helloWorldDoc.pdf";
+            String sigFieldName = "DeferredSignature1";
+            PdfName filter = PdfName.Adobe_PPKLite;
+            PdfName subFilter = PdfName.Adbe_pkcs7_detached;
+            PdfReader reader = new PdfReader(input);
+            PdfSigner signer = new PdfSigner(reader, new MemoryStream(), new StampingProperties());
+            PdfSignatureAppearance appearance = signer.GetSignatureAppearance();
+            appearance.SetLayer2Text("Signature field which signing is deferred.").SetPageRect(new Rectangle(36, 600, 
+                200, 100)).SetPageNumber(1);
+            signer.SetFieldName(sigFieldName);
+            IExternalSignatureContainer external = new ExternalBlankSignatureContainer(filter, subFilter);
+            // This size is definitely not enough, however, the size check will pass.
+            // The test will fail lately on an invalid key
+            int estimatedSize = 0;
+            Exception e = NUnit.Framework.Assert.Catch(typeof(ArgumentException), () => signer.SignExternalContainer(external
+                , estimatedSize));
+            NUnit.Framework.Assert.AreEqual(SignExceptionMessageConstant.TOO_BIG_KEY, e.Message);
+        }
+
         [NUnit.Framework.Test]
         public virtual void DeferredHashCalcAndSignTest01() {
             String srcFileName = sourceFolder + "templateForSignCMSDeferred.pdf";
             String outFileName = destinationFolder + "deferredHashCalcAndSignTest01.pdf";
             String cmpFileName = sourceFolder + "cmp_deferredHashCalcAndSignTest01.pdf";
-            String signCertFileName = certsSrc + "signCertRsa01.p12";
-            X509Certificate[] signChain = Pkcs12FileHelper.ReadFirstChain(signCertFileName, password);
-            ICipherParameters signPrivateKey = Pkcs12FileHelper.ReadFirstKey(signCertFileName, password, password);
+            String signCertFileName = certsSrc + "signCertRsa01.pem";
+            IX509Certificate[] signChain = PemFileHelper.ReadFirstChain(signCertFileName);
+            IPrivateKey signPrivateKey = PemFileHelper.ReadFirstKey(signCertFileName, password);
             IExternalSignatureContainer extSigContainer = new SignDeferredTest.CmsDeferredSigner(signPrivateKey, signChain
                 );
             String sigFieldName = "DeferredSignature1";
@@ -120,11 +157,9 @@ namespace iText.Signatures.Sign {
             PadesSigTest.BasicCheckSignedDoc(outFileName, sigFieldName);
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareVisually(outFileName, cmpFileName, destinationFolder
                 , null));
+            NUnit.Framework.Assert.IsNull(SignaturesCompareTool.CompareSignatures(outFileName, cmpFileName));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CalcHashOnDocCreationThenDeferredSignTest01() {
             String input = sourceFolder + "helloWorldDoc.pdf";
@@ -149,9 +184,9 @@ namespace iText.Signatures.Sign {
             byte[] docBytesHash = external.GetDocBytesHash();
             byte[] preSignedBytes = baos.ToArray();
             // sign the hash
-            String signCertFileName = certsSrc + "signCertRsa01.p12";
-            X509Certificate[] signChain = Pkcs12FileHelper.ReadFirstChain(signCertFileName, password);
-            ICipherParameters signPrivateKey = Pkcs12FileHelper.ReadFirstKey(signCertFileName, password, password);
+            String signCertFileName = certsSrc + "signCertRsa01.pem";
+            IX509Certificate[] signChain = PemFileHelper.ReadFirstChain(signCertFileName);
+            IPrivateKey signPrivateKey = PemFileHelper.ReadFirstKey(signCertFileName, password);
             byte[] cmsSignature = SignDocBytesHash(docBytesHash, signPrivateKey, signChain);
             // fill the signature to the presigned document
             SignDeferredTest.ReadySignatureSigner extSigContainer = new SignDeferredTest.ReadySignatureSigner(cmsSignature
@@ -165,9 +200,9 @@ namespace iText.Signatures.Sign {
             PadesSigTest.BasicCheckSignedDoc(outFileName, sigFieldName);
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareVisually(outFileName, cmpFileName, destinationFolder
                 , null));
+            NUnit.Framework.Assert.IsNull(SignaturesCompareTool.CompareSignatures(outFileName, cmpFileName));
         }
 
-        /// <exception cref="System.IO.IOException"/>
         internal static void ValidateTemplateForSignedDeferredResult(String output, String sigFieldName, PdfName filter
             , PdfName subFilter, int estimatedSize) {
             PdfDocument outDocument = new PdfDocument(new PdfReader(output));
@@ -195,33 +230,32 @@ namespace iText.Signatures.Sign {
             return docBytesHash;
         }
 
-        internal static byte[] SignDocBytesHash(byte[] docBytesHash, ICipherParameters pk, X509Certificate[] chain
-            ) {
+        internal static byte[] SignDocBytesHash(byte[] docBytesHash, IPrivateKey pk, IX509Certificate[] chain) {
             if (pk == null || chain == null) {
                 return null;
             }
             byte[] signatureContent = null;
             try {
                 PdfPKCS7 pkcs7 = new PdfPKCS7(null, chain, HASH_ALGORITHM, false);
-                byte[] attributes = pkcs7.GetAuthenticatedAttributeBytes(docBytesHash, null, null, PdfSigner.CryptoStandard
-                    .CMS);
+                byte[] attributes = pkcs7.GetAuthenticatedAttributeBytes(docBytesHash, PdfSigner.CryptoStandard.CMS, null, 
+                    null);
                 PrivateKeySignature signature = new PrivateKeySignature(pk, HASH_ALGORITHM);
                 byte[] attrSign = signature.Sign(attributes);
-                pkcs7.SetExternalDigest(attrSign, null, signature.GetEncryptionAlgorithm());
-                signatureContent = pkcs7.GetEncodedPKCS7(docBytesHash, null, null, null, PdfSigner.CryptoStandard.CMS);
+                pkcs7.SetExternalSignatureValue(attrSign, null, signature.GetSignatureAlgorithmName());
+                signatureContent = pkcs7.GetEncodedPKCS7(docBytesHash);
             }
-            catch (GeneralSecurityException) {
+            catch (AbstractGeneralSecurityException) {
             }
             // dummy catch clause
             return signatureContent;
         }
 
         internal class CmsDeferredSigner : IExternalSignatureContainer {
-            private ICipherParameters pk;
+            private IPrivateKey pk;
 
-            private X509Certificate[] chain;
+            private IX509Certificate[] chain;
 
-            public CmsDeferredSigner(ICipherParameters pk, X509Certificate[] chain) {
+            public CmsDeferredSigner(IPrivateKey pk, IX509Certificate[] chain) {
                 this.pk = pk;
                 this.chain = chain;
             }

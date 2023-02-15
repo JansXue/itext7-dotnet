@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -47,8 +47,7 @@ using iText.Layout.Renderer;
 namespace iText.Layout.Layout {
     /// <summary>
     /// Represents the result of a line
-    /// <see cref="iText.Layout.Renderer.LineRenderer.Layout(LayoutContext)">layouting</see>
-    /// .
+    /// <see cref="iText.Layout.Renderer.LineRenderer.Layout(LayoutContext)">layouting</see>.
     /// </summary>
     public class LineLayoutResult : MinMaxWidthLayoutResult {
         /// <summary>Indicates whether split was forced by new line symbol or not.</summary>
@@ -62,10 +61,17 @@ namespace iText.Layout.Layout {
         /// result of
         /// <see cref="iText.Layout.Renderer.LineRenderer.Layout(LayoutContext)">layouting</see>
         /// }.
+        /// </summary>
+        /// <remarks>
+        /// Creates the
+        /// <see cref="LayoutResult"/>
+        /// result of
+        /// <see cref="iText.Layout.Renderer.LineRenderer.Layout(LayoutContext)">layouting</see>
+        /// }.
         /// The
         /// <see cref="LayoutResult.causeOfNothing"/>
         /// will be set as null.
-        /// </summary>
+        /// </remarks>
         /// <param name="status">
         /// the status of
         /// <see cref="iText.Layout.Renderer.LineRenderer.Layout(LayoutContext)"/>
@@ -112,26 +118,26 @@ namespace iText.Layout.Layout {
             return splitForcedByNewline;
         }
 
-        /// <summary>
-        /// Sets
-        /// <see cref="SetSplitForcedByNewline(bool)"/>
-        /// </summary>
+        /// <summary>Sets a flat that split was forced by new line symbol in rendered text.</summary>
         /// <param name="isSplitForcedByNewline">indicates that split was forced by new line symbol in rendered text.</param>
         /// <returns>
         /// 
         /// <see cref="LineLayoutResult">this layout result</see>
         /// the setting was applied on.
         /// </returns>
-        /// <seealso cref="SetSplitForcedByNewline(bool)"/>
         public virtual iText.Layout.Layout.LineLayoutResult SetSplitForcedByNewline(bool isSplitForcedByNewline) {
             this.splitForcedByNewline = isSplitForcedByNewline;
             return this;
         }
 
+        /// <summary>Gets the list of floats overflowed to next page.</summary>
+        /// <returns>list of floats overflowed to next page</returns>
         public virtual IList<IRenderer> GetFloatsOverflowedToNextPage() {
             return floatsOverflowedToNextPage;
         }
 
+        /// <summary>Sets the list of floats overflowed to next page.</summary>
+        /// <param name="floatsOverflowedToNextPage">the floats overflowed to next page</param>
         public virtual void SetFloatsOverflowedToNextPage(IList<IRenderer> floatsOverflowedToNextPage) {
             this.floatsOverflowedToNextPage = floatsOverflowedToNextPage;
         }

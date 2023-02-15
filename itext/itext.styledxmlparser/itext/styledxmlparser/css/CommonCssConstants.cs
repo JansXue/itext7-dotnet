@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,7 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using iText.IO.Util;
+using iText.Commons.Utils;
 
 namespace iText.StyledXmlParser.Css {
     /// <summary>
@@ -61,6 +61,19 @@ namespace iText.StyledXmlParser.Css {
             keywordValues.Put(CommonCssConstants.XX_LARGE, "32px");
             FONT_ABSOLUTE_SIZE_KEYWORDS_VALUES = JavaCollectionsUtil.UnmodifiableMap(keywordValues);
         }
+
+        // properties
+        /// <summary>The Constant ALIGN_CONTENT.</summary>
+        public const String ALIGN_CONTENT = "align-content";
+
+        /// <summary>The Constant ALIGN_ITEMS.</summary>
+        public const String ALIGN_ITEMS = "align-items";
+
+        /// <summary>The Constant ALIGN_SELF.</summary>
+        public const String ALIGN_SELF = "align-self";
+
+        /// <summary>The constant ATTRIBUTE.</summary>
+        public const String ATTRIBUTE = "attr";
 
         /// <summary>The Constant BACKGROUND.</summary>
         public const String BACKGROUND = "background";
@@ -85,6 +98,12 @@ namespace iText.StyledXmlParser.Css {
 
         /// <summary>The Constant BACKGROUND_POSITION.</summary>
         public const String BACKGROUND_POSITION = "background-position";
+
+        /// <summary>The Constant BACKGROUND_POSITION_X.</summary>
+        public const String BACKGROUND_POSITION_X = "background-position-x";
+
+        /// <summary>The Constant BACKGROUND_POSITION_Y.</summary>
+        public const String BACKGROUND_POSITION_Y = "background-position-y";
 
         /// <summary>The Constant BACKGROUND_REPEAT.</summary>
         public const String BACKGROUND_REPEAT = "background-repeat";
@@ -179,11 +198,29 @@ namespace iText.StyledXmlParser.Css {
         /// <summary>The Constant BOX_SHADOW.</summary>
         public const String BOX_SHADOW = "box-shadow";
 
+        /// <summary>The Constant BREAK_ALL.</summary>
+        public const String BREAK_ALL = "break-all";
+
         /// <summary>The Constant CAPTION_SIDE.</summary>
         public const String CAPTION_SIDE = "caption-side";
 
         /// <summary>The Constant COLOR.</summary>
         public const String COLOR = "color";
+
+        /// <summary>The Constant COLOR_DODGE.</summary>
+        public const String COLOR_DODGE = "color-dodge";
+
+        /// <summary>The Constant COLOR_BURN.</summary>
+        public const String COLOR_BURN = "color-burn";
+
+        /// <summary>The Constant COLUMN_GAP.</summary>
+        public const String COLUMN_GAP = "column-gap";
+
+        /// <summary>The Constant DARKEN.</summary>
+        public const String DARKEN = "darken";
+
+        /// <summary>The Constant DIFFERENCE.</summary>
+        public const String DIFFERENCE = "difference";
 
         /// <summary>The Constant DIRECTION.</summary>
         public const String DIRECTION = "direction";
@@ -193,6 +230,30 @@ namespace iText.StyledXmlParser.Css {
 
         /// <summary>The Constant EMPTY_CELLS.</summary>
         public const String EMPTY_CELLS = "empty-cells";
+
+        /// <summary>The Constant EXCLUSION.</summary>
+        public const String EXCLUSION = "exclusion";
+
+        /// <summary>The Constant FLEX.</summary>
+        public const String FLEX = "flex";
+
+        /// <summary>The Constant FLEX_BASIS.</summary>
+        public const String FLEX_BASIS = "flex-basis";
+
+        /// <summary>The Constant FLEX_DIRECTION.</summary>
+        public const String FLEX_DIRECTION = "flex-direction";
+
+        /// <summary>The Constant FLEX_GROW.</summary>
+        public const String FLEX_GROW = "flex-grow";
+
+        /// <summary>The Constant FLEX_FLOW.</summary>
+        public const String FLEX_FLOW = "flex-flow";
+
+        /// <summary>The Constant FLEX_SHRINK.</summary>
+        public const String FLEX_SHRINK = "flex-shrink";
+
+        /// <summary>The Constant FLEX_WRAP.</summary>
+        public const String FLEX_WRAP = "flex-wrap";
 
         /// <summary>The Constant FLOAT.</summary>
         public const String FLOAT = "float";
@@ -251,14 +312,32 @@ namespace iText.StyledXmlParser.Css {
         /// <summary>The Constant FONT_WEIGHT.</summary>
         public const String FONT_WEIGHT = "font-weight";
 
+        /// <summary>The Constant GAP.</summary>
+        public const String GAP = "gap";
+
         /// <summary>The Constant HANGING_PUNCTUATION.</summary>
         public const String HANGING_PUNCTUATION = "hanging-punctuation";
+
+        /// <summary>The Constant HARD_LIGHT.</summary>
+        public const String HARD_LIGHT = "hard-light";
+
+        /// <summary>The Constant HUE.</summary>
+        public const String HUE = "hue";
 
         /// <summary>The Constant HYPHENS.</summary>
         public const String HYPHENS = "hyphens";
 
         /// <summary>The Constant INLINE-BLOCK</summary>
         public const String INLINE_BLOCK = "inline-block";
+
+        /// <summary>The Constant JUSTIFY_CONTENT.</summary>
+        public const String JUSTIFY_CONTENT = "justify-content";
+
+        /// <summary>The Constant JUSTIFY_ITEMS.</summary>
+        public const String JUSTIFY_ITEMS = "justify-items";
+
+        /// <summary>The Constant KEEP_ALL.</summary>
+        public const String KEEP_ALL = "keep-all";
 
         /// <summary>The Constant LETTER_SPACING.</summary>
         public const String LETTER_SPACING = "letter-spacing";
@@ -296,8 +375,17 @@ namespace iText.StyledXmlParser.Css {
         /// <summary>The Constant MIN_HEIGHT.</summary>
         public const String MIN_HEIGHT = "min-height";
 
+        /// <summary>The Constant MULTIPLY.</summary>
+        public const String MULTIPLY = "multiply";
+
         /// <summary>The Constant OPACITY.</summary>
         public const String OPACITY = "opacity";
+
+        /// <summary>The Constant ORDER.</summary>
+        public const String ORDER = "order";
+
+        /// <summary>The Constant OPRPHANS.</summary>
+        public const String ORPHANS = "orphans";
 
         /// <summary>The Constant OUTLINE.</summary>
         public const String OUTLINE = "outline";
@@ -313,6 +401,9 @@ namespace iText.StyledXmlParser.Css {
 
         /// <summary>The Constant OVERFLOW_WRAP.</summary>
         public const String OVERFLOW_WRAP = "overflow-wrap";
+
+        /// <summary>The Constant OVERFLOW.</summary>
+        public const String OVERFLOW = "overflow";
 
         /// <summary>The Constant PADDING.</summary>
         public const String PADDING = "padding";
@@ -338,6 +429,9 @@ namespace iText.StyledXmlParser.Css {
         /// <summary>The Constant PAGE_BREAK_INSIDE.</summary>
         public const String PAGE_BREAK_INSIDE = "page-break-inside";
 
+        /// <summary>The Constant PLACE_ITEMS.</summary>
+        public const String PLACE_ITEMS = "place-items";
+
         /// <summary>The Constant POSITION.</summary>
         public const String POSITION = "position";
 
@@ -358,6 +452,15 @@ namespace iText.StyledXmlParser.Css {
 
         /// <summary>The Constant TEXT_DECORATION.</summary>
         public const String TEXT_DECORATION = "text-decoration";
+
+        /// <summary>The Constant TEXT_DECORATION_LINE.</summary>
+        public const String TEXT_DECORATION_LINE = "text-decoration-line";
+
+        /// <summary>The Constant TEXT_DECORATION_STYLE.</summary>
+        public const String TEXT_DECORATION_STYLE = "text-decoration-style";
+
+        /// <summary>The Constant TEXT_DECORATION_COLOR.</summary>
+        public const String TEXT_DECORATION_COLOR = "text-decoration-color";
 
         /// <summary>The Constant TEXT_INDENT.</summary>
         public const String TEXT_INDENT = "text-indent";
@@ -389,8 +492,14 @@ namespace iText.StyledXmlParser.Css {
         /// <summary>The Constant WHITE_SPACE.</summary>
         public const String WHITE_SPACE = "white-space";
 
+        /// <summary>The Constant WIDOWS.</summary>
+        public const String WIDOWS = "widows";
+
         /// <summary>The Constant WIDTH.</summary>
         public const String WIDTH = "width";
+
+        /// <summary>The Constant HEIGHT.</summary>
+        public const String HEIGHT = "height";
 
         /// <summary>The Constant WORDWRAP.</summary>
         public const String WORDWRAP = "word-wrap";
@@ -404,6 +513,10 @@ namespace iText.StyledXmlParser.Css {
         /// <summary>The Constant WRITING_MODE.</summary>
         public const String WRITING_MODE = "writing-mode";
 
+        // property values
+        /// <summary>The Constant ANYWHERE.</summary>
+        public const String ANYWHERE = "anywhere";
+
         /// <summary>The Constant ALWAYS.</summary>
         public const String ALWAYS = "always";
 
@@ -416,6 +529,12 @@ namespace iText.StyledXmlParser.Css {
         /// <summary>The Constant AUTO.</summary>
         public const String AUTO = "auto";
 
+        /// <summary>The Constant BASELINE.</summary>
+        public const String BASELINE = "baseline";
+
+        /// <summary>The Constant BLINK.</summary>
+        public const String BLINK = "blink";
+
         /// <summary>The Constant BOLD.</summary>
         public const String BOLD = "bold";
 
@@ -427,6 +546,9 @@ namespace iText.StyledXmlParser.Css {
 
         /// <summary>The Constant BOTTOM.</summary>
         public const String BOTTOM = "bottom";
+
+        /// <summary>The Constant BREAK_WORD.</summary>
+        public const String BREAK_WORD = "break-word";
 
         /// <summary>The Constant CAPTION.</summary>
         public const String CAPTION = "caption";
@@ -443,8 +565,17 @@ namespace iText.StyledXmlParser.Css {
         /// <summary>The Constant CLOSE_QUOTE.</summary>
         public const String CLOSE_QUOTE = "close-quote";
 
+        /// <summary>The Constant COLUMN.</summary>
+        public const String COLUMN = "column";
+
+        /// <summary>The Constant COLUMN_REVERSE.</summary>
+        public const String COLUMN_REVERSE = "column-reverse";
+
         /// <summary>The Constant CONTAIN.</summary>
         public const String CONTAIN = "contain";
+
+        /// <summary>The Constant CONTENT.</summary>
+        public const String CONTENT = "content";
 
         /// <summary>The Constant CONTENT_BOX.</summary>
         public const String CONTENT_BOX = "content-box";
@@ -464,6 +595,9 @@ namespace iText.StyledXmlParser.Css {
         /// <summary>The Constant DECIMAL_LEADING_ZERO.</summary>
         public const String DECIMAL_LEADING_ZERO = "decimal-leading-zero";
 
+        /// <summary>The Constant DEG.</summary>
+        public const String DEG = "deg";
+
         /// <summary>The Constant DISC.</summary>
         public const String DISC = "disc";
 
@@ -473,14 +607,38 @@ namespace iText.StyledXmlParser.Css {
         /// <summary>The Constant DOUBLE.</summary>
         public const String DOUBLE = "double";
 
+        /// <summary>The Constant EACH_LINE.</summary>
+        public const String EACH_LINE = "each-line";
+
+        /// <summary>The Constant END.</summary>
+        public const String END = "end";
+
+        /// <summary>The Constant FIRST.</summary>
+        public const String FIRST = "first";
+
+        /// <summary>The Constant FIT_CONTENT.</summary>
+        public const String FIT_CONTENT = "fit-content";
+
         /// <summary>The Constant FIXED.</summary>
         public const String FIXED = "fixed";
+
+        /// <summary>The Constant FLEX_END.</summary>
+        public const String FLEX_END = "flex-end";
+
+        /// <summary>The Constant FLEX_START.</summary>
+        public const String FLEX_START = "flex-start";
 
         /// <summary>The Constant GEORGIAN.</summary>
         public const String GEORGIAN = "georgian";
 
+        /// <summary>The Constant GRAD.</summary>
+        public const String GRAD = "grad";
+
         /// <summary>The Constant GROOVE.</summary>
         public const String GROOVE = "groove";
+
+        /// <summary>The Constant HANGING.</summary>
+        public const String HANGING = "hanging";
 
         /// <summary>The Constant HEBREW.</summary>
         public const String HEBREW = "hebrew";
@@ -518,11 +676,23 @@ namespace iText.StyledXmlParser.Css {
         /// <summary>The Constant LARGER.</summary>
         public const String LARGER = "larger";
 
+        /// <summary>The Constant LAST.</summary>
+        public const String LAST = "last";
+
+        /// <summary>The Constant value LEGACY.</summary>
+        public const String LEGACY = "legacy";
+
         /// <summary>The Constant LEFT.</summary>
         public const String LEFT = "left";
 
+        /// <summary>The Constant LIGHTEN.</summary>
+        public const String LIGHTEN = "lighten";
+
         /// <summary>The Constant LIGHTER.</summary>
         public const String LIGHTER = "lighter";
+
+        /// <summary>The Constant value LINE_THROUGH.</summary>
+        public const String LINE_THROUGH = "line-through";
 
         /// <summary>The Constant LOCAL.</summary>
         public const String LOCAL = "local";
@@ -539,6 +709,9 @@ namespace iText.StyledXmlParser.Css {
         /// <summary>The Constant LOWER_ROMAN.</summary>
         public const String LOWER_ROMAN = "lower-roman";
 
+        /// <summary>The Constant LUMINOSITY.</summary>
+        public const String LUMINOSITY = "luminosity";
+
         /// <summary>The Constant MANUAL.</summary>
         public const String MANUAL = "manual";
 
@@ -551,8 +724,17 @@ namespace iText.StyledXmlParser.Css {
         /// <summary>The Constant MENU.</summary>
         public const String MENU = "menu";
 
+        /// <summary>The Constant MAX_CONTENT.</summary>
+        public const String MAX_CONTENT = "max-content";
+
+        /// <summary>The Constant MIN_CONTENT.</summary>
+        public const String MIN_CONTENT = "min-content";
+
         /// <summary>The Constant MESSAGE_BOX.</summary>
         public const String MESSAGE_BOX = "message-box";
+
+        /// <summary>The Constant NOWRAP.</summary>
+        public const String NOWRAP = "nowrap";
 
         /// <summary>The Constant NO_OPEN_QUOTE.</summary>
         public const String NO_OPEN_QUOTE = "no-open-quote";
@@ -581,8 +763,17 @@ namespace iText.StyledXmlParser.Css {
         /// <summary>The Constant OUTSET.</summary>
         public const String OUTSET = "outset";
 
+        /// <summary>The Constant value OVERLAY.</summary>
+        public const String OVERLAY = "overlay";
+
+        /// <summary>The Constant value OVERLINE.</summary>
+        public const String OVERLINE = "overline";
+
         /// <summary>The Constant PADDING_BOX.</summary>
         public const String PADDING_BOX = "padding-box";
+
+        /// <summary>The Constant RAD.</summary>
+        public const String RAD = "rad";
 
         /// <summary>The Constant REPEAT.</summary>
         public const String REPEAT = "repeat";
@@ -602,6 +793,24 @@ namespace iText.StyledXmlParser.Css {
         /// <summary>The Constant ROTATE.</summary>
         public const String ROTATE = "rotate";
 
+        /// <summary>The Constant ROUND.</summary>
+        public const String ROUND = "round";
+
+        /// <summary>The Constant ROW.</summary>
+        public const String ROW = "row";
+
+        /// <summary>The Constant ROW_GAP.</summary>
+        public const String ROW_GAP = "row-gap";
+
+        /// <summary>The Constant ROW_REVERSE.</summary>
+        public const String ROW_REVERSE = "row-reverse";
+
+        /// <summary>The Constant SAFE.</summary>
+        public const String SAFE = "safe";
+
+        /// <summary>The Constant SATURATION.</summary>
+        public const String SATURATION = "saturation";
+
         /// <summary>The Constant SCALE.</summary>
         public const String SCALE = "scale";
 
@@ -611,8 +820,17 @@ namespace iText.StyledXmlParser.Css {
         /// <summary>The Constant SCALE_Y.</summary>
         public const String SCALE_Y = "scaley";
 
+        /// <summary>The Constant SCREEN.</summary>
+        public const String SCREEN = "screen";
+
         /// <summary>The Constant SCROLL.</summary>
         public const String SCROLL = "scroll";
+
+        /// <summary>The Constant value SELF_END.</summary>
+        public const String SELF_END = "self-end";
+
+        /// <summary>The Constant SELF_START.</summary>
+        public const String SELF_START = "self-start";
 
         /// <summary>The Constant SKEW.</summary>
         public const String SKEW = "skew";
@@ -635,8 +853,23 @@ namespace iText.StyledXmlParser.Css {
         /// <summary>The Constant SMALLER.</summary>
         public const String SMALLER = "smaller";
 
+        /// <summary>The Constant SOFT_LIGHT.</summary>
+        public const String SOFT_LIGHT = "soft-light";
+
         /// <summary>The Constant SOLID.</summary>
         public const String SOLID = "solid";
+
+        /// <summary>The Constant SPACE.</summary>
+        public const String SPACE = "space";
+
+        /// <summary>The Constant SPACE_AROUND.</summary>
+        public const String SPACE_AROUND = "space-around";
+
+        /// <summary>The Constant SPACE_BETWEEN.</summary>
+        public const String SPACE_BETWEEN = "space-between";
+
+        /// <summary>The Constant SPACE_EVENLY.</summary>
+        public const String SPACE_EVENLY = "space-evenly";
 
         /// <summary>The Constant SQUARE.</summary>
         public const String SQUARE = "square";
@@ -649,6 +882,12 @@ namespace iText.StyledXmlParser.Css {
 
         /// <summary>The Constant STATUS_BAR.</summary>
         public const String STATUS_BAR = "status-bar";
+
+        /// <summary>The Constant STRETCH.</summary>
+        public const String STRETCH = "stretch";
+
+        /// <summary>The Constant STRING.</summary>
+        public const String STRING = "string";
 
         /// <summary>The Constant THICK.</summary>
         public const String THICK = "thick";
@@ -671,6 +910,18 @@ namespace iText.StyledXmlParser.Css {
         /// <summary>The Constant TRANSPARENT.</summary>
         public const String TRANSPARENT = "transparent";
 
+        /// <summary>The Constant UNDEFINED_NAME.</summary>
+        public const String UNDEFINED_NAME = "undefined";
+
+        /// <summary>The Constant value UNDERLINE</summary>
+        public const String UNDERLINE = "underline";
+
+        /// <summary>The Constant UNSAFE.</summary>
+        public const String UNSAFE = "unsafe";
+
+        /// <summary>The Constant value UNSET.</summary>
+        public const String UNSET = "unset";
+
         /// <summary>The Constant UPPER_ALPHA.</summary>
         public const String UPPER_ALPHA = "upper-alpha";
 
@@ -679,6 +930,18 @@ namespace iText.StyledXmlParser.Css {
 
         /// <summary>The Constant UPPER_ROMAN.</summary>
         public const String UPPER_ROMAN = "upper-roman";
+
+        /// <summary>The Constant value VISIBLE.</summary>
+        public const String VISIBLE = "visible";
+
+        /// <summary>The Constant value WAVY.</summary>
+        public const String WAVY = "wavy";
+
+        /// <summary>The Constant WRAP.</summary>
+        public const String WRAP = "wrap";
+
+        /// <summary>The Constant WRAP_REVERSE.</summary>
+        public const String WRAP_REVERSE = "wrap-reverse";
 
         /// <summary>The Constant X_LARGE.</summary>
         public const String X_LARGE = "x-large";
@@ -692,6 +955,7 @@ namespace iText.StyledXmlParser.Css {
         /// <summary>The Constant XX_SMALL.</summary>
         public const String XX_SMALL = "xx-small";
 
+        // properties possible values
         /// <summary>The Constant BACKGROUND_SIZE_VALUES.</summary>
         public static readonly ICollection<String> BACKGROUND_SIZE_VALUES = JavaCollectionsUtil.UnmodifiableSet(new 
             HashSet<String>(JavaUtil.ArraysAsList(AUTO, COVER, CONTAIN)));
@@ -702,7 +966,7 @@ namespace iText.StyledXmlParser.Css {
 
         /// <summary>The Constant BACKGROUND_REPEAT_VALUES.</summary>
         public static readonly ICollection<String> BACKGROUND_REPEAT_VALUES = JavaCollectionsUtil.UnmodifiableSet(
-            new HashSet<String>(JavaUtil.ArraysAsList(REPEAT, NO_REPEAT, REPEAT_X, REPEAT_Y)));
+            new HashSet<String>(JavaUtil.ArraysAsList(REPEAT, NO_REPEAT, REPEAT_X, REPEAT_Y, ROUND, SPACE)));
 
         /// <summary>The Constant BACKGROUND_ATTACHMENT_VALUES.</summary>
         public static readonly ICollection<String> BACKGROUND_ATTACHMENT_VALUES = JavaCollectionsUtil.UnmodifiableSet
@@ -711,6 +975,14 @@ namespace iText.StyledXmlParser.Css {
         /// <summary>The Constant BACKGROUND_POSITION_VALUES.</summary>
         public static readonly ICollection<String> BACKGROUND_POSITION_VALUES = JavaCollectionsUtil.UnmodifiableSet
             (new HashSet<String>(JavaUtil.ArraysAsList(LEFT, CENTER, BOTTOM, TOP, RIGHT)));
+
+        /// <summary>The Constant BACKGROUND_POSITION_X_VALUES.</summary>
+        public static readonly ICollection<String> BACKGROUND_POSITION_X_VALUES = JavaCollectionsUtil.UnmodifiableSet
+            (new HashSet<String>(JavaUtil.ArraysAsList(LEFT, CENTER, RIGHT)));
+
+        /// <summary>The Constant BACKGROUND_POSITION_Y_VALUES.</summary>
+        public static readonly ICollection<String> BACKGROUND_POSITION_Y_VALUES = JavaCollectionsUtil.UnmodifiableSet
+            (new HashSet<String>(JavaUtil.ArraysAsList(CENTER, BOTTOM, TOP)));
 
         /// <summary>The Constant BORDER_WIDTH_VALUES.</summary>
         public static readonly ICollection<String> BORDER_WIDTH_VALUES = JavaCollectionsUtil.UnmodifiableSet(new HashSet
@@ -721,9 +993,20 @@ namespace iText.StyledXmlParser.Css {
             <String>(JavaUtil.ArraysAsList(new String[] { NONE, HIDDEN, DOTTED, DASHED, SOLID, DOUBLE, GROOVE, RIDGE
             , INSET, OUTSET })));
 
+        /// <summary>The Constant BLEND_MODE_VALUES.</summary>
+        public static readonly ICollection<String> BLEND_MODE_VALUES = JavaCollectionsUtil.UnmodifiableSet(new HashSet
+            <String>(JavaUtil.ArraysAsList(new String[] { NORMAL, MULTIPLY, SCREEN, OVERLAY, DARKEN, LIGHTEN, COLOR_DODGE
+            , COLOR_BURN, HARD_LIGHT, SOFT_LIGHT, DIFFERENCE, EXCLUSION, HUE, SATURATION, COLOR, LUMINOSITY })));
+
         /// <summary>The Constant FONT_ABSOLUTE_SIZE_KEYWORDS.</summary>
         public static readonly IDictionary<String, String> FONT_ABSOLUTE_SIZE_KEYWORDS_VALUES;
 
+        /// <summary>The Constant METRIC_MEASUREMENTS.</summary>
+        public static readonly String[] METRIC_MEASUREMENTS_VALUES = new String[] { CommonCssConstants.PX, CommonCssConstants
+            .IN, CommonCssConstants.CM, CommonCssConstants.MM, CommonCssConstants.PC, CommonCssConstants.PT, CommonCssConstants
+            .Q };
+
+        // pseudo-classes
         /// <summary>The Constant ACTIVE.</summary>
         public const String ACTIVE = "active";
 
@@ -811,12 +1094,16 @@ namespace iText.StyledXmlParser.Css {
         /// <summary>The Constant TARGET.</summary>
         public const String TARGET = "target";
 
+        /// <summary>The Constant URL.</summary>
+        public const String URL = "url";
+
         /// <summary>The Constant VALID.</summary>
         public const String VALID = "valid";
 
         /// <summary>The Constant VISITED.</summary>
         public const String VISITED = "visited";
 
+        // units of measurement
         /// <summary>The Constant CM.</summary>
         public const String CM = "cm";
 
@@ -850,16 +1137,14 @@ namespace iText.StyledXmlParser.Css {
         /// <summary>The Constant Q.</summary>
         public const String Q = "q";
 
+        // units of resolution
         /// <summary>The Constant DPCM.</summary>
         public const String DPCM = "dpcm";
 
+        /// <summary>The Constant DPI.</summary>
+        public const String DPI = "dpi";
+
         /// <summary>The Constant DPPX.</summary>
         public const String DPPX = "dppx";
-        // properties
-        // property values
-        // properties possible values
-        // pseudo-classes
-        // units of measurement
-        // units of resolution
     }
 }

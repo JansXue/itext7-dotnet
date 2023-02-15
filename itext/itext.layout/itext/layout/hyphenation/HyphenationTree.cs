@@ -19,20 +19,18 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using iText.IO.Util;
+using iText.Commons.Utils;
 
 namespace iText.Layout.Hyphenation {
     /// <summary>
-    /// <p>
     /// This tree structure stores the hyphenation patterns in an efficient
     /// way for fast lookup.
     /// </summary>
     /// <remarks>
-    /// <p>
     /// This tree structure stores the hyphenation patterns in an efficient
     /// way for fast lookup. It provides the provides the method to
     /// hyphenate a word.
-    /// <p>
+    /// <para />
     /// This work was authored by Carlos Villegas (cav@uniscope.co.jp).
     /// </remarks>
     public class HyphenationTree : TernaryTree, IPatternConsumer {
@@ -46,7 +44,6 @@ namespace iText.Layout.Hyphenation {
         protected internal TernaryTree classmap;
 
         /// <summary>Temporary map to store interletter values on pattern loading.</summary>
-        [System.NonSerialized]
         private TernaryTree ivalues;
 
         /// <summary>Default constructor.</summary>
@@ -54,10 +51,10 @@ namespace iText.Layout.Hyphenation {
             stoplist = new Dictionary<String, IList>(23);
             classmap = new TernaryTree();
             vspace = new ByteVector();
+            // this reserves index 0, which we don't use
             vspace.Alloc(1);
         }
 
-        // this reserves index 0, which we don't use
         /// <summary>
         /// Packs the values by storing them in 4 bits, two values into a byte
         /// Values range is from 0 to 9.
@@ -88,12 +85,12 @@ namespace iText.Layout.Hyphenation {
                     va[j + offset] = (byte)(va[j + offset] | v);
                 }
                 else {
+                    // big endian
                     va[j + offset] = (byte)(v << 4);
                 }
             }
-            // big endian
-            va[m - 1 + offset] = 0;
             // terminator
+            va[m - 1 + offset] = 0;
             return offset;
         }
 
@@ -119,9 +116,6 @@ namespace iText.Layout.Hyphenation {
 
         /// <summary>Read hyphenation patterns from an XML file.</summary>
         /// <param name="filename">the filename</param>
-        /// <exception cref="HyphenationException">In case the parsing fails</exception>
-        /// <exception cref="System.IO.FileNotFoundException"/>
-        /// <exception cref="iText.Layout.Hyphenation.HyphenationException"/>
         public virtual void LoadPatterns(String filename) {
             LoadPatterns(new FileStream(filename, FileMode.Open, FileAccess.Read), filename);
         }
@@ -129,8 +123,6 @@ namespace iText.Layout.Hyphenation {
         /// <summary>Read hyphenation patterns from an XML file.</summary>
         /// <param name="stream">the InputSource for the file</param>
         /// <param name="name">unique key representing country-language combination</param>
-        /// <exception cref="HyphenationException">In case the parsing fails</exception>
-        /// <exception cref="iText.Layout.Hyphenation.HyphenationException"/>
         public virtual void LoadPatterns(Stream stream, String name) {
             PatternParser pp = new PatternParser(this);
             ivalues = new TernaryTree();
@@ -201,20 +193,22 @@ namespace iText.Layout.Hyphenation {
         }
 
         /// <summary>
-        /// <p>Search for all possible partial matches of word starting
+        /// Search for all possible partial matches of word starting
         /// at index an update interletter values.
         /// </summary>
         /// <remarks>
-        /// <p>Search for all possible partial matches of word starting
+        /// Search for all possible partial matches of word starting
         /// at index an update interletter values. In other words, it
-        /// does something like:</p>
-        /// <code>
+        /// does something like:
+        /// <para />
+        /// <c>
         /// for(i=0; i&lt;patterns.length; i++) {
         /// if ( word.substring(index).startsWidth(patterns[i]) )
         /// update_interletter_values(patterns[i]);
         /// }
-        /// </code>
-        /// <p>But it is done in an efficient way since the patterns are
+        /// </c>
+        /// <para />
+        /// But it is done in an efficient way since the patterns are
         /// stored in a ternary tree. In fact, this is the whole purpose
         /// of having the tree: doing this search without having to test
         /// every single pattern. The number of patterns for languages
@@ -223,7 +217,7 @@ namespace iText.Layout.Hyphenation {
         /// really slow without the tree. The tradeoff is memory, but
         /// using a ternary tree instead of a trie, almost halves the
         /// the memory used by Lout or TeX. It's also faster than using
-        /// a hash table</p>
+        /// a hash table
         /// </remarks>
         /// <param name="word">null terminated word to match</param>
         /// <param name="index">start index from word</param>
@@ -238,8 +232,8 @@ namespace iText.Layout.Hyphenation {
             while (p > 0 && p < sc.Length) {
                 if (sc[p] == 0xFFFF) {
                     if (Hstrcmp(word, i, kv.GetArray(), lo[p]) == 0) {
-                        values = GetValues(eq[p]);
                         // data pointer is in eq[]
+                        values = GetValues(eq[p]);
                         int j = index;
                         for (int k = 0; k < values.Length; k++) {
                             if (j < il.Length && values[k] > il[j]) {
@@ -261,8 +255,8 @@ namespace iText.Layout.Hyphenation {
                     // look for a pattern ending at this position by searching for
                     // the null char ( splitchar == 0 )
                     while (q > 0 && q < sc.Length) {
+                        // stop at compressed branch
                         if (sc[q] == 0xFFFF) {
-                            // stop at compressed branch
                             break;
                         }
                         if (sc[q] == 0) {
@@ -442,8 +436,8 @@ namespace iText.Layout.Hyphenation {
             for (i = 1; i <= len; i++) {
                 c[0] = w[offset + i - 1];
                 int nc = classmap.Find(c, 0);
+                // found a non-letter character ...
                 if (nc < 0) {
-                    // found a non-letter character ...
                     if (i == (1 + iIgnoreAtBeginning)) {
                         // ... before any letter character
                         iIgnoreAtBeginning++;
@@ -490,14 +484,14 @@ namespace iText.Layout.Hyphenation {
             }
             else {
                 // use algorithm to get hyphenation points
-                word[0] = '.';
                 // word start marker
-                word[len + 1] = '.';
+                word[0] = '.';
                 // word end marker
-                word[len + 2] = (char)0;
+                word[len + 1] = '.';
                 // null terminated
-                byte[] il = new byte[len + 3];
+                word[len + 2] = (char)0;
                 // initialized to zero
+                byte[] il = new byte[len + 3];
                 for (i = 0; i < len + 1; i++) {
                     SearchPatterns(word, i, il);
                 }

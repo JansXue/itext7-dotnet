@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -56,8 +56,6 @@ namespace iText.Barcodes.Qrcode {
         /// <param name="width">width of the QR-code</param>
         /// <param name="height">height of the QR-code</param>
         /// <returns>2D Greyscale map containing the visual representation of the QR-code, stored as a Bytematrix</returns>
-        /// <exception cref="WriterException"/>
-        /// <exception cref="iText.Barcodes.Qrcode.WriterException"/>
         public ByteMatrix Encode(String contents, int width, int height) {
             return Encode(contents, width, height, null);
         }
@@ -72,8 +70,6 @@ namespace iText.Barcodes.Qrcode {
         /// <param name="height">height of the QR-code</param>
         /// <param name="hints">Map containing suggestions for error-correction level and version</param>
         /// <returns>2D Greyscale map containing the visual representation of the QR-code, stored as a Bytematrix</returns>
-        /// <exception cref="WriterException"/>
-        /// <exception cref="iText.Barcodes.Qrcode.WriterException"/>
         public ByteMatrix Encode(String contents, int width, int height, IDictionary<EncodeHintType, Object> hints
             ) {
             if (contents == null || contents.Length == 0) {

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -86,7 +86,7 @@ namespace iText.IO.Font.Constants {
         /// <summary>Convert from Open Type font width class notation.</summary>
         /// <remarks>
         /// Convert from Open Type font width class notation.
-        /// <p>
+        /// <para />
         /// https://www.microsoft.com/typography/otspec/os2.htm#wdc
         /// </remarks>
         /// <param name="fontWidth">Open Type font width.</param>

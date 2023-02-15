@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -50,6 +50,7 @@ using iText.Svg.Renderers.Path;
 using iText.Svg.Renderers.Path.Impl;
 
 namespace iText.Svg.Renderers.Impl {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class PathSvgNodeRendererLowLevelIntegrationTest : SvgIntegrationTest {
         [NUnit.Framework.Test]
         public virtual void TestRelativeArcOperatorShapes() {
@@ -121,26 +122,18 @@ namespace iText.Svg.Renderers.Impl {
 
         [NUnit.Framework.Test]
         public virtual void TestNonsensePathNotExistingOperator() {
-            NUnit.Framework.Assert.That(() =>  {
-                PathSvgNodeRenderer path = new PathSvgNodeRenderer();
-                String instructions = "F";
-                path.SetAttribute(SvgConstants.Attributes.D, instructions);
-                NUnit.Framework.Assert.IsTrue(path.GetShapes().IsEmpty());
-            }
-            , NUnit.Framework.Throws.InstanceOf<SvgProcessingException>())
-;
+            PathSvgNodeRenderer path = new PathSvgNodeRenderer();
+            String instructions = "F";
+            path.SetAttribute(SvgConstants.Attributes.D, instructions);
+            NUnit.Framework.Assert.Catch(typeof(SvgProcessingException), () => path.GetShapes());
         }
 
         [NUnit.Framework.Test]
         public virtual void TestClosePathNoPrecedingPathsOperator() {
-            NUnit.Framework.Assert.That(() =>  {
-                PathSvgNodeRenderer path = new PathSvgNodeRenderer();
-                String instructions = "z";
-                path.SetAttribute(SvgConstants.Attributes.D, instructions);
-                NUnit.Framework.Assert.IsTrue(path.GetShapes().IsEmpty());
-            }
-            , NUnit.Framework.Throws.InstanceOf<SvgProcessingException>())
-;
+            PathSvgNodeRenderer path = new PathSvgNodeRenderer();
+            String instructions = "z";
+            path.SetAttribute(SvgConstants.Attributes.D, instructions);
+            NUnit.Framework.Assert.Catch(typeof(SvgProcessingException), () => path.GetShapes());
         }
 
         [NUnit.Framework.Test]
@@ -191,6 +184,24 @@ namespace iText.Svg.Renderers.Impl {
             path.SetAttribute(SvgConstants.Attributes.D, instructions);
             NUnit.Framework.Assert.AreEqual(3, path.GetShapes().Count);
             NUnit.Framework.Assert.IsTrue(((IList<IPathShape>)path.GetShapes())[2] is SmoothSCurveTo);
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void SmoothCurveAsFirstShapeTest1() {
+            String instructions = "S 100 200 300 400";
+            PathSvgNodeRenderer path = new PathSvgNodeRenderer();
+            path.SetAttribute(SvgConstants.Attributes.D, instructions);
+            Exception e = NUnit.Framework.Assert.Catch(typeof(SvgProcessingException), () => path.GetShapes());
+            NUnit.Framework.Assert.AreEqual(SvgExceptionMessageConstant.INVALID_SMOOTH_CURVE_USE, e.Message);
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void SmoothCurveAsFirstShapeTest2() {
+            String instructions = "T 100,200";
+            PathSvgNodeRenderer path = new PathSvgNodeRenderer();
+            path.SetAttribute(SvgConstants.Attributes.D, instructions);
+            Exception e = NUnit.Framework.Assert.Catch(typeof(SvgProcessingException), () => path.GetShapes());
+            NUnit.Framework.Assert.AreEqual(SvgExceptionMessageConstant.INVALID_SMOOTH_CURVE_USE, e.Message);
         }
     }
 }

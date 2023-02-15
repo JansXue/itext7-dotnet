@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,7 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-using iText.IO.Util;
+using iText.Commons.Utils;
 
 namespace iText.Layout.Properties {
     /// <summary>A specialized class that holds a value and the unit it is measured in.</summary>
@@ -70,7 +70,7 @@ namespace iText.Layout.Properties {
         }
 
         /// <summary>Creates a copy of UnitValue object.</summary>
-        /// <param name="unitValue"/>
+        /// <param name="unitValue">the value to be stored</param>
         public UnitValue(iText.Layout.Properties.UnitValue unitValue)
             : this(unitValue.unitType, unitValue.value) {
         }
@@ -105,8 +105,7 @@ namespace iText.Layout.Properties {
         /// a new normalized (Σ=100%) array of
         /// <see cref="PERCENT"/>
         /// 
-        /// <see cref="UnitValue"/>
-        /// .
+        /// <see cref="UnitValue"/>.
         /// </returns>
         public static iText.Layout.Properties.UnitValue[] CreatePercentArray(float[] values) {
             iText.Layout.Properties.UnitValue[] resultArray = new iText.Layout.Properties.UnitValue[values.Length];
@@ -126,8 +125,7 @@ namespace iText.Layout.Properties {
         /// a array of equal
         /// <see cref="PERCENT"/>
         /// 
-        /// <see cref="UnitValue"/>
-        /// .
+        /// <see cref="UnitValue"/>.
         /// </returns>
         public static iText.Layout.Properties.UnitValue[] CreatePercentArray(int size) {
             iText.Layout.Properties.UnitValue[] resultArray = new iText.Layout.Properties.UnitValue[size];
@@ -176,26 +174,26 @@ namespace iText.Layout.Properties {
         }
 
         /// <summary>Gets the measured value stored in this object</summary>
-        /// <returns>the value, as a <code>float</code></returns>
+        /// <returns>the value, as a <c>float</c></returns>
         public virtual float GetValue() {
             return value;
         }
 
         /// <summary>Sets the measured value stored in this object</summary>
-        /// <param name="value">a <code>float</code></param>
+        /// <param name="value">a <c>float</c></param>
         public virtual void SetValue(float value) {
             System.Diagnostics.Debug.Assert(!float.IsNaN(value));
             this.value = value;
         }
 
         /// <summary>Returns whether or not the value is stored in points (pt)</summary>
-        /// <returns><code>true</code> if stored in points</returns>
+        /// <returns><c>true</c> if stored in points</returns>
         public virtual bool IsPointValue() {
             return unitType == POINT;
         }
 
         /// <summary>Returns whether or not the value is stored in percent (%)</summary>
-        /// <returns><code>true</code> if stored in percent</returns>
+        /// <returns><c>true</c> if stored in percent</returns>
         public virtual bool IsPercentValue() {
             return unitType == PERCENT;
         }

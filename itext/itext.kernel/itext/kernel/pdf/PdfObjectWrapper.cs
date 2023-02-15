@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,7 +41,7 @@ source product.
 For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
-using iText.Kernel;
+using iText.Kernel.Exceptions;
 
 namespace iText.Kernel.Pdf {
     public abstract class PdfObjectWrapper<T>
@@ -60,8 +60,8 @@ namespace iText.Kernel.Pdf {
         }
 
         /// <summary>Marks object behind wrapper to be saved as indirect.</summary>
-        /// <param name="document">a document the indirect reference will belong to.</param>
-        /// <param name="reference"/>
+        /// <param name="document">a document the indirect reference belongs to.</param>
+        /// <param name="reference">a reference which will be assigned for the object behind wrapper.</param>
         /// <returns>object itself.</returns>
         public virtual iText.Kernel.Pdf.PdfObjectWrapper<T> MakeIndirect(PdfDocument document, PdfIndirectReference
              reference) {
@@ -129,7 +129,8 @@ namespace iText.Kernel.Pdf {
 
         protected internal virtual void EnsureUnderlyingObjectHasIndirectReference() {
             if (GetPdfObject().GetIndirectReference() == null) {
-                throw new PdfException(PdfException.ToFlushThisWrapperUnderlyingObjectMustBeAddedToDocument);
+                throw new PdfException(KernelExceptionMessageConstant.TO_FLUSH_THIS_WRAPPER_UNDERLYING_OBJECT_MUST_BE_ADDED_TO_DOCUMENT
+                    );
             }
         }
 
@@ -142,6 +143,11 @@ namespace iText.Kernel.Pdf {
         /// <summary>
         /// Some wrappers use object's indirect reference to obtain the
         /// <c>PdfDocument</c>
+        /// to which the object belongs to.
+        /// </summary>
+        /// <remarks>
+        /// Some wrappers use object's indirect reference to obtain the
+        /// <c>PdfDocument</c>
         /// to which the object belongs to. For this matter, for these wrappers it is implicitly defined
         /// that they work with indirect objects only. Commonly these wrappers have two constructors: one with
         /// <c>PdfDocument</c>
@@ -152,7 +158,7 @@ namespace iText.Kernel.Pdf {
         /// type of constructors to ensure that wrapper will able to obtain the
         /// <c>PdfDocument</c>
         /// instance.
-        /// </summary>
+        /// </remarks>
         /// <param name="object">
         /// the
         /// <c>PdfObject</c>
@@ -160,7 +166,7 @@ namespace iText.Kernel.Pdf {
         /// </param>
         protected internal static void EnsureObjectIsAddedToDocument(PdfObject @object) {
             if (@object.GetIndirectReference() == null) {
-                throw new PdfException(PdfException.ObjectMustBeIndirectToWorkWithThisWrapper);
+                throw new PdfException(KernelExceptionMessageConstant.OBJECT_MUST_BE_INDIRECT_TO_WORK_WITH_THIS_WRAPPER);
             }
         }
     }

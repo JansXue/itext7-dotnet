@@ -78,8 +78,6 @@ namespace iText.Kernel.XMP.Impl
 		/// advanced iteration options, see
 		/// <see cref="iText.Kernel.XMP.Options.IteratorOptions"/>
 		/// </param>
-		/// <exception cref="iText.Kernel.XMP.XMPException">If the node defined by the paramters is not existing.
-		/// 	</exception>
 		public XMPIteratorImpl(XMPMetaImpl xmp, String schemaNS, String propPath, IteratorOptions
 			 options)
 		{
@@ -273,7 +271,7 @@ namespace iText.Kernel.XMP.Impl
 			/// <summary>
 			/// Prepares the next node to return if not already done. 
 			/// </summary>
-			/// <seealso cref= Iterator#hasNext() </seealso>
+			/// <seealso cref="IEnumerator.MoveNext"/>
 			public virtual bool MoveNext() {
 				// find next node
 				if (state == ITERATE_NODE) {
@@ -457,7 +455,7 @@ namespace iText.Kernel.XMP.Impl
 			/// <summary>
 			/// Prepares the next node to return if not already done. 
 			/// </summary>
-			/// <seealso cref= Iterator#hasNext() </seealso>
+			/// <seealso cref="IEnumerator.MoveNext"/>
 			public override bool MoveNext() {
 				if (outerInstance.skipSiblings) {
 					return false;

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -51,14 +51,14 @@ namespace iText.Kernel.Events {
     /// implementations.
     /// </summary>
     public class EventDispatcher : IEventDispatcher {
-        protected internal IDictionary<String, IList<IEventHandler>> eventHandlers = new Dictionary<String, IList<
-            IEventHandler>>();
+        protected internal IDictionary<String, IList<iText.Kernel.Events.IEventHandler>> eventHandlers = new Dictionary
+            <String, IList<iText.Kernel.Events.IEventHandler>>();
 
-        public virtual void AddEventHandler(String type, IEventHandler handler) {
+        public virtual void AddEventHandler(String type, iText.Kernel.Events.IEventHandler handler) {
             RemoveEventHandler(type, handler);
-            IList<IEventHandler> handlers = eventHandlers.Get(type);
+            IList<iText.Kernel.Events.IEventHandler> handlers = eventHandlers.Get(type);
             if (handlers == null) {
-                handlers = new List<IEventHandler>();
+                handlers = new List<iText.Kernel.Events.IEventHandler>();
                 eventHandlers.Put(type, handlers);
             }
             handlers.Add(handler);
@@ -69,9 +69,9 @@ namespace iText.Kernel.Events {
         }
 
         public virtual void DispatchEvent(Event @event, bool delayed) {
-            IList<IEventHandler> handlers = eventHandlers.Get(@event.GetEventType());
+            IList<iText.Kernel.Events.IEventHandler> handlers = eventHandlers.Get(@event.GetEventType());
             if (handlers != null) {
-                foreach (IEventHandler handler in handlers) {
+                foreach (iText.Kernel.Events.IEventHandler handler in handlers) {
                     handler.HandleEvent(@event);
                 }
             }
@@ -81,8 +81,8 @@ namespace iText.Kernel.Events {
             return eventHandlers.ContainsKey(type);
         }
 
-        public virtual void RemoveEventHandler(String type, IEventHandler handler) {
-            IList<IEventHandler> handlers = eventHandlers.Get(type);
+        public virtual void RemoveEventHandler(String type, iText.Kernel.Events.IEventHandler handler) {
+            IList<iText.Kernel.Events.IEventHandler> handlers = eventHandlers.Get(type);
             if (handlers == null) {
                 return;
             }

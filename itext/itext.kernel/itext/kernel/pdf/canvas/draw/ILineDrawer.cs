@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -51,12 +51,18 @@ namespace iText.Kernel.Pdf.Canvas.Draw {
     /// <see cref="ILineDrawer"/>
     /// defines a drawing operation on a
     /// <see cref="iText.Kernel.Pdf.Canvas.PdfCanvas"/>
+    /// </summary>
+    /// <remarks>
+    /// The
+    /// <see cref="ILineDrawer"/>
+    /// defines a drawing operation on a
+    /// <see cref="iText.Kernel.Pdf.Canvas.PdfCanvas"/>
     /// <br />
     /// This interface allows to customize the 'empty' space in a
     /// <c>com.itextpdf.layout.element.TabStop</c>
     /// through a Strategy design
     /// pattern
-    /// </summary>
+    /// </remarks>
     public interface ILineDrawer {
         /// <summary>
         /// Performs configurable drawing operations related to specific region

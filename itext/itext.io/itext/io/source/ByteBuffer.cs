@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,7 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-using iText.IO.Util;
+using iText.Commons.Utils;
 
 namespace iText.IO.Source {
     public class ByteBuffer {
@@ -176,19 +176,22 @@ namespace iText.IO.Source {
         /// Fill
         /// <c>ByteBuffer</c>
         /// from the end.
+        /// </summary>
+        /// <remarks>
+        /// Fill
+        /// <c>ByteBuffer</c>
+        /// from the end.
         /// Set byte at
         /// <c>capacity() - size() - 1</c>
         /// position.
-        /// </summary>
+        /// </remarks>
         /// <param name="b">
         /// 
-        /// <c>byte</c>
-        /// .
+        /// <c>byte</c>.
         /// </param>
         /// <returns>
         /// 
-        /// <c>ByteBuffer</c>
-        /// .
+        /// <c>ByteBuffer</c>.
         /// </returns>
         internal virtual iText.IO.Source.ByteBuffer Prepend(byte b) {
             buffer[buffer.Length - count - 1] = b;
@@ -200,19 +203,22 @@ namespace iText.IO.Source {
         /// Fill
         /// <c>ByteBuffer</c>
         /// from the end.
+        /// </summary>
+        /// <remarks>
+        /// Fill
+        /// <c>ByteBuffer</c>
+        /// from the end.
         /// Set bytes from
         /// <c>capacity() - size() - b.length</c>
         /// position.
-        /// </summary>
+        /// </remarks>
         /// <param name="b">
         /// 
-        /// <c>byte</c>
-        /// .
+        /// <c>byte</c>.
         /// </param>
         /// <returns>
         /// 
-        /// <c>ByteBuffer</c>
-        /// .
+        /// <c>ByteBuffer</c>.
         /// </returns>
         internal virtual iText.IO.Source.ByteBuffer Prepend(byte[] b) {
             Array.Copy(b, 0, buffer, buffer.Length - count - b.Length, b.Length);

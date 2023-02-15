@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -49,8 +49,7 @@ namespace iText.Kernel.Pdf.Action {
     /// <remarks>
     /// This is a helper class for optional content states use in Set-OCG-State actions.
     /// See
-    /// <see cref="PdfAction.CreateSetOcgState(System.Collections.Generic.IList{E})"/>
-    /// .
+    /// <see cref="PdfAction.CreateSetOcgState(System.Collections.Generic.IList{E})"/>.
     /// </remarks>
     public class PdfActionOcgState {
         /// <summary>

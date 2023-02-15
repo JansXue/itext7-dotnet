@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -111,11 +111,11 @@ namespace iText.Layout.Font {
         public iText.Layout.Font.FontCharacteristics SetFontStyle(String fs) {
             if (fs != null && fs.Length > 0) {
                 fs = fs.Trim().ToLowerInvariant();
-                if (fs.Equals("normal")) {
+                if ("normal".Equals(fs)) {
                     isItalic = false;
                 }
                 else {
-                    if (fs.Equals("italic") || fs.Equals("oblique")) {
+                    if ("italic".Equals(fs) || "oblique".Equals(fs)) {
                         isItalic = true;
                     }
                 }

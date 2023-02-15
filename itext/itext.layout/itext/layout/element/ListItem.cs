@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -50,10 +50,14 @@ using iText.Layout.Renderer;
 namespace iText.Layout.Element {
     /// <summary>
     /// A list item is a layout element that is one entry in a
+    /// <see cref="List"/>.
+    /// </summary>
+    /// <remarks>
+    /// A list item is a layout element that is one entry in a
     /// <see cref="List"/>
     /// . The list
     /// object controls the prefix, postfix, and numbering of the list items.
-    /// </summary>
+    /// </remarks>
     public class ListItem : Div {
         /// <summary>Creates a ListItem.</summary>
         public ListItem()
@@ -130,8 +134,7 @@ namespace iText.Layout.Element {
         /// the
         /// <see cref="iText.Layout.Properties.ListNumberingType"/>
         /// that will generate appropriate prefixes for the
-        /// <see cref="ListItem"/>
-        /// .
+        /// <see cref="ListItem"/>.
         /// </param>
         /// <returns>this list item.</returns>
         public virtual iText.Layout.Element.ListItem SetListSymbol(ListNumberingType listNumberingType) {

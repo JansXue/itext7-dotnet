@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,17 +43,21 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.Text;
+using iText.Commons.Utils;
 
 namespace iText.StyledXmlParser.Util {
     /// <summary>Utility class for white-space handling methods that are used both in pdfHTML and the iText-core SVG module
     ///     </summary>
     public class WhiteSpaceUtil {
-        private static readonly ICollection<char> EM_SPACES = new HashSet<char>();
+        private static readonly ICollection<char> EM_SPACES;
 
         static WhiteSpaceUtil() {
-            EM_SPACES.Add((char)0x2002);
-            EM_SPACES.Add((char)0x2003);
-            EM_SPACES.Add((char)0x2009);
+            // HashSet is required in order to autoport correctly in .Net
+            HashSet<char> tempSet = new HashSet<char>();
+            tempSet.Add((char)0x2002);
+            tempSet.Add((char)0x2003);
+            tempSet.Add((char)0x2009);
+            EM_SPACES = JavaCollectionsUtil.UnmodifiableSet(tempSet);
         }
 
         /// <summary>Collapse all consecutive spaces of the passed String into single spaces</summary>

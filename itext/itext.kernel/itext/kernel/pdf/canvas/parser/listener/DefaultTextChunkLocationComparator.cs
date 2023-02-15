@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,7 +41,7 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System.Collections.Generic;
-using iText.IO.Util;
+using iText.Commons.Utils;
 
 namespace iText.Kernel.Pdf.Canvas.Parser.Listener {
     internal class DefaultTextChunkLocationComparator : IComparer<ITextChunkLocation> {
@@ -56,10 +56,10 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Listener {
         }
 
         public virtual int Compare(ITextChunkLocation first, ITextChunkLocation second) {
+            // not really needed, but just in case
             if (first == second) {
                 return 0;
             }
-            // not really needed, but just in case
             int result;
             result = JavaUtil.IntegerCompare(first.OrientationMagnitude(), second.OrientationMagnitude());
             if (result != 0) {

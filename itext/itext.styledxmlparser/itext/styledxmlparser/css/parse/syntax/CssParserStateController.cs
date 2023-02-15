@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,8 +43,9 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Common.Logging;
-using iText.IO.Util;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
 using iText.StyledXmlParser.Css;
 using iText.StyledXmlParser.Css.Parse;
 using iText.StyledXmlParser.Css.Util;
@@ -132,7 +133,6 @@ namespace iText.StyledXmlParser.Css.Parse.Syntax {
         /// </summary>
         /// <param name="baseUrl">the base URL</param>
         public CssParserStateController(String baseUrl) {
-            //Hashed value
             if (baseUrl != null && baseUrl.Length > 0) {
                 this.uriResolver = new UriResolver(baseUrl);
             }
@@ -144,7 +144,7 @@ namespace iText.StyledXmlParser.Css.Parse.Syntax {
             commendInnerState = new CommentInnerState(this);
             unknownState = new UnknownState(this);
             ruleState = new RuleState(this);
-            propertiesState = new PropertiesState(this);
+            propertiesState = new BlockState(this);
             atRuleBlockState = new AtRuleBlockState(this);
             conditionalGroupAtRuleBlockState = new ConditionalGroupAtRuleBlockState(this);
             currentState = unknownState;
@@ -356,7 +356,7 @@ namespace iText.StyledXmlParser.Css.Parse.Syntax {
                             )) {
                             String url = token.GetValue().Trim();
                             url = url.JSubstring(4, url.Length - 1).Trim();
-                            if (CssUtils.IsBase64Data(url)) {
+                            if (CssTypesValidationUtils.IsBase64Data(url)) {
                                 strToAppend = token.GetValue().Trim();
                             }
                             else {
@@ -409,8 +409,8 @@ namespace iText.StyledXmlParser.Css.Parse.Syntax {
         private bool IsCurrentRuleSupported() {
             bool isSupported = nestedAtRules.IsEmpty() || SUPPORTED_RULES.Contains(nestedAtRules.Peek().GetRuleName());
             if (!isSupported) {
-                LogManager.GetLogger(GetType()).Error(MessageFormatUtil.Format(iText.StyledXmlParser.LogMessageConstant.RULE_IS_NOT_SUPPORTED
-                    , nestedAtRules.Peek().GetRuleName()));
+                ITextLogManager.GetLogger(GetType()).LogError(MessageFormatUtil.Format(iText.StyledXmlParser.Logs.StyledXmlParserLogMessageConstant
+                    .RULE_IS_NOT_SUPPORTED, nestedAtRules.Peek().GetRuleName()));
             }
             return isSupported;
         }

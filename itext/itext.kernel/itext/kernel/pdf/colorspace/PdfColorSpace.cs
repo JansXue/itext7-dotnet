@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,14 +42,15 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System.Collections.Generic;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.Kernel.Pdf;
 
 namespace iText.Kernel.Pdf.Colorspace {
     /// <summary>Represents the most common properties of color spaces.</summary>
     public abstract class PdfColorSpace : PdfObjectWrapper<PdfObject> {
-        public static readonly ICollection<PdfName> directColorSpaces = new HashSet<PdfName>(JavaUtil.ArraysAsList
-            (PdfName.DeviceGray, PdfName.DeviceRGB, PdfName.DeviceCMYK, PdfName.Pattern));
+        public static readonly ICollection<PdfName> DIRECT_COLOR_SPACES = JavaCollectionsUtil.UnmodifiableSet(new 
+            HashSet<PdfName>(JavaUtil.ArraysAsList(PdfName.DeviceGray, PdfName.DeviceRGB, PdfName.DeviceCMYK, PdfName
+            .Pattern)));
 
         protected internal PdfColorSpace(PdfObject pdfObject)
             : base(pdfObject) {
@@ -108,6 +109,7 @@ namespace iText.Kernel.Pdf.Colorspace {
                                                     }
                                                     else {
                                                         if (PdfName.DeviceN.Equals(csType)) {
+                                                            //TODO DEVSIX-4205 Fix colorspace creation
                                                             return array.Size() == 4 ? new PdfSpecialCs.DeviceN(array) : new PdfSpecialCs.NChannel(array);
                                                         }
                                                         else {

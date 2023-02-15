@@ -1,7 +1,7 @@
 /*
 *
 * This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 * Authors: Bruno Lowagie, Paulo Soares, et al.
 *
 * This program is free software; you can redistribute it and/or modify
@@ -44,7 +44,8 @@ Copyright (c) 1998-2019 iText Group NV
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Org.BouncyCastle.Crypto;
+using iText.Commons.Bouncycastle.Crypto;
+using iText.Signatures.Exceptions;
 
 namespace iText.Signatures {
     /// <summary>Class that contains a map with the different message digest algorithms.</summary>
@@ -63,6 +64,36 @@ namespace iText.Signatures {
 
         /// <summary>Algorithm available for signatures since PDF 1.7.</summary>
         public const String RIPEMD160 = "RIPEMD160";
+
+        /// <summary>
+        /// Algorithm available for signatures since PDF 2.0
+        /// extended by ISO/TS 32001.
+        /// </summary>
+        public const String SHA3_256 = "SHA3-256";
+
+        /// <summary>
+        /// Algorithm available for signatures since PDF 2.0
+        /// extended by ISO/TS 32001.
+        /// </summary>
+        public const String SHA3_512 = "SHA3-512";
+
+        /// <summary>
+        /// Algorithm available for signatures since PDF 2.0
+        /// extended by ISO/TS 32001.
+        /// </summary>
+        public const String SHA3_384 = "SHA3-384";
+
+        /// <summary>
+        /// Algorithm available for signatures since PDF 2.0
+        /// extended by ISO/TS 32001.
+        /// </summary>
+        /// <remarks>
+        /// Algorithm available for signatures since PDF 2.0
+        /// extended by ISO/TS 32001.
+        /// <para />
+        /// The output length is fixed at 512 bits (64 bytes).
+        /// </remarks>
+        public const String SHAKE256 = "SHAKE256";
 
         /// <summary>Maps the digest IDs with the human-readable name of the digest algorithm.</summary>
         private static readonly IDictionary<String, String> digestNames = new Dictionary<String, String>();
@@ -102,6 +133,11 @@ namespace iText.Signatures {
             digestNames.Put("1.3.36.3.3.1.2", "RIPEMD160");
             digestNames.Put("1.3.36.3.3.1.4", "RIPEMD256");
             digestNames.Put("1.2.643.2.2.9", "GOST3411");
+            digestNames.Put("2.16.840.1.101.3.4.2.7", "SHA3-224");
+            digestNames.Put("2.16.840.1.101.3.4.2.8", "SHA3-256");
+            digestNames.Put("2.16.840.1.101.3.4.2.9", "SHA3-384");
+            digestNames.Put("2.16.840.1.101.3.4.2.10", "SHA3-512");
+            digestNames.Put("2.16.840.1.101.3.4.2.12", "SHAKE256");
             fixNames.Put("SHA256", SHA256);
             fixNames.Put("SHA384", SHA384);
             fixNames.Put("SHA512", SHA512);
@@ -126,37 +162,33 @@ namespace iText.Signatures {
             allowedDigests.Put("RIPEMD256", "1.3.36.3.2.3");
             allowedDigests.Put("RIPEMD-256", "1.3.36.3.2.3");
             allowedDigests.Put("GOST3411", "1.2.643.2.2.9");
+            allowedDigests.Put("SHA3-224", "2.16.840.1.101.3.4.2.7");
+            allowedDigests.Put("SHA3-256", "2.16.840.1.101.3.4.2.8");
+            allowedDigests.Put("SHA3-384", "2.16.840.1.101.3.4.2.9");
+            allowedDigests.Put("SHA3-512", "2.16.840.1.101.3.4.2.10");
+            allowedDigests.Put("SHAKE256", "2.16.840.1.101.3.4.2.12");
         }
 
         /// <summary>Get a digest algorithm.</summary>
         /// <param name="digestOid">oid of the digest algorithm</param>
-        /// <param name="provider">the provider you want to use to create the hash</param>
         /// <returns>MessageDigest object</returns>
-        /// <exception cref="Org.BouncyCastle.Security.SecurityUtilityException"/>
-        /// <exception cref="Java.Security.NoSuchProviderException"/>
-        public static IDigest GetMessageDigestFromOid(String digestOid) {
+        public static IIDigest GetMessageDigestFromOid(String digestOid) {
             return GetMessageDigest(GetDigest(digestOid));
         }
 
         /// <summary>Creates a MessageDigest object that can be used to create a hash.</summary>
         /// <param name="hashAlgorithm">the algorithm you want to use to create a hash</param>
-        /// <param name="provider">the provider you want to use to create the hash</param>
         /// <returns>a MessageDigest object</returns>
-        /// <exception cref="Org.BouncyCastle.Security.SecurityUtilityException"/>
-        /// <exception cref="Java.Security.NoSuchProviderException"/>
-        public static IDigest GetMessageDigest(String hashAlgorithm) {
+        public static IIDigest GetMessageDigest(String hashAlgorithm) {
             return SignUtils.GetMessageDigest(hashAlgorithm);
         }
 
         /// <summary>Creates a hash using a specific digest algorithm and a provider.</summary>
         /// <param name="data">the message of which you want to create a hash</param>
         /// <param name="hashAlgorithm">the algorithm used to create the hash</param>
-        /// <param name="provider">the provider used to create the hash</param>
         /// <returns>the hash</returns>
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
-        /// <exception cref="System.IO.IOException"/>
         public static byte[] Digest(Stream data, String hashAlgorithm) {
-            IDigest messageDigest = GetMessageDigest(hashAlgorithm);
+            IIDigest messageDigest = GetMessageDigest(hashAlgorithm);
             return Digest(data, messageDigest);
         }
 
@@ -164,9 +196,7 @@ namespace iText.Signatures {
         /// <param name="data">data to be digested</param>
         /// <param name="messageDigest">algorithm to be used</param>
         /// <returns>digest of the data</returns>
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
-        /// <exception cref="System.IO.IOException"/>
-        public static byte[] Digest(Stream data, IDigest messageDigest) {
+        public static byte[] Digest(Stream data, IIDigest messageDigest) {
             byte[] buf = new byte[8192];
             int n;
             while ((n = data.Read(buf)) > 0) {
@@ -195,6 +225,9 @@ namespace iText.Signatures {
         /// <param name="name">The name of the digest algorithm.</param>
         /// <returns>An oid.</returns>
         public static String GetAllowedDigest(String name) {
+            if (name == null) {
+                throw new ArgumentException(SignExceptionMessageConstant.THE_NAME_OF_THE_DIGEST_ALGORITHM_IS_NULL);
+            }
             return allowedDigests.Get(name.ToUpperInvariant());
         }
     }

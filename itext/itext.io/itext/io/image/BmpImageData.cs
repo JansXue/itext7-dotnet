@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,25 +45,28 @@ using System;
 
 namespace iText.IO.Image {
     public class BmpImageData : RawImageData {
-        private int size;
+        private readonly bool noHeader;
 
-        private bool noHeader;
-
-        protected internal BmpImageData(Uri url, bool noHeader, int size)
+        /// <summary>
+        /// Creates instance of
+        /// <see cref="BmpImageData"/>
+        /// </summary>
+        /// <param name="url">url of the image</param>
+        /// <param name="noHeader">indicates that the source image does not have a header</param>
+        protected internal BmpImageData(Uri url, bool noHeader)
             : base(url, ImageType.BMP) {
             this.noHeader = noHeader;
-            this.size = size;
         }
 
-        protected internal BmpImageData(byte[] bytes, bool noHeader, int size)
+        /// <summary>
+        /// Creates instance of
+        /// <see cref="BmpImageData"/>
+        /// </summary>
+        /// <param name="bytes">contents of the image</param>
+        /// <param name="noHeader">indicates that the source image does not have a header</param>
+        protected internal BmpImageData(byte[] bytes, bool noHeader)
             : base(bytes, ImageType.BMP) {
             this.noHeader = noHeader;
-            this.size = size;
-        }
-
-        /// <returns>size of the image</returns>
-        public virtual int GetSize() {
-            return size;
         }
 
         /// <returns>True if the bitmap image does not contain a header</returns>

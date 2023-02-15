@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -59,26 +59,24 @@ namespace iText.Kernel.Utils {
         /// This class is used to merge a number of existing documents into one. By default, if source document
         /// contains tags and outlines, they will be also copied to the destination document.
         /// </remarks>
-        /// <param name="pdfDocument">the document into which source documents will be merged.</param>
+        /// <param name="pdfDocument">the document into which source documents will be merged</param>
         public PdfMerger(PdfDocument pdfDocument)
             : this(pdfDocument, true, true) {
         }
 
         /// <summary>This class is used to merge a number of existing documents into one.</summary>
-        /// <param name="pdfDocument">the document into which source documents will be merged.</param>
+        /// <param name="pdfDocument">the document into which source documents will be merged</param>
         /// <param name="mergeTags">
         /// if true, then tags from the source document are copied even if destination document is not set as
         /// tagged. Note, that if false, tag structure is still could be copied if the destination document
         /// is explicitly marked as tagged with
         /// <see cref="iText.Kernel.Pdf.PdfDocument.SetTagged()"/>
-        /// .
         /// </param>
         /// <param name="mergeOutlines">
         /// if true, then outlines from the source document are copied even if in destination document
         /// outlines are not initialized. Note, that if false, outlines are still could be copied if the
         /// destination document outlines were explicitly initialized with
         /// <see cref="iText.Kernel.Pdf.PdfDocument.InitializeOutlines()"/>
-        /// .
         /// </param>
         public PdfMerger(PdfDocument pdfDocument, bool mergeTags, bool mergeOutlines) {
             this.pdfDocument = pdfDocument;
@@ -90,14 +88,20 @@ namespace iText.Kernel.Utils {
         /// If set to <i>true</i> then passed to the <i>
         /// <c>PdfMerger#merge</c>
         /// </i> method source documents will be closed
+        /// immediately after merging specified pages into current document.
+        /// </summary>
+        /// <remarks>
+        /// If set to <i>true</i> then passed to the <i>
+        /// <c>PdfMerger#merge</c>
+        /// </i> method source documents will be closed
         /// immediately after merging specified pages into current document. If <i>false</i> - PdfDocuments are left open.
         /// Default value - <i>false</i>.
-        /// </summary>
-        /// <param name="closeSourceDocuments">should be true to close pdf documents in merge method.</param>
+        /// </remarks>
+        /// <param name="closeSourceDocuments">should be true to close pdf documents in merge method</param>
         /// <returns>
         /// this
         /// <c>PdfMerger</c>
-        /// instance.
+        /// instance
         /// </returns>
         public virtual iText.Kernel.Utils.PdfMerger SetCloseSourceDocuments(bool closeSourceDocuments) {
             this.closeSrcDocuments = closeSourceDocuments;
@@ -107,21 +111,25 @@ namespace iText.Kernel.Utils {
         /// <summary>This method merges pages from the source document to the current one.</summary>
         /// <remarks>
         /// This method merges pages from the source document to the current one.
-        /// <br /><br />
+        /// <para />
         /// If <i>closeSourceDocuments</i> flag is set to <i>true</i> (see
         /// <see cref="SetCloseSourceDocuments(bool)"/>
         /// ),
         /// passed
         /// <c>PdfDocument</c>
         /// will be closed after pages are merged.
+        /// <para />
+        /// See also
+        /// <see cref="iText.Kernel.Pdf.PdfDocument.CopyPagesTo(System.Collections.Generic.IList{E}, iText.Kernel.Pdf.PdfDocument)
+        ///     "/>.
         /// </remarks>
-        /// <param name="from">- document, from which pages will be copied.</param>
-        /// <param name="fromPage">- start page in the range of pages to be copied.</param>
+        /// <param name="from">- document, from which pages will be copied</param>
+        /// <param name="fromPage">- start page in the range of pages to be copied</param>
         /// <param name="toPage">- end (inclusive) page in the range to be copied</param>
         /// <returns>
         /// this
         /// <c>PdfMerger</c>
-        /// instance.
+        /// instance
         /// </returns>
         public virtual iText.Kernel.Utils.PdfMerger Merge(PdfDocument from, int fromPage, int toPage) {
             IList<int> pages = new List<int>(toPage - fromPage);
@@ -134,20 +142,24 @@ namespace iText.Kernel.Utils {
         /// <summary>This method merges pages from the source document to the current one.</summary>
         /// <remarks>
         /// This method merges pages from the source document to the current one.
-        /// <br /><br />
+        /// <para />
         /// If <i>closeSourceDocuments</i> flag is set to <i>true</i> (see
         /// <see cref="SetCloseSourceDocuments(bool)"/>
         /// ),
         /// passed
         /// <c>PdfDocument</c>
         /// will be closed after pages are merged.
+        /// <para />
+        /// See also
+        /// <see cref="iText.Kernel.Pdf.PdfDocument.CopyPagesTo(System.Collections.Generic.IList{E}, iText.Kernel.Pdf.PdfDocument)
+        ///     "/>.
         /// </remarks>
-        /// <param name="from">- document, from which pages will be copied.</param>
-        /// <param name="pages">- List of numbers of pages which will be copied.</param>
+        /// <param name="from">- document, from which pages will be copied</param>
+        /// <param name="pages">- List of numbers of pages which will be copied</param>
         /// <returns>
         /// this
         /// <c>PdfMerger</c>
-        /// instance.
+        /// instance
         /// </returns>
         public virtual iText.Kernel.Utils.PdfMerger Merge(PdfDocument from, IList<int> pages) {
             if (mergeTags && from.IsTagged()) {
@@ -165,11 +177,14 @@ namespace iText.Kernel.Utils {
 
         /// <summary>Closes the current document.</summary>
         /// <remarks>
-        /// Closes the current document. It is a complete equivalent of calling
+        /// Closes the current document.
+        /// <para />
+        /// It is a complete equivalent of calling
         /// <c>PdfDocument#close</c>
         /// on the PdfDocument
-        /// passed to the constructor of this PdfMerger instance. This means that it is enough to call <i>close</i> either on
-        /// passed PdfDocument or on this PdfMerger instance, but there is no need to call them both.
+        /// passed to the constructor of this PdfMerger instance. This means that it is enough to call
+        /// <i>close</i> either on passed PdfDocument or on this PdfMerger instance, but there is no need
+        /// to call them both.
         /// </remarks>
         public virtual void Close() {
             pdfDocument.Close();

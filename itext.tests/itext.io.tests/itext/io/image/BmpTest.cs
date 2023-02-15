@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,13 +41,16 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
+using System.IO;
+using iText.IO.Util;
+using iText.Test;
 
 namespace iText.IO.Image {
-    public class BmpTest {
+    [NUnit.Framework.Category("UnitTest")]
+    public class BmpTest : ExtendedITextTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/io/image/";
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void OpenBmp1() {
             ImageData img = ImageDataFactory.Create(sourceFolder + "WP_20140410_001.bmp");
@@ -56,22 +59,27 @@ namespace iText.IO.Image {
             NUnit.Framework.Assert.AreEqual(8, img.GetBpc());
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void OpenBmp2() {
-            ImageData img = ImageDataFactory.Create(sourceFolder + "WP_20140410_001_gray.bmp");
+            // Test this a more specific entry point
+            ImageData img = ImageDataFactory.CreateBmp(UrlUtil.ToURL(sourceFolder + "WP_20140410_001_gray.bmp"), false
+                );
             NUnit.Framework.Assert.AreEqual(2592, img.GetWidth(), 0);
             NUnit.Framework.Assert.AreEqual(1456, img.GetHeight(), 0);
             NUnit.Framework.Assert.AreEqual(8, img.GetBpc());
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void OpenBmp3() {
-            ImageData img = ImageDataFactory.Create(sourceFolder + "WP_20140410_001_monochrome.bmp");
-            NUnit.Framework.Assert.AreEqual(2592, img.GetWidth(), 0);
-            NUnit.Framework.Assert.AreEqual(1456, img.GetHeight(), 0);
-            NUnit.Framework.Assert.AreEqual(1, img.GetBpc());
+            String imageFileName = sourceFolder + "WP_20140410_001_monochrome.bmp";
+            using (FileStream fis = new FileStream(imageFileName, FileMode.Open, FileAccess.Read)) {
+                byte[] imageBytes = StreamUtil.InputStreamToArray(fis);
+                // Test this a more specific entry point
+                ImageData img = ImageDataFactory.CreateBmp(imageBytes, false);
+                NUnit.Framework.Assert.AreEqual(2592, img.GetWidth(), 0);
+                NUnit.Framework.Assert.AreEqual(1456, img.GetHeight(), 0);
+                NUnit.Framework.Assert.AreEqual(1, img.GetBpc());
+            }
         }
     }
 }

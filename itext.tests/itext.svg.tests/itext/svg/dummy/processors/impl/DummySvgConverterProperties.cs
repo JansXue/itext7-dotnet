@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -56,13 +56,13 @@ namespace iText.Svg.Dummy.Processors.Impl {
 
         internal MediaDeviceDescription mediaDeviceDescription;
 
-        internal ResourceResolver resourceResolver;
+        internal IResourceRetriever resourceRetriever;
 
         public DummySvgConverterProperties() {
             rendererFactory = new DummySvgNodeFactory();
             mediaDeviceDescription = new MediaDeviceDescription("");
             baseUri = "";
-            resourceResolver = new ResourceResolver("");
+            resourceRetriever = new DefaultResourceRetriever();
         }
 
         public virtual ISvgNodeRendererFactory GetRendererFactory() {
@@ -87,6 +87,10 @@ namespace iText.Svg.Dummy.Processors.Impl {
 
         public virtual MediaDeviceDescription GetMediaDeviceDescription() {
             return mediaDeviceDescription;
+        }
+
+        public virtual IResourceRetriever GetResourceRetriever() {
+            return resourceRetriever;
         }
 
         public virtual iText.Svg.Dummy.Processors.Impl.DummySvgConverterProperties SetMediaDeviceDescription(MediaDeviceDescription

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,29 +43,32 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
+using iText.Barcodes.Exceptions;
 
 namespace iText.Barcodes.Qrcode {
     /// <author>satorux@google.com (Satoru Takabayashi) - creator</author>
     /// <author>dswitkin@google.com (Daniel Switkin) - ported from C++</author>
     internal sealed class Encoder {
-        private static readonly int[] ALPHANUMERIC_TABLE = new int[] { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 
-            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 36, -1, -1, -1, 37
-            , 38, -1, -1, -1, -1, 39, 40, -1, 41, 42, 43, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 44, -1, -1, -1, -1, -1, -1
-            , 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 
-            35, -1, -1, -1, -1, -1 };
+        // The original table is defined in the table 5 of JISX0510:2004 (p.19).
+        private static readonly int[] ALPHANUMERIC_TABLE = new int[] { 
+                // 0x00-0x0f
+                -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 
+                // 0x10-0x1f
+                -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 
+                // 0x20-0x2f
+                36, -1, -1, -1, 37, 38, -1, -1, -1, -1, 39, 40, -1, 41, 42, 43, 
+                // 0x30-0x3f
+                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 44, -1, -1, -1, -1, -1, 
+                // 0x40-0x4f
+                -1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 
+                // 0x50-0x5f
+                25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, -1, -1, -1, -1, -1 };
 
         internal const String DEFAULT_BYTE_MODE_ENCODING = "ISO-8859-1";
 
         private Encoder() {
         }
 
-        // The original table is defined in the table 5 of JISX0510:2004 (p.19).
-        // 0x00-0x0f
-        // 0x10-0x1f
-        // 0x20-0x2f
-        // 0x30-0x3f
-        // 0x40-0x4f
-        // 0x50-0x5f
         // The mask penalty calculation is complicated.  See Table 21 of JISX0510:2004 (p.45) for details.
         // Basically it applies four rules and summate all penalties.
         private static int CalculateMaskPenalty(ByteMatrix matrix) {
@@ -81,19 +84,17 @@ namespace iText.Barcodes.Qrcode {
         /// <remarks>
         /// Encode "bytes" with the error correction level "ecLevel". The encoding mode will be chosen
         /// internally by chooseMode(). On success, store the result in "qrCode".
-        /// <p>
+        /// <para />
         /// We recommend you to use QRCode.EC_LEVEL_L (the lowest level) for
         /// "getECLevel" since our primary use is to show QR code on desktop screens. We don't need very
         /// strong error correction for this purpose.
-        /// <p>
+        /// <para />
         /// Note that there is no way to encode bytes in MODE_KANJI. We might want to add EncodeWithMode()
         /// with which clients can specify the encoding mode. For now, we don't need the functionality.
         /// </remarks>
         /// <param name="content">String to encode</param>
         /// <param name="ecLevel">Error-correction level to use</param>
         /// <param name="qrCode">QR code to store the result in</param>
-        /// <exception cref="WriterException"/>
-        /// <exception cref="iText.Barcodes.Qrcode.WriterException"/>
         public static void Encode(String content, ErrorCorrectionLevel ecLevel, QRCode qrCode) {
             Encode(content, ecLevel, null, qrCode);
         }
@@ -102,11 +103,11 @@ namespace iText.Barcodes.Qrcode {
         /// <remarks>
         /// Encode "bytes" with the error correction level "ecLevel". The encoding mode will be chosen
         /// internally by chooseMode(). On success, store the result in "qrCode".
-        /// <p>
+        /// <para />
         /// We recommend you to use QRCode.EC_LEVEL_L (the lowest level) for
         /// "getECLevel" since our primary use is to show QR code on desktop screens. We don't need very
         /// strong error correction for this purpose.
-        /// <p>
+        /// <para />
         /// Note that there is no way to encode bytes in MODE_KANJI. We might want to add EncodeWithMode()
         /// with which clients can specify the encoding mode. For now, we don't need the functionality.
         /// </remarks>
@@ -114,8 +115,6 @@ namespace iText.Barcodes.Qrcode {
         /// <param name="ecLevel">Error-correction level to use</param>
         /// <param name="hints">Optional Map containing  encoding and suggested minimum version to use</param>
         /// <param name="qrCode">QR code to store the result in</param>
-        /// <exception cref="WriterException"/>
-        /// <exception cref="iText.Barcodes.Qrcode.WriterException"/>
         public static void Encode(String content, ErrorCorrectionLevel ecLevel, IDictionary<EncodeHintType, Object
             > hints, QRCode qrCode) {
             String encoding = hints == null ? null : (String)hints.Get(EncodeHintType.CHARACTER_SET);
@@ -251,11 +250,10 @@ namespace iText.Barcodes.Qrcode {
             return true;
         }
 
-        /// <exception cref="iText.Barcodes.Qrcode.WriterException"/>
         private static int ChooseMaskPattern(BitVector bits, ErrorCorrectionLevel ecLevel, int version, ByteMatrix
              matrix) {
-            int minPenalty = int.MaxValue;
             // Lower penalty is better.
+            int minPenalty = int.MaxValue;
             int bestMaskPattern = -1;
             // We try all mask patterns to choose the best one.
             for (int maskPattern = 0; maskPattern < QRCode.NUM_MASK_PATTERNS; maskPattern++) {
@@ -274,7 +272,6 @@ namespace iText.Barcodes.Qrcode {
         /// Initialize "qrCode" according to "numInputBytes", "ecLevel", and "mode". On success,
         /// modify "qrCode".
         /// </remarks>
-        /// <exception cref="iText.Barcodes.Qrcode.WriterException"/>
         private static void InitQRCode(int numInputBytes, ErrorCorrectionLevel ecLevel, int desiredMinVersion, Mode
              mode, QRCode qrCode) {
             qrCode.SetECLevel(ecLevel);
@@ -311,7 +308,6 @@ namespace iText.Barcodes.Qrcode {
         }
 
         /// <summary>Terminate bits as described in 8.4.8 and 8.4.9 of JISX0510:2004 (p.24).</summary>
-        /// <exception cref="iText.Barcodes.Qrcode.WriterException"/>
         internal static void TerminateBits(int numDataBytes, BitVector bits) {
             int capacity = numDataBytes << 3;
             if (bits.Size() > capacity) {
@@ -354,7 +350,6 @@ namespace iText.Barcodes.Qrcode {
         /// the result in "numDataBytesInBlock", and "numECBytesInBlock". See table 12 in 8.5.1 of
         /// JISX0510:2004 (p.30)
         /// </remarks>
-        /// <exception cref="iText.Barcodes.Qrcode.WriterException"/>
         internal static void GetNumDataBytesAndNumECBytesForBlockID(int numTotalBytes, int numDataBytes, int numRSBlocks
             , int blockID, int[] numDataBytesInBlock, int[] numECBytesInBlock) {
             if (blockID >= numRSBlocks) {
@@ -405,7 +400,6 @@ namespace iText.Barcodes.Qrcode {
         /// Interleave "bits" with corresponding error correction bytes. On success, store the result in
         /// "result". The interleave rule is complicated. See 8.6 of JISX0510:2004 (p.37) for details.
         /// </remarks>
-        /// <exception cref="iText.Barcodes.Qrcode.WriterException"/>
         internal static void InterleaveWithECBytes(BitVector bits, int numTotalBytes, int numDataBytes, int numRSBlocks
             , BitVector result) {
             // "bits" must have "getNumDataBytes" bytes of data.
@@ -453,8 +447,8 @@ namespace iText.Barcodes.Qrcode {
                     }
                 }
             }
+            // Should be same.
             if (numTotalBytes != result.SizeInBytes()) {
-                // Should be same.
                 throw new WriterException("Interleaving error: " + numTotalBytes + " and " + result.SizeInBytes() + " differ."
                     );
             }
@@ -482,7 +476,6 @@ namespace iText.Barcodes.Qrcode {
 
         /// <summary>Append length info.</summary>
         /// <remarks>Append length info. On success, store the result in "bits".</remarks>
-        /// <exception cref="iText.Barcodes.Qrcode.WriterException"/>
         internal static void AppendLengthInfo(int numLetters, int version, Mode mode, BitVector bits) {
             int numBits = mode.GetCharacterCountBits(Version.GetVersionForNumber(version));
             if (numLetters > ((1 << numBits) - 1)) {
@@ -493,7 +486,6 @@ namespace iText.Barcodes.Qrcode {
 
         /// <summary>Append "bytes" in "mode" mode (encoding) into "bits".</summary>
         /// <remarks>Append "bytes" in "mode" mode (encoding) into "bits". On success, store the result in "bits".</remarks>
-        /// <exception cref="iText.Barcodes.Qrcode.WriterException"/>
         internal static void AppendBytes(String content, Mode mode, BitVector bits, String encoding) {
             if (mode.Equals(Mode.NUMERIC)) {
                 AppendNumericBytes(content, bits);
@@ -546,7 +538,6 @@ namespace iText.Barcodes.Qrcode {
             }
         }
 
-        /// <exception cref="iText.Barcodes.Qrcode.WriterException"/>
         internal static void AppendAlphanumericBytes(String content, BitVector bits) {
             int length = content.Length;
             int i = 0;
@@ -572,7 +563,6 @@ namespace iText.Barcodes.Qrcode {
             }
         }
 
-        /// <exception cref="iText.Barcodes.Qrcode.WriterException"/>
         internal static void Append8BitBytes(String content, BitVector bits, String encoding) {
             byte[] bytes;
             try {
@@ -586,7 +576,6 @@ namespace iText.Barcodes.Qrcode {
             }
         }
 
-        /// <exception cref="iText.Barcodes.Qrcode.WriterException"/>
         internal static void AppendKanjiBytes(String content, BitVector bits) {
             byte[] bytes;
             try {

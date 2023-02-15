@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,14 +41,16 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
+using iText.Commons.Utils;
 using iText.IO.Util;
 using iText.Test;
 using iText.Test.Attributes;
 
 namespace iText.IO.Source {
+    [NUnit.Framework.Category("UnitTest")]
     public class WriteNumbersTest : ExtendedITextTest {
         public static double Round(double value, int places) {
-            return Math.Round(value * Math.Pow(10, places)) / Math.Pow(10, places);
+            return MathematicUtil.Round(value * Math.Pow(10, places)) / Math.Pow(10, places);
         }
 
         [NUnit.Framework.Test]
@@ -62,10 +64,10 @@ namespace iText.IO.Source {
                     continue;
                 }
                 byte[] actuals = ByteUtils.GetIsoBytes(d);
-                byte[] expecteds = DecimalFormatUtil.FormatNumber(d, "0.##").GetBytes(iText.IO.Util.EncodingUtil.ISO_8859_1
+                byte[] expecteds = DecimalFormatUtil.FormatNumber(d, "0.##").GetBytes(iText.Commons.Utils.EncodingUtil.ISO_8859_1
                     );
-                String message = "Expects: " + iText.IO.Util.JavaUtil.GetStringForBytes(expecteds) + ", actual: " + iText.IO.Util.JavaUtil.GetStringForBytes
-                    (actuals) + " \\\\ " + d;
+                String message = "Expects: " + iText.Commons.Utils.JavaUtil.GetStringForBytes(expecteds) + ", actual: " + 
+                    iText.Commons.Utils.JavaUtil.GetStringForBytes(actuals) + " \\\\ " + d;
                 NUnit.Framework.Assert.AreEqual(expecteds, actuals, message);
             }
         }
@@ -80,10 +82,10 @@ namespace iText.IO.Source {
                     continue;
                 }
                 byte[] actuals = ByteUtils.GetIsoBytes(d);
-                byte[] expecteds = DecimalFormatUtil.FormatNumber(d, "0.#####").GetBytes(iText.IO.Util.EncodingUtil.ISO_8859_1
+                byte[] expecteds = DecimalFormatUtil.FormatNumber(d, "0.#####").GetBytes(iText.Commons.Utils.EncodingUtil.ISO_8859_1
                     );
-                String message = "Expects: " + iText.IO.Util.JavaUtil.GetStringForBytes(expecteds) + ", actual: " + iText.IO.Util.JavaUtil.GetStringForBytes
-                    (actuals) + " \\\\ " + d;
+                String message = "Expects: " + iText.Commons.Utils.JavaUtil.GetStringForBytes(expecteds) + ", actual: " + 
+                    iText.Commons.Utils.JavaUtil.GetStringForBytes(actuals) + " \\\\ " + d;
                 NUnit.Framework.Assert.AreEqual(expecteds, actuals, message);
             }
         }
@@ -98,34 +100,35 @@ namespace iText.IO.Source {
                 }
                 d = Round(d, 0);
                 byte[] actuals = ByteUtils.GetIsoBytes(d);
-                byte[] expecteds = DecimalFormatUtil.FormatNumber(d, "0").GetBytes(iText.IO.Util.EncodingUtil.ISO_8859_1);
-                String message = "Expects: " + iText.IO.Util.JavaUtil.GetStringForBytes(expecteds) + ", actual: " + iText.IO.Util.JavaUtil.GetStringForBytes
-                    (actuals) + " \\\\ " + d;
+                byte[] expecteds = DecimalFormatUtil.FormatNumber(d, "0").GetBytes(iText.Commons.Utils.EncodingUtil.ISO_8859_1
+                    );
+                String message = "Expects: " + iText.Commons.Utils.JavaUtil.GetStringForBytes(expecteds) + ", actual: " + 
+                    iText.Commons.Utils.JavaUtil.GetStringForBytes(actuals) + " \\\\ " + d;
                 NUnit.Framework.Assert.AreEqual(expecteds, actuals, message);
             }
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.ATTEMPT_PROCESS_NAN)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.ATTEMPT_PROCESS_NAN)]
         public virtual void WriteNanTest() {
             double d = double.NaN;
             byte[] actuals = ByteUtils.GetIsoBytes(d);
-            byte[] expecteds = DecimalFormatUtil.FormatNumber(0, "0.##").GetBytes(iText.IO.Util.EncodingUtil.ISO_8859_1
+            byte[] expecteds = DecimalFormatUtil.FormatNumber(0, "0.##").GetBytes(iText.Commons.Utils.EncodingUtil.ISO_8859_1
                 );
-            String message = "Expects: " + iText.IO.Util.JavaUtil.GetStringForBytes(expecteds) + ", actual: " + iText.IO.Util.JavaUtil.GetStringForBytes
-                (actuals) + " \\\\ " + d;
+            String message = "Expects: " + iText.Commons.Utils.JavaUtil.GetStringForBytes(expecteds) + ", actual: " + 
+                iText.Commons.Utils.JavaUtil.GetStringForBytes(actuals) + " \\\\ " + d;
             NUnit.Framework.Assert.AreEqual(expecteds, actuals, message);
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.ATTEMPT_PROCESS_NAN)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.ATTEMPT_PROCESS_NAN)]
         public virtual void WriteNanHighPrecisionTest() {
             double d = double.NaN;
             byte[] actuals = ByteUtils.GetIsoBytes(d, null, true);
-            byte[] expecteds = DecimalFormatUtil.FormatNumber(0, "0.##").GetBytes(iText.IO.Util.EncodingUtil.ISO_8859_1
+            byte[] expecteds = DecimalFormatUtil.FormatNumber(0, "0.##").GetBytes(iText.Commons.Utils.EncodingUtil.ISO_8859_1
                 );
-            String message = "Expects: " + iText.IO.Util.JavaUtil.GetStringForBytes(expecteds) + ", actual: " + iText.IO.Util.JavaUtil.GetStringForBytes
-                (actuals) + " \\\\ " + d;
+            String message = "Expects: " + iText.Commons.Utils.JavaUtil.GetStringForBytes(expecteds) + ", actual: " + 
+                iText.Commons.Utils.JavaUtil.GetStringForBytes(actuals) + " \\\\ " + d;
             NUnit.Framework.Assert.AreEqual(expecteds, actuals, message);
         }
     }

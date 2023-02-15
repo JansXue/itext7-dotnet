@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -51,7 +51,8 @@ using iText.Kernel.Utils;
 using iText.Test;
 
 namespace iText.Forms {
-    public class Utf8FormsTest {
+    [NUnit.Framework.Category("UnitTest")]
+    public class Utf8FormsTest : ExtendedITextTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/forms/Utf8FormsTest/";
 
@@ -63,17 +64,15 @@ namespace iText.Forms {
 
         [NUnit.Framework.SetUp]
         public virtual void Before() {
-            ITextTest.CreateDestinationFolder(destinationFolder);
+            CreateDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ReadUtf8FieldName() {
             String filename = sourceFolder + "utf-8-field-name.pdf";
             PdfDocument pdfDoc = new PdfDocument(new PdfReader(filename));
             PdfAcroForm form = PdfAcroForm.GetAcroForm(pdfDoc, true);
-            IDictionary<String, PdfFormField> fields = form.GetFormFields();
+            IDictionary<String, PdfFormField> fields = form.GetAllFormFields();
             pdfDoc.Close();
             foreach (String fldName in fields.Keys) {
                 //  لا
@@ -82,14 +81,12 @@ namespace iText.Forms {
             pdfDoc.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ReadUtf8TextAnnot() {
             String filename = sourceFolder + "utf-8-text-annot.pdf";
             PdfDocument pdfDoc = new PdfDocument(new PdfReader(filename));
             PdfAcroForm form = PdfAcroForm.GetAcroForm(pdfDoc, true);
-            IDictionary<String, PdfFormField> fields = form.GetFormFields();
+            IDictionary<String, PdfFormField> fields = form.GetAllFormFields();
             pdfDoc.Close();
             foreach (String fldName in fields.Keys) {
                 //  福昕 福昕UTF8
@@ -97,13 +94,14 @@ namespace iText.Forms {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void WriteUtf8FieldNameAndValue() {
+            //TODO DEVSIX-2798
             PdfDocument pdfDoc = new PdfDocument(new PdfWriter(destinationFolder + "writeUtf8FieldNameAndValue.pdf"));
             PdfAcroForm form = PdfAcroForm.GetAcroForm(pdfDoc, true);
-            PdfTextFormField field = PdfTextFormField.CreateText(pdfDoc, new Rectangle(99, 753, 425, 15), "", "");
+            PdfTextFormField field = new TextFormFieldBuilder(pdfDoc, "").SetWidgetRectangle(new Rectangle(99, 753, 425
+                , 15)).CreateText();
+            field.SetValue("");
             field.SetFont(PdfFontFactory.CreateFont(FONT, PdfEncodings.IDENTITY_H));
             //  لا
             field.Put(PdfName.T, new PdfString("\u0644\u0627", PdfEncodings.UTF8));

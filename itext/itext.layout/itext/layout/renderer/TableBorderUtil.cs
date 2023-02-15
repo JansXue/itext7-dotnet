@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -59,7 +59,6 @@ namespace iText.Layout.Renderer {
                     cellModelSideBorder = cellModel.GetDefaultProperty<Border>(Property.BORDER);
                 }
             }
-            // TODO Maybe we need to foresee the possibility of default side border property
             return cellModelSideBorder;
         }
 

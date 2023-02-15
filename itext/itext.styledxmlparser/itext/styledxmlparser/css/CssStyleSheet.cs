@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,8 +43,9 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Common.Logging;
-using iText.IO.Util;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
 using iText.StyledXmlParser;
 using iText.StyledXmlParser.Css.Media;
 using iText.StyledXmlParser.Css.Resolve.Shorthand;
@@ -75,7 +76,6 @@ namespace iText.StyledXmlParser.Css {
         /// <summary>Append another CSS style sheet to this one.</summary>
         /// <param name="anotherCssStyleSheet">the other CSS style sheet</param>
         public virtual void AppendCssStyleSheet(iText.StyledXmlParser.Css.CssStyleSheet anotherCssStyleSheet) {
-            // TODO move this functionality to the parser (parse into)
             statements.AddAll(anotherCssStyleSheet.statements);
         }
 
@@ -148,9 +148,7 @@ namespace iText.StyledXmlParser.Css {
                 else {
                     IList<CssDeclaration> resolvedShorthandProps = shorthandResolver.ResolveShorthand(declaration.GetExpression
                         ());
-                    foreach (CssDeclaration resolvedProp in resolvedShorthandProps) {
-                        PutDeclarationInMapIfValid(map, resolvedProp);
-                    }
+                    PopulateDeclarationsMap(resolvedShorthandProps, map);
                 }
             }
         }
@@ -177,8 +175,8 @@ namespace iText.StyledXmlParser.Css {
                 stylesMap.Put(cssDeclaration.GetProperty(), cssDeclaration);
             }
             else {
-                ILog logger = LogManager.GetLogger(typeof(ICssResolver));
-                logger.Warn(MessageFormatUtil.Format(iText.StyledXmlParser.LogMessageConstant.INVALID_CSS_PROPERTY_DECLARATION
+                ILogger logger = ITextLogManager.GetLogger(typeof(ICssResolver));
+                logger.LogWarning(MessageFormatUtil.Format(iText.StyledXmlParser.Logs.StyledXmlParserLogMessageConstant.INVALID_CSS_PROPERTY_DECLARATION
                     , cssDeclaration));
             }
         }

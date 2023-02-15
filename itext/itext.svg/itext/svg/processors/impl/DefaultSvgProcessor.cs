@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,8 +44,8 @@ using System;
 using System.Collections.Generic;
 using iText.StyledXmlParser.Css;
 using iText.StyledXmlParser.Node;
+using iText.StyledXmlParser.Node.Impl.Jsoup.Node;
 using iText.Svg;
-using iText.Svg.Css;
 using iText.Svg.Css.Impl;
 using iText.Svg.Exceptions;
 using iText.Svg.Processors;
@@ -58,15 +58,18 @@ using iText.Svg.Utils;
 namespace iText.Svg.Processors.Impl {
     /// <summary>
     /// Default implementation of
-    /// <see cref="iText.Svg.Processors.ISvgProcessor"/>
-    /// .
+    /// <see cref="iText.Svg.Processors.ISvgProcessor"/>.
+    /// </summary>
+    /// <remarks>
+    /// Default implementation of
+    /// <see cref="iText.Svg.Processors.ISvgProcessor"/>.
     /// This implementation traverses the
     /// <see cref="iText.StyledXmlParser.Node.INode"/>
     /// tree depth-first,
     /// using a stack to recreate a tree of
     /// <see cref="iText.Svg.Renderers.ISvgNodeRenderer"/>
     /// with the same structure.
-    /// </summary>
+    /// </remarks>
     public class DefaultSvgProcessor : ISvgProcessor {
         private ProcessorState processorState;
 
@@ -76,18 +79,15 @@ namespace iText.Svg.Processors.Impl {
 
         private IDictionary<String, ISvgNodeRenderer> namedObjects;
 
-        private SvgCssContext cssContext;
-
         private SvgProcessorContext context;
 
         /// <summary>Instantiates a DefaultSvgProcessor object.</summary>
         public DefaultSvgProcessor() {
         }
 
-        /// <exception cref="iText.Svg.Exceptions.SvgProcessingException"/>
         public virtual ISvgProcessorResult Process(INode root, ISvgConverterProperties converterProps) {
             if (root == null) {
-                throw new SvgProcessingException(SvgLogMessageConstant.INODEROOTISNULL);
+                throw new SvgProcessingException(SvgExceptionMessageConstant.I_NODE_ROOT_IS_NULL);
             }
             if (converterProps == null) {
                 converterProps = new SvgConverterProperties();
@@ -100,17 +100,11 @@ namespace iText.Svg.Processors.Impl {
                 //Iterate over children
                 ExecuteDepthFirstTraversal(svgRoot);
                 ISvgNodeRenderer rootSvgRenderer = CreateResultAndClean();
-                return new SvgProcessorResult(namedObjects, rootSvgRenderer, context.GetFontProvider(), context.GetTempFonts
-                    ());
+                return new SvgProcessorResult(namedObjects, rootSvgRenderer, context);
             }
             else {
-                throw new SvgProcessingException(SvgLogMessageConstant.NOROOT);
+                throw new SvgProcessingException(SvgExceptionMessageConstant.NO_ROOT);
             }
-        }
-
-        /// <exception cref="iText.Svg.Exceptions.SvgProcessingException"/>
-        public virtual ISvgProcessorResult Process(INode root) {
-            return Process(root, null);
         }
 
         /// <summary>Load in configuration, set initial processorState and create/fill-in context of the processor</summary>
@@ -120,12 +114,14 @@ namespace iText.Svg.Processors.Impl {
             if (converterProps.GetRendererFactory() != null) {
                 rendererFactory = converterProps.GetRendererFactory();
             }
+            else {
+                rendererFactory = new DefaultSvgNodeRendererFactory();
+            }
             context = new SvgProcessorContext(converterProps);
             cssResolver = new SvgStyleResolver(root, context);
             new SvgFontProcessor(context).AddFontFaceFonts(cssResolver);
-            //TODO RND-1042
+            //TODO DEVSIX-2264
             namedObjects = new Dictionary<String, ISvgNodeRenderer>();
-            cssContext = new SvgCssContext();
         }
 
         /// <summary>Start the depth-first traversal of the INode tree, pushing the results on the stack</summary>
@@ -136,7 +132,8 @@ namespace iText.Svg.Processors.Impl {
                 IElementNode rootElementNode = (IElementNode)startingNode;
                 ISvgNodeRenderer startingRenderer = rendererFactory.CreateSvgNodeRendererForTag(rootElementNode, null);
                 if (startingRenderer != null) {
-                    IDictionary<String, String> attributesAndStyles = cssResolver.ResolveStyles(startingNode, cssContext);
+                    IDictionary<String, String> attributesAndStyles = cssResolver.ResolveStyles(startingNode, context.GetCssContext
+                        ());
                     rootElementNode.SetStyles(attributesAndStyles);
                     startingRenderer.SetAttributesAndStyles(attributesAndStyles);
                     processorState.Push(startingRenderer);
@@ -158,9 +155,9 @@ namespace iText.Svg.Processors.Impl {
         /// <remarks>
         /// Recursive visit of the object tree, depth-first, processing the visited node and calling visit on its children.
         /// Visit responsibilities for element nodes:
-        /// - Assign styles(CSS & attributes) to element
+        /// - Assign styles(CSS and attributes) to element
         /// - Create Renderer based on element
-        /// - push & pop renderer to stack
+        /// - push and pop renderer to stack
         /// Visit responsibilities for text nodes
         /// - add text to parent object
         /// </remarks>
@@ -169,26 +166,36 @@ namespace iText.Svg.Processors.Impl {
             if (node is IElementNode) {
                 IElementNode element = (IElementNode)node;
                 if (!rendererFactory.IsTagIgnored(element)) {
-                    ISvgNodeRenderer renderer = CreateRenderer(element, processorState.Top());
+                    ISvgNodeRenderer parentRenderer = processorState.Top();
+                    ISvgNodeRenderer renderer = rendererFactory.CreateSvgNodeRendererForTag(element, parentRenderer);
                     if (renderer != null) {
-                        IDictionary<String, String> styles = cssResolver.ResolveStyles(node, cssContext);
+                        IDictionary<String, String> styles = cssResolver.ResolveStyles(node, context.GetCssContext());
+                        // For inheritance
                         element.SetStyles(styles);
-                        //For inheritance
+                        // For drawing operations
                         renderer.SetAttributesAndStyles(styles);
-                        //For drawing operations
                         String attribute = renderer.GetAttribute(SvgConstants.Attributes.ID);
                         if (attribute != null) {
                             namedObjects.Put(attribute, renderer);
                         }
-                        // don't add the NoDrawOperationSvgNodeRenderer or its subtree to the ISvgNodeRenderer tree
-                        if (!(renderer is NoDrawOperationSvgNodeRenderer)) {
-                            if (processorState.Top() is IBranchSvgNodeRenderer) {
-                                ((IBranchSvgNodeRenderer)processorState.Top()).AddChild(renderer);
+                        if (renderer is StopSvgNodeRenderer) {
+                            if (parentRenderer is LinearGradientSvgNodeRenderer) {
+                                // It is necessary to add StopSvgNodeRenderer only as a child of LinearGradientSvgNodeRenderer,
+                                // because StopSvgNodeRenderer performs an auxiliary function and should not be drawn at all
+                                ((LinearGradientSvgNodeRenderer)parentRenderer).AddChild(renderer);
                             }
-                            else {
-                                if (processorState.Top() is TextSvgBranchRenderer && renderer is ISvgTextNodeRenderer) {
-                                    //Text branch node renderers only accept ISvgTextNodeRenderers
-                                    ((TextSvgBranchRenderer)processorState.Top()).AddChild((ISvgTextNodeRenderer)renderer);
+                        }
+                        else {
+                            // DefsSvgNodeRenderer should not have parental relationship with any renderer, it only serves as a storage
+                            if (!(renderer is INoDrawSvgNodeRenderer) && !(parentRenderer is DefsSvgNodeRenderer)) {
+                                if (parentRenderer is IBranchSvgNodeRenderer) {
+                                    ((IBranchSvgNodeRenderer)parentRenderer).AddChild(renderer);
+                                }
+                                else {
+                                    if (parentRenderer is TextSvgBranchRenderer && renderer is ISvgTextNodeRenderer) {
+                                        // Text branch node renderers only accept ISvgTextNodeRenderers
+                                        ((TextSvgBranchRenderer)parentRenderer).AddChild((ISvgTextNodeRenderer)renderer);
+                                    }
                                 }
                             }
                         }
@@ -209,14 +216,6 @@ namespace iText.Svg.Processors.Impl {
             }
         }
 
-        /// <summary>Create renderer based on the passed SVG tag and assign its parent</summary>
-        /// <param name="tag">SVG tag with all style attributes already assigned</param>
-        /// <param name="parent">renderer of the parent tag</param>
-        /// <returns>Configured renderer for the tag</returns>
-        private ISvgNodeRenderer CreateRenderer(IElementNode tag, ISvgNodeRenderer parent) {
-            return rendererFactory.CreateSvgNodeRendererForTag(tag, parent);
-        }
-
         /// <summary>Check if this node is a text node that needs to be processed by the parent</summary>
         /// <param name="node">node to check</param>
         /// <returns>true if the node should be processed as text, false otherwise</returns>
@@ -230,8 +229,11 @@ namespace iText.Svg.Processors.Impl {
             ISvgNodeRenderer parentRenderer = this.processorState.Top();
             if (parentRenderer is TextSvgBranchRenderer) {
                 String wholeText = textNode.WholeText();
-                if (!wholeText.Equals("") && !SvgTextUtil.IsOnlyWhiteSpace(wholeText)) {
-                    TextLeafSvgNodeRenderer textLeaf = new TextLeafSvgNodeRenderer();
+                if (!"".Equals(wholeText) && !SvgTextUtil.IsOnlyWhiteSpace(wholeText)) {
+                    IElementNode textLeafElement = new JsoupElementNode(new iText.StyledXmlParser.Jsoup.Nodes.Element(iText.StyledXmlParser.Jsoup.Parser.Tag
+                        .ValueOf(SvgConstants.Tags.TEXT_LEAF), ""));
+                    ISvgTextNodeRenderer textLeaf = (ISvgTextNodeRenderer)this.rendererFactory.CreateSvgNodeRendererForTag(textLeafElement
+                        , parentRenderer);
                     textLeaf.SetParent(parentRenderer);
                     textLeaf.SetAttribute(SvgConstants.Attributes.TEXT_CONTENT, wholeText);
                     ((TextSvgBranchRenderer)parentRenderer).AddChild(textLeaf);

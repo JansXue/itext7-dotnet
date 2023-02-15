@@ -44,29 +44,29 @@ namespace iText.Kernel.XMP.Impl
 		}
 
 		// EMPTY
-		/// <summary>Converts an ISO 8601 string to an <code>XMPDateTime</code>.</summary>
+		/// <summary>Converts an ISO 8601 string to an <c>XMPDateTime</c>.</summary>
 		/// <remarks>
-		/// Converts an ISO 8601 string to an <code>XMPDateTime</code>.
+		/// Converts an ISO 8601 string to an <c>XMPDateTime</c>.
 		/// Parse a date according to ISO 8601 and
 		/// http://www.w3.org/TR/NOTE-datetime:
 		/// <ul>
-		/// <li>YYYY
-		/// <li>YYYY-MM
-		/// <li>YYYY-MM-DD
-		/// <li>YYYY-MM-DDThh:mmTZD
-		/// <li>YYYY-MM-DDThh:mm:ssTZD
-		/// <li>YYYY-MM-DDThh:mm:ss.sTZD
+		/// <li>YYYY</li>
+		/// <li>YYYY-MM</li>
+		/// <li>YYYY-MM-DD</li>
+		/// <li>YYYY-MM-DDThh:mmTZD</li>
+		/// <li>YYYY-MM-DDThh:mm:ssTZD</li>
+		/// <li>YYYY-MM-DDThh:mm:ss.sTZD</li>
 		/// </ul>
 		/// Data fields:
 		/// <ul>
-		/// <li>YYYY = four-digit year
-		/// <li>MM = two-digit month (01=January, etc.)
-		/// <li>DD = two-digit day of month (01 through 31)
-		/// <li>hh = two digits of hour (00 through 23)
-		/// <li>mm = two digits of minute (00 through 59)
-		/// <li>ss = two digits of second (00 through 59)
-		/// <li>s = one or more digits representing a decimal fraction of a second
-		/// <li>TZD = time zone designator (Z or +hh:mm or -hh:mm)
+		/// <li>YYYY = four-digit year</li>
+		/// <li>MM = two-digit month (01=January, etc.)</li>
+		/// <li>DD = two-digit day of month (01 through 31)</li>
+		/// <li>hh = two digits of hour (00 through 23)</li>
+		/// <li>mm = two digits of minute (00 through 59)</li>
+		/// <li>ss = two digits of second (00 through 59)</li>
+		/// <li>s = one or more digits representing a decimal fraction of a second</li>
+		/// <li>TZD = time zone designator (Z or +hh:mm or -hh:mm)</li>
 		/// </ul>
 		/// Note that ISO 8601 does not seem to allow years less than 1000 or greater
 		/// than 9999. We allow any year, even negative ones. The year is formatted
@@ -77,11 +77,10 @@ namespace iText.Kernel.XMP.Impl
 		/// <em>Note:</em> DOES NOT APPLY ANYMORE.
 		/// Tolerate missing date portion, in case someone foolishly
 		/// writes a time-only value that way.
+		/// </p>
 		/// </remarks>
 		/// <param name="iso8601String">a date string that is ISO 8601 conform.</param>
-		/// <returns>Returns a <code>Calendar</code>.</returns>
-		/// <exception cref="iText.Kernel.XMP.XMPException">Is thrown when the string is non-conform.
-		/// 	</exception>
+		/// <returns>Returns a <c>XMPDateTime</c>.</returns>
 		public static XMPDateTime Parse(String iso8601String)
 		{
 			return Parse(iso8601String, new XMPDateTimeImpl());
@@ -90,8 +89,6 @@ namespace iText.Kernel.XMP.Impl
 		/// <param name="iso8601String">a date string that is ISO 8601 conform.</param>
 		/// <param name="binValue">an existing XMPDateTime to set with the parsed date</param>
 		/// <returns>Returns an XMPDateTime-object containing the ISO8601-date.</returns>
-		/// <exception cref="iText.Kernel.XMP.XMPException">Is thrown when the string is non-conform.
-		/// 	</exception>
 		public static XMPDateTime Parse(String iso8601String, XMPDateTime binValue)
 		{
 			if (iso8601String == null) {
@@ -234,34 +231,35 @@ namespace iText.Kernel.XMP.Impl
 			return binValue;
 		}
 
-		/// <summary>Converts a <code>Calendar</code> into an ISO 8601 string.</summary>
+		/// <summary>Converts a <c>XMPDateTime</c> into an ISO 8601 string.</summary>
 		/// <remarks>
-		/// Converts a <code>Calendar</code> into an ISO 8601 string.
+		/// Converts a <c>XMPDateTime</c> into an ISO 8601 string.
 		/// Format a date according to ISO 8601 and http://www.w3.org/TR/NOTE-datetime:
 		/// <ul>
-		/// <li>YYYY
-		/// <li>YYYY-MM
-		/// <li>YYYY-MM-DD
-		/// <li>YYYY-MM-DDThh:mmTZD
-		/// <li>YYYY-MM-DDThh:mm:ssTZD
-		/// <li>YYYY-MM-DDThh:mm:ss.sTZD
+		/// <li>YYYY</li>
+		/// <li>YYYY-MM</li>
+		/// <li>YYYY-MM-DD</li>
+		/// <li>YYYY-MM-DDThh:mmTZD</li>
+		/// <li>YYYY-MM-DDThh:mm:ssTZD</li>
+		/// <li>YYYY-MM-DDThh:mm:ss.sTZD</li>
 		/// </ul>
 		/// Data fields:
 		/// <ul>
-		/// <li>YYYY = four-digit year
-		/// <li>MM	 = two-digit month (01=January, etc.)
-		/// <li>DD	 = two-digit day of month (01 through 31)
-		/// <li>hh	 = two digits of hour (00 through 23)
-		/// <li>mm	 = two digits of minute (00 through 59)
-		/// <li>ss	 = two digits of second (00 through 59)
-		/// <li>s	 = one or more digits representing a decimal fraction of a second
-		/// <li>TZD	 = time zone designator (Z or +hh:mm or -hh:mm)
+		/// <li>YYYY = four-digit year</li>
+		/// <li>MM	 = two-digit month (01=January, etc.)</li>
+		/// <li>DD	 = two-digit day of month (01 through 31)</li>
+		/// <li>hh	 = two digits of hour (00 through 23)</li>
+		/// <li>mm	 = two digits of minute (00 through 59)</li>
+		/// <li>ss	 = two digits of second (00 through 59)</li>
+		/// <li>s	 = one or more digits representing a decimal fraction of a second</li>
+		/// <li>TZD	 = time zone designator (Z or +hh:mm or -hh:mm)</li>
 		/// </ul>
 		/// <p>
 		/// <em>Note:</em> ISO 8601 does not seem to allow years less than 1000 or greater than 9999.
-		/// We allow any year, even negative ones. The year is formatted as "%.4d".<p>
+		/// We allow any year, even negative ones. The year is formatted as "%.4d".</p><p>
 		/// <em>Note:</em> Fix for bug 1269463 (silently fix out of range values) included in parsing.
 		/// The quasi-bogus "time only" values from Photoshop CS are not supported.
+		/// </p>
 		/// </remarks>
 		/// <param name="dateTime">an XMPDateTime-object.</param>
 		/// <returns>Returns an ISO 8601 string.</returns>
@@ -325,8 +323,6 @@ namespace iText.Kernel.XMP.Impl
 		/// 	</param>
 		/// <param name="maxValue">the max value of the number to return</param>
 		/// <returns>Returns the parsed integer.</returns>
-		/// <exception cref="iText.Kernel.XMP.XMPException">Thrown if no integer can be found.
-		/// 	</exception>
 		public virtual int GatherInt(String errorMsg, int maxValue)
 		{
 			int value = 0;

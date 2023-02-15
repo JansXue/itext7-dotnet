@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -48,6 +48,7 @@ using iText.Kernel.Utils;
 using iText.Test;
 
 namespace iText.Forms {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class FormFieldAppendTest : ExtendedITextTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/forms/FormFieldAppendTest/";
@@ -60,8 +61,6 @@ namespace iText.Forms {
             CreateDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void FormFillingAppend_form_empty_Test() {
             String srcFilename = sourceFolder + "Form_Empty.pdf";
@@ -71,7 +70,7 @@ namespace iText.Forms {
             props.UseAppendMode();
             PdfDocument doc = new PdfDocument(new PdfReader(srcFilename), new PdfWriter(temp), props);
             PdfAcroForm form = PdfAcroForm.GetAcroForm(doc, true);
-            foreach (PdfFormField field in form.GetFormFields().Values) {
+            foreach (PdfFormField field in form.GetAllFormFields().Values) {
                 field.SetValue("Test");
             }
             doc.Close();
@@ -86,8 +85,6 @@ namespace iText.Forms {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void FormFillingAppend_form_filled_Test() {
             String srcFilename = sourceFolder + "Form_Empty.pdf";
@@ -97,7 +94,7 @@ namespace iText.Forms {
             props.UseAppendMode();
             PdfDocument doc = new PdfDocument(new PdfReader(srcFilename), new PdfWriter(temp), props);
             PdfAcroForm form = PdfAcroForm.GetAcroForm(doc, true);
-            foreach (PdfFormField field in form.GetFormFields().Values) {
+            foreach (PdfFormField field in form.GetAllFormFields().Values) {
                 field.SetValue("Different");
             }
             doc.Close();
@@ -111,7 +108,6 @@ namespace iText.Forms {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private void Flatten(String src, String dest) {
             PdfDocument doc = new PdfDocument(new PdfReader(src), new PdfWriter(dest));
             PdfAcroForm form = PdfAcroForm.GetAcroForm(doc, true);

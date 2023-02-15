@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,6 +41,14 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 namespace iText.Layout.Element {
-    public interface IBlockElement : IElement {
+    /// <summary>This class represents a block layout element with special margins, tabbing, and alignment.</summary>
+    /// <remarks>
+    /// This class represents a block layout element with special margins, tabbing, and alignment.
+    /// An
+    /// <see cref="IBlockElement"/>
+    /// will try to take up as much horizontal space as available to it
+    /// on the canvas or page. The concept is comparable to the block element in HTML.
+    /// </remarks>
+    public interface IBlockElement : IAbstractElement {
     }
 }

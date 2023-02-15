@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,43 +41,43 @@ source product.
 For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
 using iText.Kernel.Colors;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 
 namespace iText.Kernel.Pdf.Annot {
-    public class PdfPolyGeomAnnotation : PdfMarkupAnnotation {
-        /// <summary>Subtypes</summary>
-        public static readonly PdfName Polygon = PdfName.Polygon;
-
-        public static readonly PdfName PolyLine = PdfName.PolyLine;
-
-        private PdfPolyGeomAnnotation(Rectangle rect, PdfName subtype, float[] vertices)
+    public abstract class PdfPolyGeomAnnotation : PdfMarkupAnnotation {
+        internal PdfPolyGeomAnnotation(Rectangle rect, float[] vertices)
             : base(rect) {
-            SetSubtype(subtype);
             SetVertices(vertices);
         }
 
         /// <summary>
-        /// see
-        /// <see cref="PdfAnnotation.MakeAnnotation(iText.Kernel.Pdf.PdfObject)"/>
+        /// Instantiates a new
+        /// <see cref="PdfPolyGeomAnnotation"/>
+        /// instance based on
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// instance, that represents existing annotation object in the document.
         /// </summary>
+        /// <param name="pdfObject">
+        /// the
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// representing annotation object
+        /// </param>
+        /// <seealso cref="PdfAnnotation.MakeAnnotation(iText.Kernel.Pdf.PdfObject)"/>
         protected internal PdfPolyGeomAnnotation(PdfDictionary pdfObject)
             : base(pdfObject) {
         }
 
         public static iText.Kernel.Pdf.Annot.PdfPolyGeomAnnotation CreatePolygon(Rectangle rect, float[] vertices) {
-            return new iText.Kernel.Pdf.Annot.PdfPolyGeomAnnotation(rect, Polygon, vertices);
+            return new PdfPolygonAnnotation(rect, vertices);
         }
 
         public static iText.Kernel.Pdf.Annot.PdfPolyGeomAnnotation CreatePolyLine(Rectangle rect, float[] vertices
             ) {
-            return new iText.Kernel.Pdf.Annot.PdfPolyGeomAnnotation(rect, PolyLine, vertices);
-        }
-
-        public override PdfName GetSubtype() {
-            return GetPdfObject().GetAsName(PdfName.Subtype);
+            return new PdfPolylineAnnotation(rect, vertices);
         }
 
         public virtual PdfArray GetVertices() {
@@ -86,7 +86,7 @@ namespace iText.Kernel.Pdf.Annot {
 
         public virtual iText.Kernel.Pdf.Annot.PdfPolyGeomAnnotation SetVertices(PdfArray vertices) {
             if (GetPdfObject().ContainsKey(PdfName.Path)) {
-                LogManager.GetLogger(GetType()).Warn(iText.IO.LogMessageConstant.PATH_KEY_IS_PRESENT_VERTICES_WILL_BE_IGNORED
+                ITextLogManager.GetLogger(GetType()).LogWarning(iText.IO.Logs.IoLogMessageConstant.PATH_KEY_IS_PRESENT_VERTICES_WILL_BE_IGNORED
                     );
             }
             return (iText.Kernel.Pdf.Annot.PdfPolyGeomAnnotation)Put(PdfName.Vertices, vertices);
@@ -94,7 +94,7 @@ namespace iText.Kernel.Pdf.Annot {
 
         public virtual iText.Kernel.Pdf.Annot.PdfPolyGeomAnnotation SetVertices(float[] vertices) {
             if (GetPdfObject().ContainsKey(PdfName.Path)) {
-                LogManager.GetLogger(GetType()).Warn(iText.IO.LogMessageConstant.PATH_KEY_IS_PRESENT_VERTICES_WILL_BE_IGNORED
+                ITextLogManager.GetLogger(GetType()).LogWarning(iText.IO.Logs.IoLogMessageConstant.PATH_KEY_IS_PRESENT_VERTICES_WILL_BE_IGNORED
                     );
             }
             return (iText.Kernel.Pdf.Annot.PdfPolyGeomAnnotation)Put(PdfName.Vertices, new PdfArray(vertices));
@@ -128,7 +128,7 @@ namespace iText.Kernel.Pdf.Annot {
         /// Arrays of length 6 specify the operands for curveto operators.
         /// Each array is processed in sequence to construct the path.
         /// </remarks>
-        /// <returns>path, or <code>null</code> if path is not set</returns>
+        /// <returns>path, or <c>null</c> if path is not set</returns>
         public virtual PdfArray GetPath() {
             return GetPdfObject().GetAsArray(PdfName.Path);
         }
@@ -153,14 +153,10 @@ namespace iText.Kernel.Pdf.Annot {
         /// </returns>
         public virtual iText.Kernel.Pdf.Annot.PdfPolyGeomAnnotation SetPath(PdfArray path) {
             if (GetPdfObject().ContainsKey(PdfName.Vertices)) {
-                LogManager.GetLogger(GetType()).Error(iText.IO.LogMessageConstant.IF_PATH_IS_SET_VERTICES_SHALL_NOT_BE_PRESENT
+                ITextLogManager.GetLogger(GetType()).LogError(iText.IO.Logs.IoLogMessageConstant.IF_PATH_IS_SET_VERTICES_SHALL_NOT_BE_PRESENT
                     );
             }
             return (iText.Kernel.Pdf.Annot.PdfPolyGeomAnnotation)Put(PdfName.Path, path);
-        }
-
-        private void SetSubtype(PdfName subtype) {
-            Put(PdfName.Subtype, subtype);
         }
 
         /// <summary>The dictionaries for some annotation types (such as free text and polygon annotations) can include the BS entry.
@@ -189,10 +185,15 @@ namespace iText.Kernel.Pdf.Annot {
         /// Sets border style dictionary that has more settings than the array specified for the Border entry (
         /// <see cref="PdfAnnotation.GetBorder()"/>
         /// ).
+        /// </summary>
+        /// <remarks>
+        /// Sets border style dictionary that has more settings than the array specified for the Border entry (
+        /// <see cref="PdfAnnotation.GetBorder()"/>
+        /// ).
         /// See ISO-320001, Table 166 and
         /// <see cref="GetBorderStyle()"/>
         /// for more info.
-        /// </summary>
+        /// </remarks>
         /// <param name="borderStyle">
         /// a border style dictionary specifying the line width and dash pattern that shall be used
         /// in drawing the annotation’s border.
@@ -209,23 +210,28 @@ namespace iText.Kernel.Pdf.Annot {
         /// <summary>Setter for the annotation's preset border style.</summary>
         /// <remarks>
         /// Setter for the annotation's preset border style. Possible values are
-        /// <ul>
-        /// <li>
+        /// <list type="bullet">
+        /// <item><description>
         /// <see cref="PdfAnnotation.STYLE_SOLID"/>
-        /// - A solid rectangle surrounding the annotation.</li>
-        /// <li>
+        /// - A solid rectangle surrounding the annotation.
+        /// </description></item>
+        /// <item><description>
         /// <see cref="PdfAnnotation.STYLE_DASHED"/>
-        /// - A dashed rectangle surrounding the annotation.</li>
-        /// <li>
+        /// - A dashed rectangle surrounding the annotation.
+        /// </description></item>
+        /// <item><description>
         /// <see cref="PdfAnnotation.STYLE_BEVELED"/>
-        /// - A simulated embossed rectangle that appears to be raised above the surface of the page.</li>
-        /// <li>
+        /// - A simulated embossed rectangle that appears to be raised above the surface of the page.
+        /// </description></item>
+        /// <item><description>
         /// <see cref="PdfAnnotation.STYLE_INSET"/>
-        /// - A simulated engraved rectangle that appears to be recessed below the surface of the page.</li>
-        /// <li>
+        /// - A simulated engraved rectangle that appears to be recessed below the surface of the page.
+        /// </description></item>
+        /// <item><description>
         /// <see cref="PdfAnnotation.STYLE_UNDERLINE"/>
-        /// - A single line along the bottom of the annotation rectangle.</li>
-        /// </ul>
+        /// - A single line along the bottom of the annotation rectangle.
+        /// </description></item>
+        /// </list>
         /// See also ISO-320001, Table 166.
         /// </remarks>
         /// <param name="style">The new value for the annotation's border style.</param>
@@ -244,8 +250,7 @@ namespace iText.Kernel.Pdf.Annot {
         /// Setter for the annotation's preset dashed border style. This property has affect only if
         /// <see cref="PdfAnnotation.STYLE_DASHED"/>
         /// style was used for the annotation border style (see
-        /// <see cref="SetBorderStyle(iText.Kernel.Pdf.PdfName)"/>
-        /// .
+        /// <see cref="SetBorderStyle(iText.Kernel.Pdf.PdfName)"/>.
         /// See ISO-320001 8.4.3.6, "Line Dash Pattern" for the format in which dash pattern shall be specified.
         /// </remarks>
         /// <param name="dashPattern">

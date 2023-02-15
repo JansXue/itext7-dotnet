@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -119,7 +119,6 @@ namespace iText.Kernel.Pdf.Canvas.Wmf {
 
         /// <summary>Initializes the MetaFont instance.</summary>
         /// <param name="in">InputMeta containing the WMF data</param>
-        /// <exception cref="System.IO.IOException"/>
         public virtual void Init(InputMeta @in) {
             height = Math.Abs(@in.ReadShort());
             @in.Skip(2);
@@ -142,17 +141,16 @@ namespace iText.Kernel.Pdf.Canvas.Wmf {
                 name[k] = (byte)c;
             }
             try {
-                faceName = iText.IO.Util.JavaUtil.GetStringForBytes(name, 0, k, "Cp1252");
+                faceName = iText.Commons.Utils.JavaUtil.GetStringForBytes(name, 0, k, "Cp1252");
             }
             catch (ArgumentException) {
-                faceName = iText.IO.Util.JavaUtil.GetStringForBytes(name, 0, k);
+                faceName = iText.Commons.Utils.JavaUtil.GetStringForBytes(name, 0, k);
             }
             faceName = faceName.ToLowerInvariant();
         }
 
         /// <summary>Returns the Font.</summary>
         /// <returns>the font</returns>
-        /// <exception cref="System.IO.IOException"/>
         public virtual FontProgram GetFont() {
             if (font != null) {
                 return font;

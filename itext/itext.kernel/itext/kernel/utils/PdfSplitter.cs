@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,10 +43,10 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
+using iText.Commons.Actions.Contexts;
+using iText.Commons.Utils;
 using iText.IO.Source;
-using iText.IO.Util;
-using iText.Kernel;
-using iText.Kernel.Counter.Event;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf;
 
 namespace iText.Kernel.Utils {
@@ -63,7 +63,7 @@ namespace iText.Kernel.Utils {
         /// <param name="pdfDocument">the document to be split.</param>
         public PdfSplitter(PdfDocument pdfDocument) {
             if (pdfDocument.GetWriter() != null) {
-                throw new PdfException(PdfException.CannotSplitDocumentThatIsBeingWritten);
+                throw new PdfException(KernelExceptionMessageConstant.CANNOT_SPLIT_DOCUMENT_THAT_IS_BEING_WRITTEN);
             }
             this.pdfDocument = pdfDocument;
             this.preserveTagged = true;
@@ -72,7 +72,7 @@ namespace iText.Kernel.Utils {
 
         /// <summary>
         /// Sets the
-        /// <see cref="iText.Kernel.Counter.Event.IMetaInfo"/>
+        /// <see cref="iText.Commons.Actions.Contexts.IMetaInfo"/>
         /// that will be used during
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
         /// creation.
@@ -88,6 +88,7 @@ namespace iText.Kernel.Utils {
         /// This could be changed with this flag - if set to false, resultant documents will be not tagged, even if
         /// original document is tagged.
         /// </remarks>
+        /// <param name="preserveTagged">defines whether the resultant documents need to be tagged</param>
         public virtual void SetPreserveTagged(bool preserveTagged) {
             this.preserveTagged = preserveTagged;
         }
@@ -99,12 +100,13 @@ namespace iText.Kernel.Utils {
         /// This could be changed with this flag - if set to false, resultant documents won't contain outlines, even if
         /// original document had them.
         /// </remarks>
+        /// <param name="preserveOutlines">defines whether the resultant documents will preserve outlines or not</param>
         public virtual void SetPreserveOutlines(bool preserveOutlines) {
             this.preserveOutlines = preserveOutlines;
         }
 
-        /// <summary>Splits the document basing on the given size.</summary>
-        /// <param name="size"><strong>Preferred</strong> size for splitting.</param>
+        /// <summary>Splits the document basing on the given size specified in bytes.</summary>
+        /// <param name="size"><strong>Preferred</strong> size specified in bytes for splitting.</param>
         /// <returns>
         /// The documents which the source document was split into.
         /// Be warned that these documents are not closed.
@@ -155,20 +157,8 @@ namespace iText.Kernel.Utils {
         /// <returns>the list of resultant documents. By warned that they are not closed.</returns>
         public virtual IList<PdfDocument> SplitByPageNumbers(IList<int> pageNumbers) {
             IList<PdfDocument> splitDocuments = new List<PdfDocument>();
-            SplitByPageNumbers(pageNumbers, new _IDocumentReadyListener_167(splitDocuments));
+            SplitByPageNumbers(pageNumbers, new PdfSplitter.SplitReadyListener(splitDocuments));
             return splitDocuments;
-        }
-
-        private sealed class _IDocumentReadyListener_167 : PdfSplitter.IDocumentReadyListener {
-            public _IDocumentReadyListener_167(IList<PdfDocument> splitDocuments) {
-                this.splitDocuments = splitDocuments;
-            }
-
-            public void DocumentReady(PdfDocument pdfDocument, PageRange pageRange) {
-                splitDocuments.Add(pdfDocument);
-            }
-
-            private readonly IList<PdfDocument> splitDocuments;
         }
 
         /// <summary>Splits a document into smaller documents with no more than @pageCount pages each.</summary>
@@ -192,20 +182,8 @@ namespace iText.Kernel.Utils {
         /// <returns>the list of resultant documents. By warned that they are not closed.</returns>
         public virtual IList<PdfDocument> SplitByPageCount(int pageCount) {
             IList<PdfDocument> splitDocuments = new List<PdfDocument>();
-            SplitByPageCount(pageCount, new _IDocumentReadyListener_204(splitDocuments));
+            SplitByPageCount(pageCount, new PdfSplitter.SplitReadyListener(splitDocuments));
             return splitDocuments;
-        }
-
-        private sealed class _IDocumentReadyListener_204 : PdfSplitter.IDocumentReadyListener {
-            public _IDocumentReadyListener_204(IList<PdfDocument> splitDocuments) {
-                this.splitDocuments = splitDocuments;
-            }
-
-            public void DocumentReady(PdfDocument pdfDocument, PageRange pageRange) {
-                splitDocuments.Add(pdfDocument);
-            }
-
-            private readonly IList<PdfDocument> splitDocuments;
         }
 
         /// <summary>Extracts the specified page ranges from a document.</summary>
@@ -246,8 +224,10 @@ namespace iText.Kernel.Utils {
         /// <see cref="iText.Kernel.Pdf.PdfWriter"/>
         /// depending on your needs.
         /// </remarks>
-        /// <param name="documentPageRange">the page range of the original document to be included in the document being created now.
-        ///     </param>
+        /// <param name="documentPageRange">
+        /// the page range of the original document to be included
+        /// in the document being created now.
+        /// </param>
         /// <returns>the PdfWriter instance for the document which is being created.</returns>
         protected internal virtual PdfWriter GetNextPdfWriter(PageRange documentPageRange) {
             return new PdfWriter(new ByteArrayOutputStream());
@@ -274,6 +254,11 @@ namespace iText.Kernel.Utils {
         /// and places the entire hierarchy in a separate document ( outlines and pages ) .
         /// </summary>
         /// <param name="outlineTitles">list of outline titles .</param>
+        /// <returns>
+        /// Collection of
+        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
+        /// which contains split parts of a document
+        /// </returns>
         public virtual IList<PdfDocument> SplitByOutlines(IList<String> outlineTitles) {
             if (outlineTitles == null || outlineTitles.Count == 0) {
                 return JavaCollectionsUtil.EmptyList<PdfDocument>();
@@ -361,8 +346,8 @@ namespace iText.Kernel.Utils {
         private PageRange GetNextRange(int startPage, int endPage, long size) {
             PdfResourceCounter counter = new PdfResourceCounter(pdfDocument.GetTrailer());
             IDictionary<int, PdfObject> resources = counter.GetResources();
-            long lengthWithoutXref = counter.GetLength(null);
             // initialize with trailer length
+            long lengthWithoutXref = counter.GetLength(null);
             int currentPage = startPage;
             bool oversized = false;
             do {
@@ -386,6 +371,18 @@ namespace iText.Kernel.Utils {
 
         private long XrefLength(int size) {
             return 20L * (size + 1);
+        }
+
+        private sealed class SplitReadyListener : PdfSplitter.IDocumentReadyListener {
+            private IList<PdfDocument> splitDocuments;
+
+            public SplitReadyListener(IList<PdfDocument> splitDocuments) {
+                this.splitDocuments = splitDocuments;
+            }
+
+            public void DocumentReady(PdfDocument pdfDocument, PageRange pageRange) {
+                splitDocuments.Add(pdfDocument);
+            }
         }
     }
 }

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,7 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using iText.IO.Util;
+using iText.Commons.Utils;
 
 namespace iText.Signatures {
     /// <summary>Class containing all the OID values used by iText.</summary>
@@ -50,20 +50,23 @@ namespace iText.Signatures {
         private OID() {
         }
 
+        // Empty on purpose. Avoiding instantiation of this class.
         /// <summary>Contains all OIDs used by iText in the context of Certificate Extensions.</summary>
         public sealed class X509Extensions {
-            /// <summary>
+            /// <summary>One of the standard extensions from https://tools.ietf.org/html/rfc5280</summary>
+            /// <remarks>
             /// One of the standard extensions from https://tools.ietf.org/html/rfc5280
-            /// <p>
+            /// <para />
             /// "Conforming CAs MUST mark this extension as non-critical."
-            /// </summary>
+            /// </remarks>
             public const String AUTHORITY_KEY_IDENTIFIER = "2.5.29.35";
 
-            /// <summary>
+            /// <summary>One of the standard extensions from https://tools.ietf.org/html/rfc5280</summary>
+            /// <remarks>
             /// One of the standard extensions from https://tools.ietf.org/html/rfc5280
-            /// <p>
+            /// <para />
             /// "Conforming CAs MUST mark this extension as non-critical."
-            /// </summary>
+            /// </remarks>
             public const String SUBJECT_KEY_IDENTIFIER = "2.5.29.14";
 
             /// <summary>One of the standard extensions from https://tools.ietf.org/html/rfc5280</summary>
@@ -81,11 +84,12 @@ namespace iText.Signatures {
             /// <summary>One of the standard extensions from https://tools.ietf.org/html/rfc5280</summary>
             public const String ISSUER_ALTERNATIVE_NAME = "2.5.29.18";
 
-            /// <summary>
+            /// <summary>One of the standard extensions from https://tools.ietf.org/html/rfc5280</summary>
+            /// <remarks>
             /// One of the standard extensions from https://tools.ietf.org/html/rfc5280
-            /// <p>
+            /// <para />
             /// "Conforming CAs MUST mark this extension as non-critical."
-            /// </summary>
+            /// </remarks>
             public const String SUBJECT_DIRECTORY_ATTRIBUTES = "2.5.29.9";
 
             /// <summary>One of the standard extensions from https://tools.ietf.org/html/rfc5280</summary>
@@ -106,25 +110,28 @@ namespace iText.Signatures {
             /// <summary>One of the standard extensions from https://tools.ietf.org/html/rfc5280</summary>
             public const String INHIBIT_ANY_POLICY = "2.5.29.54";
 
-            /// <summary>
+            /// <summary>One of the standard extensions from https://tools.ietf.org/html/rfc5280</summary>
+            /// <remarks>
             /// One of the standard extensions from https://tools.ietf.org/html/rfc5280
-            /// <p>
+            /// <para />
             /// "The extension MUST be marked as non-critical by conforming CAs."
-            /// </summary>
+            /// </remarks>
             public const String FRESHEST_CRL = "2.5.29.46";
 
-            /// <summary>
+            /// <summary>One of the Internet Certificate Extensions also from https://tools.ietf.org/html/rfc5280</summary>
+            /// <remarks>
             /// One of the Internet Certificate Extensions also from https://tools.ietf.org/html/rfc5280
-            /// <p>
+            /// <para />
             /// "The extension MUST be marked as non-critical by conforming CAs."
-            /// </summary>
+            /// </remarks>
             public const String AUTHORITY_INFO_ACCESS = "1.3.6.1.5.5.7.1.1";
 
-            /// <summary>
+            /// <summary>One of the Internet Certificate Extensions also from https://tools.ietf.org/html/rfc5280</summary>
+            /// <remarks>
             /// One of the Internet Certificate Extensions also from https://tools.ietf.org/html/rfc5280
-            /// <p>
+            /// <para />
             /// "Conforming CAs MUST mark this extension as non-critical."
-            /// </summary>
+            /// </remarks>
             public const String SUBJECT_INFO_ACCESS = "1.3.6.1.5.5.7.1.11";
 
             /// <summary>
@@ -145,7 +152,7 @@ namespace iText.Signatures {
             /// According to https://tools.ietf.org/html/rfc5280 4.2. "Certificate Extensions":
             /// "A certificate-using system MUST reject the certificate if it encounters a critical extension it
             /// does not recognize or a critical extension that contains information that it cannot process."
-            /// <p>
+            /// <para />
             /// This set consists of standard extensions which are defined in RFC specifications and are not mentioned
             /// as forbidden to be marked as critical.
             /// </remarks>
@@ -153,7 +160,6 @@ namespace iText.Signatures {
                 (new LinkedHashSet<String>(JavaUtil.ArraysAsList(KEY_USAGE, CERTIFICATE_POLICIES, POLICY_MAPPINGS, SUBJECT_ALTERNATIVE_NAME
                 , ISSUER_ALTERNATIVE_NAME, BASIC_CONSTRAINTS, NAME_CONSTRAINTS, POLICY_CONSTRAINTS, EXTENDED_KEY_USAGE
                 , CRL_DISTRIBUTION_POINTS, INHIBIT_ANY_POLICY, ID_PKIX_OCSP_NOCHECK)));
-            // Empty on purpose. Avoiding instantiation of this class.
         }
     }
 }

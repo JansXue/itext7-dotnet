@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,7 +41,27 @@ source product.
 For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
+using iText.Layout;
+using iText.Layout.Element;
+
 namespace iText.Layout.Properties {
+    /// <summary>
+    /// A specialized enum holding the possible values
+    /// for a list
+    /// <see cref="List"/>
+    /// 's entry prefix.
+    /// </summary>
+    /// <remarks>
+    /// A specialized enum holding the possible values
+    /// for a list
+    /// <see cref="List"/>
+    /// 's entry prefix.
+    /// This class is meant to be used as the value for the
+    /// <see cref="Property.LIST_SYMBOL"/>
+    /// key
+    /// in an
+    /// <see cref="IPropertyContainer"/>.
+    /// </remarks>
     public enum ListNumberingType {
         DECIMAL,
         DECIMAL_LEADING_ZERO,
@@ -51,9 +71,13 @@ namespace iText.Layout.Properties {
         ENGLISH_UPPER,
         GREEK_LOWER,
         GREEK_UPPER,
+        /// <summary>Zapfdingbats font characters in range [172; 181]</summary>
         ZAPF_DINGBATS_1,
+        /// <summary>Zapfdingbats font characters in range [182; 191]</summary>
         ZAPF_DINGBATS_2,
+        /// <summary>Zapfdingbats font characters in range [192; 201]</summary>
         ZAPF_DINGBATS_3,
+        /// <summary>Zapfdingbats font characters in range [202; 221]</summary>
         ZAPF_DINGBATS_4
     }
 }

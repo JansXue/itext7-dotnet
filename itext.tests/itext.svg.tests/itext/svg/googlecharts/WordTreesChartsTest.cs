@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,57 +41,45 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-using iText.Svg.Exceptions;
+using iText.Kernel.Geom;
 using iText.Svg.Renderers;
 using iText.Test;
-using iText.Test.Attributes;
 
 namespace iText.Svg.Googlecharts {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class WordTreesChartsTest : SvgIntegrationTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
-            .CurrentContext.TestDirectory) + "/resources/itext/svg/googlecharts/wordTrees_charts/";
+            .CurrentContext.TestDirectory) + "/resources/itext/svg/googlecharts/WordTreesChartsTest/";
 
         public static readonly String destinationFolder = NUnit.Framework.TestContext.CurrentContext.TestDirectory
-             + "/test/itext/svg/googlecharts/wordTrees_charts/";
+             + "/test/itext/svg/googlecharts/WordTreesChartsTest/";
 
         [NUnit.Framework.OneTimeSetUp]
         public static void BeforeClass() {
             ITextTest.CreateDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        public virtual void WordTrees_chart() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "wordTrees_chart");
+        public virtual void WordTreesChart() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "wordTreesChart");
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        [LogMessage(SvgLogMessageConstant.UNMAPPEDTAG)]
-        public virtual void WordTrees2_chart() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "wordTrees2_chart");
+        public virtual void WordTrees2Chart() {
+            //TODO update cmp file after DEVSIX-4136 will be fixed (opacity gradient)
+            ConvertAndCompare(sourceFolder, destinationFolder, "wordTrees2Chart", PageSize.A1);
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        [LogMessage(SvgLogMessageConstant.UNMAPPEDTAG)]
-        public virtual void WordTrees3_chart() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "wordTrees3_chart");
+        public virtual void WordTrees3Chart() {
+            //TODO update cmp file after DEVSIX-4136 will be fixed (opacity gradient)
+            ConvertAndCompare(sourceFolder, destinationFolder, "wordTrees3Chart", PageSize.A1);
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        [LogMessage(SvgLogMessageConstant.UNMAPPEDTAG, Count = 2)]
-        public virtual void WordTrees4_chart() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "wordTrees4_chart");
+        public virtual void WordTrees4Chart() {
+            //TODO update cmp file after DEVSIX-4136 will be fixed (opacity gradient)
+            ConvertAndCompare(sourceFolder, destinationFolder, "wordTrees4Chart", PageSize.A1);
         }
     }
 }

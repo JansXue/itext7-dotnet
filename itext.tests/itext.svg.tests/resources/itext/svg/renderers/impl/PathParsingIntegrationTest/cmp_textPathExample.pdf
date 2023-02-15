@@ -1,9 +1,8 @@
 %PDF-1.7
 %‚„œ”
 5 0 obj
-<</Length 27>>stream
+<</Length 12>>stream
 q
-1 0 0 1 0 0 cm
 /Fm1 Do
 Q
 
@@ -16,7 +15,7 @@ endobj
 <</Pages 2 0 R/Type/Catalog>>
 endobj
 3 0 obj
-<</CreationDate(D:20190627160720+03'00')/ModDate(D:20190627160720+03'00')/Producer(iTextÆ 7.1.7-SNAPSHOT ©2000-2019 iText Group NV \(AGPL-version\))>>
+<</CreationDate(D:20211108174956+03'00')/ModDate(D:20211108174956+03'00')/Producer(iTextÆ Core 7.2.1-SNAPSHOT \(AGPL version\) ©2000-2021 iText Group NV)>>
 endobj
 6 0 obj
 <</BaseFont/Times-Roman/Encoding/WinAnsiEncoding/Subtype/Type1/Type/Font>>
@@ -25,10 +24,11 @@ endobj
 <</Count 1/Kids[4 0 R]/Type/Pages>>
 endobj
 7 0 obj
-<</BBox[0 0 191.25 180]/Length 77/Resources<</XObject<</Fm1 8 0 R>>>>/Subtype/Form/Type/XObject>>stream
+<</BBox[0 0 191.25 180]/Length 99/Resources<</XObject<</Fm1 8 0 R>>>>/Subtype/Form/Type/XObject>>stream
 1 0 0 -1 0 180 cm
 % svg root
-0.255 0 0 0.8 0 0 cm
+0.255 0 0 0.255 0 0 cm
+1 0 0 1 0 240.44 cm
 q
 1 0 0 1 0 0 cm
 /Fm1 Do
@@ -37,11 +37,13 @@ Q
 endstream
 endobj
 8 0 obj
-<</BBox[0 0 750 225]/Length 289/Resources<</Font<</F1 6 0 R>>>>/Subtype/Form/Type/XObject>>stream
+<</BBox[0 -240.44 750 465.44]/Length 309/Resources<</Font<</F1 6 0 R>>>>/Subtype/Form/Type/XObject>>stream
+0 -240.44 750 705.88 re
+W
+n
 q
 0 0.50196 0 RG
 3.75 w
-1 w
 % path
 75 150 m
 150 75 225 0 300 75 c
@@ -51,17 +53,15 @@ S
 Q
 q
 0 0 0 rg
+q
 BT
 1 0 0 -1 0 0 Tm
 0 Tr
 /F1 33.75 Tf
-q
 0 0 Td
 (Sample test here - as going up and down test)Tj
-n
-Q
 ET
-f
+Q
 Q
 q
 0 0 0 RG
@@ -76,17 +76,17 @@ endobj
 xref
 0 9
 0000000000 65535 f 
-0000000226 00000 n 
-0000000527 00000 n 
-0000000271 00000 n 
-0000000089 00000 n 
+0000000211 00000 n 
+0000000517 00000 n 
+0000000256 00000 n 
+0000000074 00000 n 
 0000000015 00000 n 
-0000000437 00000 n 
-0000000578 00000 n 
-0000000785 00000 n 
+0000000427 00000 n 
+0000000568 00000 n 
+0000000797 00000 n 
 trailer
-<</ID [<0903bba5fe7641281f3ddda5d9607786><0903bba5fe7641281f3ddda5d9607786>]/Info 3 0 R/Root 1 0 R/Size 9>>
-%iText-7.1.7-SNAPSHOT
+<</ID [<13b79c688f5f6561288c07d9e9fbd91c><13b79c688f5f6561288c07d9e9fbd91c>]/Info 3 0 R/Root 1 0 R/Size 9>>
+%iText-Core-7.2.1-SNAPSHOT
 startxref
-1198
+1239
 %%EOF

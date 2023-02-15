@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,27 +42,31 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-using Common.Logging;
-using iText.Kernel;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas;
 using iText.Kernel.Pdf.Xobject;
 using iText.Layout.Element;
+using iText.Layout.Exceptions;
 using iText.Layout.Renderer;
 
 namespace iText.Layout {
     /// <summary>
     /// This class is used for adding content directly onto a specified
-    /// <see cref="iText.Kernel.Pdf.Canvas.PdfCanvas"/>
-    /// .
+    /// <see cref="iText.Kernel.Pdf.Canvas.PdfCanvas"/>.
+    /// </summary>
+    /// <remarks>
+    /// This class is used for adding content directly onto a specified
+    /// <see cref="iText.Kernel.Pdf.Canvas.PdfCanvas"/>.
     /// <see cref="Canvas"/>
     /// does not know the concept of a page, so it can't reflow to a 'next'
-    /// <see cref="Canvas"/>
-    /// .
+    /// <see cref="Canvas"/>.
     /// This class effectively acts as a bridge between the high-level <em>layout</em>
     /// API and the low-level <em>kernel</em> API.
-    /// </summary>
+    /// </remarks>
     public class Canvas : RootElement<iText.Layout.Canvas> {
         protected internal PdfCanvas pdfCanvas;
 
@@ -70,10 +74,13 @@ namespace iText.Layout {
 
         /// <summary>
         /// Is initialized and used only when Canvas element autotagging is enabled, see
-        /// <see cref="EnableAutoTagging(iText.Kernel.Pdf.PdfPage)"/>
-        /// .
-        /// It is also used to determine if autotagging is enabled.
+        /// <see cref="EnableAutoTagging(iText.Kernel.Pdf.PdfPage)"/>.
         /// </summary>
+        /// <remarks>
+        /// Is initialized and used only when Canvas element autotagging is enabled, see
+        /// <see cref="EnableAutoTagging(iText.Kernel.Pdf.PdfPage)"/>.
+        /// It is also used to determine if autotagging is enabled.
+        /// </remarks>
         protected internal PdfPage page;
 
         private bool isCanvasOfPage;
@@ -86,13 +93,12 @@ namespace iText.Layout {
         /// <see cref="iText.Layout.Element.Link"/>
         /// elements on it
         /// (using any other constructor would result in inability to add PDF annotations, based on which, for example, links work).
-        /// <p>
+        /// <para />
         /// If the
         /// <see cref="iText.Kernel.Pdf.PdfDocument.IsTagged()"/>
         /// is true, using this constructor would automatically enable
         /// the tagging for the content. Regarding tagging the effect is the same as using
-        /// <see cref="EnableAutoTagging(iText.Kernel.Pdf.PdfPage)"/>
-        /// .
+        /// <see cref="EnableAutoTagging(iText.Kernel.Pdf.PdfPage)"/>.
         /// </remarks>
         /// <param name="page">
         /// the page on which this canvas will be rendered, shall not be flushed (see
@@ -101,46 +107,43 @@ namespace iText.Layout {
         /// </param>
         /// <param name="rootArea">the maximum area that the Canvas may write upon</param>
         public Canvas(PdfPage page, Rectangle rootArea)
-            : this(InitPdfCanvasOrThrowIfPageIsFlushed(page), page.GetDocument(), rootArea) {
+            : this(InitPdfCanvasOrThrowIfPageIsFlushed(page), rootArea) {
             this.EnableAutoTagging(page);
             this.isCanvasOfPage = true;
         }
 
         /// <summary>
-        /// Creates a new Canvas to manipulate a specific document and content stream, which might be for example a page
+        /// Creates a new Canvas to manipulate a specific content stream, which might be for example a page
         /// or
         /// <see cref="iText.Kernel.Pdf.Xobject.PdfFormXObject"/>
         /// stream.
         /// </summary>
         /// <param name="pdfCanvas">the low-level content stream writer</param>
-        /// <param name="pdfDocument">the document that the resulting content stream will be written to</param>
         /// <param name="rootArea">the maximum area that the Canvas may write upon</param>
-        public Canvas(PdfCanvas pdfCanvas, PdfDocument pdfDocument, Rectangle rootArea)
+        public Canvas(PdfCanvas pdfCanvas, Rectangle rootArea)
             : base() {
-            this.pdfDocument = pdfDocument;
+            this.pdfDocument = pdfCanvas.GetDocument();
             this.pdfCanvas = pdfCanvas;
             this.rootArea = rootArea;
         }
 
         /// <summary>Creates a new Canvas to manipulate a specific document and page.</summary>
         /// <param name="pdfCanvas">The low-level content stream writer</param>
-        /// <param name="pdfDocument">The document that the resulting content stream will be written to</param>
         /// <param name="rootArea">The maximum area that the Canvas may write upon</param>
         /// <param name="immediateFlush">Whether to flush the canvas immediately after operations, false otherwise</param>
-        public Canvas(PdfCanvas pdfCanvas, PdfDocument pdfDocument, Rectangle rootArea, bool immediateFlush)
-            : this(pdfCanvas, pdfDocument, rootArea) {
+        public Canvas(PdfCanvas pdfCanvas, Rectangle rootArea, bool immediateFlush)
+            : this(pdfCanvas, rootArea) {
             this.immediateFlush = immediateFlush;
         }
 
         /// <summary>
         /// Creates a new Canvas to manipulate a specific
-        /// <see cref="iText.Kernel.Pdf.Xobject.PdfFormXObject"/>
-        /// .
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfFormXObject"/>.
         /// </summary>
         /// <param name="formXObject">the form</param>
         /// <param name="pdfDocument">the document that the resulting content stream will be written to</param>
         public Canvas(PdfFormXObject formXObject, PdfDocument pdfDocument)
-            : this(new PdfCanvas(formXObject, pdfDocument), pdfDocument, formXObject.GetBBox().ToRectangle()) {
+            : this(new PdfCanvas(formXObject, pdfDocument), formXObject.GetBBox().ToRectangle()) {
         }
 
         /// <summary>
@@ -161,8 +164,7 @@ namespace iText.Layout {
 
         /// <summary>
         /// Gets the
-        /// <see cref="iText.Kernel.Pdf.Canvas.PdfCanvas"/>
-        /// .
+        /// <see cref="iText.Kernel.Pdf.Canvas.PdfCanvas"/>.
         /// </summary>
         /// <returns>the low-level content stream writer</returns>
         public virtual PdfCanvas GetPdfCanvas() {
@@ -194,8 +196,8 @@ namespace iText.Layout {
         /// <param name="page">the page, on which this canvas will be rendered.</param>
         public virtual void EnableAutoTagging(PdfPage page) {
             if (IsCanvasOfPage() && this.page != page) {
-                ILog logger = LogManager.GetLogger(typeof(iText.Layout.Canvas));
-                logger.Error(iText.IO.LogMessageConstant.PASSED_PAGE_SHALL_BE_ON_WHICH_CANVAS_WILL_BE_RENDERED);
+                ILogger logger = ITextLogManager.GetLogger(typeof(iText.Layout.Canvas));
+                logger.LogError(iText.IO.Logs.IoLogMessageConstant.PASSED_PAGE_SHALL_BE_ON_WHICH_CANVAS_WILL_BE_RENDERED);
             }
             this.page = page;
         }
@@ -233,7 +235,7 @@ namespace iText.Layout {
         /// resource-intensive for large documents.
         /// Do not use when you have set
         /// <see cref="RootElement{T}.immediateFlush"/>
-        /// to <code>true</code>.
+        /// to <c>true</c>.
         /// </remarks>
         public virtual void Relayout() {
             if (immediateFlush) {
@@ -259,6 +261,10 @@ namespace iText.Layout {
 
         /// <summary>
         /// Closes the
+        /// <see cref="Canvas"/>.
+        /// </summary>
+        /// <remarks>
+        /// Closes the
         /// <see cref="Canvas"/>
         /// . Although not completely necessary in all cases, it is still recommended to call this
         /// method when you are done working with
@@ -269,7 +275,7 @@ namespace iText.Layout {
         /// tells the
         /// <see cref="Canvas"/>
         /// that no more elements will be added and it is time to finish processing all the elements.
-        /// </summary>
+        /// </remarks>
         public override void Close() {
             if (rootRenderer != null) {
                 rootRenderer.Close();
@@ -285,7 +291,7 @@ namespace iText.Layout {
 
         private static PdfCanvas InitPdfCanvasOrThrowIfPageIsFlushed(PdfPage page) {
             if (page.IsFlushed()) {
-                throw new PdfException(PdfException.CannotDrawElementsOnAlreadyFlushedPages);
+                throw new PdfException(LayoutExceptionMessageConstant.CANNOT_DRAW_ELEMENTS_ON_ALREADY_FLUSHED_PAGES);
             }
             return new PdfCanvas(page);
         }

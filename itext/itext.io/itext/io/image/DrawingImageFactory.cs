@@ -1,8 +1,8 @@
-#if !NETSTANDARD1_6
+#if !NETSTANDARD2_0
 /*
 
 This file is part of the iText (R) project.
-    Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -48,20 +48,19 @@ using System.IO;
 
 namespace iText.IO.Image {
     internal class DrawingImageFactory {
-        /// <summary>Gets an instance of an Image from a java.awt.Image</summary>
-        /// <param name="image">the java.awt.Image to convert</param>
+        /// <summary>Gets an instance of an Image from <see cref="System.Drawing.Image"/></summary>
+        /// <param name="image">the <see cref="System.Drawing.Image"/> to convert</param>
         /// <param name="color">if different from <CODE>null</CODE> the transparency pixels are replaced by this color
         /// 	</param>
         /// <returns>RawImage</returns>
-        /// <exception cref="System.IO.IOException"/>
         public static ImageData GetImage(System.Drawing.Image image, Color? color) {
             return GetImage(image, color, false);
         }
 
         /// <summary>
-        /// Gets an instance of an Image from a System.Drwaing.Image.
+        /// Gets an instance of an Image from a <see cref="System.Drawing.Image"/>.
         /// </summary>
-        /// <param name="image">the System.Drawing.Image to convert</param>
+        /// <param name="image">the <see cref="System.Drawing.Image"/> to convert</param>
         /// <param name="color">
         /// if different from null the transparency
         /// pixels are replaced by this color

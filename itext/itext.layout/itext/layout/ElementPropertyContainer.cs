@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,7 +44,8 @@ address: sales@itextpdf.com
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using iText.IO.Util;
+using iText.Commons.Actions.Sequence;
+using iText.Commons.Utils;
 using iText.Kernel.Colors;
 using iText.Kernel.Font;
 using iText.Kernel.Pdf.Canvas;
@@ -62,8 +63,8 @@ namespace iText.Layout {
     /// <see cref="iText.Layout.Element.IElement">layout object</see>
     /// implementations.
     /// </remarks>
-    /// 
-    public abstract class ElementPropertyContainer<T> : IPropertyContainer
+    /// <typeparam name="T">this type</typeparam>
+    public abstract class ElementPropertyContainer<T> : AbstractIdentifiableElement, IPropertyContainer
         where T : IPropertyContainer {
         protected internal IDictionary<int, Object> properties = new Dictionary<int, Object>();
 
@@ -116,13 +117,12 @@ namespace iText.Layout {
         /// side effect that the Element's
         /// <see cref="iText.Layout.Properties.Property.POSITION"/>
         /// is changed to
-        /// <see cref="iText.Layout.Layout.LayoutPosition.RELATIVE">relative</see>
-        /// .
+        /// <see cref="iText.Layout.Layout.LayoutPosition.RELATIVE">relative</see>.
         /// The default implementation in
         /// <see cref="iText.Layout.Renderer.AbstractRenderer"/>
         /// treats
-        /// <code>left</code> and <code>top</code> as the most important values. Only
-        /// if <code>left == 0</code> will <code>right</code> be used for the
+        /// <c>left</c> and <c>top</c> as the most important values. Only
+        /// if <c>left == 0</c> will <c>right</c> be used for the
         /// calculation; ditto for top vs. bottom.
         /// </remarks>
         /// <param name="left">movement to the left</param>
@@ -148,8 +148,7 @@ namespace iText.Layout {
         /// Also has as a side effect that the Element's
         /// <see cref="iText.Layout.Properties.Property.POSITION"/>
         /// is changed to
-        /// <see cref="iText.Layout.Layout.LayoutPosition.FIXED">fixed</see>
-        /// .
+        /// <see cref="iText.Layout.Layout.LayoutPosition.FIXED">fixed</see>.
         /// </remarks>
         /// <param name="left">horizontal position of the bottom-left corner on the page</param>
         /// <param name="bottom">vertical position of the bottom-left corner on the page</param>
@@ -168,8 +167,7 @@ namespace iText.Layout {
         /// Also has as a side effect that the Element's
         /// <see cref="iText.Layout.Properties.Property.POSITION"/>
         /// is changed to
-        /// <see cref="iText.Layout.Layout.LayoutPosition.FIXED">fixed</see>
-        /// .
+        /// <see cref="iText.Layout.Layout.LayoutPosition.FIXED">fixed</see>.
         /// </remarks>
         /// <param name="left">horizontal position of the bottom-left corner on the page</param>
         /// <param name="bottom">vertical position of the bottom-left corner on the page</param>
@@ -194,8 +192,7 @@ namespace iText.Layout {
         /// Also has as a side effect that the Element's
         /// <see cref="iText.Layout.Properties.Property.POSITION"/>
         /// is changed to
-        /// <see cref="iText.Layout.Layout.LayoutPosition.FIXED">fixed</see>
-        /// .
+        /// <see cref="iText.Layout.Layout.LayoutPosition.FIXED">fixed</see>.
         /// </remarks>
         /// <param name="pageNumber">the page where the element must be positioned</param>
         /// <param name="left">horizontal position of the bottom-left corner on the page</param>
@@ -216,8 +213,7 @@ namespace iText.Layout {
         /// Also has as a side effect that the Element's
         /// <see cref="iText.Layout.Properties.Property.POSITION"/>
         /// is changed to
-        /// <see cref="iText.Layout.Layout.LayoutPosition.FIXED">fixed</see>
-        /// .
+        /// <see cref="iText.Layout.Layout.LayoutPosition.FIXED">fixed</see>.
         /// </remarks>
         /// <param name="pageNumber">the page where the element must be positioned</param>
         /// <param name="left">horizontal position of the bottom-left corner on the page</param>
@@ -244,7 +240,7 @@ namespace iText.Layout {
         /// <summary>Sets the font of this Element.</summary>
         /// <remarks>
         /// Sets the font of this Element.
-        /// <p>
+        /// <para />
         /// This property overrides the value set by
         /// <see cref="ElementPropertyContainer{T}.SetFontFamily(System.String[])"/>
         /// . Font is set either via exact
@@ -271,7 +267,7 @@ namespace iText.Layout {
         /// shall be set as well.
         /// See
         /// <see cref="RootElement{T}.SetFontProvider(iText.Layout.Font.FontProvider)"/>
-        /// <p>
+        /// <para />
         /// This property overrides the value set by
         /// <see cref="ElementPropertyContainer{T}.SetFont(iText.Kernel.Font.PdfFont)"/>
         /// . Font is set either via exact
@@ -279,7 +275,7 @@ namespace iText.Layout {
         /// instance or via font-family name that should correspond to the font in
         /// <see cref="iText.Layout.Font.FontProvider"/>
         /// , but not both.
-        /// <p>
+        /// <para />
         /// All
         /// <see cref="System.String"/>
         /// that are passed as argument are directly handled as a collection of font family names,
@@ -305,7 +301,7 @@ namespace iText.Layout {
         /// shall be set as well.
         /// See
         /// <see cref="RootElement{T}.SetFontProvider(iText.Layout.Font.FontProvider)"/>
-        /// <p>
+        /// <para />
         /// This property overrides the value set by
         /// <see cref="ElementPropertyContainer{T}.SetFont(iText.Kernel.Font.PdfFont)"/>
         /// . Font is set either via exact
@@ -313,7 +309,7 @@ namespace iText.Layout {
         /// instance or via font-family name that should correspond to the font in
         /// <see cref="iText.Layout.Font.FontProvider"/>
         /// , but not both.
-        /// <p>
+        /// <para />
         /// All
         /// <see cref="System.String"/>
         /// that are passed as argument are directly handled as a collection of font family names,
@@ -328,27 +324,6 @@ namespace iText.Layout {
         /// <returns>this Element.</returns>
         public virtual T SetFontFamily(IList<String> fontFamilyNames) {
             return this.SetFontFamily(fontFamilyNames.ToArray(new String[fontFamilyNames.Count]));
-        }
-
-        /// <summary>Sets the font family of this Element.</summary>
-        /// <remarks>
-        /// Sets the font family of this Element. Note that
-        /// <see cref="iText.Layout.Font.FontProvider"/>
-        /// shall be set as well.
-        /// See
-        /// <see cref="RootElement{T}.SetFontProvider(iText.Layout.Font.FontProvider)"/>
-        /// </remarks>
-        /// <seealso cref="iText.IO.Font.Constants.StandardFontFamilies"/>
-        /// <param name="font">
-        /// a font name to fetch from
-        /// <see cref="iText.Layout.Font.FontProvider"/>
-        /// </param>
-        /// <returns>this Element.</returns>
-        [System.ObsoleteAttribute(@"This method will be removed in 7.2. Use ElementPropertyContainer{T}.SetFontFamily(System.String[]) instead."
-            )]
-        public virtual T SetFont(String font) {
-            SetProperty(Property.FONT, font);
-            return (T)(Object)this;
         }
 
         /// <summary>Sets the font color of this Element.</summary>
@@ -480,6 +455,30 @@ namespace iText.Layout {
             float extraRight, float extraBottom) {
             SetProperty(Property.BACKGROUND, backgroundColor != null ? new Background(backgroundColor, opacity, extraLeft
                 , extraTop, extraRight, extraBottom) : null);
+            return (T)(Object)this;
+        }
+
+        /// <summary>Specifies a background image for the Element.</summary>
+        /// <param name="image">
+        /// 
+        /// <see cref="iText.Layout.Properties.BackgroundImage"/>
+        /// </param>
+        /// <returns>this Element.</returns>
+        public virtual T SetBackgroundImage(BackgroundImage image) {
+            IList<BackgroundImage> backgroundImages = new List<BackgroundImage>();
+            backgroundImages.Add(image);
+            SetProperty(Property.BACKGROUND_IMAGE, backgroundImages);
+            return (T)(Object)this;
+        }
+
+        /// <summary>Specifies a list of background images for the Element.</summary>
+        /// <param name="imagesList">
+        /// List of
+        /// <see cref="iText.Layout.Properties.BackgroundImage"/>
+        /// </param>
+        /// <returns>this Element.</returns>
+        public virtual T SetBackgroundImage(IList<BackgroundImage> imagesList) {
+            SetProperty(Property.BACKGROUND_IMAGE, imagesList);
             return (T)(Object)this;
         }
 
@@ -634,7 +633,7 @@ namespace iText.Layout {
         /// text causes glyph outlines to be stroked, filled, used as a clipping
         /// boundary, or some combination of the three.
         /// </summary>
-        /// <param name="textRenderingMode">an <code>int</code> value</param>
+        /// <param name="textRenderingMode">an <c>int</c> value</param>
         /// <returns>this Element.</returns>
         /// <seealso cref="iText.Kernel.Pdf.Canvas.PdfCanvasConstants.TextRenderingMode"/>
         public virtual T SetTextRenderingMode(int textRenderingMode) {
@@ -750,16 +749,14 @@ namespace iText.Layout {
         /// Sets an horizontal line that can be an underline or a strikethrough.
         /// Actually, the line can be anywhere vertically due to position parameter.
         /// Multiple call to this method will produce multiple lines.
-        /// <p>
+        /// <para />
         /// The thickness of the line will be
-        /// <c>thickness + thicknessMul * fontSize</c>
-        /// .
+        /// <c>thickness + thicknessMul * fontSize</c>.
         /// The position of the line will be
-        /// <c>baseLine + yPosition + yPositionMul * fontSize</c>
-        /// .
+        /// <c>baseLine + yPosition + yPositionMul * fontSize</c>.
         /// </remarks>
         /// <param name="color">
-        /// the color of the line or <CODE>null</CODE> to follow the
+        /// the color of the line or <c>null</c> to follow the
         /// text color
         /// </param>
         /// <param name="thickness">the absolute thickness of the line</param>
@@ -781,16 +778,14 @@ namespace iText.Layout {
         /// Sets an horizontal line that can be an underline or a strikethrough.
         /// Actually, the line can be anywhere vertically due to position parameter.
         /// Multiple call to this method will produce multiple lines.
-        /// <p>
+        /// <para />
         /// The thickness of the line will be
-        /// <c>thickness + thicknessMul * fontSize</c>
-        /// .
+        /// <c>thickness + thicknessMul * fontSize</c>.
         /// The position of the line will be
-        /// <c>baseLine + yPosition + yPositionMul * fontSize</c>
-        /// .
+        /// <c>baseLine + yPosition + yPositionMul * fontSize</c>.
         /// </remarks>
         /// <param name="color">
-        /// the color of the line or <CODE>null</CODE> to follow the
+        /// the color of the line or <c>null</c> to follow the
         /// text color
         /// </param>
         /// <param name="opacity">the opacity of the line; a float between 0 and 1, where 1 stands for fully opaque color and 0 - for fully transparent

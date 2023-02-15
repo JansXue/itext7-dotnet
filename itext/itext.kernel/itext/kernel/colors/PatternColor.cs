@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -48,11 +48,11 @@ namespace iText.Kernel.Colors {
     public class PatternColor : Color {
         private PdfPattern pattern;
 
+        // The underlying color for uncolored patterns. Will be null for colored ones.
         private Color underlyingColor;
 
         public PatternColor(PdfPattern coloredPattern)
             : base(new PdfSpecialCs.Pattern(), null) {
-            // The underlying color for uncolored patterns. Will be null for colored ones.
             this.pattern = coloredPattern;
         }
 
@@ -61,12 +61,8 @@ namespace iText.Kernel.Colors {
         }
 
         public PatternColor(PdfPattern.Tiling uncoloredPattern, PdfColorSpace underlyingCS, float[] colorValue)
-            : base(new PdfSpecialCs.UncoloredTilingPattern(underlyingCS), colorValue) {
-            if (underlyingCS is PdfSpecialCs.Pattern) {
-                throw new ArgumentException("underlyingCS");
-            }
-            this.pattern = uncoloredPattern;
-            this.underlyingColor = MakeColor(underlyingCS, colorValue);
+            : this(uncoloredPattern, new PdfSpecialCs.UncoloredTilingPattern(EnsureNotPatternCs(underlyingCS)), colorValue
+                ) {
         }
 
         public PatternColor(PdfPattern.Tiling uncoloredPattern, PdfSpecialCs.UncoloredTilingPattern uncoloredTilingCS
@@ -80,8 +76,9 @@ namespace iText.Kernel.Colors {
             return pattern;
         }
 
-        public virtual void SetPattern(PdfPattern pattern) {
-            this.pattern = pattern;
+        public override void SetColorValue(float[] value) {
+            base.SetColorValue(value);
+            underlyingColor.SetColorValue(value);
         }
 
         public override bool Equals(Object o) {
@@ -91,6 +88,13 @@ namespace iText.Kernel.Colors {
             iText.Kernel.Colors.PatternColor color = (iText.Kernel.Colors.PatternColor)o;
             return pattern.Equals(color.pattern) && (underlyingColor != null ? underlyingColor.Equals(color.underlyingColor
                 ) : color.underlyingColor == null);
+        }
+
+        private static PdfColorSpace EnsureNotPatternCs(PdfColorSpace underlyingCS) {
+            if (underlyingCS is PdfSpecialCs.Pattern) {
+                throw new ArgumentException("underlyingCS");
+            }
+            return underlyingCS;
         }
     }
 }

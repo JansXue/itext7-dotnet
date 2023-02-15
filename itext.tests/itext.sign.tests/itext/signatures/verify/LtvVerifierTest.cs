@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,10 +44,11 @@ using System;
 using System.Collections.Generic;
 using iText.Kernel.Pdf;
 using iText.Signatures;
+using iText.Signatures.Testutils;
 using iText.Test;
-using iText.Test.Signutils;
 
 namespace iText.Signatures.Verify {
+    [NUnit.Framework.Category("BouncyCastleIntegrationTest")]
     public class LtvVerifierTest : ExtendedITextTest {
         private static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/signatures/verify/LtvVerifierTest/";
@@ -65,26 +66,22 @@ namespace iText.Signatures.Verify {
         public static void After() {
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
         [NUnit.Framework.Test]
         public virtual void ValidLtvDocTest01() {
             String ltvTsFileName = sourceFolder + "ltvDoc.pdf";
             LtvVerifier verifier = new LtvVerifier(new PdfDocument(new PdfReader(ltvTsFileName)));
             verifier.SetCertificateOption(LtvVerification.CertificateOption.WHOLE_CHAIN);
-            verifier.SetRootStore(Pkcs12FileHelper.InitStore(certsSrc + "rootStore.p12", password));
+            verifier.SetRootStore(PemFileHelper.InitStore(certsSrc + "rootStore.pem"));
             IList<VerificationOK> verificationMessages = verifier.Verify(null);
             NUnit.Framework.Assert.AreEqual(7, verificationMessages.Count);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
         [NUnit.Framework.Test]
         public virtual void ValidLtvDocTest02() {
             String ltvTsFileName = sourceFolder + "ltvDoc.pdf";
             LtvVerifier verifier = new LtvVerifier(new PdfDocument(new PdfReader(ltvTsFileName)));
             verifier.SetCertificateOption(LtvVerification.CertificateOption.WHOLE_CHAIN);
-            verifier.SetRootStore(Pkcs12FileHelper.InitStore(certsSrc + "rootStore.p12", password));
+            verifier.SetRootStore(PemFileHelper.InitStore(certsSrc + "rootStore.pem"));
             IList<VerificationOK> verificationMessages = verifier.Verify(null);
             NUnit.Framework.Assert.AreEqual(7, verificationMessages.Count);
         }

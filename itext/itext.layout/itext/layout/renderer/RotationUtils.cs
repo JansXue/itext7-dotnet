@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -56,13 +56,18 @@ namespace iText.Layout.Renderer {
         /// This method tries to calculate min-max-width of rotated element using heuristics
         /// of
         /// <see cref="iText.Layout.Minmaxwidth.RotationMinMaxWidth.Calculate(double, double, iText.Layout.Minmaxwidth.MinMaxWidth)
-        ///     "/>
-        /// .
+        ///     "/>.
+        /// </summary>
+        /// <remarks>
+        /// This method tries to calculate min-max-width of rotated element using heuristics
+        /// of
+        /// <see cref="iText.Layout.Minmaxwidth.RotationMinMaxWidth.Calculate(double, double, iText.Layout.Minmaxwidth.MinMaxWidth)
+        ///     "/>.
         /// This method may call
         /// <see cref="IRenderer.Layout(iText.Layout.Layout.LayoutContext)"/>
         /// once in best case
         /// (if the width is set on element, or if we are really lucky) and three times in worst case.
-        /// </summary>
+        /// </remarks>
         /// <param name="minMaxWidth">the minMaxWidth of NOT rotated renderer</param>
         /// <param name="renderer">the actual renderer</param>
         /// <returns>minMaxWidth of rotated renderer or original value in case rotated value can not be calculated, or renderer isn't rotated.
@@ -118,8 +123,7 @@ namespace iText.Layout.Renderer {
         /// This method tries to calculate width of not rotated renderer, so after rotation it fits availableWidth.
         /// This method uses heuristics of
         /// <see cref="iText.Layout.Minmaxwidth.RotationMinMaxWidth.Calculate(double, double, iText.Layout.Minmaxwidth.MinMaxWidth, double)
-        ///     "/>
-        /// .
+        ///     "/>.
         /// It doesn't take into account any of height properties of renderer or height of layoutArea.
         /// The minMaxWidth calculations and initial layout may take long time, but they won't be called if the renderer have width property.
         /// </remarks>
@@ -138,6 +142,7 @@ namespace iText.Layout.Renderer {
                 backup.StoreProperty<UnitValue>(Property.HEIGHT);
                 backup.StoreProperty<UnitValue>(Property.MIN_HEIGHT);
                 backup.StoreProperty<UnitValue>(Property.MAX_HEIGHT);
+                backup.StoreBoolProperty(Property.FORCED_PLACEMENT);
                 MinMaxWidth minMaxWidth = renderer.GetMinMaxWidth();
                 //Using this width for initial layout helps in case of small elements. They may have more free spaces but it's more likely they fit.
                 float length = (minMaxWidth.GetMaxWidth() + minMaxWidth.GetMinWidth()) / 2 + MinMaxWidthUtils.GetEps();
@@ -146,6 +151,7 @@ namespace iText.Layout.Renderer {
                 backup.RestoreProperty(Property.HEIGHT);
                 backup.RestoreProperty(Property.MIN_HEIGHT);
                 backup.RestoreProperty(Property.MAX_HEIGHT);
+                backup.RestoreProperty(Property.FORCED_PLACEMENT);
                 Rectangle additions = new Rectangle(0, 0);
                 renderer.ApplyPaddings(additions, true);
                 renderer.ApplyBorderBox(additions, true);
@@ -196,6 +202,16 @@ namespace iText.Layout.Renderer {
             //workaround for autoport
             public virtual float? StoreFloatProperty(int property) {
                 float? value = renderer.GetPropertyAsFloat(property);
+                if (value != null) {
+                    propertiesBackup.Put(property, new RotationUtils.PropertiesBackup.PropertyBackup(value, renderer.HasOwnProperty
+                        (property)));
+                    renderer.SetProperty(property, null);
+                }
+                return value;
+            }
+
+            public virtual bool? StoreBoolProperty(int property) {
+                bool? value = renderer.GetPropertyAsBoolean(property);
                 if (value != null) {
                     propertiesBackup.Put(property, new RotationUtils.PropertiesBackup.PropertyBackup(value, renderer.HasOwnProperty
                         (property)));

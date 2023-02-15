@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -40,10 +40,18 @@ source product.
 For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
+using System;
+using System.Collections.Generic;
 using iText.IO.Source;
+using iText.Kernel.Geom;
+using iText.Kernel.Pdf.Canvas.Parser;
+using iText.Kernel.Pdf.Canvas.Parser.Data;
+using iText.Kernel.Pdf.Canvas.Parser.Listener;
+using iText.Kernel.Pdf.Colorspace;
 using iText.Test;
 
 namespace iText.Kernel.Pdf {
+    [NUnit.Framework.Category("UnitTest")]
     public class PdfArrayTest : ExtendedITextTest {
         [NUnit.Framework.Test]
         public virtual void TestValuesIndirectContains() {
@@ -195,6 +203,37 @@ namespace iText.Kernel.Pdf {
             array2.Add(new PdfNumber(6));
             for (int i = 0; i < array2.Size(); i++) {
                 NUnit.Framework.Assert.AreEqual(i, array.IndexOf(array2.Get(i)));
+            }
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void PdfUncoloredPatternColorSize1Test() {
+            PdfDocument pdfDocument = new PdfDocument(new PdfWriter(new ByteArrayOutputStream()));
+            String contentColorSpace = "/Cs1 cs\n";
+            PdfDictionary pageDictionary = (PdfDictionary)new PdfDictionary().MakeIndirect(pdfDocument);
+            PdfStream contentStream = new PdfStream(contentColorSpace.GetBytes());
+            pageDictionary.Put(PdfName.Contents, contentStream);
+            PdfPage page = pdfDocument.AddNewPage();
+            page.GetPdfObject().Put(PdfName.Contents, contentStream);
+            PdfArray pdfArray = new PdfArray();
+            pdfArray.Add(PdfName.Pattern);
+            PdfColorSpace space = PdfColorSpace.MakeColorSpace(pdfArray);
+            page.GetResources().AddColorSpace(space);
+            Rectangle rectangle = new Rectangle(50, 50, 1000, 1000);
+            page.SetMediaBox(rectangle);
+            PdfCanvasProcessor processor = new PdfCanvasProcessor(new PdfArrayTest.NoOpListener());
+            processor.ProcessPageContent(page);
+            // Check if we reach the end of the test without failings together with verifying expected color space instance
+            NUnit.Framework.Assert.IsTrue(processor.GetGraphicsState().GetFillColor().GetColorSpace() is PdfSpecialCs.Pattern
+                );
+        }
+
+        private class NoOpListener : IEventListener {
+            public virtual void EventOccurred(IEventData data, EventType type) {
+            }
+
+            public virtual ICollection<EventType> GetSupportedEvents() {
+                return null;
             }
         }
     }

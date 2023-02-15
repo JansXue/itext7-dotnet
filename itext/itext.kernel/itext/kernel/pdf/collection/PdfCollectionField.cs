@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,7 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-using iText.Kernel;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf;
 
 namespace iText.Kernel.Pdf.Collection {
@@ -172,37 +172,64 @@ namespace iText.Kernel.Pdf.Collection {
         /// <summary>The relative order of the field name.</summary>
         /// <remarks>The relative order of the field name. Fields are sorted in ascending order.</remarks>
         /// <param name="order">a number indicating the order of the field</param>
+        /// <returns>this instance to support fluent interface</returns>
         public virtual iText.Kernel.Pdf.Collection.PdfCollectionField SetOrder(int order) {
             GetPdfObject().Put(PdfName.O, new PdfNumber(order));
             return this;
         }
 
+        /// <summary>Retrieves the order of the field name.</summary>
+        /// <returns>
+        /// the
+        /// <see cref="iText.Kernel.Pdf.PdfNumber">PDF number</see>
+        /// showing the order of the field name
+        /// </returns>
         public virtual PdfNumber GetOrder() {
             return GetPdfObject().GetAsNumber(PdfName.O);
         }
 
         /// <summary>Sets the initial visibility of the field.</summary>
-        /// <param name="visible"/>
+        /// <param name="visible">is a state of visibility</param>
+        /// <returns>this instance to support fluent interface</returns>
         public virtual iText.Kernel.Pdf.Collection.PdfCollectionField SetVisibility(bool visible) {
             GetPdfObject().Put(PdfName.V, PdfBoolean.ValueOf(visible));
             return this;
         }
 
+        /// <summary>Retrieves the initial visibility of the field.</summary>
+        /// <returns>
+        /// the initial visibility of the field as
+        /// <see cref="iText.Kernel.Pdf.PdfBoolean">PDF boolean</see>
+        /// value
+        /// </returns>
         public virtual PdfBoolean GetVisibility() {
             return GetPdfObject().GetAsBoolean(PdfName.V);
         }
 
         /// <summary>Indication if the field value should be editable in the viewer.</summary>
-        /// <param name="editable"/>
+        /// <param name="editable">is a state of editable</param>
+        /// <returns>this instance to support fluent interface</returns>
         public virtual iText.Kernel.Pdf.Collection.PdfCollectionField SetEditable(bool editable) {
             GetPdfObject().Put(PdfName.E, PdfBoolean.ValueOf(editable));
             return this;
         }
 
+        /// <summary>Retrieves the state of the editable of the field.</summary>
+        /// <returns>
+        /// true if filed is editable and false otherwise. Returned value is presented
+        /// as
+        /// <see cref="iText.Kernel.Pdf.PdfBoolean">pdf boolean</see>.
+        /// </returns>
         public virtual PdfBoolean GetEditable() {
             return GetPdfObject().GetAsBoolean(PdfName.E);
         }
 
+        /// <summary>Converts string to appropriate pdf value.</summary>
+        /// <param name="value">is a plain string representation of the value</param>
+        /// <returns>
+        /// resulting
+        /// <see cref="iText.Kernel.Pdf.PdfObject">PDF object</see>
+        /// </returns>
         public virtual PdfObject GetValue(String value) {
             switch (subType) {
                 case TEXT: {
@@ -217,8 +244,8 @@ namespace iText.Kernel.Pdf.Collection {
                     return new PdfNumber(Double.Parse(value.Trim(), System.Globalization.CultureInfo.InvariantCulture));
                 }
             }
-            throw new PdfException(PdfException._1IsNotAnAcceptableValueForTheField2).SetMessageParams(value, GetPdfObject
-                ().GetAsName(PdfName.N).GetValue());
+            throw new PdfException(KernelExceptionMessageConstant.UNACCEPTABLE_FIELD_VALUE).SetMessageParams(value, GetPdfObject
+                ().GetAsString(PdfName.N).GetValue());
         }
 
         protected internal override bool IsWrappedObjectMustBeIndirect() {

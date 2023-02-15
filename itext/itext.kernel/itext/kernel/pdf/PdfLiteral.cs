@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,8 +42,9 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
+using iText.Commons.Utils;
 using iText.IO.Font;
-using iText.IO.Util;
+using iText.Kernel.Utils;
 
 namespace iText.Kernel.Pdf {
     public class PdfLiteral : PdfPrimitiveObject {
@@ -73,7 +74,8 @@ namespace iText.Kernel.Pdf {
 
         public override String ToString() {
             if (content != null) {
-                return iText.IO.Util.JavaUtil.GetStringForBytes(content);
+                return iText.Commons.Utils.JavaUtil.GetStringForBytes(content, iText.Commons.Utils.EncodingUtil.ISO_8859_1
+                    );
             }
             else {
                 return "";
@@ -108,8 +110,8 @@ namespace iText.Kernel.Pdf {
             return new iText.Kernel.Pdf.PdfLiteral();
         }
 
-        protected internal override void CopyContent(PdfObject from, PdfDocument document) {
-            base.CopyContent(from, document);
+        protected internal override void CopyContent(PdfObject from, PdfDocument document, ICopyFilter copyFilter) {
+            base.CopyContent(from, document, copyFilter);
             iText.Kernel.Pdf.PdfLiteral literal = (iText.Kernel.Pdf.PdfLiteral)from;
             this.content = literal.GetInternalContent();
         }

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -47,18 +47,22 @@ namespace iText.StyledXmlParser.Css.Validate.Impl.Datatype {
     /// <summary>
     /// <see cref="iText.StyledXmlParser.Css.Validate.ICssDataTypeValidator"/>
     /// implementation for identifiers.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="iText.StyledXmlParser.Css.Validate.ICssDataTypeValidator"/>
+    /// implementation for identifiers.
     /// In CSS, identifiers (including element names, classes, and IDs in selectors) can contain only the characters [a-zA-Z0-9]
     /// and ISO 10646 characters U+00A0 and higher, plus the hyphen (-) and the underscore (_);
     /// they cannot start with a digit, two hyphens, or a hyphen followed by a digit.
     /// Identifiers can also contain escaped characters and any ISO 10646 character as a numeric code (see next item).
     /// For instance, the identifier "B&amp;W?" may be written as "B\&amp;W\?" or "B\26 W\3F".
-    /// </summary>
+    /// </remarks>
     public class CssIdentifierValidator : ICssDataTypeValidator {
         /* (non-Javadoc)
         * @see com.itextpdf.styledxmlparser.css.validate.ICssDataTypeValidator#isValid(java.lang.String)
         */
         public virtual bool IsValid(String objectString) {
-            // TODO now the validation is very lenient. Make it more strict
+            // TODO DEVSIX-3969: now the validation is very lenient. Make it more strict
             if (objectString.Length >= 2 && objectString.StartsWith("--")) {
                 return false;
             }

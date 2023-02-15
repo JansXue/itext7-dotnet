@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,7 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using iText.IO.Util;
+using iText.Commons.Utils;
 
 namespace iText.Kernel.Pdf.Tagging {
     /// <summary>
@@ -53,13 +53,15 @@ namespace iText.Kernel.Pdf.Tagging {
     /// This class encapsulates information about the standard structure namespaces and provides some utility methods
     /// connected to them. The main purpose of this class is to determine if the given role in the specified namespace
     /// belongs to the standard or known domain-specific namespace.
-    /// <p>See ISO 32000-2 14.8.6, "Standard structure namespaces"</p>
+    /// <para />
+    /// See ISO 32000-2 14.8.6, "Standard structure namespaces"
     /// </remarks>
     public sealed class StandardNamespaces {
         private static readonly ICollection<String> STD_STRUCT_NAMESPACE_1_7_TYPES;
 
         private static readonly ICollection<String> STD_STRUCT_NAMESPACE_2_0_TYPES;
 
+        // other namespaces
         private const String MATH_ML = "http://www.w3.org/1998/Math/MathML";
 
         /// <summary>Specifies the name of the standard structure namespace for PDF 1.7</summary>
@@ -69,25 +71,26 @@ namespace iText.Kernel.Pdf.Tagging {
         public const String PDF_2_0 = "http://iso.org/pdf2/ssn";
 
         static StandardNamespaces() {
-            // other namespaces
-            STD_STRUCT_NAMESPACE_1_7_TYPES = new HashSet<String>(JavaUtil.ArraysAsList(StandardRoles.DOCUMENT, StandardRoles
-                .PART, StandardRoles.DIV, StandardRoles.P, StandardRoles.H, StandardRoles.H1, StandardRoles.H2, StandardRoles
-                .H3, StandardRoles.H4, StandardRoles.H5, StandardRoles.H6, StandardRoles.LBL, StandardRoles.SPAN, StandardRoles
+            STD_STRUCT_NAMESPACE_1_7_TYPES = JavaCollectionsUtil.UnmodifiableSet(new HashSet<String>(JavaUtil.ArraysAsList
+                (StandardRoles.DOCUMENT, StandardRoles.PART, StandardRoles.DIV, StandardRoles.P, StandardRoles.H, StandardRoles
+                .H1, StandardRoles.H2, StandardRoles.H3, StandardRoles.H4, StandardRoles.H5, StandardRoles.H6, StandardRoles
+                .LBL, StandardRoles.SPAN, StandardRoles.LINK, StandardRoles.ANNOT, StandardRoles.FORM, StandardRoles.RUBY
+                , StandardRoles.RB, StandardRoles.RT, StandardRoles.RP, StandardRoles.WARICHU, StandardRoles.WT, StandardRoles
+                .WP, StandardRoles.L, StandardRoles.LI, StandardRoles.LBODY, StandardRoles.TABLE, StandardRoles.TR, StandardRoles
+                .TH, StandardRoles.TD, StandardRoles.THEAD, StandardRoles.TBODY, StandardRoles.TFOOT, StandardRoles.CAPTION
+                , StandardRoles.FIGURE, StandardRoles.FORMULA, StandardRoles.SECT, StandardRoles.ART, StandardRoles.BLOCKQUOTE
+                , StandardRoles.TOC, StandardRoles.TOCI, StandardRoles.INDEX, StandardRoles.NONSTRUCT, StandardRoles.PRIVATE
+                , StandardRoles.QUOTE, StandardRoles.NOTE, StandardRoles.REFERENCE, StandardRoles.BIBENTRY, StandardRoles
+                .CODE)));
+            STD_STRUCT_NAMESPACE_2_0_TYPES = JavaCollectionsUtil.UnmodifiableSet(new HashSet<String>(JavaUtil.ArraysAsList
+                (StandardRoles.DOCUMENT, StandardRoles.DOCUMENTFRAGMENT, StandardRoles.PART, StandardRoles.SECT, StandardRoles
+                .NONSTRUCT, StandardRoles.DIV, StandardRoles.ASIDE, StandardRoles.TITLE, StandardRoles.SUB, StandardRoles
+                .P, StandardRoles.H, StandardRoles.LBL, StandardRoles.EM, StandardRoles.STRONG, StandardRoles.SPAN, StandardRoles
                 .LINK, StandardRoles.ANNOT, StandardRoles.FORM, StandardRoles.RUBY, StandardRoles.RB, StandardRoles.RT
-                , StandardRoles.RP, StandardRoles.WARICHU, StandardRoles.WT, StandardRoles.WP, StandardRoles.L, StandardRoles
-                .LI, StandardRoles.LBODY, StandardRoles.TABLE, StandardRoles.TR, StandardRoles.TH, StandardRoles.TD, StandardRoles
-                .THEAD, StandardRoles.TBODY, StandardRoles.TFOOT, StandardRoles.CAPTION, StandardRoles.FIGURE, StandardRoles
-                .FORMULA, StandardRoles.SECT, StandardRoles.ART, StandardRoles.BLOCKQUOTE, StandardRoles.TOC, StandardRoles
-                .TOCI, StandardRoles.INDEX, StandardRoles.NONSTRUCT, StandardRoles.PRIVATE, StandardRoles.QUOTE, StandardRoles
-                .NOTE, StandardRoles.REFERENCE, StandardRoles.BIBENTRY, StandardRoles.CODE));
-            STD_STRUCT_NAMESPACE_2_0_TYPES = new HashSet<String>(JavaUtil.ArraysAsList(StandardRoles.DOCUMENT, StandardRoles
-                .DOCUMENTFRAGMENT, StandardRoles.PART, StandardRoles.DIV, StandardRoles.ASIDE, StandardRoles.TITLE, StandardRoles
-                .SUB, StandardRoles.P, StandardRoles.H, StandardRoles.LBL, StandardRoles.EM, StandardRoles.STRONG, StandardRoles
-                .SPAN, StandardRoles.LINK, StandardRoles.ANNOT, StandardRoles.FORM, StandardRoles.RUBY, StandardRoles.
-                RB, StandardRoles.RT, StandardRoles.RP, StandardRoles.WARICHU, StandardRoles.WT, StandardRoles.WP, StandardRoles
-                .FENOTE, StandardRoles.L, StandardRoles.LI, StandardRoles.LBODY, StandardRoles.TABLE, StandardRoles.TR
-                , StandardRoles.TH, StandardRoles.TD, StandardRoles.THEAD, StandardRoles.TBODY, StandardRoles.TFOOT, StandardRoles
-                .CAPTION, StandardRoles.FIGURE, StandardRoles.FORMULA, StandardRoles.ARTIFACT));
+                , StandardRoles.RP, StandardRoles.WARICHU, StandardRoles.WT, StandardRoles.WP, StandardRoles.FENOTE, StandardRoles
+                .L, StandardRoles.LI, StandardRoles.LBODY, StandardRoles.TABLE, StandardRoles.TR, StandardRoles.TH, StandardRoles
+                .TD, StandardRoles.THEAD, StandardRoles.TBODY, StandardRoles.TFOOT, StandardRoles.CAPTION, StandardRoles
+                .FIGURE, StandardRoles.FORMULA, StandardRoles.ARTIFACT)));
         }
 
         // Hn, this type is handled in roleBelongsToStandardNamespace method
@@ -96,8 +99,7 @@ namespace iText.Kernel.Pdf.Tagging {
         /// Gets the name of the default standard structure namespace. When a namespace is not
         /// explicitly specified for a given structure element or attribute, it shall be assumed to be within this
         /// default standard structure namespace. According to ISO 32000-2 default namespace is
-        /// <see cref="PDF_1_7"/>
-        /// .
+        /// <see cref="PDF_1_7"/>.
         /// </remarks>
         /// <returns>the name of the default standard structure namespace.</returns>
         public static String GetDefault() {
@@ -158,7 +160,8 @@ namespace iText.Kernel.Pdf.Tagging {
         public static bool IsHnRole(String role) {
             if (role.StartsWith("H") && role.Length > 1 && role[1] != '0') {
                 try {
-                    return Convert.ToInt32(role.JSubstring(1, role.Length)) > 0;
+                    return Convert.ToInt32(role.JSubstring(1, role.Length), System.Globalization.CultureInfo.InvariantCulture)
+                         > 0;
                 }
                 catch (Exception) {
                 }

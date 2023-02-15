@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,17 +43,36 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using System.Text;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
 using iText.IO.Font;
 using iText.IO.Font.Cmap;
 using iText.IO.Util;
 using iText.Kernel.Pdf;
 
 namespace iText.Kernel.Font {
-    internal class FontUtil {
+    public class FontUtil {
+        private static readonly RNGCryptoServiceProvider NUMBER_GENERATOR = new RNGCryptoServiceProvider();
+
         private static readonly Dictionary<String, CMapToUnicode> uniMaps = new Dictionary<String, CMapToUnicode>(
             );
+
+        private FontUtil() {
+        }
+
+        public static String AddRandomSubsetPrefixForFontName(String fontName) {
+            StringBuilder newFontName = new StringBuilder(fontName.Length + 7);
+            byte[] randomByte = new byte[1];
+            for (int k = 0; k < 6; ++k) {
+                NUMBER_GENERATOR.GetBytes(randomByte);
+                newFontName.Append((char)(Math.Abs(randomByte[0] % 26) + 'A'));
+            }
+            newFontName.Append('+').Append(fontName);
+            return newFontName.ToString();
+        }
 
         internal static CMapToUnicode ProcessToUnicode(PdfObject toUnicode) {
             CMapToUnicode cMapToUnicode = null;
@@ -65,8 +84,8 @@ namespace iText.Kernel.Font {
                     CMapParser.ParseCid("", cMapToUnicode, lb);
                 }
                 catch (Exception) {
-                    ILog logger = LogManager.GetLogger(typeof(CMapToUnicode));
-                    logger.Error(iText.IO.LogMessageConstant.UNKNOWN_ERROR_WHILE_PROCESSING_CMAP);
+                    ILogger logger = ITextLogManager.GetLogger(typeof(CMapToUnicode));
+                    logger.LogError(iText.IO.Logs.IoLogMessageConstant.UNKNOWN_ERROR_WHILE_PROCESSING_CMAP);
                     cMapToUnicode = CMapToUnicode.EmptyCMapToUnicodeMap;
                 }
             }
@@ -112,12 +131,10 @@ namespace iText.Kernel.Font {
 
         internal static int[] ConvertSimpleWidthsArray(PdfArray widthsArray, int first, int missingWidth) {
             int[] res = new int[256];
-            for (int i = 0; i < res.Length; i++) {
-                res[i] = missingWidth;
-            }
+            JavaUtil.Fill(res, missingWidth);
             if (widthsArray == null) {
-                ILog logger = LogManager.GetLogger(typeof(FontUtil));
-                logger.Warn(iText.IO.LogMessageConstant.FONT_DICTIONARY_WITH_NO_WIDTHS);
+                ILogger logger = ITextLogManager.GetLogger(typeof(iText.Kernel.Font.FontUtil));
+                logger.LogWarning(iText.IO.Logs.IoLogMessageConstant.FONT_DICTIONARY_WITH_NO_WIDTHS);
                 return res;
             }
             for (int i = 0; i < widthsArray.Size() && first + i < 256; i++) {

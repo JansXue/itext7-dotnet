@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,6 +43,7 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
+using iText.Barcodes.Exceptions;
 using iText.Barcodes.Qrcode;
 using iText.Kernel.Colors;
 using iText.Kernel.Geom;
@@ -142,14 +143,14 @@ namespace iText.Barcodes {
             return PlaceBarcode(canvas, foreground, DEFAULT_MODULE_SIZE);
         }
 
-        /// <summary>* Places the barcode in a <CODE>PdfCanvas</CODE>.</summary>
+        /// <summary>* Places the barcode in a <c>PdfCanvas</c>.</summary>
         /// <remarks>
-        /// * Places the barcode in a <CODE>PdfCanvas</CODE>. The
+        /// * Places the barcode in a <c>PdfCanvas</c>. The
         /// barcode is always placed at coordinates (0, 0). Use the
         /// translation matrix to move it elsewhere.
         /// </remarks>
-        /// <param name="canvas">the <CODE>PdfCanvas</CODE> where the barcode will be placed</param>
-        /// <param name="foreground">the foreground color. It can be <CODE>null</CODE></param>
+        /// <param name="canvas">the <c>PdfCanvas</c> where the barcode will be placed</param>
+        /// <param name="foreground">the foreground color. It can be <c>null</c></param>
         /// <param name="moduleSide">the size of the square grid cell</param>
         /// <returns>the dimensions the barcode occupies</returns>
         public virtual Rectangle PlaceBarcode(PdfCanvas canvas, Color foreground, float moduleSide) {
@@ -172,14 +173,14 @@ namespace iText.Barcodes {
         }
 
         /// <summary>Creates a PdfFormXObject with the barcode.</summary>
-        /// <param name="foreground">the color of the pixels. It can be <CODE>null</CODE></param>
+        /// <param name="foreground">the color of the pixels. It can be <c>null</c></param>
         /// <returns>the XObject.</returns>
         public override PdfFormXObject CreateFormXObject(Color foreground, PdfDocument document) {
             return CreateFormXObject(foreground, DEFAULT_MODULE_SIZE, document);
         }
 
         /// <summary>Creates a PdfFormXObject with the barcode.</summary>
-        /// <param name="foreground">The color of the pixels. It can be <CODE>null</CODE></param>
+        /// <param name="foreground">The color of the pixels. It can be <c>null</c></param>
         /// <param name="moduleSize">The size of the pixels.</param>
         /// <param name="document">The document</param>
         /// <returns>the XObject.</returns>

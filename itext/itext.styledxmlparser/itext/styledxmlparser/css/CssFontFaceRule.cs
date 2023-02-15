@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,8 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.Text;
-using iText.IO.Util;
+using iText.Layout.Font;
+using iText.StyledXmlParser.Css.Util;
 
 namespace iText.StyledXmlParser.Css {
     /// <summary>Class to store a CSS font face At rule.</summary>
@@ -52,14 +53,16 @@ namespace iText.StyledXmlParser.Css {
         private IList<CssDeclaration> properties;
 
         /// <summary>Instantiates a new CSS font face rule.</summary>
-        /// <param name="ruleParameters">the rule parameters</param>
-        public CssFontFaceRule(String ruleParameters)
-            : base(CssRuleName.FONT_FACE, ruleParameters) {
+        public CssFontFaceRule()
+            : base(CssRuleName.FONT_FACE, "") {
         }
 
         /// <summary>Gets the properties.</summary>
         /// <returns>the properties</returns>
         public virtual IList<CssDeclaration> GetProperties() {
+            if (properties == null) {
+                return new List<CssDeclaration>();
+            }
             return new List<CssDeclaration>(properties);
         }
 
@@ -75,16 +78,24 @@ namespace iText.StyledXmlParser.Css {
         */
         public override String ToString() {
             StringBuilder sb = new StringBuilder();
-            sb.Append(MessageFormatUtil.Format("@{0} ", ruleName));
-            sb.Append("{");
-            sb.Append("\n");
-            foreach (CssDeclaration declaration in properties) {
+            sb.Append("@").Append(GetRuleName()).Append(" {").Append("\n");
+            foreach (CssDeclaration declaration in GetProperties()) {
                 sb.Append("    ");
                 sb.Append(declaration);
-                sb.Append("\n");
+                sb.Append(";\n");
             }
             sb.Append("}");
             return sb.ToString();
+        }
+
+        public virtual Range ResolveUnicodeRange() {
+            Range range = null;
+            foreach (CssDeclaration descriptor in GetProperties()) {
+                if ("unicode-range".Equals(descriptor.GetProperty())) {
+                    range = CssUtils.ParseUnicodeRange(descriptor.GetExpression());
+                }
+            }
+            return range;
         }
     }
 }

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -47,7 +47,10 @@ using iText.Test;
 
 namespace iText.StyledXmlParser.Resolver.Resource {
     public class UriResolverTest : ExtendedITextTest {
-        /// <exception cref="Java.Net.MalformedURLException"/>
+        
+        public static readonly String SOURCE_FOLDER = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
+            .CurrentContext.TestDirectory) + "/resources/com/itextpdfstyledxmlparser/resolver/resource/UriResolverTest/";
+
         [NUnit.Framework.Test]
         public virtual void UriResolverTest01() {
             String absolutePathRoot = new Uri(new Uri("file://"), Path.GetPathRoot(Directory.GetCurrentDirectory())).ToExternalForm();
@@ -56,7 +59,6 @@ namespace iText.StyledXmlParser.Resolver.Resource {
             TestPaths(absolutePathRoot, resolver);
         }
 
-        /// <exception cref="Java.Net.MalformedURLException"/>
         [NUnit.Framework.Test]
         public virtual void UriResolverTest01A() {
             String absolutePathRoot = new Uri(new Uri("file://"), Path.GetPathRoot(Directory.GetCurrentDirectory())).ToExternalForm();
@@ -65,7 +67,6 @@ namespace iText.StyledXmlParser.Resolver.Resource {
             TestPaths(absolutePathRoot, resolver);
         }
 
-        /// <exception cref="Java.Net.MalformedURLException"/>
         [NUnit.Framework.Test]
         public virtual void UriResolverTest02() {
             UriResolver resolver = new UriResolver("test/folder/index.html");
@@ -73,7 +74,6 @@ namespace iText.StyledXmlParser.Resolver.Resource {
             TestPaths(runFolder, resolver);
         }
 
-        /// <exception cref="Java.Net.MalformedURLException"/>
         [NUnit.Framework.Test]
         public virtual void UriResolverTest03() {
             UriResolver resolver = new UriResolver("/test/folder/index.html");
@@ -81,7 +81,6 @@ namespace iText.StyledXmlParser.Resolver.Resource {
             TestPaths(rootFolder, resolver);
         }
 
-        /// <exception cref="Java.Net.MalformedURLException"/>
         [NUnit.Framework.Test]
         public virtual void UriResolverTest04() {
             UriResolver resolver = new UriResolver("index.html");
@@ -97,7 +96,6 @@ namespace iText.StyledXmlParser.Resolver.Resource {
 //                ).ToExternalForm());
         }
 
-        /// <exception cref="Java.Net.MalformedURLException"/>
         [NUnit.Framework.Test]
         public virtual void UriResolverTest05() {
             UriResolver resolver = new UriResolver("/../test/folder/index.html");
@@ -105,15 +103,22 @@ namespace iText.StyledXmlParser.Resolver.Resource {
             TestPaths(rootFolder, resolver);
         }
 
-        /// <exception cref="Java.Net.MalformedURLException"/>
         [NUnit.Framework.Test]
         public virtual void UriResolverTest06() {
             UriResolver resolver = new UriResolver("../test/folder/index.html");
             String parentFolder = new Uri(Directory.GetParent(Directory.GetCurrentDirectory()).FullName).ToExternalForm() + "/";
             TestPaths(parentFolder, resolver);
         }
+        
+        [NUnit.Framework.Test]
+        public virtual void ResolveAgainstBaseUriTest() {
+            String baseUrl = "https://test";
+            UriResolver resolver = new UriResolver(SOURCE_FOLDER);
+        resolver.ResolveAgainstBaseUri(baseUrl);
+        NUnit.Framework.Assert.IsTrue(resolver.IsLocalBaseUri());
+        NUnit.Framework.Assert.IsTrue(resolver.GetBaseUri().StartsWith("file:"));
+    }
 
-        /// <exception cref="Java.Net.MalformedURLException"/>
         [NUnit.Framework.Test]
         public virtual void UriResolverTest07() {
             UriResolver resolver = new UriResolver("http://itextpdf.com/itext7");
@@ -157,7 +162,6 @@ namespace iText.StyledXmlParser.Resolver.Resource {
 //                ("//folder2/innerTest2").ToExternalForm());
         }
 
-        /// <exception cref="Java.Net.MalformedURLException"/>
         [NUnit.Framework.Test]
         public virtual void UriResolverTest08() {
             UriResolver resolver = new UriResolver("http://itextpdf.com/itext7/");
@@ -170,7 +174,6 @@ namespace iText.StyledXmlParser.Resolver.Resource {
                 ).ToExternalForm());
         }
 
-        /// <exception cref="Java.Net.MalformedURLException"/>
         [NUnit.Framework.Test]
         public virtual void UriResolverTest09() {
             Uri absoluteBaseUri = new Uri(new Uri("file://"), Path.GetPathRoot(Directory.GetCurrentDirectory()) + "test/folder/index.html");
@@ -228,7 +231,6 @@ namespace iText.StyledXmlParser.Resolver.Resource {
             TestPaths(malformedPath, resolver);
         }
 
-        /// <exception cref="Java.Net.MalformedURLException"/>
         [NUnit.Framework.Test]
         public virtual void UriResolverTest13() {
             UriResolver resolver = new UriResolver("");
@@ -246,25 +248,31 @@ namespace iText.StyledXmlParser.Resolver.Resource {
 //                ).ToExternalForm());
         }
 
-        /// <exception cref="Java.Net.MalformedURLException"/>
         [NUnit.Framework.Test]
         public virtual void UriResolverTest14() {
             UriResolver resolver = new UriResolver("base/uri/index.html");
             String runFolder = new Uri(Path.GetFullPath(Directory.GetCurrentDirectory() )).ToExternalForm() + "/";
             NUnit.Framework.Assert.AreEqual(runFolder + "base/uri/index.html", resolver.GetBaseUri());
-            NUnit.Framework.Assert.AreEqual("file:///c:/test/folder/img.txt", resolver.ResolveAgainstBaseUri("file:/c:/test/folder/img.txt"
-                ).ToExternalForm());
+            
+            String firstUriResolvingResult = resolver.ResolveAgainstBaseUri("file:/c:/test/folder/img.txt")
+                .ToExternalForm();
+            String expectedUriWithSingleSlash = "file:/c:/test/folder/img.txt";
+            String expectedUriWithTripleSlash = "file:///c:/test/folder/img.txt";
+            NUnit.Framework.Assert.True(expectedUriWithSingleSlash.Equals(firstUriResolvingResult) 
+                                        || expectedUriWithTripleSlash.Equals(firstUriResolvingResult));
             NUnit.Framework.Assert.AreEqual("file:///c:/test/folder/img.txt", resolver.ResolveAgainstBaseUri("file://c:/test/folder/img.txt"
                 ).ToExternalForm());
-            NUnit.Framework.Assert.AreEqual("file:///c:/test/folder/data.jpg", resolver.ResolveAgainstBaseUri("file:///c:/test/folder/data.jpg"
-                ).ToExternalForm());
+            
+            String thirdUriResolvingResult = resolver.ResolveAgainstBaseUri("file:///c:/test/folder/img.txt")
+                .ToExternalForm();
+            // Result of resolving uri with triple slash should be the same as if it contained single slash.
+            NUnit.Framework.Assert.AreEqual(firstUriResolvingResult, thirdUriResolvingResult);
         }
 
 
         // It is windows specific to assume this to work. On unix it shall fail, as it will assume that it is
         // an absolute URI with scheme 'c', and will not recognize this scheme.
         // Assert.assertEquals("file:/c:/test/folder/data.jpg", resolver.resolveAgainstBaseUri("c:/test/folder/data.jpg").toExternalForm());
-        /// <exception cref="Java.Net.MalformedURLException"/>
         [NUnit.Framework.Test]
         public virtual void UriResolverTest15() {
             String absolutePathRoot = new Uri(new Uri("file://"), Path.GetPathRoot(Directory.GetCurrentDirectory())).ToString();
@@ -273,7 +281,6 @@ namespace iText.StyledXmlParser.Resolver.Resource {
             TestPaths(absolutePathRoot, resolver);
         }
 
-        /// <exception cref="Java.Net.MalformedURLException"/>
         [NUnit.Framework.Test]
         public virtual void UriResolverTest16() {
             String absolutePathRoot = new Uri(new Uri("file://"), Path.GetPathRoot(Directory.GetCurrentDirectory())).ToString();
@@ -318,8 +325,7 @@ namespace iText.StyledXmlParser.Resolver.Resource {
 //            NUnit.Framework.Assert.AreNotEqual(uriRoot + "test/folder/folder2/innerTest2", resolver.ResolveAgainstBaseUri
 //                ("//folder2/innerTest2").ToExternalForm());
         }
-
-        // the whitespace characters are
+        
         [NUnit.Framework.Test]
         public virtual void UriResolverTest16C() {
             String absolutePathRoot = new Uri(new Uri("file://"), Path.GetPathRoot(Directory.GetCurrentDirectory())).ToString();
@@ -354,7 +360,6 @@ namespace iText.StyledXmlParser.Resolver.Resource {
         }
 
         // the whitespace characters are
-        /// <exception cref="Java.Net.MalformedURLException"/>
         [NUnit.Framework.Test]
         public virtual void UriResolverTest17()
         {
@@ -380,6 +385,57 @@ namespace iText.StyledXmlParser.Resolver.Resource {
             UriResolver resolver = new UriResolver(absoluteBaseUri);
            
             NUnit.Framework.Assert.IsFalse(resolver.IsLocalBaseUri());
+        }
+        
+        [NUnit.Framework.Test]
+        public void SingleQuoteRelativePath() {
+            String expectedUrl = "https://he.wikipedia.org/wiki/%D7%90%D7%91%D7%92'%D7%93";
+            String baseUri = "https://he.wikipedia.org/wiki/";
+            String relativePath = "%D7%90%D7%91%D7%92'%D7%93";
+            UriResolver resolver = new UriResolver(baseUri);
+
+            NUnit.Framework.Assert.AreEqual(expectedUrl, resolver.ResolveAgainstBaseUri(relativePath).ToExternalForm());
+    }
+        
+        [NUnit.Framework.Test]
+        [NUnit.Framework.Ignore("DEVSIX-2880: single quote character isn't encoded in Java and .NET 4.0, but it's encoded in .NETCoreApp 1.0" +
+        " from single quote to %27")]
+        public void quoteInPercentsRelativePath() {
+            String expectedUrl = "https://he.wikipedia.org/wiki/%D7%90%D7%91%D7%92%27%D7%93";
+            String baseUri = "https://he.wikipedia.org/wiki/";
+            String relativePath = "%D7%90%D7%91%D7%92%27%D7%93";
+            UriResolver resolver = new UriResolver(baseUri);
+
+            NUnit.Framework.Assert.AreEqual(expectedUrl, resolver.ResolveAgainstBaseUri(relativePath).ToExternalForm());
+    }
+        
+        [NUnit.Framework.Test]
+        public void singleQuoteBasePath() {
+            String expectedUrl = "https://he.wikipedia.org/wiki'/%D7%90%D7%91%D7%92%D7%93";
+            String baseUri = "https://he.wikipedia.org/wiki'/";
+            String relativePath = "%D7%90%D7%91%D7%92%D7%93";
+            UriResolver resolver = new UriResolver(baseUri);
+
+            NUnit.Framework.Assert.AreEqual(expectedUrl, resolver.ResolveAgainstBaseUri(relativePath).ToExternalForm());
+    }
+        
+        [NUnit.Framework.Test]
+        [NUnit.Framework.Ignore("DEVSIX-2880: single quote character isn't encoded in Java and .NET 4.0, but it's encoded in .NETCoreApp 1.0" +
+                                " from single quote to %27")]
+        public void quoteInPercentsBasePath() {
+            String expectedUrl = "https://he.wikipedia.org/wiki%27/%D7%90%D7%91%D7%92%D7%93";
+            String baseUri = "https://he.wikipedia.org/wiki%27/";
+            String relativePath = "%D7%90%D7%91%D7%92%D7%93";
+            UriResolver resolver = new UriResolver(baseUri);
+
+            NUnit.Framework.Assert.AreEqual(expectedUrl, resolver.ResolveAgainstBaseUri(relativePath).ToExternalForm());
+    }
+        
+        [NUnit.Framework.Test]
+        public void UriResolverPercentSignTest() {
+            String absolutePathRoot = new Uri(new Uri("file://"), Path.GetPathRoot(Directory.GetCurrentDirectory())).ToString();
+            UriResolver resolver = new UriResolver(absolutePathRoot + "%homepath%");
+            NUnit.Framework.Assert.AreEqual(absolutePathRoot + "%25homepath%25", resolver.GetBaseUri());
         }
         
         private void TestPaths(String absolutePathRoot, UriResolver resolver)

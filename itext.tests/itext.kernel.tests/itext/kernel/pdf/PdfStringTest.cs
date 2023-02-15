@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -47,6 +47,7 @@ using iText.IO.Font.Constants;
 using iText.IO.Image;
 using iText.Kernel.Colors;
 using iText.Kernel.Font;
+using iText.Kernel.Geom;
 using iText.Kernel.Pdf.Canvas;
 using iText.Kernel.Pdf.Canvas.Parser;
 using iText.Kernel.Pdf.Canvas.Parser.Listener;
@@ -57,6 +58,7 @@ using iText.Test;
 using iText.Test.Attributes;
 
 namespace iText.Kernel.Pdf {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class PdfStringTest : ExtendedITextTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/kernel/pdf/PdfStringTest/";
@@ -69,8 +71,6 @@ namespace iText.Kernel.Pdf {
             CreateDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TestPdfDocumentInfoStringEncoding01() {
             String fileName = "testPdfDocumentInfoStringEncoding01.pdf";
@@ -98,8 +98,6 @@ namespace iText.Kernel.Pdf {
                  + "cmp_" + fileName, destinationFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TestUnicodeString() {
             String unicode = "Привет!";
@@ -107,8 +105,6 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.AreNotEqual(unicode, @string.ToUnicodeString());
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ReadUtf8ActualText() {
             String filename = sourceFolder + "utf-8-actual-text.pdf";
@@ -121,10 +117,8 @@ namespace iText.Kernel.Pdf {
                 , text);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.EXISTING_TAG_STRUCTURE_ROOT_IS_NOT_STANDARD)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.EXISTING_TAG_STRUCTURE_ROOT_IS_NOT_STANDARD)]
         public virtual void ReadUtf8AltText() {
             String filename = sourceFolder + "utf-8-alt-text.pdf";
             PdfDocument pdfDoc = new PdfDocument(new PdfReader(filename), new PdfWriter(destinationFolder + "whatever"
@@ -138,8 +132,6 @@ namespace iText.Kernel.Pdf {
                  + "\u043E\u0434\u0438\u0441\u0441\u0435\u044F)", alternateDescription);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ReadUtf8Bookmarks() {
             String filename = sourceFolder + "utf-8-bookmarks.pdf";
@@ -167,8 +159,6 @@ namespace iText.Kernel.Pdf {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ReadUtf8PageLabelPrefix() {
             String filename = sourceFolder + "utf-8-page-label-prefix.pdf";
@@ -182,8 +172,6 @@ namespace iText.Kernel.Pdf {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void WriteUtf8AltText() {
             String RESOURCE = sourceFolder + "Space Odyssey.jpg";
@@ -200,7 +188,7 @@ namespace iText.Kernel.Pdf {
                  + "\u043E\u0434\u0438\u0441\u0441\u0435\u044F)", PdfEncodings.UTF8));
             ImageData img = ImageDataFactory.Create(RESOURCE);
             canvas.OpenTag(tagPointer.GetTagReference());
-            canvas.AddImage(img, 36, 700, 100, false, false);
+            canvas.AddImageFittedIntoRectangle(img, new Rectangle(36, 700, 65, 100), false);
             canvas.CloseTag();
             canvas.EndText();
             pdfDoc.Close();
@@ -208,8 +196,6 @@ namespace iText.Kernel.Pdf {
                 , sourceFolder + "cmp_writeUtf8AltText.pdf", destinationFolder, "diffAltText_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void WriteUtf8Bookmarks() {
             PdfDocument pdfDoc = new PdfDocument(new PdfWriter(destinationFolder + "writeUtf8Bookmarks.pdf"));
@@ -241,8 +227,6 @@ namespace iText.Kernel.Pdf {
                 , sourceFolder + "cmp_writeUtf8Bookmarks.pdf", destinationFolder, "diffBookmarks_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void WriteUtf8PageLabelPrefix() {
             PdfDocument pdfDoc = new PdfDocument(new PdfWriter(destinationFolder + "writeUtf8PageLabelPrefix.pdf"));
@@ -265,8 +249,6 @@ namespace iText.Kernel.Pdf {
                 , sourceFolder + "cmp_writeUtf8PageLabelPrefix.pdf", destinationFolder, "diffPageLabelPrefix_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void WriteUtf8ActualText() {
             PdfDocument pdfDoc = new PdfDocument(new PdfWriter(destinationFolder + "writeUtf8ActualText.pdf"));

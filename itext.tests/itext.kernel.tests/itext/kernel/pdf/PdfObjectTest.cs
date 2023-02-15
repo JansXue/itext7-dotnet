@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,9 +42,12 @@ address: sales@itextpdf.com
 */
 using System.Collections.Generic;
 using System.IO;
+using iText.Test;
+using iText.Test.Attributes;
 
 namespace iText.Kernel.Pdf {
-    public class PdfObjectTest {
+    [NUnit.Framework.Category("IntegrationTest")]
+    public class PdfObjectTest : ExtendedITextTest {
         [NUnit.Framework.Test]
         public virtual void IndirectsChain1() {
             PdfDocument document = new PdfDocument(new PdfWriter(new MemoryStream()));
@@ -145,7 +148,6 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.AreEqual(false, !reference.IsFree(), "Not IsInUse");
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void PdtIndirectReferenceLateInitializing1() {
             MemoryStream baos = new MemoryStream();
@@ -168,8 +170,11 @@ namespace iText.Kernel.Pdf {
             document.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.FLUSHED_OBJECT_CONTAINS_REFERENCE_WHICH_NOT_REFER_TO_ANY_OBJECT
+            )]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.INDIRECT_REFERENCE_USED_IN_FLUSHED_OBJECT_MADE_FREE)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.XREF_ERROR_WHILE_READING_TABLE_WILL_BE_REBUILT)]
         public virtual void PdtIndirectReferenceLateInitializing2() {
             MemoryStream baos = new MemoryStream();
             PdfDocument document = new PdfDocument(new PdfWriter(baos));
@@ -192,8 +197,10 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.IsTrue(object2 is PdfArray);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.FLUSHED_OBJECT_CONTAINS_REFERENCE_WHICH_NOT_REFER_TO_ANY_OBJECT
+            )]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.INDIRECT_REFERENCE_USED_IN_FLUSHED_OBJECT_MADE_FREE)]
         public virtual void PdtIndirectReferenceLateInitializing3() {
             PdfDocument document = new PdfDocument(new PdfWriter(new MemoryStream()));
             document.AddNewPage();

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,7 +45,7 @@ using System;
 using System.Text;
 
 namespace iText.Barcodes.Qrcode {
-    /// <summary><p>A simple, fast array of bits, represented compactly by an array of ints internally.</p></summary>
+    /// <summary>A simple, fast array of bits, represented compactly by an array of ints internally.</summary>
     /// <author>Sean Owen</author>
     internal sealed class BitArray {
         private int[] bits;
@@ -105,17 +105,16 @@ namespace iText.Barcodes.Qrcode {
         /// <param name="end">end of range, exclusive</param>
         /// <param name="value">if true, checks that bits in range are set, otherwise checks that they are not set</param>
         /// <returns>true iff all bits are set or not set in range, according to value argument</returns>
-        /// <exception cref="System.ArgumentException">if end is less than or equal to start</exception>
         public bool IsRange(int start, int end, bool value) {
             if (end < start) {
                 throw new ArgumentException();
             }
             if (end == start) {
+                // empty range matches
                 return true;
             }
-            // empty range matches
-            end--;
             // will be easier to treat this as the last actually set bit -- inclusive
+            end--;
             int firstInt = start >> 5;
             int lastInt = end >> 5;
             for (int i = firstInt; i <= lastInt; i++) {

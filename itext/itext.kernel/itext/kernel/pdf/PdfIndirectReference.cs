@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,8 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Text;
-using iText.IO.Util;
+using iText.Commons.Utils;
+using iText.Kernel.Utils;
 
 namespace iText.Kernel.Pdf {
     public class PdfIndirectReference : PdfObject, IComparable<iText.Kernel.Pdf.PdfIndirectReference> {
@@ -69,8 +70,13 @@ namespace iText.Kernel.Pdf {
         /// Offset in a document of the
         /// <c>refersTo</c>
         /// object.
-        /// If the object placed into object stream then it is an object index inside object stream.
         /// </summary>
+        /// <remarks>
+        /// Offset in a document of the
+        /// <c>refersTo</c>
+        /// object.
+        /// If the object placed into object stream then it is an object index inside object stream.
+        /// </remarks>
         protected internal long offsetOrIndex = 0;
 
         /// <summary>PdfDocument object belongs to.</summary>
@@ -112,11 +118,20 @@ namespace iText.Kernel.Pdf {
         /// <summary>Gets direct object and try to resolve indirects chain.</summary>
         /// <remarks>
         /// Gets direct object and try to resolve indirects chain.
-        /// <p>
+        /// <para />
         /// Note: If chain of references has length of more than 32,
         /// this method return 31st reference in chain.
-        /// </p>
         /// </remarks>
+        /// <param name="recursively">
+        /// 
+        /// <see langword="true"/>
+        /// to resolve indirects chain
+        /// </param>
+        /// <returns>
+        /// the
+        /// <see cref="PdfObject"/>
+        /// result of indirect reference resolving
+        /// </returns>
         public virtual PdfObject GetRefersTo(bool recursively) {
             if (!recursively) {
                 if (refersTo == null && !CheckState(FLUSHED) && !CheckState(MODIFIED) && !CheckState(FREE) && GetReader() 
@@ -167,19 +182,27 @@ namespace iText.Kernel.Pdf {
                 return false;
             }
             iText.Kernel.Pdf.PdfIndirectReference that = (iText.Kernel.Pdf.PdfIndirectReference)o;
-            return objNr == that.objNr && genNr == that.genNr;
+            bool documentsEquals = pdfDocument == that.pdfDocument;
+            if (!documentsEquals) {
+                documentsEquals = pdfDocument != null && that.pdfDocument != null && pdfDocument.GetDocumentId() == that.pdfDocument
+                    .GetDocumentId();
+            }
+            return objNr == that.objNr && genNr == that.genNr && documentsEquals;
         }
 
         public override int GetHashCode() {
             int result = objNr;
             result = 31 * result + genNr;
+            if (pdfDocument != null) {
+                result = 31 * result + (int)pdfDocument.GetDocumentId();
+            }
             return result;
         }
 
         public virtual int CompareTo(iText.Kernel.Pdf.PdfIndirectReference o) {
             if (objNr == o.objNr) {
                 if (genNr == o.genNr) {
-                    return 0;
+                    return ComparePdfDocumentLinks(o);
                 }
                 return (genNr > o.genNr) ? 1 : -1;
             }
@@ -200,15 +223,13 @@ namespace iText.Kernel.Pdf {
         /// it only ensures that corresponding xref entry is free and indirect object referred by this reference is no longer
         /// linked to it. Actual object still might be written to the resultant document (and would get a new corresponding
         /// indirect reference in this case) if it is still contained in some other object.
-        /// <p>
+        /// <para />
         /// This method will not give any result if the corresponding indirect object or another object
         /// that contains a reference to this object is already flushed.
-        /// </p>
-        /// <p>
+        /// <para />
         /// Note: in some cases, removing a link of indirect object to it's indirect reference while
         /// leaving the actual object in the document structure might lead to errors, because some objects are expected
         /// to always have such explicit link (e.g. Catalog object, page objects, etc).
-        /// </p>
         /// </remarks>
         public virtual void SetFree() {
             GetDocument().GetXref().FreeReference(this);
@@ -218,11 +239,16 @@ namespace iText.Kernel.Pdf {
         /// Checks if this
         /// <see cref="PdfIndirectReference"/>
         /// instance corresponds to free indirect reference.
+        /// </summary>
+        /// <remarks>
+        /// Checks if this
+        /// <see cref="PdfIndirectReference"/>
+        /// instance corresponds to free indirect reference.
         /// Indirect reference might be in a free state either because it was read as such from the opened existing
         /// PDF document or because it was set free via
         /// <see cref="SetFree()"/>
         /// method.
-        /// </summary>
+        /// </remarks>
         /// <returns>
         /// 
         /// <see langword="true"/>
@@ -288,6 +314,9 @@ namespace iText.Kernel.Pdf {
             return PdfNull.PDF_NULL;
         }
 
+        protected internal override void CopyContent(PdfObject from, PdfDocument document, ICopyFilter copyFilter) {
+        }
+
         protected internal override void CopyContent(PdfObject from, PdfDocument document) {
         }
 
@@ -313,6 +342,30 @@ namespace iText.Kernel.Pdf {
         internal virtual void FixOffset(long offset) {
             if (!IsFree()) {
                 this.offsetOrIndex = offset;
+            }
+        }
+
+        private int ComparePdfDocumentLinks(iText.Kernel.Pdf.PdfIndirectReference toCompare) {
+            if (pdfDocument == toCompare.pdfDocument) {
+                return 0;
+            }
+            else {
+                if (pdfDocument == null) {
+                    return -1;
+                }
+                else {
+                    if (toCompare.pdfDocument == null) {
+                        return 1;
+                    }
+                    else {
+                        long thisDocumentId = pdfDocument.GetDocumentId();
+                        long documentIdToCompare = toCompare.pdfDocument.GetDocumentId();
+                        if (thisDocumentId == documentIdToCompare) {
+                            return 0;
+                        }
+                        return (thisDocumentId > documentIdToCompare) ? 1 : -1;
+                    }
+                }
             }
         }
     }

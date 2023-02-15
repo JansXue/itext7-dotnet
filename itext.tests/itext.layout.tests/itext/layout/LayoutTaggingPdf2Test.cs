@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,17 +42,19 @@ address: sales@itextpdf.com
 */
 using System;
 using iText.IO.Image;
-using iText.Kernel;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Tagging;
 using iText.Kernel.Pdf.Tagutils;
 using iText.Kernel.Utils;
 using iText.Layout.Element;
+using iText.Layout.Exceptions;
 using iText.Layout.Properties;
 using iText.Test;
 using iText.Test.Attributes;
 
 namespace iText.Layout {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class LayoutTaggingPdf2Test : ExtendedITextTest {
         public static readonly String destinationFolder = NUnit.Framework.TestContext.CurrentContext.TestDirectory
              + "/test/itext/layout/LayoutTaggingPdf2Test/";
@@ -67,10 +69,6 @@ namespace iText.Layout {
             CreateOrClearDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
         [NUnit.Framework.Test]
         public virtual void SimpleDocDefault() {
             PdfDocument pdfDocument = new PdfDocument(new PdfWriter(destinationFolder + "simpleDocDefault.pdf", new WriterProperties
@@ -87,10 +85,6 @@ namespace iText.Layout {
             CompareResult("simpleDocDefault");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
         [NUnit.Framework.Test]
         public virtual void SimpleDocNullNsByDefault() {
             PdfDocument pdfDocument = new PdfDocument(new PdfWriter(destinationFolder + "simpleDocNullNsByDefault.pdf"
@@ -107,10 +101,6 @@ namespace iText.Layout {
             CompareResult("simpleDocNullNsByDefault");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
         [NUnit.Framework.Test]
         public virtual void SimpleDocExplicitlyOldStdNs() {
             PdfDocument pdfDocument = new PdfDocument(new PdfWriter(destinationFolder + "simpleDocExplicitlyOldStdNs.pdf"
@@ -129,10 +119,6 @@ namespace iText.Layout {
             CompareResult("simpleDocExplicitlyOldStdNs");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
         [NUnit.Framework.Test]
         public virtual void CustomRolesMappingPdf2() {
             PdfDocument pdfDocument = new PdfDocument(new PdfWriter(destinationFolder + "customRolesMappingPdf2.pdf", 
@@ -164,10 +150,6 @@ namespace iText.Layout {
             CompareResult("customRolesMappingPdf2");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
         [NUnit.Framework.Test]
         public virtual void CustomRolesMappingPdf17() {
             PdfDocument pdfDocument = new PdfDocument(new PdfWriter(destinationFolder + "customRolesMappingPdf17.pdf", 
@@ -200,10 +182,6 @@ namespace iText.Layout {
             CompareResult("customRolesMappingPdf17");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
         [NUnit.Framework.Test]
         public virtual void DocWithExplicitAndImplicitDefaultNsAtTheSameTime() {
             PdfDocument pdfDocument = new PdfDocument(new PdfWriter(destinationFolder + "docWithExplicitAndImplicitDefaultNsAtTheSameTime.pdf"
@@ -255,91 +233,68 @@ namespace iText.Layout {
             CompareResult("docWithExplicitAndImplicitDefaultNsAtTheSameTime");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
         [NUnit.Framework.Test]
         public virtual void DocWithInvalidMapping01() {
-            NUnit.Framework.Assert.That(() =>  {
-                PdfDocument pdfDocument = new PdfDocument(new PdfWriter(destinationFolder + "docWithInvalidMapping01.pdf", 
-                    new WriterProperties().SetPdfVersion(PdfVersion.PDF_2_0)));
-                pdfDocument.SetTagged();
-                TagStructureContext tagsContext = pdfDocument.GetTagStructureContext();
-                tagsContext.SetDocumentDefaultNamespace(null);
-                PdfNamespace explicitDefaultNs = tagsContext.FetchNamespace(StandardNamespaces.PDF_1_7);
-                Document document = new Document(pdfDocument);
+            PdfDocument pdfDocument = new PdfDocument(new PdfWriter(destinationFolder + "docWithInvalidMapping01.pdf", 
+                new WriterProperties().SetPdfVersion(PdfVersion.PDF_2_0)));
+            pdfDocument.SetTagged();
+            TagStructureContext tagsContext = pdfDocument.GetTagStructureContext();
+            tagsContext.SetDocumentDefaultNamespace(null);
+            PdfNamespace explicitDefaultNs = tagsContext.FetchNamespace(StandardNamespaces.PDF_1_7);
+            using (Document document = new Document(pdfDocument)) {
                 pdfDocument.GetStructTreeRoot().AddRoleMapping(LayoutTaggingPdf2Test.HtmlRoles.p, StandardRoles.P);
                 Paragraph customRolePara = new Paragraph("Hello world text.");
                 customRolePara.GetAccessibilityProperties().SetRole(LayoutTaggingPdf2Test.HtmlRoles.p);
                 customRolePara.GetAccessibilityProperties().SetNamespace(explicitDefaultNs);
-                document.Add(customRolePara);
-                document.Close();
+                Exception e = NUnit.Framework.Assert.Catch(typeof(PdfException), () => document.Add(customRolePara));
+                NUnit.Framework.Assert.AreEqual(String.Format(LayoutExceptionMessageConstant.ROLE_IN_NAMESPACE_IS_NOT_MAPPED_TO_ANY_STANDARD_ROLE
+                    , "p", "http://iso.org/pdf/ssn"), e.Message);
             }
-            , NUnit.Framework.Throws.InstanceOf<PdfException>().With.Message.EqualTo(String.Format(PdfException.RoleInNamespaceIsNotMappedToAnyStandardRole, "p", "http://iso.org/pdf/ssn")))
-;
         }
 
-        // compareResult("docWithInvalidMapping01");
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
         [NUnit.Framework.Test]
         public virtual void DocWithInvalidMapping02() {
-            NUnit.Framework.Assert.That(() =>  {
-                PdfDocument pdfDocument = new PdfDocument(new PdfWriter(destinationFolder + "docWithInvalidMapping02.pdf", 
-                    new WriterProperties().SetPdfVersion(PdfVersion.PDF_2_0)));
-                pdfDocument.SetTagged();
-                TagStructureContext tagsContext = pdfDocument.GetTagStructureContext();
-                tagsContext.SetDocumentDefaultNamespace(null);
-                PdfNamespace explicitDefaultNs = tagsContext.FetchNamespace(StandardNamespaces.PDF_1_7);
-                Document document = new Document(pdfDocument);
+            PdfDocument pdfDocument = new PdfDocument(new PdfWriter(destinationFolder + "docWithInvalidMapping02.pdf", 
+                new WriterProperties().SetPdfVersion(PdfVersion.PDF_2_0)));
+            pdfDocument.SetTagged();
+            TagStructureContext tagsContext = pdfDocument.GetTagStructureContext();
+            tagsContext.SetDocumentDefaultNamespace(null);
+            PdfNamespace explicitDefaultNs = tagsContext.FetchNamespace(StandardNamespaces.PDF_1_7);
+            using (Document document = new Document(pdfDocument)) {
                 explicitDefaultNs.AddNamespaceRoleMapping(LayoutTaggingPdf2Test.HtmlRoles.p, StandardRoles.P);
                 Paragraph customRolePara = new Paragraph("Hello world text.");
                 customRolePara.GetAccessibilityProperties().SetRole(LayoutTaggingPdf2Test.HtmlRoles.p);
-                document.Add(customRolePara);
-                document.Close();
+                Exception e = NUnit.Framework.Assert.Catch(typeof(PdfException), () => document.Add(customRolePara));
+                NUnit.Framework.Assert.AreEqual(String.Format(LayoutExceptionMessageConstant.ROLE_IS_NOT_MAPPED_TO_ANY_STANDARD_ROLE
+                    , "p"), e.Message);
             }
-            , NUnit.Framework.Throws.InstanceOf<PdfException>().With.Message.EqualTo(String.Format(PdfException.RoleIsNotMappedToAnyStandardRole, "p")))
-;
         }
 
-        // compareResult("docWithInvalidMapping02");
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
         [NUnit.Framework.Test]
         public virtual void DocWithInvalidMapping03() {
-            NUnit.Framework.Assert.That(() =>  {
-                PdfDocument pdfDocument = new PdfDocument(new PdfWriter(destinationFolder + "docWithInvalidMapping03.pdf", 
-                    new WriterProperties().SetPdfVersion(PdfVersion.PDF_2_0)));
-                pdfDocument.SetTagged();
-                Document document = new Document(pdfDocument);
+            PdfDocument pdfDocument = new PdfDocument(new PdfWriter(destinationFolder + "docWithInvalidMapping03.pdf", 
+                new WriterProperties().SetPdfVersion(PdfVersion.PDF_2_0)));
+            pdfDocument.SetTagged();
+            using (Document document = new Document(pdfDocument)) {
                 Paragraph customRolePara = new Paragraph("Hello world text.");
                 customRolePara.GetAccessibilityProperties().SetRole(LayoutTaggingPdf2Test.HtmlRoles.p);
-                document.Add(customRolePara);
-                document.Close();
+                Exception e = NUnit.Framework.Assert.Catch(typeof(PdfException), () => document.Add(customRolePara));
+                NUnit.Framework.Assert.AreEqual(String.Format(LayoutExceptionMessageConstant.ROLE_IN_NAMESPACE_IS_NOT_MAPPED_TO_ANY_STANDARD_ROLE
+                    , "p", "http://iso.org/pdf2/ssn"), e.Message);
             }
-            , NUnit.Framework.Throws.InstanceOf<PdfException>().With.Message.EqualTo(String.Format(PdfException.RoleInNamespaceIsNotMappedToAnyStandardRole, "p", "http://iso.org/pdf2/ssn")))
-;
         }
 
-        // compareResult("docWithInvalidMapping03");
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
         [NUnit.Framework.Test]
         public virtual void DocWithInvalidMapping04() {
-            // TODO this test passes, however it seems, that mingling two standard namespaces in the same tag structure tree should be illegal
-            // May be this should be checked if we would implement conforming PDF/UA docs generations in a way PDF/A docs are generated
             PdfDocument pdfDocument = new PdfDocument(new PdfWriter(destinationFolder + "docWithInvalidMapping04.pdf", 
                 new WriterProperties().SetPdfVersion(PdfVersion.PDF_2_0)));
             pdfDocument.SetTagged();
             TagStructureContext tagsCntxt = pdfDocument.GetTagStructureContext();
             PdfNamespace stdNs2 = tagsCntxt.FetchNamespace(StandardNamespaces.PDF_2_0);
+            // For /P elem a namespace is not explicitly specified, so PDF 1.7 namespace is used (see 14.8.6.1 of ISO 32000-2).
+            // Mingling two standard namespaces in the same tag structure tree is valid in "core" PDF 2.0, however,
+            // specifically the interaction between them will be addressed by ISO/TS 32005, which is currently still being drafted
+            // (see DEVSIX-6676)
             stdNs2.AddNamespaceRoleMapping(LayoutTaggingPdf2Test.HtmlRoles.p, StandardRoles.P);
             Document document = new Document(pdfDocument);
             Paragraph customRolePara = new Paragraph("Hello world text.");
@@ -349,17 +304,12 @@ namespace iText.Layout {
             CompareResult("docWithInvalidMapping04");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
         [NUnit.Framework.Test]
         public virtual void DocWithInvalidMapping05() {
-            NUnit.Framework.Assert.That(() =>  {
-                PdfDocument pdfDocument = new PdfDocument(new PdfWriter(destinationFolder + "docWithInvalidMapping05.pdf", 
-                    new WriterProperties().SetPdfVersion(PdfVersion.PDF_2_0)));
-                pdfDocument.SetTagged();
-                Document document = new Document(pdfDocument);
+            PdfDocument pdfDocument = new PdfDocument(new PdfWriter(destinationFolder + "docWithInvalidMapping05.pdf", 
+                new WriterProperties().SetPdfVersion(PdfVersion.PDF_2_0)));
+            pdfDocument.SetTagged();
+            using (Document document = new Document(pdfDocument)) {
                 // deliberately creating namespace via constructor instead of using TagStructureContext#fetchNamespace
                 PdfNamespace stdNs2 = new PdfNamespace(StandardNamespaces.PDF_2_0);
                 stdNs2.AddNamespaceRoleMapping(LayoutTaggingPdf2Test.HtmlRoles.p, StandardRoles.P, stdNs2);
@@ -371,18 +321,12 @@ namespace iText.Layout {
                 customRolePara2.GetAccessibilityProperties().SetRole(LayoutTaggingPdf2Test.HtmlRoles.p);
                 // not explicitly setting namespace that we've manually created. This will lead to the situation, when
                 // /Namespaces entry in StructTreeRoot would have two different namespace dictionaries with the same name.
-                document.Add(customRolePara2);
-                document.Close();
+                Exception e = NUnit.Framework.Assert.Catch(typeof(PdfException), () => document.Add(customRolePara2));
+                NUnit.Framework.Assert.AreEqual(String.Format(LayoutExceptionMessageConstant.ROLE_IN_NAMESPACE_IS_NOT_MAPPED_TO_ANY_STANDARD_ROLE
+                    , "p", "http://iso.org/pdf2/ssn"), e.Message);
             }
-            , NUnit.Framework.Throws.InstanceOf<PdfException>().With.Message.EqualTo(String.Format(PdfException.RoleInNamespaceIsNotMappedToAnyStandardRole, "p", "http://iso.org/pdf2/ssn")))
-;
         }
 
-        //         compareResult("docWithInvalidMapping05");
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
         [NUnit.Framework.Test]
         public virtual void DocWithInvalidMapping06() {
             PdfDocument pdfDocument = new PdfDocument(new PdfWriter(destinationFolder + "docWithInvalidMapping06.pdf", 
@@ -408,19 +352,14 @@ namespace iText.Layout {
             CompareResult("docWithInvalidMapping06");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.CANNOT_RESOLVE_ROLE_IN_NAMESPACE_TOO_MUCH_TRANSITIVE_MAPPINGS, Count
-             = 1)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.CANNOT_RESOLVE_ROLE_IN_NAMESPACE_TOO_MUCH_TRANSITIVE_MAPPINGS
+            , Count = 1)]
         public virtual void DocWithInvalidMapping07() {
-            NUnit.Framework.Assert.That(() =>  {
-                PdfDocument pdfDocument = new PdfDocument(new PdfWriter(destinationFolder + "docWithInvalidMapping07.pdf", 
-                    new WriterProperties().SetPdfVersion(PdfVersion.PDF_2_0)));
-                pdfDocument.SetTagged();
-                Document document = new Document(pdfDocument);
+            PdfDocument pdfDocument = new PdfDocument(new PdfWriter(destinationFolder + "docWithInvalidMapping07.pdf", 
+                new WriterProperties().SetPdfVersion(PdfVersion.PDF_2_0)));
+            pdfDocument.SetTagged();
+            using (Document document = new Document(pdfDocument)) {
                 PdfNamespace stdNs2 = pdfDocument.GetTagStructureContext().FetchNamespace(StandardNamespaces.PDF_2_0);
                 int numOfTransitiveMappings = 120;
                 String prevRole = LayoutTaggingPdf2Test.HtmlRoles.span;
@@ -433,41 +372,29 @@ namespace iText.Layout {
                 Text customRolePText1 = new Text("Hello world text.");
                 customRolePText1.GetAccessibilityProperties().SetRole(LayoutTaggingPdf2Test.HtmlRoles.span);
                 customRolePText1.GetAccessibilityProperties().SetNamespace(stdNs2);
-                document.Add(new Paragraph(customRolePText1));
-                document.Close();
+                Exception e = NUnit.Framework.Assert.Catch(typeof(PdfException), () => document.Add(new Paragraph(customRolePText1
+                    )));
+                NUnit.Framework.Assert.AreEqual(String.Format(LayoutExceptionMessageConstant.ROLE_IN_NAMESPACE_IS_NOT_MAPPED_TO_ANY_STANDARD_ROLE
+                    , "span", "http://iso.org/pdf2/ssn"), e.Message);
             }
-            , NUnit.Framework.Throws.InstanceOf<PdfException>().With.Message.EqualTo(String.Format(PdfException.RoleInNamespaceIsNotMappedToAnyStandardRole, "span", "http://iso.org/pdf2/ssn")))
-;
         }
 
-        //        compareResult("docWithInvalidMapping07");
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
         [NUnit.Framework.Test]
         public virtual void DocWithInvalidMapping08() {
-            NUnit.Framework.Assert.That(() =>  {
-                PdfDocument pdfDocument = new PdfDocument(new PdfWriter(destinationFolder + "docWithInvalidMapping08.pdf", 
-                    new WriterProperties().SetPdfVersion(PdfVersion.PDF_1_7)));
-                pdfDocument.SetTagged();
-                Document document = new Document(pdfDocument);
+            PdfDocument pdfDocument = new PdfDocument(new PdfWriter(destinationFolder + "docWithInvalidMapping08.pdf", 
+                new WriterProperties().SetPdfVersion(PdfVersion.PDF_1_7)));
+            pdfDocument.SetTagged();
+            using (Document document = new Document(pdfDocument)) {
                 Paragraph h9Para = new Paragraph("Header level 9");
                 h9Para.GetAccessibilityProperties().SetRole("H9");
-                document.Add(h9Para);
-                document.Close();
+                Exception e = NUnit.Framework.Assert.Catch(typeof(PdfException), () => document.Add(h9Para));
+                NUnit.Framework.Assert.AreEqual(String.Format(LayoutExceptionMessageConstant.ROLE_IS_NOT_MAPPED_TO_ANY_STANDARD_ROLE
+                    , "H9"), e.Message);
             }
-            , NUnit.Framework.Throws.InstanceOf<PdfException>().With.Message.EqualTo(String.Format(PdfException.RoleIsNotMappedToAnyStandardRole, "H9")))
-;
         }
 
-        //        compareResult("docWithInvalidMapping08");
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.CREATED_ROOT_TAG_HAS_MAPPING)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.CREATED_ROOT_TAG_HAS_MAPPING)]
         public virtual void DocWithInvalidMapping09() {
             PdfDocument pdfDocument = new PdfDocument(new PdfWriter(destinationFolder + "docWithInvalidMapping09.pdf", 
                 new WriterProperties().SetPdfVersion(PdfVersion.PDF_2_0)));
@@ -481,12 +408,8 @@ namespace iText.Layout {
             CompareResult("docWithInvalidMapping09");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.CREATED_ROOT_TAG_HAS_MAPPING)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.CREATED_ROOT_TAG_HAS_MAPPING)]
         public virtual void DocWithInvalidMapping10() {
             PdfDocument pdfDocument = new PdfDocument(new PdfWriter(destinationFolder + "docWithInvalidMapping10.pdf", 
                 new WriterProperties().SetPdfVersion(PdfVersion.PDF_2_0)));
@@ -501,10 +424,6 @@ namespace iText.Layout {
             CompareResult("docWithInvalidMapping10");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
         [NUnit.Framework.Test]
         public virtual void StampTest01() {
             PdfDocument pdfDocument = new PdfDocument(new PdfReader(sourceFolder + "simpleDocOldStdNs.pdf"), new PdfWriter
@@ -517,10 +436,6 @@ namespace iText.Layout {
             CompareResult("stampTest01");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
         [NUnit.Framework.Test]
         public virtual void StampTest02() {
             PdfDocument pdfDocument = new PdfDocument(new PdfReader(sourceFolder + "simpleDocNoNs.pdf"), new PdfWriter
@@ -533,10 +448,6 @@ namespace iText.Layout {
             CompareResult("stampTest02");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
         [NUnit.Framework.Test]
         public virtual void StampTest03() {
             PdfDocument pdfDocument = new PdfDocument(new PdfReader(sourceFolder + "simpleDocNewStdNs.pdf"), new PdfWriter
@@ -549,10 +460,6 @@ namespace iText.Layout {
             CompareResult("stampTest03");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
         [NUnit.Framework.Test]
         public virtual void StampTest04() {
             PdfDocument pdfDocument = new PdfDocument(new PdfReader(sourceFolder + "simpleDoc1_7.pdf"), new PdfWriter(
@@ -565,10 +472,6 @@ namespace iText.Layout {
             CompareResult("stampTest04");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
         [NUnit.Framework.Test]
         public virtual void StampTest05() {
             PdfDocument pdfDocument = new PdfDocument(new PdfReader(sourceFolder + "simpleDocNewStdNs.pdf"), new PdfWriter
@@ -585,10 +488,6 @@ namespace iText.Layout {
             CompareResult("stampTest05");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
         [NUnit.Framework.Test]
         public virtual void CopyTest01() {
             PdfDocument srcPdf = new PdfDocument(new PdfReader(sourceFolder + "simpleDocNewStdNs.pdf"));
@@ -601,10 +500,29 @@ namespace iText.Layout {
             CompareResult("copyTest01");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
+        [NUnit.Framework.Test]
+        public virtual void DocWithSectInPdf2() {
+            PdfDocument pdfDocument = new PdfDocument(new PdfWriter(destinationFolder + "docWithSectInPdf2.pdf", new WriterProperties
+                ().SetPdfVersion(PdfVersion.PDF_2_0)));
+            pdfDocument.SetTagged();
+            Document document = new Document(pdfDocument);
+            Div section = new Div();
+            section.GetAccessibilityProperties().SetRole(StandardRoles.SECT);
+            Paragraph h1 = new Paragraph("This is a header");
+            h1.GetAccessibilityProperties().SetRole("H1");
+            section.Add(h1);
+            section.Add(new Paragraph("This is a paragraph."));
+            Paragraph para = new Paragraph("This is another paragraph, ");
+            Text emphasised = new Text("with semantic emphasis!");
+            emphasised.SetUnderline();
+            emphasised.GetAccessibilityProperties().SetRole(StandardRoles.EM);
+            para.Add(emphasised);
+            section.Add(para);
+            document.Add(section);
+            document.Close();
+            CompareResult("docWithSectInPdf2");
+        }
+
         [NUnit.Framework.Test]
         public virtual void CopyTest02() {
             PdfDocument srcPdf = new PdfDocument(new PdfReader(sourceFolder + "docSeveralNs.pdf"));
@@ -631,7 +549,6 @@ namespace iText.Layout {
             internal static String span = "span";
         }
 
-        /// <exception cref="System.UriFormatException"/>
         private void AddSimpleContentToDoc(Document document, Paragraph p2) {
             iText.Layout.Element.Image img = new iText.Layout.Element.Image(ImageDataFactory.Create(sourceFolder + imageName
                 )).SetWidth(100);
@@ -655,7 +572,6 @@ namespace iText.Layout {
             document.Add(table);
         }
 
-        /// <exception cref="System.UriFormatException"/>
         private void AddContentToDocInCustomNs(PdfDocument pdfDocument, PdfNamespace defaultNamespace, PdfNamespace
              xhtmlNs, PdfNamespace html4Ns, String hnRole, Document document) {
             Paragraph h1P = new Paragraph("Header level 1");
@@ -689,10 +605,6 @@ namespace iText.Layout {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
         private void CompareResult(String testName) {
             String outFileName = testName + ".pdf";
             String cmpFileName = "cmp_" + outFileName;

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,14 +41,17 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
+using System.Text.RegularExpressions;
 
 namespace iText.StyledXmlParser.Jsoup {
     /// <summary>Text utils to ease testing</summary>
     /// <author>Jonathan Hedley, jonathan@hedley.net</author>
     public class TextUtil {
-        public static String StripNewlines(String text) {
-            text = iText.IO.Util.StringUtil.ReplaceAll(text, "\\n\\s*", "");
-            return text;
+        internal static Regex stripper = iText.Commons.Utils.StringUtil.RegexCompile("\\r?\\n\\s*");
+
+        public static String StripNewlines(String text)
+        {
+            return stripper.Replace(text, "");
         }
     }
 }

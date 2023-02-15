@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-    Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,56 +44,55 @@ address: sales@itextpdf.com
 
 using System;
 using System.Globalization;
+using System.Security.Cryptography;
+using iText.Bouncycastleconnector;
+using iText.Commons.Bouncycastle;
+using iText.Commons.Bouncycastle.Asn1;
+using iText.Commons.Bouncycastle.Asn1.X509;
+using iText.Commons.Bouncycastle.Cert;
+using iText.Commons.Bouncycastle.Cms;
+using iText.Commons.Bouncycastle.Crypto;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf;
-using Org.BouncyCastle.Asn1;
-using Org.BouncyCastle.Asn1.X509;
-using Org.BouncyCastle.Cms;
-using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Security;
-using Org.BouncyCastle.X509;
 
 namespace iText.Kernel.Crypto.Securityhandler {
     internal sealed class EncryptionUtils {
+        // 256-bit AES-CBC, PKCS#5 padding
+        // Not ideal, but the best that the PDF standard allows.
+        public const String ENVELOPE_ENCRYPTION_ALGORITHM_OID = "2.16.840.1.101.3.4.1.42";
+        public const int ENVELOPE_ENCRYPTION_KEY_LENGTH = 256;
+
+        private static readonly IBouncyCastleFactory FACTORY = BouncyCastleFactoryCreator.GetFactory();
+
         internal static byte[] GenerateSeed(int seedLength) {
             return IVGenerator.GetIV(seedLength);
         }
 
-        internal static byte[] FetchEnvelopedData(ICipherParameters certificateKey, X509Certificate certificate, PdfArray recipients) {
+        internal static byte[] FetchEnvelopedData(IPrivateKey certificateKey, IX509Certificate certificate, PdfArray recipients) {
             bool foundRecipient = false;
             byte[] envelopedData = null;
             for (int i = 0; i < recipients.Size(); i++) {
                 try {
                     PdfString recipient = recipients.GetAsString(i);
-                    CmsEnvelopedData data = new CmsEnvelopedData(recipient.GetValueBytes());
-
-                    foreach (RecipientInformation recipientInfo in data.GetRecipientInfos().GetRecipients()) {
-                        if (recipientInfo.RecipientID.Match(certificate) && !foundRecipient) {
-                            envelopedData = recipientInfo.GetContent(certificateKey);
+                    ICMSEnvelopedData data = FACTORY.CreateCMSEnvelopedData(recipient.GetValueBytes());
+                    foreach (IRecipientInformation recipientInfo in data.GetRecipientInfos().GetRecipients()) {
+                        if (recipientInfo.GetRID().Match(certificate) && !foundRecipient) { 
+                            envelopedData = recipientInfo.GetContent(certificateKey); 
                             foundRecipient = true;
                         }
                     }
                 } catch (Exception f) {
-                    throw new PdfException(PdfException.PdfDecryption, f);
+                    throw new PdfException(KernelExceptionMessageConstant.PDF_DECRYPTION, f);
                 }
             }
             if (!foundRecipient || envelopedData == null) {
-                throw new PdfException(PdfException.BadCertificateAndKey);
+                throw new PdfException(KernelExceptionMessageConstant.BAD_CERTIFICATE_AND_KEY);
             }
             return envelopedData;
         }
 
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
-        /// <exception cref="System.IO.IOException"/>
-        internal static byte[] CipherBytes(X509Certificate x509Certificate, byte[] abyte0, AlgorithmIdentifier algorithmidentifier) {
-            IBufferedCipher cipher = CipherUtilities.GetCipher(algorithmidentifier.ObjectID);
-            cipher.Init(true, x509Certificate.GetPublicKey());
-            byte[] outp = new byte[10000];
-            int len = cipher.DoFinal(abyte0, outp, 0);
-            byte[] abyte1 = new byte[len];
-            Array.Copy(outp, 0, abyte1, 0, len);
-
-            return abyte1;
+        internal static byte[] CipherBytes(IX509Certificate x509Certificate, byte[] abyte0, IAlgorithmIdentifier algorithmidentifier) {
+            return FACTORY.CreateCipherBytes(x509Certificate, abyte0, algorithmidentifier);
         }
 
         // TODO Review this method and it's usages. It is used in bouncy castle sources in itextsharp, so we need to be carefull about it in case we update BouncyCastle.
@@ -116,40 +115,32 @@ namespace iText.Kernel.Crypto.Securityhandler {
             return locale;
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
         internal static DERForRecipientParams CalculateDERForRecipientParams(byte[] @in) {
-            String s = "1.2.840.113549.3.2";
             DERForRecipientParams parameters = new DERForRecipientParams();
 
-            byte[] outp = new byte[100];
-            DerObjectIdentifier derob = new DerObjectIdentifier(s);
-            byte[] abyte0 = IVGenerator.GetIV(16); // keyp
-            IBufferedCipher cf = CipherUtilities.GetCipher(derob);
-            KeyParameter kp = new KeyParameter(abyte0);
-            byte[] iv = IVGenerator.GetIV(cf.GetBlockSize());
-            ParametersWithIV piv = new ParametersWithIV(kp, iv);
-            cf.Init(true, piv);
-            int len = cf.DoFinal(@in, outp, 0);
+            IASN1ObjectIdentifier derob = FACTORY.CreateASN1ObjectIdentifier(ENVELOPE_ENCRYPTION_ALGORITHM_OID);
 
-            byte[] abyte1 = new byte[len];
-            Array.Copy(outp, 0, abyte1, 0, len);
+            RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
+            byte[] abyte0 = new byte[ENVELOPE_ENCRYPTION_KEY_LENGTH / 8];
+            rng.GetBytes(abyte0);
+            
+            byte[] iv = IVGenerator.GetIV(16);
+            ICryptoTransform encryptor = Aes.Create().CreateEncryptor(abyte0, iv);
 
-            Asn1EncodableVector ev = new Asn1EncodableVector();
-            ev.Add(new DerInteger(58));
-            ev.Add(new DerOctetString(iv));
-            DerSequence seq = new DerSequence(ev);
+            byte[] abyte1 = encryptor.TransformFinalBlock(@in, 0, @in.Length);
 
+            // AES-256-CBC takes an octet string with the IV in the parameters field
+            IASN1Encodable envelopeAlgoParams = FACTORY.CreateDEROctetString(iv);
             parameters.abyte0 = abyte0;
             parameters.abyte1 = abyte1;
-            parameters.algorithmIdentifier = new AlgorithmIdentifier(derob, seq);
+            parameters.algorithmIdentifier = FACTORY.CreateAlgorithmIdentifier(derob, envelopeAlgoParams);
             return parameters;
         }
 
         internal class DERForRecipientParams {
             internal byte[] abyte0;
             internal byte[] abyte1;
-            internal AlgorithmIdentifier algorithmIdentifier;
+            internal IAlgorithmIdentifier algorithmIdentifier;
         }
     }
 }

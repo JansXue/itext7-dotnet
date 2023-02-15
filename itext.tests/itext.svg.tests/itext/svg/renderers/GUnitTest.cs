@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,6 +45,7 @@ using System.Collections.Generic;
 using iText.Test;
 
 namespace iText.Svg.Renderers {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class GUnitTest : SvgIntegrationTest {
         private static readonly String SOURCE_FOLDER = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/svg/renderers/impl/gunit/";
@@ -57,14 +58,12 @@ namespace iText.Svg.Renderers {
             ITextTest.CreateDestinationFolder(DESTINATION_FOLDER);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void MeetTheTeam() {
             IList<Exception> assertionErrorsThrown = new List<Exception>();
             for (int i = 1; i < 6; i++) {
                 try {
-                    ConvertAndCompareVisually(SOURCE_FOLDER, DESTINATION_FOLDER, "test_00" + i);
+                    ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "test_00" + i);
                 }
                 catch (Exception ae) {
                     if (ae.Message.Contains("expected null, but was")) {
@@ -77,18 +76,14 @@ namespace iText.Svg.Renderers {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ViewboxTest() {
-            ConvertAndCompareVisually(SOURCE_FOLDER, DESTINATION_FOLDER, "test_viewbox");
+            ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "test_viewbox");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void SimpleGTest() {
-            ConvertAndCompareVisually(SOURCE_FOLDER, DESTINATION_FOLDER, "simpleG");
+            ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "simpleG");
         }
     }
 }

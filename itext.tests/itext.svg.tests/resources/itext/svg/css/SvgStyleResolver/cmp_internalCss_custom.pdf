@@ -1,36 +1,36 @@
 %PDF-1.7
 %‚„œ”
 5 0 obj
-<</Length 27>>stream
+<</Length 12>>stream
 q
-1 0 0 1 0 0 cm
 /Fm1 Do
 Q
 
 endstream
 endobj
 4 0 obj
-<</Contents 5 0 R/MediaBox[0 0 595 842]/Parent 2 0 R/Resources<</XObject<</Fm1 8 0 R>>>>/TrimBox[0 0 595 842]/Type/Page>>
+<</Contents 5 0 R/MediaBox[0 0 1190 842]/Parent 2 0 R/Resources<</XObject<</Fm1 8 0 R>>>>/TrimBox[0 0 1190 842]/Type/Page>>
 endobj
 1 0 obj
 <</Pages 2 0 R/Type/Catalog>>
 endobj
 3 0 obj
-<</CreationDate(D:20190705120012+03'00')/ModDate(D:20190705120012+03'00')/Producer(iTextÆ 7.1.7-SNAPSHOT ©2000-2019 iText Group NV \(AGPL-version\))>>
-endobj
-7 0 obj
-<</BaseFont/Times-Roman/Encoding/WinAnsiEncoding/Subtype/Type1/Type/Font>>
+<</CreationDate(D:20211108180039+03'00')/ModDate(D:20211108180039+03'00')/Producer(iTextÆ Core 7.2.1-SNAPSHOT \(AGPL version\) ©2000-2021 iText Group NV)>>
 endobj
 6 0 obj
 <</BaseFont/Times-Bold/Encoding/WinAnsiEncoding/Subtype/Type1/Type/Font>>
+endobj
+7 0 obj
+<</BaseFont/Times-Roman/Encoding/WinAnsiEncoding/Subtype/Type1/Type/Font>>
 endobj
 2 0 obj
 <</Count 1/Kids[4 0 R]/Type/Pages>>
 endobj
 8 0 obj
-<</BBox[0 0 450 450]/Length 56/Resources<</XObject<</Fm1 9 0 R>>>>/Subtype/Form/Type/XObject>>stream
+<</BBox[0 0 450 450]/Length 75/Resources<</XObject<</Fm1 9 0 R>>>>/Subtype/Form/Type/XObject>>stream
 1 0 0 -1 0 450 cm
 % svg root
+1 0 0 1 225 225 cm
 q
 1 0 0 1 0 0 cm
 /Fm1 Do
@@ -39,34 +39,33 @@ Q
 endstream
 endobj
 9 0 obj
-<</BBox[0 0 450 450]/Length 11125/Resources<</ExtGState<</Gs1 10 0 R/Gs2 11 0 R>>/Font<</F1 6 0 R/F2 7 0 R>>>>/Subtype/Form/Type/XObject>>stream
+<</BBox[-225 -225 225 225]/Length 11142/Resources<</ExtGState<</Gs1 10 0 R/Gs2 11 0 R>>/Font<</F1 6 0 R/F2 7 0 R>>>>/Subtype/Form/Type/XObject>>stream
+-225 -225 450 450 re
+W
+n
 q
 0 0 0 rg
+q
 BT
 1 0 0 -1 -210 -202.5 Tm
 0 Tr
 /F1 18 Tf
-q
 0 0 Td
 (SVG demonstration)Tj
-n
-Q
 ET
-f
+Q
 Q
 q
 0 0 0 rg
+q
 BT
 1 0 0 -1 -210 -187.5 Tm
 0 Tr
 /F2 9 Tf
-q
 0 0 Td
 (Move your mouse pointer over the flower.)Tj
-n
-Q
 ET
-f
+Q
 Q
 q
 0 0 0 rg
@@ -873,20 +872,20 @@ endobj
 xref
 0 12
 0000000000 65535 f 
-0000000226 00000 n 
-0000000616 00000 n 
-0000000271 00000 n 
-0000000089 00000 n 
+0000000213 00000 n 
+0000000608 00000 n 
+0000000258 00000 n 
+0000000074 00000 n 
 0000000015 00000 n 
-0000000527 00000 n 
-0000000437 00000 n 
-0000000667 00000 n 
-0000000850 00000 n 
-0000012146 00000 n 
-0000012175 00000 n 
+0000000429 00000 n 
+0000000518 00000 n 
+0000000659 00000 n 
+0000000861 00000 n 
+0000012180 00000 n 
+0000012209 00000 n 
 trailer
-<</ID [<9db530bc43e1c42fbf0c5647b85c50b1><9db530bc43e1c42fbf0c5647b85c50b1>]/Info 3 0 R/Root 1 0 R/Size 12>>
-%iText-7.1.7-SNAPSHOT
+<</ID [<43c8ae5a70fd3ee44b1d3b44f322d5a3><43c8ae5a70fd3ee44b1d3b44f322d5a3>]/Info 3 0 R/Root 1 0 R/Size 12>>
+%iText-Core-7.2.1-SNAPSHOT
 startxref
-12204
+12238
 %%EOF

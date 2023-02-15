@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -74,7 +74,6 @@ namespace iText.Kernel.Pdf.Canvas.Wmf {
 
         /// <summary>Initializes a MetaPen object.</summary>
         /// <param name="in">the InputMeta object that holds the inputstream of the WMF image</param>
-        /// <exception cref="System.IO.IOException"/>
         public virtual void Init(InputMeta @in) {
             style = @in.ReadWord();
             penWidth = @in.ReadShort();

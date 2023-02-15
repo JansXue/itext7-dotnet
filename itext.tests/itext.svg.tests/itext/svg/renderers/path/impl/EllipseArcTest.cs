@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,9 +41,11 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using iText.Kernel.Geom;
+using iText.Test;
 
 namespace iText.Svg.Renderers.Path.Impl {
-    public class EllipseArcTest {
+    [NUnit.Framework.Category("UnitTest")]
+    public class EllipseArcTest : ExtendedITextTest {
         private const double DELTA = 0.00001;
 
         private void AssertPointEqual(Point expected, Point actual) {

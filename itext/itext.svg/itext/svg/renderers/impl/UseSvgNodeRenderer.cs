@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,14 +41,16 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf.Canvas;
 using iText.StyledXmlParser.Css.Util;
 using iText.Svg;
 using iText.Svg.Css.Impl;
-using iText.Svg.Exceptions;
+using iText.Svg.Logs;
 using iText.Svg.Renderers;
+using iText.Svg.Utils;
 
 namespace iText.Svg.Renderers.Impl {
     /// <summary>Renderer implementing the use tag.</summary>
@@ -61,14 +63,13 @@ namespace iText.Svg.Renderers.Impl {
                     elementToReUse = this.attributesAndStyles.Get(SvgConstants.Attributes.HREF);
                 }
                 if (elementToReUse != null && !String.IsNullOrEmpty(elementToReUse) && IsValidHref(elementToReUse)) {
-                    String normalizedName = NormalizeName(elementToReUse);
+                    String normalizedName = SvgTextUtil.FilterReferenceValue(elementToReUse);
                     if (!context.IsIdUsedByUseTagBefore(normalizedName)) {
                         ISvgNodeRenderer template = context.GetNamedObject(normalizedName);
-                        //Clone template
+                        // Clone template
                         ISvgNodeRenderer namedObject = template == null ? null : template.CreateDeepCopy();
-                        //Resolve parent inheritance
-                        SvgNodeRendererInheritanceResolver iresolver = new SvgNodeRendererInheritanceResolver();
-                        iresolver.ApplyInheritanceToSubTree(this, namedObject);
+                        // Resolve parent inheritance
+                        SvgNodeRendererInheritanceResolver.ApplyInheritanceToSubTree(this, namedObject, context.GetCssContext());
                         if (namedObject != null) {
                             if (namedObject is AbstractSvgNodeRenderer) {
                                 ((AbstractSvgNodeRenderer)namedObject).SetPartOfClipPath(partOfClipPath);
@@ -77,10 +78,10 @@ namespace iText.Svg.Renderers.Impl {
                             float x = 0f;
                             float y = 0f;
                             if (this.attributesAndStyles.ContainsKey(SvgConstants.Attributes.X)) {
-                                x = CssUtils.ParseAbsoluteLength(this.attributesAndStyles.Get(SvgConstants.Attributes.X));
+                                x = CssDimensionParsingUtils.ParseAbsoluteLength(this.attributesAndStyles.Get(SvgConstants.Attributes.X));
                             }
                             if (this.attributesAndStyles.ContainsKey(SvgConstants.Attributes.Y)) {
-                                y = CssUtils.ParseAbsoluteLength(this.attributesAndStyles.Get(SvgConstants.Attributes.Y));
+                                y = CssDimensionParsingUtils.ParseAbsoluteLength(this.attributesAndStyles.Get(SvgConstants.Attributes.Y));
                             }
                             AffineTransform inverseMatrix = null;
                             if (!CssUtils.CompareFloats(x, 0) || !CssUtils.CompareFloats(y, 0)) {
@@ -91,8 +92,8 @@ namespace iText.Svg.Renderers.Impl {
                                         inverseMatrix = translation.CreateInverse();
                                     }
                                     catch (NoninvertibleTransformException ex) {
-                                        LogManager.GetLogger(typeof(UseSvgNodeRenderer)).Warn(SvgLogMessageConstant.NONINVERTIBLE_TRANSFORMATION_MATRIX_USED_IN_CLIP_PATH
-                                            , ex);
+                                        ITextLogManager.GetLogger(typeof(UseSvgNodeRenderer)).LogWarning(ex, SvgLogMessageConstant.NONINVERTIBLE_TRANSFORMATION_MATRIX_USED_IN_CLIP_PATH
+                                            );
                                     }
                                 }
                             }
@@ -113,14 +114,6 @@ namespace iText.Svg.Renderers.Impl {
         internal override void PostDraw(SvgDrawContext context) {
         }
 
-        /// <summary>The reference value will contain a hashtag character.</summary>
-        /// <remarks>The reference value will contain a hashtag character. This method will filter that value.</remarks>
-        /// <param name="name">value to be filtered</param>
-        /// <returns>filtered value</returns>
-        private String NormalizeName(String name) {
-            return name.Replace("#", "").Trim();
-        }
-
         private bool IsValidHref(String name) {
             return name.StartsWith("#");
         }
@@ -129,6 +122,10 @@ namespace iText.Svg.Renderers.Impl {
             UseSvgNodeRenderer copy = new UseSvgNodeRenderer();
             DeepCopyAttributesAndStyles(copy);
             return copy;
+        }
+
+        public override Rectangle GetObjectBoundingBox(SvgDrawContext context) {
+            return null;
         }
     }
 }

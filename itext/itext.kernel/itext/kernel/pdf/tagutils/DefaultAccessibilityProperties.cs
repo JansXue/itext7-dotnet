@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,10 +43,26 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.Kernel.Pdf.Tagging;
 
 namespace iText.Kernel.Pdf.Tagutils {
+    /// <summary>
+    /// The class represents a basic implementation of
+    /// <see cref="AccessibilityProperties"/>
+    /// that preserves specified
+    /// accessibility properties.
+    /// </summary>
+    /// <remarks>
+    /// The class represents a basic implementation of
+    /// <see cref="AccessibilityProperties"/>
+    /// that preserves specified
+    /// accessibility properties. Accessibility properties are used to define properties of
+    /// <see cref="iText.Kernel.Pdf.Tagging.PdfStructElem">structure elements</see>
+    /// in Tagged PDF documents via
+    /// <see cref="TagTreePointer"/>
+    /// API.
+    /// </remarks>
     public class DefaultAccessibilityProperties : AccessibilityProperties {
         protected internal String role;
 
@@ -68,6 +84,14 @@ namespace iText.Kernel.Pdf.Tagutils {
 
         protected internal IList<TagTreePointer> refs = new List<TagTreePointer>();
 
+        private byte[] structElemId;
+
+        /// <summary>
+        /// Instantiates a new
+        /// <see cref="DefaultAccessibilityProperties"/>
+        /// instance based on structure element role.
+        /// </summary>
+        /// <param name="role">the structure element role</param>
         public DefaultAccessibilityProperties(String role) {
             this.role = role;
         }
@@ -180,6 +204,17 @@ namespace iText.Kernel.Pdf.Tagutils {
 
         public override AccessibilityProperties ClearRefs() {
             refs.Clear();
+            return this;
+        }
+
+        /// <summary><inheritDoc/></summary>
+        public override byte[] GetStructureElementId() {
+            return this.structElemId;
+        }
+
+        /// <summary><inheritDoc/></summary>
+        public override AccessibilityProperties SetStructureElementId(byte[] id) {
+            this.structElemId = JavaUtil.ArraysCopyOf(id, id.Length);
             return this;
         }
     }

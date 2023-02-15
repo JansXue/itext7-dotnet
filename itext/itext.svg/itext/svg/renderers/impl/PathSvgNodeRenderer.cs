@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,7 +44,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf.Canvas;
 using iText.Svg;
@@ -59,49 +59,59 @@ namespace iText.Svg.Renderers.Impl {
     /// <see cref="iText.Svg.Renderers.ISvgNodeRenderer"/>
     /// implementation for the &lt;path&gt; tag.
     /// </summary>
-    public class PathSvgNodeRenderer : AbstractSvgNodeRenderer {
+    public class PathSvgNodeRenderer : AbstractSvgNodeRenderer, IMarkerCapable {
         private const String SPACE_CHAR = " ";
 
         /// <summary>
-        /// The regular expression to find invalid operators in the <a href="https://www.w3.org/TR/SVG/paths.html#PathData">PathData attribute of the &ltpath&gt element</a>
-        /// <p>
-        /// Find any occurrence of a letter that is not an operator
+        /// The regular expression to find invalid operators in the <a href="https://www.w3.org/tr/svg/paths.html#pathdata">PathData
+        /// attribute of the &lt;path&gt; element</a>
         /// </summary>
+        /// <remarks>
+        /// The regular expression to find invalid operators in the <a href="https://www.w3.org/tr/svg/paths.html#pathdata">PathData
+        /// attribute of the &lt;path&gt; element</a>
+        /// <para />
+        /// Find any occurrence of a letter that is not an operator
+        /// </remarks>
         private const String INVALID_OPERATOR_REGEX = "(?:(?![mzlhvcsqtae])\\p{L})";
 
-        private static Regex invalidRegexPattern = iText.IO.Util.StringUtil.RegexCompile(INVALID_OPERATOR_REGEX, System.Text.RegularExpressions.RegexOptions.IgnoreCase
-            );
+        private static readonly Regex INVALID_REGEX_PATTERN = iText.Commons.Utils.StringUtil.RegexCompile(INVALID_OPERATOR_REGEX
+            , System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
         /// <summary>
-        /// The regular expression to split the <a href="https://www.w3.org/TR/SVG/paths.html#PathData">PathData attribute of the &ltpath&gt element</a>
-        /// <p>
+        /// The regular expression to split the <a href="https://www.w3.org/tr/svg/paths.html#pathdata">PathData attribute of
+        /// the &lt;path&gt; element</a>
+        /// </summary>
+        /// <remarks>
+        /// The regular expression to split the <a href="https://www.w3.org/tr/svg/paths.html#pathdata">PathData attribute of
+        /// the &lt;path&gt; element</a>
+        /// <para />
         /// Since
         /// <see cref="ContainsInvalidAttributes(System.String)"/>
-        /// is called before the use of this expression in
+        /// is called before the use of this expression
+        /// in
         /// <see cref="ParsePathOperations()"/>
         /// the attribute to be split is valid.
+        /// <para />
         /// SVG defines 6 types of path commands, for a total of 20 commands:
+        /// <para />
         /// MoveTo: M, m
         /// LineTo: L, l, H, h, V, v
         /// Cubic Bezier Curve: C, c, S, s
         /// Quadratic Bezier Curve: Q, q, T, t
         /// Elliptical Arc Curve: A, a
         /// ClosePath: Z, z
-        /// </summary>
-        private static readonly Regex SPLIT_PATTERN = iText.IO.Util.StringUtil.RegexCompile("(?=[mlhvcsqtaz])", System.Text.RegularExpressions.RegexOptions.IgnoreCase
-            );
+        /// </remarks>
+        private static readonly Regex SPLIT_PATTERN = iText.Commons.Utils.StringUtil.RegexCompile("(?=[mlhvcsqtaz])"
+            , System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
         /// <summary>
         /// The
-        /// <see cref="iText.Kernel.Geom.Point"/>
-        /// representing the current point in the path to be used for relative pathing operations.
-        /// The original value is the origin, and should be set via a
+        /// <see cref="iText.Svg.Renderers.Path.Impl.ClosePath"/>
+        /// shape keeping track of the initial point set by a
         /// <see cref="iText.Svg.Renderers.Path.Impl.MoveTo"/>
-        /// operation before it may be referenced.
+        /// operation.
         /// </summary>
-        private Point currentPoint = new Point(0, 0);
-
-        /// <summary>
+        /// <remarks>
         /// The
         /// <see cref="iText.Svg.Renderers.Path.Impl.ClosePath"/>
         /// shape keeping track of the initial point set by a
@@ -112,13 +122,12 @@ namespace iText.Svg.Renderers.Impl {
         /// , and must be set via a
         /// <see cref="iText.Svg.Renderers.Path.Impl.MoveTo"/>
         /// operation before it may be drawn.
-        /// </summary>
+        /// </remarks>
         private ClosePath zOperator = null;
 
         protected internal override void DoDraw(SvgDrawContext context) {
             PdfCanvas canvas = context.GetCurrentCanvas();
             canvas.WriteLiteral("% path\n");
-            currentPoint = new Point(0, 0);
             foreach (IPathShape item in GetShapes()) {
                 item.Draw(canvas);
             }
@@ -130,6 +139,20 @@ namespace iText.Svg.Renderers.Impl {
             return copy;
         }
 
+        public override Rectangle GetObjectBoundingBox(SvgDrawContext context) {
+            Point lastPoint = null;
+            Rectangle commonRectangle = null;
+            foreach (IPathShape item in GetShapes()) {
+                if (lastPoint == null) {
+                    lastPoint = item.GetEndingPoint();
+                }
+                Rectangle rectangle = item.GetPathShapeRectangle(lastPoint);
+                commonRectangle = Rectangle.GetCommonRectangle(commonRectangle, rectangle);
+                lastPoint = item.GetEndingPoint();
+            }
+            return commonRectangle;
+        }
+
         /// <summary>
         /// Gets the coordinates that shall be passed to
         /// <see cref="iText.Svg.Renderers.Path.IPathShape.SetCoordinates(System.String[], iText.Kernel.Geom.Point)"/>
@@ -138,13 +161,14 @@ namespace iText.Svg.Renderers.Impl {
         /// <param name="shape">The current shape.</param>
         /// <param name="previousShape">The previous shape which can affect the coordinates of the current shape.</param>
         /// <param name="pathProperties">
-        /// The operator and all arguments as a
-        /// <see>String[]</see>
+        /// The operator and all arguments as an array of
+        /// <see cref="System.String">String</see>
+        /// s
         /// </param>
         /// <returns>
         /// a
-        /// <see>String[]</see>
-        /// of coordinates that shall be passed to
+        /// <see cref="System.String"/>
+        /// array of coordinates that shall be passed to
         /// <see cref="iText.Svg.Renderers.Path.IPathShape.SetCoordinates(System.String[], iText.Kernel.Geom.Point)"/>
         /// </returns>
         private String[] GetShapeCoordinates(IPathShape shape, IPathShape previousShape, String[] pathProperties) {
@@ -156,7 +180,7 @@ namespace iText.Svg.Renderers.Impl {
                 String[] startingControlPoint = new String[2];
                 if (previousShape != null) {
                     Point previousEndPoint = previousShape.GetEndingPoint();
-                    //if the previous command was a Bezier curve, use its last control point
+                    // If the previous command was a Bezier curve, use its last control point
                     if (previousShape is IControlPointCurve) {
                         Point lastControlPoint = ((IControlPointCurve)previousShape).GetLastControlPoint();
                         float reflectedX = (float)(2 * previousEndPoint.GetX() - lastControlPoint.GetX());
@@ -170,9 +194,7 @@ namespace iText.Svg.Renderers.Impl {
                     }
                 }
                 else {
-                    // TODO RND-951
-                    startingControlPoint[0] = pathProperties[0];
-                    startingControlPoint[1] = pathProperties[1];
+                    throw new SvgProcessingException(SvgExceptionMessageConstant.INVALID_SMOOTH_CURVE_USE);
                 }
                 shapeCoordinates = Concatenate(startingControlPoint, pathProperties);
             }
@@ -188,8 +210,9 @@ namespace iText.Svg.Renderers.Impl {
         /// objects.
         /// </summary>
         /// <param name="pathProperties">
-        /// The property operator and all arguments as a
-        /// <see>String[]</see>
+        /// The property operator and all arguments as an array of
+        /// <see cref="System.String"/>
+        /// s
         /// </param>
         /// <param name="previousShape">
         /// The previous shape which can affect the positioning of the current shape. If no previous
@@ -214,10 +237,9 @@ namespace iText.Svg.Renderers.Impl {
             if (argumentCount == 0) {
                 // closePath operator
                 if (previousShape == null) {
-                    throw new SvgProcessingException(SvgLogMessageConstant.INVALID_CLOSEPATH_OPERATOR_USE);
+                    throw new SvgProcessingException(SvgExceptionMessageConstant.INVALID_CLOSEPATH_OPERATOR_USE);
                 }
                 shapes.Add(zOperator);
-                currentPoint = zOperator.GetEndingPoint();
                 return shapes;
             }
             for (int index = 1; index < pathProperties.Length; index += argumentCount) {
@@ -226,17 +248,15 @@ namespace iText.Svg.Renderers.Impl {
                 }
                 IPathShape pathShape = SvgPathShapeFactory.CreatePathShape(pathProperties[0]);
                 if (pathShape is MoveTo) {
-                    shapes.AddAll(AddMoveToShapes(pathShape, pathProperties));
+                    shapes.AddAll(AddMoveToShapes(pathShape, pathProperties, previousShape));
                     return shapes;
                 }
                 String[] shapeCoordinates = GetShapeCoordinates(pathShape, previousShape, JavaUtil.ArraysCopyOfRange(pathProperties
                     , index, index + argumentCount));
                 if (pathShape != null) {
                     if (shapeCoordinates != null) {
-                        pathShape.SetCoordinates(shapeCoordinates, currentPoint);
+                        pathShape.SetCoordinates(shapeCoordinates, GetCurrentPoint(previousShape));
                     }
-                    currentPoint = pathShape.GetEndingPoint();
-                    // unsupported operators are ignored.
                     shapes.Add(pathShape);
                 }
                 previousShape = pathShape;
@@ -244,15 +264,16 @@ namespace iText.Svg.Renderers.Impl {
             return shapes;
         }
 
-        private IList<IPathShape> AddMoveToShapes(IPathShape pathShape, String[] pathProperties) {
+        private IList<IPathShape> AddMoveToShapes(IPathShape pathShape, String[] pathProperties, IPathShape beforeMoveShape
+            ) {
             IList<IPathShape> shapes = new List<IPathShape>();
             int argumentCount = 2;
-            String[] shapeCoordinates = GetShapeCoordinates(pathShape, null, JavaUtil.ArraysCopyOfRange(pathProperties
+            String[] shapeCoordinates = GetShapeCoordinates(pathShape, beforeMoveShape, JavaUtil.ArraysCopyOfRange(pathProperties
                 , 1, 3));
             zOperator = new ClosePath(pathShape.IsRelative());
-            zOperator.SetCoordinates(shapeCoordinates, currentPoint);
-            pathShape.SetCoordinates(shapeCoordinates, currentPoint);
-            currentPoint = pathShape.GetEndingPoint();
+            Point currentPointBeforeMove = GetCurrentPoint(beforeMoveShape);
+            zOperator.SetCoordinates(shapeCoordinates, currentPointBeforeMove);
+            pathShape.SetCoordinates(shapeCoordinates, currentPointBeforeMove);
             shapes.Add(pathShape);
             IPathShape previousShape = pathShape;
             if (pathProperties.Length > 3) {
@@ -281,11 +302,22 @@ namespace iText.Svg.Renderers.Impl {
         /// into one or more
         /// <see cref="iText.Svg.Renderers.Path.IPathShape"/>
         /// objects to be drawn on the canvas.
-        /// <p>
+        /// </summary>
+        /// <remarks>
+        /// Processes the
+        /// <see cref="iText.Svg.SvgConstants.Attributes.D"/>
+        /// 
+        /// <see cref="AbstractSvgNodeRenderer.attributesAndStyles"/>
+        /// and converts them
+        /// into one or more
+        /// <see cref="iText.Svg.Renderers.Path.IPathShape"/>
+        /// objects to be drawn on the canvas.
+        /// <para />
         /// Each individual operator is passed to
         /// <see cref="ProcessPathOperator(System.String[], iText.Svg.Renderers.Path.IPathShape)"/>
-        /// to be processed individually.
-        /// </summary>
+        /// to be
+        /// processed individually.
+        /// </remarks>
         /// <returns>
         /// a
         /// <see cref="System.Collections.ICollection{E}"/>
@@ -297,7 +329,7 @@ namespace iText.Svg.Renderers.Impl {
             ICollection<String> parsedResults = ParsePathOperations();
             IList<IPathShape> shapes = new List<IPathShape>();
             foreach (String parsedResult in parsedResults) {
-                String[] pathProperties = iText.IO.Util.StringUtil.Split(parsedResult, " +");
+                String[] pathProperties = iText.Commons.Utils.StringUtil.Split(parsedResult, " +");
                 IPathShape previousShape = shapes.Count == 0 ? null : shapes[shapes.Count - 1];
                 IList<IPathShape> operatorShapes = ProcessPathOperator(pathProperties, previousShape);
                 shapes.AddAll(operatorShapes);
@@ -313,26 +345,26 @@ namespace iText.Svg.Renderers.Impl {
         }
 
         internal virtual bool ContainsInvalidAttributes(String attributes) {
-            return SvgRegexUtils.ContainsAtLeastOneMatch(invalidRegexPattern, attributes);
+            return iText.Commons.Utils.Matcher.Match(INVALID_REGEX_PATTERN, attributes).Find();
         }
 
         internal virtual ICollection<String> ParsePathOperations() {
             ICollection<String> result = new List<String>();
-            String attributes = attributesAndStyles.Get(SvgConstants.Attributes.D);
-            if (attributes == null) {
-                throw new SvgProcessingException(SvgExceptionMessageConstant.PATH_OBJECT_MUST_HAVE_D_ATTRIBUTE);
+            String pathString = attributesAndStyles.Get(SvgConstants.Attributes.D);
+            if (pathString == null) {
+                pathString = "";
             }
-            if (ContainsInvalidAttributes(attributes)) {
-                throw new SvgProcessingException(SvgLogMessageConstant.INVALID_PATH_D_ATTRIBUTE_OPERATORS).SetMessageParams
-                    (attributes);
+            if (ContainsInvalidAttributes(pathString)) {
+                throw new SvgProcessingException(SvgExceptionMessageConstant.INVALID_PATH_D_ATTRIBUTE_OPERATORS).SetMessageParams
+                    (pathString);
             }
-            String[] operators = SplitPathStringIntoOperators(attributes);
+            String[] operators = SplitPathStringIntoOperators(pathString);
             foreach (String inst in operators) {
                 String instTrim = inst.Trim();
                 if (!String.IsNullOrEmpty(instTrim)) {
                     char instruction = instTrim[0];
                     String temp = instruction + SPACE_CHAR + instTrim.Substring(1).Replace(",", SPACE_CHAR).Trim();
-                    //Do a run-through for decimal point separation
+                    // Do a run-through for decimal point separation
                     temp = SeparateDecimalPoints(temp);
                     result.Add(temp);
                 }
@@ -342,8 +374,8 @@ namespace iText.Svg.Renderers.Impl {
 
         /// <summary>Iterate over the input string and separate numbers from each other with space chars</summary>
         internal virtual String SeparateDecimalPoints(String input) {
-            //If a space or minus sign is found reset
-            //If a another point is found, add an extra space on before the point
+            // If a space or minus sign is found reset
+            // If a another point is found, add an extra space on before the point
             StringBuilder res = new StringBuilder();
             // We are now among the digits to the right of the decimal point
             bool fractionalPartAfterDecimalPoint = false;
@@ -376,15 +408,66 @@ namespace iText.Svg.Renderers.Impl {
             return res.ToString();
         }
 
-        /// <summary>Gets an array of strings representing operators with their arguments, e.g.</summary>
-        /// <remarks>Gets an array of strings representing operators with their arguments, e.g. {"M 100 100", "L 300 100", "L200, 300", "z"}
-        ///     </remarks>
+        /// <summary>
+        /// Gets an array of strings representing operators with their arguments, e.g. {"M 100 100", "L 300 100", "L200,
+        /// 300", "z"}
+        /// </summary>
         internal static String[] SplitPathStringIntoOperators(String path) {
-            return iText.IO.Util.StringUtil.Split(SPLIT_PATTERN, path);
+            return iText.Commons.Utils.StringUtil.Split(SPLIT_PATTERN, path);
         }
 
         private static bool EndsWithNonWhitespace(StringBuilder sb) {
             return sb.Length > 0 && !iText.IO.Util.TextUtil.IsWhiteSpace(sb[sb.Length - 1]);
+        }
+
+        public virtual void DrawMarker(SvgDrawContext context, MarkerVertexType markerVertexType) {
+            Object[] allShapesOrdered = GetShapes().ToArray();
+            Point point = null;
+            if (MarkerVertexType.MARKER_START.Equals(markerVertexType)) {
+                point = ((AbstractPathShape)allShapesOrdered[0]).GetEndingPoint();
+            }
+            else {
+                if (MarkerVertexType.MARKER_END.Equals(markerVertexType)) {
+                    point = ((AbstractPathShape)allShapesOrdered[allShapesOrdered.Length - 1]).GetEndingPoint();
+                }
+            }
+            if (point != null) {
+                String moveX = SvgCssUtils.ConvertDoubleToString(point.x);
+                String moveY = SvgCssUtils.ConvertDoubleToString(point.y);
+                MarkerSvgNodeRenderer.DrawMarker(context, moveX, moveY, markerVertexType, this);
+            }
+        }
+
+        public virtual double GetAutoOrientAngle(MarkerSvgNodeRenderer marker, bool reverse) {
+            Object[] pathShapes = GetShapes().ToArray();
+            if (pathShapes.Length > 1) {
+                Vector v = new Vector(0, 0, 0);
+                if (SvgConstants.Attributes.MARKER_END.Equals(marker.attributesAndStyles.Get(SvgConstants.Tags.MARKER))) {
+                    // Create vector from the last two shapes
+                    IPathShape lastShape = (IPathShape)pathShapes[pathShapes.Length - 1];
+                    IPathShape secondToLastShape = (IPathShape)pathShapes[pathShapes.Length - 2];
+                    v = new Vector((float)(lastShape.GetEndingPoint().GetX() - secondToLastShape.GetEndingPoint().GetX()), (float
+                        )(lastShape.GetEndingPoint().GetY() - secondToLastShape.GetEndingPoint().GetY()), 0f);
+                }
+                else {
+                    if (SvgConstants.Attributes.MARKER_START.Equals(marker.attributesAndStyles.Get(SvgConstants.Tags.MARKER))) {
+                        // Create vector from the first two shapes
+                        IPathShape firstShape = (IPathShape)pathShapes[0];
+                        IPathShape secondShape = (IPathShape)pathShapes[1];
+                        v = new Vector((float)(secondShape.GetEndingPoint().GetX() - firstShape.GetEndingPoint().GetX()), (float)(
+                            secondShape.GetEndingPoint().GetY() - firstShape.GetEndingPoint().GetY()), 0f);
+                    }
+                }
+                // Get angle from this vector and the horizontal axis
+                Vector xAxis = new Vector(1, 0, 0);
+                double rotAngle = SvgCoordinateUtils.CalculateAngleBetweenTwoVectors(xAxis, v);
+                return v.Get(1) >= 0 && !reverse ? rotAngle : rotAngle * -1f;
+            }
+            return 0;
+        }
+
+        private static Point GetCurrentPoint(IPathShape previousShape) {
+            return previousShape == null ? new Point(0, 0) : previousShape.GetEndingPoint();
         }
     }
 }

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,16 +41,30 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
+using iText.Test;
 
 namespace iText.StyledXmlParser.Css.Util {
-    public class CssPropertyNormalizerTest {
+    [NUnit.Framework.Category("UnitTest")]
+    public class CssPropertyNormalizerTest : ExtendedITextTest {
         [NUnit.Framework.Test]
-        public virtual void TestUrlNormalizationSimple() {
+        public virtual void CheckUrlNormalizationSimpleTest() {
             Test("url('data:image/png;base64,iVBORw0K')", "url('data:image/png;base64,iVBORw0K')");
         }
 
         [NUnit.Framework.Test]
-        public virtual void TestUrlNormalizationLineTerminators() {
+        public virtual void CheckUrlNormalizationUppercaseTest() {
+            Test("URL('data:image/png;base64,iVBORw0K')", "url('data:image/png;base64,iVBORw0K')");
+            Test("uRL('data:image/png;base64,iVBORw0K')", "url('data:image/png;base64,iVBORw0K')");
+            Test("urL('data:image/png;base64,iVBORw0K')", "url('data:image/png;base64,iVBORw0K')");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void CheckUrlNormalizationWhitespacesTest() {
+            Test("  url(  'data:image/png;base64,iVBORw0K' )", "url('data:image/png;base64,iVBORw0K')");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void CheckUrlNormalizationLineTerminatorsTest() {
             // Test is initially added to ensure equal behavior between Java and C#.
             // The behavior itself might be reconsidered in the future. Browsers do not forgive newlines in base64 expressions
             Test("url(data:image/png;base64,iVBOR\nw0K)", "url(data:image/png;base64,iVBOR\nw0K)");

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,9 +42,11 @@ address: sales@itextpdf.com
 */
 using System;
 using iText.Kernel.Geom;
+using iText.Test;
 
 namespace iText.Svg.Renderers.Path.Impl {
-    public class EllipticalPathOperatorTest {
+    [NUnit.Framework.Category("UnitTest")]
+    public class EllipticalPathOperatorTest : ExtendedITextTest {
         // tests for coordinates
         [NUnit.Framework.Test]
         public virtual void TestBasicParameterSet() {
@@ -96,28 +98,18 @@ namespace iText.Svg.Renderers.Path.Impl {
 
         [NUnit.Framework.Test]
         public virtual void TestNotEnoughParameterSet() {
-            NUnit.Framework.Assert.That(() =>  {
-                EllipticalCurveTo absoluteElliptic = new EllipticalCurveTo();
-                // String array length = 6
-                absoluteElliptic.SetCoordinates(new String[] { "40", "0", "0", "0", "20", "20" }, new Point());
-                String[] result = absoluteElliptic.GetCoordinates();
-                NUnit.Framework.Assert.AreEqual(0, result.Length);
-            }
-            , NUnit.Framework.Throws.InstanceOf<ArgumentException>())
-;
+            EllipticalCurveTo absoluteElliptic = new EllipticalCurveTo();
+            // String array length = 6
+            NUnit.Framework.Assert.Catch(typeof(ArgumentException), () => absoluteElliptic.SetCoordinates(new String[]
+                 { "40", "0", "0", "0", "20", "20" }, new Point()));
         }
 
         [NUnit.Framework.Test]
         public virtual void TestNoParameterSet() {
-            NUnit.Framework.Assert.That(() =>  {
-                EllipticalCurveTo absoluteElliptic = new EllipticalCurveTo();
-                // String array length = 0
-                absoluteElliptic.SetCoordinates(new String[] {  }, new Point());
-                String[] result = absoluteElliptic.GetCoordinates();
-                NUnit.Framework.Assert.AreEqual(0, result.Length);
-            }
-            , NUnit.Framework.Throws.InstanceOf<ArgumentException>())
-;
+            EllipticalCurveTo absoluteElliptic = new EllipticalCurveTo();
+            // String array length = 0
+            NUnit.Framework.Assert.Catch(typeof(ArgumentException), () => absoluteElliptic.SetCoordinates(new String[]
+                 {  }, new Point()));
         }
 
         // rotate tests

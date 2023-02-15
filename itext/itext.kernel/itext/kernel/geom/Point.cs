@@ -19,11 +19,12 @@
 *  That's why we imported the code into iText.
 */
 using System;
+using iText.Commons.Utils;
 using iText.IO.Util;
 
 namespace iText.Kernel.Geom {
     public class Point
-#if !NETSTANDARD1_6
+#if !NETSTANDARD2_0
  : ICloneable
 #endif
  {
@@ -59,10 +60,10 @@ namespace iText.Kernel.Geom {
         }
 
         public override String ToString() {
+            //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             return MessageFormatUtil.Format("Point: [x={0},y={1}]", x, y);
         }
 
-        //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         public virtual double GetX() {
             return x;
         }

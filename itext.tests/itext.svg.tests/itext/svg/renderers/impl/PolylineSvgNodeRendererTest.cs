@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -54,6 +54,7 @@ using iText.Svg.Renderers;
 using iText.Test;
 
 namespace iText.Svg.Renderers.Impl {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class PolylineSvgNodeRendererTest : SvgIntegrationTest {
         private static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/svg/renderers/impl/PolylineSvgNodeRendererTest/";
@@ -66,8 +67,6 @@ namespace iText.Svg.Renderers.Impl {
             ITextTest.CreateDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void PolylineRendererTest() {
             String filename = "polylineRendererTest.pdf";
@@ -88,42 +87,32 @@ namespace iText.Svg.Renderers.Impl {
 
         [NUnit.Framework.Test]
         public virtual void PolyLineInvalidAttributeTest01() {
-            NUnit.Framework.Assert.That(() =>  {
-                PdfDocument doc = new PdfDocument(new PdfWriter(new MemoryStream()));
-                doc.AddNewPage();
-                ISvgNodeRenderer root = new PolylineSvgNodeRenderer();
-                IDictionary<String, String> polyLineAttributes = new Dictionary<String, String>();
-                polyLineAttributes.Put(SvgConstants.Attributes.POINTS, "0,0 notAnum,alsoNotANum");
-                root.SetAttributesAndStyles(polyLineAttributes);
-                SvgDrawContext context = new SvgDrawContext(null, null);
-                PdfCanvas cv = new PdfCanvas(doc, 1);
-                context.PushCanvas(cv);
-                root.Draw(context);
-            }
-            , NUnit.Framework.Throws.InstanceOf<StyledXMLParserException>())
-;
+            PdfDocument doc = new PdfDocument(new PdfWriter(new MemoryStream()));
+            doc.AddNewPage();
+            ISvgNodeRenderer root = new PolylineSvgNodeRenderer();
+            IDictionary<String, String> polyLineAttributes = new Dictionary<String, String>();
+            polyLineAttributes.Put(SvgConstants.Attributes.POINTS, "0,0 notAnum,alsoNotANum");
+            root.SetAttributesAndStyles(polyLineAttributes);
+            SvgDrawContext context = new SvgDrawContext(null, null);
+            PdfCanvas cv = new PdfCanvas(doc, 1);
+            context.PushCanvas(cv);
+            NUnit.Framework.Assert.Catch(typeof(StyledXMLParserException), () => root.Draw(context));
         }
 
         [NUnit.Framework.Test]
         public virtual void PolyLineInvalidAttributeTest02() {
-            NUnit.Framework.Assert.That(() =>  {
-                PdfDocument doc = new PdfDocument(new PdfWriter(new MemoryStream()));
-                doc.AddNewPage();
-                ISvgNodeRenderer root = new PolylineSvgNodeRenderer();
-                IDictionary<String, String> polyLineAttributes = new Dictionary<String, String>();
-                polyLineAttributes.Put(SvgConstants.Attributes.POINTS, "0,0 100,100 5, 20,30");
-                root.SetAttributesAndStyles(polyLineAttributes);
-                SvgDrawContext context = new SvgDrawContext(null, null);
-                PdfCanvas cv = new PdfCanvas(doc, 1);
-                context.PushCanvas(cv);
-                root.Draw(context);
-            }
-            , NUnit.Framework.Throws.InstanceOf<SvgProcessingException>())
-;
+            PdfDocument doc = new PdfDocument(new PdfWriter(new MemoryStream()));
+            doc.AddNewPage();
+            ISvgNodeRenderer root = new PolylineSvgNodeRenderer();
+            IDictionary<String, String> polyLineAttributes = new Dictionary<String, String>();
+            polyLineAttributes.Put(SvgConstants.Attributes.POINTS, "0,0 100,100 5, 20,30");
+            root.SetAttributesAndStyles(polyLineAttributes);
+            SvgDrawContext context = new SvgDrawContext(null, null);
+            PdfCanvas cv = new PdfCanvas(doc, 1);
+            context.PushCanvas(cv);
+            NUnit.Framework.Assert.Catch(typeof(SvgProcessingException), () => root.Draw(context));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void PolyLineEmptyPointsListTest() {
             String filename = "polyLineEmptyPointsListTest.pdf";
@@ -165,6 +154,11 @@ namespace iText.Svg.Renderers.Impl {
             for (int x = 0; x < attributePoints.Count; x++) {
                 NUnit.Framework.Assert.AreEqual(expectedPoints[x], attributePoints[x]);
             }
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ElementDimensionExceedsViewboxBoundaryTest() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "elementDimensionExceedsViewboxBoundary");
         }
     }
 }

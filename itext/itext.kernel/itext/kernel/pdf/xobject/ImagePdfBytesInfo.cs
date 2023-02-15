@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -40,31 +40,40 @@ source product.
 For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
+using System;
 using System.IO;
 using iText.IO.Codec;
+using iText.Kernel.Actions.Data;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf;
+using iText.Kernel.Pdf.Colorspace;
+using iText.Kernel.Pdf.Function;
 
 namespace iText.Kernel.Pdf.Xobject {
     internal class ImagePdfBytesInfo {
+        private static readonly String TIFFTAG_SOFTWARE_VALUE = "iText\u00ae " + ITextCoreProductData.GetInstance(
+            ).GetVersion() + " \u00a9" + ITextCoreProductData.GetInstance().GetSinceCopyrightYear() + "-" + ITextCoreProductData
+            .GetInstance().GetToCopyrightYear() + " iText Group NV";
+
+        private readonly int bpc;
+
+        private readonly int width;
+
+        private readonly int height;
+
+        private readonly PdfObject colorspace;
+
+        private readonly PdfArray decode;
+
         private int pngColorType;
 
         private int pngBitDepth;
-
-        private int bpc;
 
         private byte[] palette;
 
         private byte[] icc;
 
         private int stride;
-
-        private int width;
-
-        private int height;
-
-        private PdfObject colorspace;
-
-        private PdfArray decode;
 
         public ImagePdfBytesInfo(PdfImageXObject imageXObject) {
             pngColorType = -1;
@@ -84,33 +93,34 @@ namespace iText.Kernel.Pdf.Xobject {
             return pngColorType;
         }
 
-        /// <exception cref="System.IO.IOException"/>
         public virtual byte[] DecodeTiffAndPngBytes(byte[] imageBytes) {
-            MemoryStream ms = new MemoryStream();
             if (pngColorType < 0) {
                 if (bpc != 8) {
-                    throw new iText.IO.IOException(iText.IO.IOException.ColorDepthIsNotSupported).SetMessageParams(bpc);
+                    throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.ColorDepthIsNotSupported).SetMessageParams
+                        (bpc);
                 }
                 if (colorspace is PdfArray) {
                     PdfArray ca = (PdfArray)colorspace;
                     PdfObject tyca = ca.Get(0);
                     if (!PdfName.ICCBased.Equals(tyca)) {
-                        throw new iText.IO.IOException(iText.IO.IOException.ColorSpaceIsNotSupported).SetMessageParams(tyca.ToString
-                            ());
+                        throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.ColorSpaceIsNotSupported).SetMessageParams
+                            (tyca.ToString());
                     }
                     PdfStream pr = (PdfStream)ca.Get(1);
                     int n = pr.GetAsNumber(PdfName.N).IntValue();
                     if (n != 4) {
-                        throw new iText.IO.IOException(iText.IO.IOException.NValueIsNotSupported).SetMessageParams(n);
+                        throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.NValueIsNotSupported).SetMessageParams
+                            (n);
                     }
                     icc = pr.GetBytes();
                 }
                 else {
                     if (!PdfName.DeviceCMYK.Equals(colorspace)) {
-                        throw new iText.IO.IOException(iText.IO.IOException.ColorSpaceIsNotSupported).SetMessageParams(colorspace.
-                            ToString());
+                        throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.ColorSpaceIsNotSupported).SetMessageParams
+                            (colorspace.ToString());
                     }
                 }
+                MemoryStream ms = new MemoryStream();
                 stride = 4 * width;
                 TiffWriter wr = new TiffWriter();
                 wr.AddField(new TiffWriter.FieldShort(TIFFConstants.TIFFTAG_SAMPLESPERPIXEL, 4));
@@ -126,8 +136,7 @@ namespace iText.Kernel.Pdf.Xobject {
                 wr.AddField(new TiffWriter.FieldRational(TIFFConstants.TIFFTAG_XRESOLUTION, new int[] { 300, 1 }));
                 wr.AddField(new TiffWriter.FieldRational(TIFFConstants.TIFFTAG_YRESOLUTION, new int[] { 300, 1 }));
                 wr.AddField(new TiffWriter.FieldShort(TIFFConstants.TIFFTAG_RESOLUTIONUNIT, TIFFConstants.RESUNIT_INCH));
-                wr.AddField(new TiffWriter.FieldAscii(TIFFConstants.TIFFTAG_SOFTWARE, iText.Kernel.Version.GetInstance().GetVersion
-                    ()));
+                wr.AddField(new TiffWriter.FieldAscii(TIFFConstants.TIFFTAG_SOFTWARE, TIFFTAG_SOFTWARE_VALUE));
                 MemoryStream comp = new MemoryStream();
                 TiffWriter.CompressLZW(comp, 2, imageBytes, (int)height, 4, stride);
                 byte[] buf = comp.ToArray();
@@ -141,40 +150,63 @@ namespace iText.Kernel.Pdf.Xobject {
                 return imageBytes;
             }
             else {
-                PngWriter png = new PngWriter(ms);
-                if (decode != null) {
-                    if (pngBitDepth == 1) {
-                        // if the decode array is 1,0, then we need to invert the image
-                        if (decode.GetAsNumber(0).IntValue() == 1 && decode.GetAsNumber(1).IntValue() == 0) {
-                            int len = imageBytes.Length;
-                            for (int t = 0; t < len; ++t) {
-                                imageBytes[t] ^= 0xff;
-                            }
+                if (colorspace is PdfArray) {
+                    PdfArray ca = (PdfArray)colorspace;
+                    PdfObject tyca = ca.Get(0);
+                    if (PdfName.Separation.Equals(tyca)) {
+                        return ProcessSeperationColor(imageBytes, ca);
+                    }
+                }
+                return ProcessPng(imageBytes, pngBitDepth, pngColorType);
+            }
+        }
+
+        private byte[] ProcessSeperationColor(byte[] imageBytes, PdfArray colorSpaceArray) {
+            PdfSpecialCs.Separation scs = new PdfSpecialCs.Separation(colorSpaceArray);
+            byte[] newImageBytes = scs.GetTintTransformation().CalculateFromByteArray(imageBytes, 0, imageBytes.Length
+                , 8, 8);
+            // TODO switch top tiff for CMYK
+            // TODO verify RGBA is working
+            if (scs.GetBaseCs().GetNumberOfComponents() > 3) {
+                throw new NotSupportedException(KernelExceptionMessageConstant.GET_IMAGEBYTES_FOR_SEPARATION_COLOR_ONLY_SUPPORTS_RGB
+                    );
+            }
+            stride = (width * bpc * 3 + 7) / 8;
+            return ProcessPng(newImageBytes, pngBitDepth, 2);
+        }
+
+        private byte[] ProcessPng(byte[] imageBytes, int pngBitDepth, int pngColorType) {
+            MemoryStream ms = new MemoryStream();
+            PngWriter png = new PngWriter(ms);
+            if (decode != null) {
+                if (pngBitDepth == 1) {
+                    // if the decode array is 1,0, then we need to invert the image
+                    if (decode.GetAsNumber(0).IntValue() == 1 && decode.GetAsNumber(1).IntValue() == 0) {
+                        int len = imageBytes.Length;
+                        for (int t = 0; t < len; ++t) {
+                            imageBytes[t] ^= 0xff;
                         }
                     }
                 }
-                // if the decode array is 0,1, do nothing.  It's possible that the array could be 0,0 or 1,1 - but that would be silly, so we'll just ignore that case
-                // todo: add decode transformation for other depths
-                png.WriteHeader(width, height, pngBitDepth, pngColorType);
-                if (icc != null) {
-                    png.WriteIccProfile(icc);
-                }
-                if (palette != null) {
-                    png.WritePalette(palette);
-                }
-                png.WriteData(imageBytes, stride);
-                png.WriteEnd();
-                imageBytes = ms.ToArray();
-                return imageBytes;
             }
+            // if the decode array is 0,1, do nothing.  It's possible that the array could be 0,0 or 1,1 - but that would be silly, so we'll just ignore that case
+            // TODO DEVSIX-7015 add decode transformation for other depths
+            png.WriteHeader(width, height, pngBitDepth, pngColorType);
+            if (icc != null) {
+                png.WriteIccProfile(icc);
+            }
+            if (palette != null) {
+                png.WritePalette(palette);
+            }
+            png.WriteData(imageBytes, stride);
+            png.WriteEnd();
+            imageBytes = ms.ToArray();
+            return imageBytes;
         }
 
         /// <summary>Sets state of this object according to the color space</summary>
         /// <param name="csObj">the colorspace to use</param>
         /// <param name="allowIndexed">whether indexed color spaces will be resolved (used for recursive call)</param>
-        /// <param name="width"/>
-        /// <param name="height"/>
-        /// <exception cref="System.IO.IOException">if there is a problem with reading from the underlying stream</exception>
         private void FindColorspace(PdfObject csObj, bool allowIndexed) {
             if (PdfName.DeviceGray.Equals(csObj) || (csObj == null && bpc == 1)) {
                 // handle imagemasks
@@ -235,6 +267,14 @@ namespace iText.Kernel.Pdf.Xobject {
                                             }
                                             stride = (width * bpc + 7) / 8;
                                             pngColorType = 3;
+                                        }
+                                    }
+                                    else {
+                                        if (PdfName.Separation.Equals(tyca)) {
+                                            IPdfFunction fct = PdfFunctionFactory.Create(ca.Get(3));
+                                            int components = fct.GetOutputSize();
+                                            pngColorType = components == 1 ? 1 : 2;
+                                            pngBitDepth = 8;
                                         }
                                     }
                                 }

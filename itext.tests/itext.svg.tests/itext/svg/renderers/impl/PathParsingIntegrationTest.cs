@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,11 +42,13 @@ address: sales@itextpdf.com
 */
 using System;
 using iText.Svg.Exceptions;
+using iText.Svg.Logs;
 using iText.Svg.Renderers;
 using iText.Test;
 using iText.Test.Attributes;
 
 namespace iText.Svg.Renderers.Impl {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class PathParsingIntegrationTest : SvgIntegrationTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/svg/renderers/impl/PathParsingIntegrationTest/";
@@ -59,169 +61,152 @@ namespace iText.Svg.Renderers.Impl {
             ITextTest.CreateDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void NormalTest() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "normal");
+            ConvertAndCompare(sourceFolder, destinationFolder, "normal");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void MixTest() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "mix");
+            ConvertAndCompare(sourceFolder, destinationFolder, "mix");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void NoWhitespace() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "noWhitespace");
+            ConvertAndCompare(sourceFolder, destinationFolder, "noWhitespace");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ZOperator() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "zOperator");
+            ConvertAndCompare(sourceFolder, destinationFolder, "zOperator");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void MissingOperandArgument() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "missingOperandArgument");
+            ConvertAndCompare(sourceFolder, destinationFolder, "missingOperandArgument");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void DecimalPointHandlingTest() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "decimalPointHandling");
+            ConvertAndCompare(sourceFolder, destinationFolder, "decimalPointHandling");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void InvalidOperatorTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                ConvertAndCompareVisually(sourceFolder, destinationFolder, "invalidOperator");
-            }
-            , NUnit.Framework.Throws.InstanceOf<SvgProcessingException>())
-;
+            NUnit.Framework.Assert.Catch(typeof(SvgProcessingException), () => ConvertAndCompare(sourceFolder, destinationFolder
+                , "invalidOperator"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void InvalidOperatorCSensTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                ConvertAndCompareVisually(sourceFolder, destinationFolder, "invalidOperatorCSens");
-            }
-            , NUnit.Framework.Throws.InstanceOf<SvgProcessingException>())
-;
+            NUnit.Framework.Assert.Catch(typeof(SvgProcessingException), () => ConvertAndCompare(sourceFolder, destinationFolder
+                , "invalidOperatorCSens"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void MoreThanOneHParam() {
-            // TODO-2331 Update the cmp after the issue is resolved
-            // UPD: Seems to be fixed now, but leaving the TODO and issue open because the scope of the issue might be bigger than
+            // TODO DEVSIX-2331 Update the cmp after the issue is resolved
+            // UPD: Seems to be fixed now, but leaving the remark and issue open because the scope of the issue might be bigger than
             // this test
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "moreThanOneHParam");
+            ConvertAndCompare(sourceFolder, destinationFolder, "moreThanOneHParam");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void NegativeAfterPositiveHandlingTest01() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "negativeAfterPositiveHandling");
+            //TODO update after DEVSIX-2331 - several (negative) line operators
+            ConvertAndCompare(sourceFolder, destinationFolder, "negativeAfterPositiveHandling");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void NegativeAfterPositiveHandlingTest02() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "negativeAfterPositiveHandlingExtendedViewbox");
+            //TODO update after DEVSIX-2333 (negative viewbox) fix
+            ConvertAndCompare(sourceFolder, destinationFolder, "negativeAfterPositiveHandlingExtendedViewbox");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void InsignificantSpacesTest() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "insignificantSpaces");
+            ConvertAndCompare(sourceFolder, destinationFolder, "insignificantSpaces");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void PrecedingSpacesTest() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "precedingSpaces");
+            ConvertAndCompare(sourceFolder, destinationFolder, "precedingSpaces");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(SvgLogMessageConstant.UNMAPPEDTAG)]
+        [LogMessage(SvgLogMessageConstant.UNMAPPED_TAG)]
         public virtual void Text_path_Test() {
             //TODO: update cmp-file after DEVSIX-2255
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "textpath");
+            ConvertAndCompare(sourceFolder, destinationFolder, "textpath");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(SvgLogMessageConstant.UNMAPPEDTAG)]
+        [LogMessage(SvgLogMessageConstant.UNMAPPED_TAG)]
         public virtual void TextPathExample() {
             //TODO: update when DEVSIX-2255 implemented
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "textPathExample");
+            ConvertAndCompare(sourceFolder, destinationFolder, "textPathExample");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
+        [NUnit.Framework.Test]
+        public virtual void PathH() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "pathH");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void PathV() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "pathV");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void PathHV() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "pathHV");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void PathRelativeAbsoluteCombinedTest() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "pathRelativeAbsoluteCombined");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void PathHVExponential() {
+            // TODO DEVSIX-2906 This file has large numbers (2e+10) in it. At the moment we do not post-process such big numbers
+            // and simply print them to the output PDF. Not all the viewers are able to process such large numbers
+            // and hence different results in different viewers. Acrobat is not able to process the numbers
+            // and the result is garbled visual representation. GhostScript, however, renders the PDF just fine
+            ConvertAndCompare(sourceFolder, destinationFolder, "pathHVExponential");
+        }
+
         [NUnit.Framework.Test]
         public virtual void PathABasic() {
-            ConvertAndCompareSinglePageVisually(sourceFolder, destinationFolder, "pathABasic");
+            ConvertAndCompareSinglePage(sourceFolder, destinationFolder, "pathABasic");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void PathAFlags() {
-            ConvertAndCompareSinglePageVisually(sourceFolder, destinationFolder, "pathAFlags");
+            ConvertAndCompareSinglePage(sourceFolder, destinationFolder, "pathAFlags");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void PathAAxisRotation() {
-            ConvertAndCompareSinglePageVisually(sourceFolder, destinationFolder, "pathAAxisRotation");
+            ConvertAndCompareSinglePage(sourceFolder, destinationFolder, "pathAAxisRotation");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void PathAOutOfRange() {
             //TODO: update cmp when DEVSIX-3010 and DEVSIX-3011 fixed
-            ConvertAndCompareSinglePageVisually(sourceFolder, destinationFolder, "pathAOutOfRange");
+            ConvertAndCompareSinglePage(sourceFolder, destinationFolder, "pathAOutOfRange");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void Arcs_end_point() {
             //TODO: update cmp when DEVSIX-3010 fixed
-            ConvertAndCompareSinglePageVisually(sourceFolder, destinationFolder, "arcsEndPoint");
+            ConvertAndCompareSinglePage(sourceFolder, destinationFolder, "arcsEndPoint");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void Flags_out_of_range() {
             //TODO: update cmp when DEVSIX-3011 fixed
-            ConvertAndCompareSinglePageVisually(sourceFolder, destinationFolder, "flags_out_of_range");
+            ConvertAndCompareSinglePage(sourceFolder, destinationFolder, "flags_out_of_range");
         }
     }
 }

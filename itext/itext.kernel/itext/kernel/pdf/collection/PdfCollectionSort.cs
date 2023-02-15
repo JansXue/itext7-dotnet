@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,8 +42,8 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-using iText.IO.Util;
-using iText.Kernel;
+using iText.Commons.Utils;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf;
 
 namespace iText.Kernel.Pdf.Collection {
@@ -68,30 +68,35 @@ namespace iText.Kernel.Pdf.Collection {
 
         /// <summary>Defines the sort order of the field (ascending or descending).</summary>
         /// <param name="ascending">true is the default, use false for descending order</param>
+        /// <returns>this instance to support fluent interface</returns>
         public virtual iText.Kernel.Pdf.Collection.PdfCollectionSort SetSortOrder(bool ascending) {
             PdfObject obj = GetPdfObject().Get(PdfName.S);
             if (obj.IsName()) {
                 GetPdfObject().Put(PdfName.A, PdfBoolean.ValueOf(ascending));
             }
             else {
-                throw new PdfException(PdfException.YouHaveToDefineABooleanArrayForThisCollectionSortDictionary);
+                throw new PdfException(KernelExceptionMessageConstant.YOU_HAVE_TO_DEFINE_A_BOOLEAN_ARRAY_FOR_THIS_COLLECTION_SORT_DICTIONARY
+                    );
             }
             return this;
         }
 
         /// <summary>Defines the sort order of the field (ascending or descending).</summary>
         /// <param name="ascending">an array with every element corresponding with a name of a field.</param>
+        /// <returns>this instance to support fluent interface</returns>
         public virtual iText.Kernel.Pdf.Collection.PdfCollectionSort SetSortOrder(bool[] ascending) {
             PdfObject obj = GetPdfObject().Get(PdfName.S);
             if (obj.IsArray()) {
                 if (((PdfArray)obj).Size() != ascending.Length) {
-                    throw new PdfException(PdfException.NumberOfBooleansInTheArrayDoesntCorrespondWithTheNumberOfFields);
+                    throw new PdfException(KernelExceptionMessageConstant.NUMBER_OF_BOOLEANS_IN_THE_ARRAY_DOES_NOT_CORRESPOND_WITH_THE_NUMBER_OF_FIELDS
+                        );
                 }
                 GetPdfObject().Put(PdfName.A, new PdfArray(ascending));
                 return this;
             }
             else {
-                throw new PdfException(PdfException.YouNeedASingleBooleanForThisCollectionSortDictionary);
+                throw new PdfException(KernelExceptionMessageConstant.YOU_NEED_A_SINGLE_BOOLEAN_FOR_THIS_COLLECTION_SORT_DICTIONARY
+                    );
             }
         }
 

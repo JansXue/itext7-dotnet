@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,14 +42,18 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
+using iText.Kernel.Geom;
 using iText.StyledXmlParser.Node;
 using iText.StyledXmlParser.Node.Impl.Jsoup;
+using iText.Svg.Logs;
 using iText.Svg.Processors.Impl;
 using iText.Svg.Renderers;
 using iText.Svg.Renderers.Impl;
 using iText.Test;
+using iText.Test.Attributes;
 
 namespace iText.Svg.Css {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class SvgStyleResolverIntegrationTest : SvgIntegrationTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/svg/css/SvgStyleResolver/";
@@ -71,8 +75,8 @@ namespace iText.Svg.Css {
                  + "</svg>\n";
             JsoupXmlParser xmlParser = new JsoupXmlParser();
             IDocumentNode root = xmlParser.Parse(svg);
-            IBranchSvgNodeRenderer nodeRenderer = (IBranchSvgNodeRenderer)new DefaultSvgProcessor().Process(root).GetRootRenderer
-                ();
+            IBranchSvgNodeRenderer nodeRenderer = (IBranchSvgNodeRenderer)new DefaultSvgProcessor().Process(root, null
+                ).GetRootRenderer();
             IDictionary<String, String> actual = new Dictionary<String, String>();
             //Traverse to ellipse
             ISvgNodeRenderer ellipse = nodeRenderer.GetChildren()[0];
@@ -96,8 +100,8 @@ namespace iText.Svg.Css {
                  + "</svg>\n";
             JsoupXmlParser xmlParser = new JsoupXmlParser();
             IDocumentNode root = xmlParser.Parse(svg);
-            IBranchSvgNodeRenderer nodeRenderer = (IBranchSvgNodeRenderer)new DefaultSvgProcessor().Process(root).GetRootRenderer
-                ();
+            IBranchSvgNodeRenderer nodeRenderer = (IBranchSvgNodeRenderer)new DefaultSvgProcessor().Process(root, null
+                ).GetRootRenderer();
             IDictionary<String, String> actual = new Dictionary<String, String>();
             //Traverse to ellipse
             ISvgNodeRenderer ellipse = nodeRenderer.GetChildren()[0];
@@ -121,8 +125,8 @@ namespace iText.Svg.Css {
                  + "    </style>\n" + "    <g >\n" + "        <path d=\"M0 100 L0 50 L70 50\"/>\n" + "    </g>\n" + "</svg>";
             JsoupXmlParser xmlParser = new JsoupXmlParser();
             IDocumentNode root = xmlParser.Parse(svg);
-            IBranchSvgNodeRenderer nodeRenderer = (IBranchSvgNodeRenderer)new DefaultSvgProcessor().Process(root).GetRootRenderer
-                ();
+            IBranchSvgNodeRenderer nodeRenderer = (IBranchSvgNodeRenderer)new DefaultSvgProcessor().Process(root, null
+                ).GetRootRenderer();
             PathSvgNodeRenderer pathSvgNodeRenderer = (PathSvgNodeRenderer)((IBranchSvgNodeRenderer)nodeRenderer.GetChildren
                 ()[0]).GetChildren()[0];
             IDictionary<String, String> actual = new Dictionary<String, String>();
@@ -136,79 +140,78 @@ namespace iText.Svg.Css {
             NUnit.Framework.Assert.AreEqual(expected, actual);
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void FontResolverIntegrationTest() {
             //TODO DEVSIX-2058
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "fontssvg");
+            ConvertAndCompare(sourceFolder, destinationFolder, "fontssvg");
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void ValidLocalFontTest() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "validLocalFontTest");
+            ConvertAndCompare(sourceFolder, destinationFolder, "validLocalFontTest");
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void FontWeightTest() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "fontWeightTest");
+            ConvertAndCompare(sourceFolder, destinationFolder, "fontWeightTest");
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
+        [NUnit.Framework.Test]
+        [LogMessage(SvgLogMessageConstant.UNMAPPED_TAG, LogLevel = LogLevelConstants.WARN)]
+        public virtual void ExternalStyleSheetWithFillStyleTest() {
+            // TODO DEVSIX-4275 investigate why fill style not processed
+            ConvertAndCompare(sourceFolder, destinationFolder, "externalStyleSheetWithFillStyleTest");
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(SvgLogMessageConstant.UNMAPPED_TAG, LogLevel = LogLevelConstants.WARN)]
+        public virtual void ExternalStyleSheetWithStrokeStyleTest() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "externalStyleSheetWithStrokeStyleTest");
+        }
+
         [NUnit.Framework.Test]
         public virtual void GoogleFontsTest() {
             //TODO DEVSIX-2264: that test shall fail after the fix.
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "googleFontsTest");
+            ConvertAndCompare(sourceFolder, destinationFolder, "googleFontsTest");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void SvgWithExternalCSStoSingleDefaultPage() {
             // TODO: update cmp files when DEVSIX-2286 resolved
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "externalCss");
+            ConvertAndCompare(sourceFolder, destinationFolder, "externalCss");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void SvgWithInternalCSStoSingleDefaultPage() {
             // TODO: update cmp files when DEVSIX-2286 resolved
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "internalCss");
+            ConvertAndCompare(sourceFolder, destinationFolder, "internalCss");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void SvgWithExternalCSStoCustomPage() {
             // TODO: update cmp files when DEVSIX-2286 resolved
             // Take a note this method differs from the one used in Default Page test
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "internalCss");
+            ConvertAndCompare(sourceFolder, destinationFolder, "externalCss_custom", PageSize.A3.Rotate());
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void SvgWithInternalCSStoCustomPage() {
             // TODO: update cmp files when DEVSIX-2286 resolved
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "internalCss_custom");
+            ConvertAndCompare(sourceFolder, destinationFolder, "internalCss_custom", PageSize.A3.Rotate());
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void MultipleSVGtagsWithDiffStylesFromExternalCSS() {
             // TODO: update cmp files when DEVSIX-2286 resolved
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "externalCss_palette");
+            ConvertAndCompare(sourceFolder, destinationFolder, "externalCss_palette", PageSize.A3.Rotate());
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(iText.StyledXmlParser.Logs.StyledXmlParserLogMessageConstant.UNKNOWN_ABSOLUTE_METRIC_LENGTH_PARSED
+            )]
+        public virtual void RelativeStyleInheritanceTest() {
+            // TODO DEVSIX-4140 font-relative values doesn't support
+            ConvertAndCompare(sourceFolder, destinationFolder, "relativeStyleInheritanceTest");
         }
     }
 }

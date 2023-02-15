@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -89,6 +89,11 @@ namespace iText.IO.Font.Cmap {
         /// Returns a list containing sequential pairs of code space beginning and endings:
         /// (begincodespacerange1, endcodespacerange1, begincodespacerange2, endcodespacerange1, ...)
         /// </summary>
+        /// <returns>
+        /// list of
+        /// <c>byte[]</c>
+        /// that contain code space ranges
+        /// </returns>
         public virtual IList<byte[]> GetCodeSpaceRanges() {
             return codeSpaceRanges;
         }

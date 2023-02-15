@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -49,11 +49,18 @@ namespace iText.Layout.Element {
     /// <see cref="Text"/>
     /// to the following
     /// <see cref="TabStop"/>
+    /// , if any.
+    /// </summary>
+    /// <remarks>
+    /// This class represents the empty space from a
+    /// <see cref="Text"/>
+    /// to the following
+    /// <see cref="TabStop"/>
     /// , if any. Using this class will not have any effect unless
     /// there are
     /// <see cref="TabStop"/>
     /// objects defined for the enveloping element.
-    /// </summary>
+    /// </remarks>
     public class Tab : AbstractElement<Tab>, ILeafElement {
         protected internal override IRenderer MakeNewRenderer() {
             return new TabRenderer(this);

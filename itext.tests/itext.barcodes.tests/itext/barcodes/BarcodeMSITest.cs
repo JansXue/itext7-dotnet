@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,7 +41,7 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.Kernel.Colors;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas;
@@ -49,6 +49,7 @@ using iText.Kernel.Utils;
 using iText.Test;
 
 namespace iText.Barcodes {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class BarcodeMSITest : ExtendedITextTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/barcodes/";
@@ -61,9 +62,6 @@ namespace iText.Barcodes {
             CreateDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.PdfException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void Barcode01Test() {
             String filename = "barcodeMSI_01.pdf";
@@ -81,8 +79,6 @@ namespace iText.Barcodes {
                  + "cmp_" + filename, destinationFolder, "diff01_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void Barcode02Test() {
             String filename = "barcodeMSI_02.pdf";
@@ -97,6 +93,40 @@ namespace iText.Barcodes {
             document.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destinationFolder + filename, sourceFolder
                  + "cmp_" + filename, destinationFolder, "diff02_"));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void BarcodeAlignRightTest() {
+            String filename = "barcodeMSI_AlignRight.pdf";
+            PdfWriter writer = new PdfWriter(destinationFolder + filename);
+            PdfDocument document = new PdfDocument(writer);
+            PdfPage page = document.AddNewPage();
+            PdfCanvas canvas = new PdfCanvas(page);
+            Barcode1D barcode = new BarcodeMSI(document);
+            barcode.SetCode("123456789");
+            barcode.SetGenerateChecksum(true);
+            barcode.SetTextAlignment(Barcode1D.ALIGN_RIGHT);
+            barcode.PlaceBarcode(canvas, ColorConstants.BLACK, ColorConstants.RED);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destinationFolder + filename, sourceFolder
+                 + "cmp_" + filename, destinationFolder, "diff01_"));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void BarcodeAlignCenterTest() {
+            String filename = "barcodeMSI_AlignCenter.pdf";
+            PdfWriter writer = new PdfWriter(destinationFolder + filename);
+            PdfDocument document = new PdfDocument(writer);
+            PdfPage page = document.AddNewPage();
+            PdfCanvas canvas = new PdfCanvas(page);
+            Barcode1D barcode = new BarcodeMSI(document);
+            barcode.SetCode("123456789");
+            barcode.SetGenerateChecksum(true);
+            barcode.SetTextAlignment(Barcode1D.ALIGN_CENTER);
+            barcode.PlaceBarcode(canvas, ColorConstants.BLACK, ColorConstants.RED);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destinationFolder + filename, sourceFolder
+                 + "cmp_" + filename, destinationFolder, "diff01_"));
         }
 
         [NUnit.Framework.Test]

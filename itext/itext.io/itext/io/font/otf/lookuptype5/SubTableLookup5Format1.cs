@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,12 +42,12 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System.Collections.Generic;
+using iText.Commons.Utils;
 using iText.IO.Font.Otf;
-using iText.IO.Util;
 
 namespace iText.IO.Font.Otf.Lookuptype5 {
     /// <summary>Contextual Substitution Subtable: Simple context glyph substitution</summary>
-    public class SubTableLookup5Format1 : ContextualSubTable {
+    public class SubTableLookup5Format1 : ContextualTable<ContextualSubstRule> {
         private IDictionary<int, IList<ContextualSubstRule>> substMap;
 
         public SubTableLookup5Format1(OpenTypeFontTableReader openReader, int lookupFlag, IDictionary<int, IList<ContextualSubstRule
@@ -64,13 +64,13 @@ namespace iText.IO.Font.Otf.Lookuptype5 {
         }
 
         public class SubstRuleFormat1 : ContextualSubstRule {
+            // inputGlyphIds array omits the first glyph in the sequence,
+            // the first glyph is defined by corresponding coverage glyph
             private int[] inputGlyphIds;
 
             private SubstLookupRecord[] substLookupRecords;
 
             public SubstRuleFormat1(int[] inputGlyphIds, SubstLookupRecord[] substLookupRecords) {
-                // inputGlyphIds array omits the first glyph in the sequence,
-                // the first glyph is defined by corresponding coverage glyph
                 this.inputGlyphIds = inputGlyphIds;
                 this.substLookupRecords = substLookupRecords;
             }

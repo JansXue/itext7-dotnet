@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-    Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,7 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf.Canvas.Parser;
 using iText.Kernel.Pdf.Canvas.Parser.Data;
@@ -52,12 +52,14 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Listener {
     /// <summary>This class is designed to search for the occurrences of a regular expression and return the resultant rectangles.
     ///     </summary>
     public class RegexBasedLocationExtractionStrategy : ILocationExtractionStrategy {
+        private const float EPS = 1.0E-4F;
+
         private Regex pattern;
 
         private IList<CharacterRenderInfo> parseResult = new List<CharacterRenderInfo>();
 
         public RegexBasedLocationExtractionStrategy(String regex) {
-            this.pattern = iText.IO.Util.StringUtil.RegexCompile(regex);
+            this.pattern = iText.Commons.Utils.StringUtil.RegexCompile(regex);
         }
 
         public RegexBasedLocationExtractionStrategy(Regex pattern) {
@@ -66,49 +68,33 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Listener {
 
         public virtual ICollection<IPdfTextLocation> GetResultantLocations() {
             // align characters in "logical" order
-            JavaCollectionsUtil.Sort(parseResult, new TextChunkLocationBasedComparator(new DefaultTextChunkLocationComparator()));
+            JavaCollectionsUtil.Sort(parseResult, new TextChunkLocationBasedComparator(new DefaultTextChunkLocationComparator
+                ()));
             // process parse results
             IList<IPdfTextLocation> retval = new List<IPdfTextLocation>();
             CharacterRenderInfo.StringConversionInfo txt = CharacterRenderInfo.MapString(parseResult);
-            Match mat = iText.IO.Util.StringUtil.Match(pattern, txt.text);
-            while (mat.Success) {
-                int? startIndex = txt.indexMap.Get(mat.Index);
-                int? endIndex = txt.indexMap.Get(mat.Index + mat.Length - 1);
-                foreach (Rectangle r in ToRectangles(parseResult.SubList(startIndex.Value, endIndex.Value + 1))) {
-                    retval.Add(new DefaultPdfTextLocation(0, r, iText.IO.Util.StringUtil.Group(mat, 0)));
+            Matcher mat = iText.Commons.Utils.Matcher.Match(pattern, txt.text);
+            while (mat.Find()) {
+                int? startIndex = GetStartIndex(txt.indexMap, mat.Start(), txt.text);
+                int? endIndex = GetEndIndex(txt.indexMap, mat.End() - 1);
+                if (startIndex != null && endIndex != null && startIndex <= endIndex) {
+                    foreach (Rectangle r in ToRectangles(parseResult.SubList(startIndex.Value, endIndex.Value + 1))) {
+                        retval.Add(new DefaultPdfTextLocation(0, r, mat.Group(0)));
+                    }
                 }
-                mat = mat.NextMatch();
             }
             /* sort
             * even though the return type is Collection<Rectangle>, we apply a sorting algorithm here
             * This is to ensure that tests that use this functionality (for instance to generate pdf with
             * areas of interest highlighted) will not break when compared.
             */
-            JavaCollectionsUtil.Sort(retval, new _IComparer_54());
-            
+            JavaCollectionsUtil.Sort(retval, new RegexBasedLocationExtractionStrategy.PdfTextLocationComparator());
             // ligatures can produces same rectangle
-            removeDuplicates(retval);
-
+            RemoveDuplicates(retval);
             return retval;
         }
 
-        private sealed class _IComparer_54 : IComparer<IPdfTextLocation> {
-            public _IComparer_54() {
-            }
-
-            public int Compare(IPdfTextLocation l1, IPdfTextLocation l2) {
-                Rectangle o1 = l1.GetRectangle();
-                Rectangle o2 = l2.GetRectangle();
-                if (o1.GetY() == o2.GetY()) {
-                    return o1.GetX() == o2.GetX() ? 0 : (o1.GetX() < o2.GetX() ? -1 : 1);
-                }
-                else {
-                    return o1.GetY() < o2.GetY() ? -1 : 1;
-                }
-            }
-        }
-        
-        private void removeDuplicates(IList<IPdfTextLocation> sortedList) {
+        private void RemoveDuplicates(IList<IPdfTextLocation> sortedList) {
             IPdfTextLocation lastItem = null;
             int orgSize = sortedList.Count;
             for (int i = orgSize - 1; i >= 0; i--) {
@@ -120,7 +106,6 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Listener {
                 lastItem = currItem;
             }
         }
-
 
         public virtual void EventOccurred(IEventData data, EventType type) {
             if (data is TextRenderInfo) {
@@ -134,24 +119,40 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Listener {
 
         /// <summary>
         /// Convert
-        /// <c>TextRenderInfo</c>
+        /// <see cref="iText.Kernel.Pdf.Canvas.Parser.Data.TextRenderInfo"/>
         /// to
-        /// <c>CharacterRenderInfo</c>
+        /// <see cref="CharacterRenderInfo"/>
+        /// This method is public and not final so that custom implementations can choose to override it.
+        /// </summary>
+        /// <remarks>
+        /// Convert
+        /// <see cref="iText.Kernel.Pdf.Canvas.Parser.Data.TextRenderInfo"/>
+        /// to
+        /// <see cref="CharacterRenderInfo"/>
         /// This method is public and not final so that custom implementations can choose to override it.
         /// Other implementations of
         /// <c>CharacterRenderInfo</c>
         /// may choose to store different properties than
         /// merely the
-        /// <c>Rectangle</c>
+        /// <see cref="iText.Kernel.Geom.Rectangle"/>
         /// describing the bounding box. E.g. a custom implementation might choose to
         /// store
-        /// <c>Color</c>
+        /// <see cref="iText.Kernel.Colors.Color"/>
         /// information as well, to better match the content surrounding the redaction
-        /// <c>Rectangle</c>
-        /// .
-        /// </summary>
-        /// <param name="tri"/>
-        /// <returns/>
+        /// <see cref="iText.Kernel.Geom.Rectangle"/>.
+        /// </remarks>
+        /// <param name="tri">
+        /// 
+        /// <see cref="iText.Kernel.Pdf.Canvas.Parser.Data.TextRenderInfo"/>
+        /// object
+        /// </param>
+        /// <returns>
+        /// a list of
+        /// <see cref="CharacterRenderInfo"/>
+        /// s which represents the passed
+        /// <see cref="iText.Kernel.Pdf.Canvas.Parser.Data.TextRenderInfo"/>
+        /// ?
+        /// </returns>
         protected internal virtual IList<CharacterRenderInfo> ToCRI(TextRenderInfo tri) {
             IList<CharacterRenderInfo> cris = new List<CharacterRenderInfo>();
             foreach (TextRenderInfo subTri in tri.GetCharacterRenderInfos()) {
@@ -162,26 +163,37 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Listener {
 
         /// <summary>
         /// Converts
-        /// <c>CharacterRenderInfo</c>
+        /// <see cref="CharacterRenderInfo"/>
         /// objects to
-        /// <c>Rectangles</c>
+        /// <see cref="iText.Kernel.Geom.Rectangle"/>
+        /// s
+        /// This method is protected and not final so that custom implementations can choose to override it.
+        /// </summary>
+        /// <remarks>
+        /// Converts
+        /// <see cref="CharacterRenderInfo"/>
+        /// objects to
+        /// <see cref="iText.Kernel.Geom.Rectangle"/>
+        /// s
         /// This method is protected and not final so that custom implementations can choose to override it.
         /// E.g. other implementations may choose to add padding/margin to the Rectangles.
         /// This method also offers a convenient access point to the mapping of
-        /// <c>CharacterRenderInfo</c>
+        /// <see cref="CharacterRenderInfo"/>
         /// to
-        /// <c>Rectangle</c>
-        /// .
+        /// <see cref="iText.Kernel.Geom.Rectangle"/>.
         /// This mapping enables (custom implementations) to match color of text in redacted Rectangles,
         /// or match color of background, by the mere virtue of offering access to the
-        /// <c>CharacterRenderInfo</c>
+        /// <see cref="CharacterRenderInfo"/>
         /// objects
         /// that generated the
-        /// <c>Rectangle</c>
-        /// .
-        /// </summary>
-        /// <param name="cris"/>
-        /// <returns/>
+        /// <see cref="iText.Kernel.Geom.Rectangle"/>.
+        /// </remarks>
+        /// <param name="cris">
+        /// list of
+        /// <see cref="CharacterRenderInfo"/>
+        /// objects
+        /// </param>
+        /// <returns>an array containing the elements of this list</returns>
         protected internal virtual IList<Rectangle> ToRectangles(IList<CharacterRenderInfo> cris) {
             IList<Rectangle> retval = new List<Rectangle>();
             if (cris.IsEmpty()) {
@@ -199,11 +211,37 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Listener {
                     resultRectangle = Rectangle.GetCommonRectangle(resultRectangle, cri.GetBoundingBox());
                 }
                 retval.Add(resultRectangle);
-
                 prev = curr;
             }
             // return
             return retval;
+        }
+
+        private static int? GetStartIndex(IDictionary<int, int?> indexMap, int index, String txt) {
+            while (!indexMap.ContainsKey(index) && index < txt.Length) {
+                index++;
+            }
+            return indexMap.Get(index);
+        }
+
+        private static int? GetEndIndex(IDictionary<int, int?> indexMap, int index) {
+            while (!indexMap.ContainsKey(index) && index >= 0) {
+                index--;
+            }
+            return indexMap.Get(index);
+        }
+
+        private sealed class PdfTextLocationComparator : IComparer<IPdfTextLocation> {
+            public int Compare(IPdfTextLocation l1, IPdfTextLocation l2) {
+                Rectangle o1 = l1.GetRectangle();
+                Rectangle o2 = l2.GetRectangle();
+                if (Math.Abs(o1.GetY() - o2.GetY()) < EPS) {
+                    return Math.Abs(o1.GetX() - o2.GetX()) < EPS ? 0 : ((o2.GetX() - o1.GetX()) > EPS ? -1 : 1);
+                }
+                else {
+                    return (o2.GetY() - o1.GetY()) > EPS ? -1 : 1;
+                }
+            }
         }
     }
 }

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,10 +42,10 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-using iText.IO.Util;
+using iText.Commons.Utils;
 
 namespace iText.Kernel.Geom {
-    /// <summary>Represents a vector (i.e.</summary>
+    /// <summary>Represents a vector (i.e. a point in space).</summary>
     /// <remarks>
     /// Represents a vector (i.e. a point in space).  This class is completely
     /// unrelated to the
@@ -117,8 +117,7 @@ namespace iText.Kernel.Geom {
             return new iText.Kernel.Geom.Vector(x, y, z);
         }
 
-        /// <summary>Normalizes the vector (i.e.</summary>
-        /// <remarks>Normalizes the vector (i.e. returns the unit vector in the same orientation as this vector)</remarks>
+        /// <summary>Normalizes the vector (i.e. returns the unit vector in the same orientation as this vector)</summary>
         /// <returns>the unit vector</returns>
         public virtual iText.Kernel.Geom.Vector Normalize() {
             float l = this.Length();
@@ -145,12 +144,7 @@ namespace iText.Kernel.Geom {
             return vals[I1] * with.vals[I1] + vals[I2] * with.vals[I2] + vals[I3] * with.vals[I3];
         }
 
-        /// <summary>
-        /// Computes the length of this vector
-        /// <br />
-        /// <b>Note:</b> If you are working with raw vectors from PDF, be careful -
-        /// the Z axis will generally be set to 1.
-        /// </summary>
+        /// <summary>Computes the length of this vector</summary>
         /// <remarks>
         /// Computes the length of this vector
         /// <br />
@@ -160,7 +154,7 @@ namespace iText.Kernel.Geom {
         /// the Z axis to 0).
         /// <br />
         /// For example:
-        /// <code>aVector.subtract(originVector).length();</code>
+        /// <c>aVector.subtract(originVector).length();</c>
         /// </remarks>
         /// <returns>the length of this vector</returns>
         public virtual float Length() {

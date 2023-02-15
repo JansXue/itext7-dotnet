@@ -46,13 +46,13 @@ namespace iText.Kernel.XMP.Impl {
             this.length = 0;
         }
 
-        /// <param name="buffer">a byte array that will be wrapped with <code>ByteBuffer</code>.</param>
+        /// <param name="buffer">a byte array that will be wrapped with <c>ByteBuffer</c>.</param>
         public ByteBuffer(byte[] buffer) {
             this.buffer = buffer;
             this.length = buffer.Length;
         }
 
-        /// <param name="buffer">a byte array that will be wrapped with <code>ByteBuffer</code>.</param>
+        /// <param name="buffer">a byte array that will be wrapped with <c>ByteBuffer</c>.</param>
         /// <param name="length">the length of valid bytes in the array</param>
         public ByteBuffer(byte[] buffer, int length) {
             if (length > buffer.Length) {
@@ -64,7 +64,6 @@ namespace iText.Kernel.XMP.Impl {
 
         /// <summary>Loads the stream into a buffer.</summary>
         /// <param name="in">an InputStream</param>
-        /// <exception cref="System.IO.IOException">If the stream cannot be read.</exception>
         public ByteBuffer(Stream @in) {
             // load stream into buffer
             int chunk = 16384;
@@ -82,7 +81,7 @@ namespace iText.Kernel.XMP.Impl {
             }
         }
 
-        /// <param name="buffer">a byte array that will be wrapped with <code>ByteBuffer</code>.</param>
+        /// <param name="buffer">a byte array that will be wrapped with <c>ByteBuffer</c>.</param>
         /// <param name="offset">the offset of the provided buffer.</param>
         /// <param name="length">the length of valid bytes in the array</param>
         public ByteBuffer(byte[] buffer, int offset, int length) {
@@ -144,10 +143,17 @@ namespace iText.Kernel.XMP.Impl {
             buffer[length++] = b;
         }
 
-        /// <summary>Appends a byte array or part of to the buffer.</summary>
+        /// <summary>Appends a part of byte array to the buffer.</summary>
+        /// <remarks>
+        /// Appends a part of byte array to the buffer. Elements on positions
+        /// <paramref name="offset"/>
+        /// through
+        /// <c>offset+len-1</c>
+        /// of provided array will be copied
+        /// </remarks>
         /// <param name="bytes">a byte array</param>
-        /// <param name="offset">an offset with</param>
-        /// <param name="len"/>
+        /// <param name="offset">is a position of the first element to copy</param>
+        /// <param name="len">the number of array elements to be added</param>
         public virtual void Append(byte[] bytes, int offset, int len) {
             EnsureCapacity(length + len);
             Array.Copy(bytes, offset, buffer, length, len);
@@ -161,7 +167,7 @@ namespace iText.Kernel.XMP.Impl {
         }
 
         /// <summary>Append another buffer to this buffer.</summary>
-        /// <param name="anotherBuffer">another <code>ByteBuffer</code></param>
+        /// <param name="anotherBuffer">another <c>ByteBuffer</c></param>
         public virtual void Append(iText.Kernel.XMP.Impl.ByteBuffer anotherBuffer) {
             Append(anotherBuffer.buffer, 0, anotherBuffer.length);
         }

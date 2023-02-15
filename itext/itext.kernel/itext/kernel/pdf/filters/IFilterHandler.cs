@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -53,8 +53,10 @@ namespace iText.Kernel.Pdf.Filters {
         /// <param name="b">the bytes that need to be decoded</param>
         /// <param name="filterName">PdfName of the filter</param>
         /// <param name="decodeParams">decode parameters</param>
-        /// <param name="streamDictionary">the dictionary of the stream. Can contain additional information needed to decode the byte[].
-        ///     </param>
+        /// <param name="streamDictionary">
+        /// the dictionary of the stream. Can contain additional information needed to decode the
+        /// byte[].
+        /// </param>
         /// <returns>decoded byte array</returns>
         byte[] Decode(byte[] b, PdfName filterName, PdfObject decodeParams, PdfDictionary streamDictionary);
     }

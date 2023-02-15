@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -50,17 +50,17 @@ using iText.Kernel.Pdf.Canvas.Parser;
 using iText.Test;
 
 namespace iText.Kernel.Pdf.Canvas.Parser.Listener {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class RegexBasedLocationExtractionStrategyTest : ExtendedITextTest {
         private static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/kernel/parser/RegexBasedLocationExtractionStrategyTest/";
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void Test01() {
             System.Console.Out.WriteLine(new FileInfo(sourceFolder).FullName);
             PdfDocument pdfDocument = new PdfDocument(new PdfReader(sourceFolder + "in01.pdf"));
             // build strategy
-            RegexBasedLocationExtractionStrategy extractionStrategy = new RegexBasedLocationExtractionStrategy(iText.IO.Util.StringUtil.RegexCompile
+            RegexBasedLocationExtractionStrategy extractionStrategy = new RegexBasedLocationExtractionStrategy(iText.Commons.Utils.StringUtil.RegexCompile
                 ("\\{\\{Signature\\}\\}"));
             // get locations
             IList<IPdfTextLocation> locationList = new List<IPdfTextLocation>();
@@ -86,7 +86,6 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Listener {
 
         // https://jira.itextsupport.com/browse/DEVSIX-1940
         // text is 'calligraphy' and 'll' is composing a ligature
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void TestLigatureBeforeLigature() {
             System.Console.Out.WriteLine(new FileInfo(sourceFolder).FullName);
@@ -115,7 +114,6 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Listener {
             pdfDocument.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void TestLigatureCrossLigature() {
             System.Console.Out.WriteLine(new FileInfo(sourceFolder).FullName);
@@ -144,7 +142,6 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Listener {
             pdfDocument.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void TestLigatureInLigature() {
             System.Console.Out.WriteLine(new FileInfo(sourceFolder).FullName);
@@ -173,7 +170,6 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Listener {
             pdfDocument.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void TestRotatedText() {
             PdfDocument pdfDocument = new PdfDocument(new PdfReader(sourceFolder + "rotatedText.pdf"));
@@ -196,6 +192,113 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Listener {
             NUnit.Framework.Assert.IsTrue(locationList[1].GetRectangle().EqualsWithEpsilon(new Rectangle(36f, 746.688f
                 , 25.792f, 14.799988f)));
             pdfDocument.Close();
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void RegexStartedWithWhiteSpaceTest() {
+            PdfDocument pdfDocument = new PdfDocument(new PdfReader(sourceFolder + "regexStartedWithWhiteSpaceTest.pdf"
+                ));
+            RegexBasedLocationExtractionStrategy extractionStrategy = new RegexBasedLocationExtractionStrategy("\\sstart"
+                );
+            new PdfCanvasProcessor(extractionStrategy).ProcessPageContent(pdfDocument.GetPage(1));
+            IList<IPdfTextLocation> locations = new List<IPdfTextLocation>(extractionStrategy.GetResultantLocations());
+            pdfDocument.Close();
+            NUnit.Framework.Assert.AreEqual(1, locations.Count);
+            NUnit.Framework.Assert.AreEqual(" start", locations[0].GetText());
+            NUnit.Framework.Assert.IsTrue(new Rectangle(92.3f, 743.3970f, 20.6159f, 13.2839f).EqualsWithEpsilon(locations
+                [0].GetRectangle()));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void RegexStartedWithNewLineTest() {
+            PdfDocument pdfDocument = new PdfDocument(new PdfReader(sourceFolder + "regexStartedWithNewLineTest.pdf"));
+            RegexBasedLocationExtractionStrategy extractionStrategy = new RegexBasedLocationExtractionStrategy("\\nstart"
+                );
+            new PdfCanvasProcessor(extractionStrategy).ProcessPageContent(pdfDocument.GetPage(1));
+            IList<IPdfTextLocation> locations = new List<IPdfTextLocation>(extractionStrategy.GetResultantLocations());
+            pdfDocument.Close();
+            NUnit.Framework.Assert.AreEqual(1, locations.Count);
+            NUnit.Framework.Assert.AreEqual("\nstart", locations[0].GetText());
+            NUnit.Framework.Assert.IsTrue(new Rectangle(56.8f, 729.5970f, 20.6159f, 13.2839f).EqualsWithEpsilon(locations
+                [0].GetRectangle()));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void RegexWithWhiteSpacesTest() {
+            PdfDocument pdfDocument = new PdfDocument(new PdfReader(sourceFolder + "regexWithWhiteSpacesTest.pdf"));
+            RegexBasedLocationExtractionStrategy extractionStrategy = new RegexBasedLocationExtractionStrategy("\\sstart\\s"
+                );
+            new PdfCanvasProcessor(extractionStrategy).ProcessPageContent(pdfDocument.GetPage(1));
+            IList<IPdfTextLocation> locations = new List<IPdfTextLocation>(extractionStrategy.GetResultantLocations());
+            pdfDocument.Close();
+            NUnit.Framework.Assert.AreEqual(1, locations.Count);
+            NUnit.Framework.Assert.AreEqual(" start ", locations[0].GetText());
+            NUnit.Framework.Assert.IsTrue(new Rectangle(92.3f, 743.3970f, 20.6159f, 13.2839f).EqualsWithEpsilon(locations
+                [0].GetRectangle()));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void RegexWithNewLinesTest() {
+            PdfDocument pdfDocument = new PdfDocument(new PdfReader(sourceFolder + "regexWithNewLinesTest.pdf"));
+            RegexBasedLocationExtractionStrategy extractionStrategy = new RegexBasedLocationExtractionStrategy("\\nstart\\n"
+                );
+            new PdfCanvasProcessor(extractionStrategy).ProcessPageContent(pdfDocument.GetPage(1));
+            IList<IPdfTextLocation> locations = new List<IPdfTextLocation>(extractionStrategy.GetResultantLocations());
+            pdfDocument.Close();
+            NUnit.Framework.Assert.AreEqual(1, locations.Count);
+            NUnit.Framework.Assert.AreEqual("\nstart\n", locations[0].GetText());
+            NUnit.Framework.Assert.IsTrue(new Rectangle(56.8f, 729.5970f, 20.6159f, 13.2839f).EqualsWithEpsilon(locations
+                [0].GetRectangle()));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void RegexWithNewLineBetweenWordsTest() {
+            PdfDocument pdfDocument = new PdfDocument(new PdfReader(sourceFolder + "regexWithNewLineBetweenWordsTest.pdf"
+                ));
+            RegexBasedLocationExtractionStrategy extractionStrategy = new RegexBasedLocationExtractionStrategy("hello\\nworld"
+                );
+            new PdfCanvasProcessor(extractionStrategy).ProcessPageContent(pdfDocument.GetPage(1));
+            IList<IPdfTextLocation> locations = new List<IPdfTextLocation>(extractionStrategy.GetResultantLocations());
+            pdfDocument.Close();
+            NUnit.Framework.Assert.AreEqual(2, locations.Count);
+            NUnit.Framework.Assert.AreEqual("hello\nworld", locations[0].GetText());
+            NUnit.Framework.Assert.AreEqual("hello\nworld", locations[1].GetText());
+            NUnit.Framework.Assert.IsTrue(new Rectangle(56.8f, 729.5970f, 27.8999f, 13.2839f).EqualsWithEpsilon(locations
+                [0].GetRectangle()));
+            NUnit.Framework.Assert.IsTrue(new Rectangle(56.8f, 743.3970f, 23.9039f, 13.2839f).EqualsWithEpsilon(locations
+                [1].GetRectangle()));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void RegexWithOnlyNewLine() {
+            PdfDocument pdfDocument = new PdfDocument(new PdfReader(sourceFolder + "regexWithNewLinesTest.pdf"));
+            RegexBasedLocationExtractionStrategy extractionStrategy = new RegexBasedLocationExtractionStrategy("\\n");
+            new PdfCanvasProcessor(extractionStrategy).ProcessPageContent(pdfDocument.GetPage(1));
+            IList<IPdfTextLocation> locations = new List<IPdfTextLocation>(extractionStrategy.GetResultantLocations());
+            pdfDocument.Close();
+            NUnit.Framework.Assert.AreEqual(0, locations.Count);
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void RegexWithOnlyWhiteSpace() {
+            PdfDocument pdfDocument = new PdfDocument(new PdfReader(sourceFolder + "regexWithWhiteSpacesTest.pdf"));
+            RegexBasedLocationExtractionStrategy extractionStrategy = new RegexBasedLocationExtractionStrategy(" ");
+            new PdfCanvasProcessor(extractionStrategy).ProcessPageContent(pdfDocument.GetPage(1));
+            IList<IPdfTextLocation> locations = new List<IPdfTextLocation>(extractionStrategy.GetResultantLocations());
+            pdfDocument.Close();
+            NUnit.Framework.Assert.AreEqual(0, locations.Count);
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void SortCompareTest() {
+            using (PdfDocument pdfDocument = new PdfDocument(new PdfReader(sourceFolder + "sortCompare.pdf"))) {
+                RegexBasedLocationExtractionStrategy extractionStrategy = new RegexBasedLocationExtractionStrategy("a");
+                PdfCanvasProcessor pdfCanvasProcessor = new PdfCanvasProcessor(extractionStrategy);
+                pdfCanvasProcessor.ProcessPageContent(pdfDocument.GetPage(1));
+                pdfCanvasProcessor.ProcessPageContent(pdfDocument.GetPage(2));
+                IList<IPdfTextLocation> locations = new List<IPdfTextLocation>(extractionStrategy.GetResultantLocations());
+                NUnit.Framework.Assert.AreEqual(13, locations.Count);
+            }
         }
     }
 }

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,33 +44,46 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.Text;
+using iText.Commons.Utils;
 using iText.IO.Source;
-using iText.IO.Util;
+using iText.Kernel.Utils;
 
 namespace iText.Kernel.Pdf {
     public class PdfName : PdfPrimitiveObject, IComparable<iText.Kernel.Pdf.PdfName> {
+        //  ' '
         private static readonly byte[] space = ByteUtils.GetIsoBytes("#20");
 
+        //  '%'
         private static readonly byte[] percent = ByteUtils.GetIsoBytes("#25");
 
+        //  '('
         private static readonly byte[] leftParenthesis = ByteUtils.GetIsoBytes("#28");
 
+        //  ')'
         private static readonly byte[] rightParenthesis = ByteUtils.GetIsoBytes("#29");
 
+        //  '<'
         private static readonly byte[] lessThan = ByteUtils.GetIsoBytes("#3c");
 
+        //  '>'
         private static readonly byte[] greaterThan = ByteUtils.GetIsoBytes("#3e");
 
+        //  '['
         private static readonly byte[] leftSquare = ByteUtils.GetIsoBytes("#5b");
 
+        //  ']'
         private static readonly byte[] rightSquare = ByteUtils.GetIsoBytes("#5d");
 
+        //  '{'
         private static readonly byte[] leftCurlyBracket = ByteUtils.GetIsoBytes("#7b");
 
+        //  '}'
         private static readonly byte[] rightCurlyBracket = ByteUtils.GetIsoBytes("#7d");
 
+        //  '/'
         private static readonly byte[] solidus = ByteUtils.GetIsoBytes("#2f");
 
+        //  '#'
         private static readonly byte[] numberSign = ByteUtils.GetIsoBytes("#23");
 
         public static readonly iText.Kernel.Pdf.PdfName _3D = CreateDirectName("3D");
@@ -221,6 +234,8 @@ namespace iText.Kernel.Pdf {
         public static readonly iText.Kernel.Pdf.PdfName BaseEncoding = CreateDirectName("BaseEncoding");
 
         public static readonly iText.Kernel.Pdf.PdfName BaselineShift = CreateDirectName("BaselineShift");
+
+        public static readonly iText.Kernel.Pdf.PdfName BaseState = CreateDirectName("BaseState");
 
         public static readonly iText.Kernel.Pdf.PdfName BaseVersion = CreateDirectName("BaseVersion");
 
@@ -604,6 +619,8 @@ namespace iText.Kernel.Pdf {
 
         public static readonly iText.Kernel.Pdf.PdfName ExtensionLevel = CreateDirectName("ExtensionLevel");
 
+        public static readonly iText.Kernel.Pdf.PdfName ExtensionRevision = CreateDirectName("ExtensionRevision");
+
         public static readonly iText.Kernel.Pdf.PdfName ExtGState = CreateDirectName("ExtGState");
 
         public static readonly iText.Kernel.Pdf.PdfName F = CreateDirectName("F");
@@ -812,6 +829,8 @@ namespace iText.Kernel.Pdf {
 
         public static readonly iText.Kernel.Pdf.PdfName ID = CreateDirectName("ID");
 
+        public static readonly iText.Kernel.Pdf.PdfName IDTree = CreateDirectName("IDTree");
+
         public static readonly iText.Kernel.Pdf.PdfName IDS = CreateDirectName("IDS");
 
         public static readonly iText.Kernel.Pdf.PdfName Identity = CreateDirectName("Identity");
@@ -917,6 +936,8 @@ namespace iText.Kernel.Pdf {
         public static readonly iText.Kernel.Pdf.PdfName Limits = CreateDirectName("Limits");
 
         public static readonly iText.Kernel.Pdf.PdfName Line = CreateDirectName("Line");
+
+        public static readonly iText.Kernel.Pdf.PdfName LineArrow = CreateDirectName("LineArrow");
 
         public static readonly iText.Kernel.Pdf.PdfName LineHeight = CreateDirectName("LineHeight");
 
@@ -1214,6 +1235,8 @@ namespace iText.Kernel.Pdf {
         public static readonly iText.Kernel.Pdf.PdfName Pdf_Version_1_6 = CreateDirectName("1.6");
 
         public static readonly iText.Kernel.Pdf.PdfName Pdf_Version_1_7 = CreateDirectName("1.7");
+
+        public static readonly iText.Kernel.Pdf.PdfName Pdf_Version_2_0 = CreateDirectName("2.0");
 
         public static readonly iText.Kernel.Pdf.PdfName Pg = CreateDirectName("Pg");
 
@@ -1528,6 +1551,8 @@ namespace iText.Kernel.Pdf {
 
         public static readonly iText.Kernel.Pdf.PdfName Supplement = CreateDirectName("Supplement");
 
+        public static readonly iText.Kernel.Pdf.PdfName SV = CreateDirectName("SV");
+
         public static readonly iText.Kernel.Pdf.PdfName Sy = CreateDirectName("Sy");
 
         public static readonly iText.Kernel.Pdf.PdfName Symbol = CreateDirectName("Symbol");
@@ -1787,24 +1812,14 @@ namespace iText.Kernel.Pdf {
 
         public static readonly iText.Kernel.Pdf.PdfName Zoom = CreateDirectName("Zoom");
 
+        public static readonly iText.Kernel.Pdf.PdfName ISO_ = new iText.Kernel.Pdf.PdfName("ISO_");
+
         protected internal String value = null;
 
         /// <summary>map strings to all known static names</summary>
         public static IDictionary<String, iText.Kernel.Pdf.PdfName> staticNames;
 
         static PdfName() {
-            //  ' '
-            //  '%'
-            //  '('
-            //  ')'
-            //  '<'
-            //  '>'
-            //  '['
-            //  ']'
-            //  '{'
-            //  '}'
-            //  '/'
-            //  '#'
             staticNames = PdfNameLoader.LoadNames();
         }
 
@@ -1896,9 +1911,9 @@ namespace iText.Kernel.Pdf {
             char[] chars = value.ToCharArray();
             for (int k = 0; k < length; k++) {
                 c = (char)(chars[k] & 0xff);
+                // Escape special characters
                 switch (c) {
                     case ' ': {
-                        // Escape special characters
                         buf.Append(space);
                         break;
                     }
@@ -1978,7 +1993,8 @@ namespace iText.Kernel.Pdf {
 
         public override String ToString() {
             if (content != null) {
-                return "/" + iText.IO.Util.JavaUtil.GetStringForBytes(content);
+                return "/" + iText.Commons.Utils.JavaUtil.GetStringForBytes(content, iText.Commons.Utils.EncodingUtil.ISO_8859_1
+                    );
             }
             else {
                 return "/" + GetValue();
@@ -1989,8 +2005,8 @@ namespace iText.Kernel.Pdf {
             return new iText.Kernel.Pdf.PdfName();
         }
 
-        protected internal override void CopyContent(PdfObject from, PdfDocument document) {
-            base.CopyContent(from, document);
+        protected internal override void CopyContent(PdfObject from, PdfDocument document, ICopyFilter copyFilter) {
+            base.CopyContent(from, document, copyFilter);
             iText.Kernel.Pdf.PdfName name = (iText.Kernel.Pdf.PdfName)from;
             value = name.value;
         }

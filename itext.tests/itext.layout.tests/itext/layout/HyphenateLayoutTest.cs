@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -54,6 +54,7 @@ using iText.Layout.Properties;
 using iText.Test;
 
 namespace iText.Layout {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class HyphenateLayoutTest : ExtendedITextTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/layout/HyphenateLayoutTest/";
@@ -69,9 +70,9 @@ namespace iText.Layout {
             CreateDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ParenthesisTest01() {
+            //TODO DEVSIX-3148
             String outFileName = destinationFolder + "parenthesisTest01.pdf";
             String cmpFileName = sourceFolder + "cmp_parenthesisTest01.pdf";
             PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outFileName));
@@ -90,7 +91,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void UriTest01() {
             String outFileName = destinationFolder + "uriTest01.pdf";
@@ -121,7 +121,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void WidthTest01() {
             String outFileName = destinationFolder + "widthTest01.pdf";
@@ -141,7 +140,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void WidthTest02() {
             String outFileName = destinationFolder + "widthTest02.pdf";
@@ -159,7 +157,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void WidthTest03() {
             String outFileName = destinationFolder + "widthTest03.pdf";
@@ -187,7 +184,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void NonBreakingHyphenTest01() {
             String outFileName = destinationFolder + "nonBreakingHyphenTest01.pdf";
@@ -199,7 +195,7 @@ namespace iText.Layout {
                  + "Dies ist ein Satz in deutscher Sprache. An hm kann man sehen, ob alle Buchstaben da sind. Und der Umbruch? 99\u2011Days-Kaiser.\n"
                  + "Dies ist ein Satz in deutscher Sprache. An hm kann man sehen, ob alle Buchstaben da sind. Und der Umbruch? 99\u2011Frage-Kaiser.\n"
                 );
-            PdfFont font = PdfFontFactory.CreateFont(fontsFolder + "FreeSans.ttf", PdfEncodings.IDENTITY_H, true);
+            PdfFont font = PdfFontFactory.CreateFont(fontsFolder + "FreeSans.ttf", PdfEncodings.IDENTITY_H);
             text.SetFont(font);
             text.SetFontSize(10);
             Paragraph paragraph = new Paragraph(text);
@@ -211,7 +207,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void NonBreakingHyphenTest02() {
             String outFileName = destinationFolder + "nonBreakingHyphenTest02.pdf";
@@ -221,7 +216,7 @@ namespace iText.Layout {
             Document document = new Document(pdf);
             Div div = new Div();
             div.SetHyphenation(new HyphenationConfig("en", "EN", 2, 2));
-            PdfFont font = PdfFontFactory.CreateFont(fontsFolder + "FreeSans.ttf", PdfEncodings.IDENTITY_H, true);
+            PdfFont font = PdfFontFactory.CreateFont(fontsFolder + "FreeSans.ttf", PdfEncodings.IDENTITY_H);
             div.SetFont(font);
             div.SetFontSize(12);
             Text text = new Text("Hyphen hyphen hyphen hyphen hyphen hyphen hyphen hyphen hyphen hyphen hyphen ");
@@ -236,14 +231,13 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void HyphenSymbolTest01() {
             String outFileName = destinationFolder + "hyphenSymbolTest01.pdf";
             String cmpFileName = sourceFolder + "cmp_hyphenSymbolTest01.pdf";
             PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outFileName));
             Document doc = new Document(pdfDoc);
-            PdfFont font = PdfFontFactory.CreateFont(fontsFolder + "FreeSans.ttf", PdfEncodings.IDENTITY_H, true);
+            PdfFont font = PdfFontFactory.CreateFont(fontsFolder + "FreeSans.ttf", PdfEncodings.IDENTITY_H);
             Style style = new Style();
             style.SetBorder(new SolidBorder(ColorConstants.BLACK, 1));
             style.SetHyphenation(new HyphenationConfig("en", "EN", 2, 2));

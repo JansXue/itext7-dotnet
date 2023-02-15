@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -85,6 +85,18 @@ namespace iText.Kernel.Pdf {
 
         public virtual iText.Kernel.Pdf.PdfDocumentInfo SetCreator(String creator) {
             return Put(PdfName.Creator, new PdfString(creator, PdfEncodings.UNICODE_BIG));
+        }
+
+        /// <summary>
+        /// Sets a producer line for the
+        /// <see cref="PdfDocument"/>
+        /// described by this instance.
+        /// </summary>
+        /// <param name="producer">is a new producer line to set</param>
+        /// <returns>this instance</returns>
+        public virtual iText.Kernel.Pdf.PdfDocumentInfo SetProducer(String producer) {
+            GetPdfObject().Put(PdfName.Producer, new PdfString(producer, PdfEncodings.UNICODE_BIG));
+            return this;
         }
 
         public virtual iText.Kernel.Pdf.PdfDocumentInfo SetTrapped(PdfName trapped) {

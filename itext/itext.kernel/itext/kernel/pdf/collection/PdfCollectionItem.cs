@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,7 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-using iText.Kernel;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf;
 
 namespace iText.Kernel.Pdf.Collection {
@@ -55,29 +55,40 @@ namespace iText.Kernel.Pdf.Collection {
         }
 
         /// <summary>Sets the value of the collection item.</summary>
-        /// <param name="key"/>
-        /// <param name="value"/>
+        /// <param name="key">is a key with which the specified value is to be associated</param>
+        /// <param name="value">is a value to be associated with the specified key</param>
+        /// <returns>this instance to support fluent interface</returns>
         public virtual iText.Kernel.Pdf.Collection.PdfCollectionItem AddItem(String key, String value) {
             PdfCollectionField field = schema.GetField(key);
             GetPdfObject().Put(new PdfName(key), field.GetValue(value));
             return this;
         }
 
-        /// <summary>Sets the value of the collection item.</summary>
-        /// <param name="d"/>
-        public virtual void AddItem(String key, PdfDate d) {
+        /// <summary>Sets the date value of the collection item.</summary>
+        /// <param name="key">is a key with which the specified date value is to be associated</param>
+        /// <param name="date">
+        /// is a
+        /// <see cref="iText.Kernel.Pdf.PdfDate">PDF date</see>
+        /// value to be associated with the specified key
+        /// </param>
+        public virtual void AddItem(String key, PdfDate date) {
             PdfCollectionField field = schema.GetField(key);
             if (field.subType == PdfCollectionField.DATE) {
-                GetPdfObject().Put(new PdfName(key), d.GetPdfObject());
+                GetPdfObject().Put(new PdfName(key), date.GetPdfObject());
             }
         }
 
-        /// <summary>Sets the value of the collection item.</summary>
-        /// <param name="n"/>
-        public virtual void AddItem(String key, PdfNumber n) {
+        /// <summary>Sets the number value of the collection item.</summary>
+        /// <param name="key">is a key with which the specified number value is to be associated</param>
+        /// <param name="number">
+        /// is a
+        /// <see cref="iText.Kernel.Pdf.PdfNumber">PDF number</see>
+        /// value to be associated with the specified key
+        /// </param>
+        public virtual void AddItem(String key, PdfNumber number) {
             PdfCollectionField field = schema.GetField(key);
             if (field.subType == PdfCollectionField.NUMBER) {
-                GetPdfObject().Put(new PdfName(key), n);
+                GetPdfObject().Put(new PdfName(key), number);
             }
         }
 
@@ -86,13 +97,14 @@ namespace iText.Kernel.Pdf.Collection {
         /// Adds a prefix for the Collection item.
         /// You can only use this method after you have set the value of the item.
         /// </remarks>
-        /// <param name="key"/>
-        /// <param name="prefix"/>
+        /// <param name="key">is a key identifying the Collection item</param>
+        /// <param name="prefix">is a prefix to be added</param>
+        /// <returns>this instance to support fluent interface</returns>
         public virtual iText.Kernel.Pdf.Collection.PdfCollectionItem SetPrefix(String key, String prefix) {
             PdfName fieldName = new PdfName(key);
             PdfObject obj = GetPdfObject().Get(fieldName);
             if (obj == null) {
-                throw new PdfException(PdfException.YouMustSetAValueBeforeAddingAPrefix);
+                throw new PdfException(KernelExceptionMessageConstant.YOU_MUST_SET_A_VALUE_BEFORE_ADDING_A_PREFIX);
             }
             PdfDictionary subItem = new PdfDictionary();
             subItem.Put(PdfName.D, obj);

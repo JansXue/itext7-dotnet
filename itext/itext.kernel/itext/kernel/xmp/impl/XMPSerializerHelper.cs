@@ -29,6 +29,7 @@
 //        http://www.adobe.com/devnet/xmp/library/eula-xmp-library-java.html
 using System;
 using System.IO;
+using iText.Commons.Utils;
 using iText.IO.Util;
 using iText.Kernel.XMP.Options;
 
@@ -51,7 +52,7 @@ namespace iText.Kernel.XMP.Impl
 		/// <param name="out">the output stream to serialize to</param>
 		/// <param name="options">serialization options, can be <code>null</code> for default.
 		/// 	</param>
-		/// <exception cref="iText.Kernel.XMP.XMPException"/>
+		/// <exception cref="iText.Kernel.XMP.XMPException">if serialization failed</exception>
 		public static void Serialize(XMPMetaImpl xmp, Stream output, SerializeOptions options
 			)
 		{
@@ -77,7 +78,7 @@ namespace iText.Kernel.XMP.Impl
 		/// ).
 		/// </param>
 		/// <returns>Returns a string containing the serialized RDF.</returns>
-		/// <exception cref="iText.Kernel.XMP.XMPException">on serializsation errors.</exception>
+		/// <exception cref="iText.Kernel.XMP.XMPException">on serialization errors.</exception>
 		public static String SerializeToString(XMPMetaImpl xmp, SerializeOptions options)
 		{
 			// forces the encoding to be UTF-16 to get the correct string length
@@ -87,13 +88,15 @@ namespace iText.Kernel.XMP.Impl
 			MemoryStream output = new MemoryStream(2048);
 			Serialize(xmp, output, options);
 
-			try {
-				return new EncodingNoPreamble(IanaEncodings.GetEncodingEncoding(options.GetEncoding())).GetString(output.GetBuffer());
+			try
+			{
+				return new EncodingNoPreamble(IanaEncodings.GetEncodingEncoding(options.GetEncoding())).GetString(output.GetBuffer(), 0, (int) output.Length);
 			}
-			catch (Exception) {
+			catch (Exception)
+			{
 				// cannot happen as UTF-8/16LE/BE is required to be implemented in
 				// Java
-				return GetString(output.GetBuffer());
+				return GetString(output.GetBuffer(), (int) output.Length);
 			}
 		}
 
@@ -105,7 +108,7 @@ namespace iText.Kernel.XMP.Impl
 		/// ).
 		/// </param>
 		/// <returns>Returns a byte buffer containing the serialized RDF.</returns>
-		/// <exception cref="iText.Kernel.XMP.XMPException">on serializsation errors.</exception>
+		/// <exception cref="iText.Kernel.XMP.XMPException">on serialization errors.</exception>
 		public static byte[] SerializeToBuffer(XMPMetaImpl xmp, SerializeOptions options)
 		{
 			MemoryStream output = new MemoryStream(2048);
@@ -113,10 +116,10 @@ namespace iText.Kernel.XMP.Impl
 			return output.ToArray();
 		}
 
-		static string GetString(byte[] bytes)
+		static string GetString(byte[] bytes, int length)
 		{
-			char[] chars = new char[bytes.Length / sizeof(char)];
-			Buffer.BlockCopy(bytes, 0, chars, 0, bytes.Length);
+			char[] chars = new char[length / sizeof(char)];
+			Buffer.BlockCopy(bytes, 0, chars, 0, length);
 			return new string(chars);
 		}
 	}

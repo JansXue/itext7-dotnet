@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,8 +41,12 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
+using iText.IO.Font;
 using iText.Kernel.Font;
+using iText.Kernel.Geom;
 using iText.Kernel.Pdf.Canvas;
+using iText.Layout.Properties;
+using iText.Layout.Renderer;
 using iText.Svg;
 using iText.Svg.Renderers;
 using iText.Svg.Utils;
@@ -63,8 +67,8 @@ namespace iText.Svg.Renderers.Impl {
             float contentLength = 0.0f;
             if (font != null && this.attributesAndStyles != null && this.attributesAndStyles.ContainsKey(SvgConstants.Attributes
                 .TEXT_CONTENT)) {
-                //Use own font-size declaration if it is present, parent's otherwise
-                float fontSize = (float)SvgTextUtil.ResolveFontSize(this, parentFontSize);
+                // Use own font-size declaration if it is present, parent's otherwise
+                float fontSize = SvgTextUtil.ResolveFontSize(this, parentFontSize);
                 String content = this.attributesAndStyles.Get(SvgConstants.Attributes.TEXT_CONTENT);
                 contentLength = font.GetWidth(content, fontSize);
             }
@@ -90,12 +94,40 @@ namespace iText.Svg.Renderers.Impl {
             return new float[][] { part, part };
         }
 
+        public virtual TextRectangle GetTextRectangle(SvgDrawContext context, Point basePoint) {
+            if (GetParent() is TextSvgBranchRenderer && basePoint != null) {
+                float parentFontSize = ((AbstractSvgNodeRenderer)GetParent()).GetCurrentFontSize();
+                PdfFont parentFont = ((TextSvgBranchRenderer)GetParent()).GetFont();
+                float textLength = GetTextContentLength(parentFontSize, parentFont);
+                float[] fontAscenderDescenderFromMetrics = TextRenderer.CalculateAscenderDescender(parentFont, RenderingMode
+                    .HTML_MODE);
+                float fontAscender = FontProgram.ConvertTextSpaceToGlyphSpace(fontAscenderDescenderFromMetrics[0]) * parentFontSize;
+                float fontDescender = FontProgram.ConvertTextSpaceToGlyphSpace(fontAscenderDescenderFromMetrics[1]) * parentFontSize;
+                // TextRenderer#calculateAscenderDescender returns fontDescender as a negative value so we should subtract this value
+                float textHeight = fontAscender - fontDescender;
+                return new TextRectangle((float)basePoint.GetX(), (float)basePoint.GetY() - fontAscender, textLength, textHeight
+                    , (float)basePoint.GetY());
+            }
+            else {
+                return null;
+            }
+        }
+
+        public override Rectangle GetObjectBoundingBox(SvgDrawContext context) {
+            return null;
+        }
+
         protected internal override void DoDraw(SvgDrawContext context) {
             if (this.attributesAndStyles != null && this.attributesAndStyles.ContainsKey(SvgConstants.Attributes.TEXT_CONTENT
                 )) {
                 PdfCanvas currentCanvas = context.GetCurrentCanvas();
                 //TODO(DEVSIX-2507): Support for glyph by glyph handling of x, y and rotate
-                currentCanvas.MoveText(context.GetTextMove()[0], context.GetTextMove()[1]);
+                if (context.GetPreviousElementTextMove() == null) {
+                    currentCanvas.MoveText(context.GetTextMove()[0], context.GetTextMove()[1]);
+                }
+                else {
+                    currentCanvas.MoveText(context.GetPreviousElementTextMove()[0], context.GetPreviousElementTextMove()[1]);
+                }
                 currentCanvas.ShowText(this.attributesAndStyles.Get(SvgConstants.Attributes.TEXT_CONTENT));
             }
         }

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -48,9 +48,11 @@ using iText.Kernel.Pdf.Canvas;
 using iText.Svg.Dummy.Renderers.Impl;
 using iText.Svg.Exceptions;
 using iText.Svg.Renderers.Impl;
+using iText.Test;
 
 namespace iText.Svg.Renderers {
-    public class SvgDrawContextTest {
+    [NUnit.Framework.Category("UnitTest")]
+    public class SvgDrawContextTest : ExtendedITextTest {
         private PdfDocument tokenDoc;
 
         private PdfCanvas page1;
@@ -74,21 +76,13 @@ namespace iText.Svg.Renderers {
         }
 
         [NUnit.Framework.Test]
-        public virtual void DrawContextEmptyStackPeekTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                context.GetCurrentCanvas();
-            }
-            , NUnit.Framework.Throws.InstanceOf<InvalidOperationException>())
-;
+        public virtual void DrawContextEmptyDequeGetFirstTest() {
+            NUnit.Framework.Assert.Catch(typeof(NullReferenceException), () => context.GetCurrentCanvas());
         }
 
         [NUnit.Framework.Test]
-        public virtual void DrawContextEmptyStackPopTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                context.PopCanvas();
-            }
-            , NUnit.Framework.Throws.InstanceOf<InvalidOperationException>())
-;
+        public virtual void DrawContextEmptyDequePopTest() {
+            NUnit.Framework.Assert.Catch(typeof(NullReferenceException), () => context.PopCanvas());
         }
 
         [NUnit.Framework.Test]
@@ -156,32 +150,26 @@ namespace iText.Svg.Renderers {
 
         [NUnit.Framework.Test]
         public virtual void AddNullToNamedObjects() {
-            NUnit.Framework.Assert.That(() =>  {
-                String name = "expected";
-                this.context.AddNamedObject(name, null);
-            }
-            , NUnit.Framework.Throws.InstanceOf<SvgProcessingException>().With.Message.EqualTo(SvgLogMessageConstant.NAMED_OBJECT_NULL))
-;
+            String name = "expected";
+            Exception e = NUnit.Framework.Assert.Catch(typeof(SvgProcessingException), () => this.context.AddNamedObject
+                (name, null));
+            NUnit.Framework.Assert.AreEqual(SvgExceptionMessageConstant.NAMED_OBJECT_NULL, e.Message);
         }
 
         [NUnit.Framework.Test]
         public virtual void AddNamedObjectWithNullName() {
-            NUnit.Framework.Assert.That(() =>  {
-                ISvgNodeRenderer expected = new DummySvgNodeRenderer();
-                this.context.AddNamedObject(null, expected);
-            }
-            , NUnit.Framework.Throws.InstanceOf<SvgProcessingException>().With.Message.EqualTo(SvgLogMessageConstant.NAMED_OBJECT_NAME_NULL_OR_EMPTY))
-;
+            ISvgNodeRenderer expected = new DummySvgNodeRenderer();
+            Exception e = NUnit.Framework.Assert.Catch(typeof(SvgProcessingException), () => this.context.AddNamedObject
+                (null, expected));
+            NUnit.Framework.Assert.AreEqual(SvgExceptionMessageConstant.NAMED_OBJECT_NAME_NULL_OR_EMPTY, e.Message);
         }
 
         [NUnit.Framework.Test]
         public virtual void AddNamedObjectWithEmptyName() {
-            NUnit.Framework.Assert.That(() =>  {
-                ISvgNodeRenderer expected = new DummySvgNodeRenderer();
-                this.context.AddNamedObject("", expected);
-            }
-            , NUnit.Framework.Throws.InstanceOf<SvgProcessingException>().With.Message.EqualTo(SvgLogMessageConstant.NAMED_OBJECT_NAME_NULL_OR_EMPTY))
-;
+            ISvgNodeRenderer expected = new DummySvgNodeRenderer();
+            Exception e = NUnit.Framework.Assert.Catch(typeof(SvgProcessingException), () => this.context.AddNamedObject
+                ("", expected));
+            NUnit.Framework.Assert.AreEqual(SvgExceptionMessageConstant.NAMED_OBJECT_NAME_NULL_OR_EMPTY, e.Message);
         }
 
         [NUnit.Framework.Test]

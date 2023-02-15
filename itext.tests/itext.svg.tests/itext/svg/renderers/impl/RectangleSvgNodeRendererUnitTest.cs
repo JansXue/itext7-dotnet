@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -40,8 +40,11 @@ source product.
 For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
+using iText.Test;
+
 namespace iText.Svg.Renderers.Impl {
-    public class RectangleSvgNodeRendererUnitTest {
+    [NUnit.Framework.Category("UnitTest")]
+    public class RectangleSvgNodeRendererUnitTest : ExtendedITextTest {
         private const float EPSILON = 0.00001f;
 
         internal RectangleSvgNodeRenderer renderer;

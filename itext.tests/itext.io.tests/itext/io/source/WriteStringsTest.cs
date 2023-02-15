@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,28 +41,31 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
+using iText.Test;
 
 namespace iText.IO.Source {
-    public class WriteStringsTest {
+    [NUnit.Framework.Category("UnitTest")]
+    public class WriteStringsTest : ExtendedITextTest {
         [NUnit.Framework.Test]
         public virtual void WriteStringTest() {
             String str = "SomeString";
             byte[] content = ByteUtils.GetIsoBytes(str);
-            NUnit.Framework.Assert.AreEqual(str.GetBytes(iText.IO.Util.EncodingUtil.ISO_8859_1), content);
+            NUnit.Framework.Assert.AreEqual(str.GetBytes(iText.Commons.Utils.EncodingUtil.ISO_8859_1), content);
         }
 
         [NUnit.Framework.Test]
         public virtual void WriteNameTest() {
             String str = "SomeName";
             byte[] content = ByteUtils.GetIsoBytes((byte)'/', str);
-            NUnit.Framework.Assert.AreEqual(("/" + str).GetBytes(iText.IO.Util.EncodingUtil.ISO_8859_1), content);
+            NUnit.Framework.Assert.AreEqual(("/" + str).GetBytes(iText.Commons.Utils.EncodingUtil.ISO_8859_1), content
+                );
         }
 
         [NUnit.Framework.Test]
         public virtual void WritePdfStringTest() {
             String str = "Some PdfString";
             byte[] content = ByteUtils.GetIsoBytes((byte)'(', str, (byte)')');
-            NUnit.Framework.Assert.AreEqual(("(" + str + ")").GetBytes(iText.IO.Util.EncodingUtil.ISO_8859_1), content
+            NUnit.Framework.Assert.AreEqual(("(" + str + ")").GetBytes(iText.Commons.Utils.EncodingUtil.ISO_8859_1), content
                 );
         }
     }

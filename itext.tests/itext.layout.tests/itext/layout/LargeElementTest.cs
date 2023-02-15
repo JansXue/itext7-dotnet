@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,21 +41,24 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-using iText.IO.Util;
-using iText.Kernel;
+using iText.Commons.Utils;
 using iText.Kernel.Colors;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using iText.Kernel.Utils;
 using iText.Layout.Borders;
 using iText.Layout.Element;
+using iText.Layout.Exceptions;
 using iText.Layout.Layout;
+using iText.Layout.Logs;
 using iText.Layout.Properties;
 using iText.Layout.Renderer;
 using iText.Test;
 using iText.Test.Attributes;
 
 namespace iText.Layout {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class LargeElementTest : ExtendedITextTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/layout/LargeElementTest/";
@@ -68,8 +71,6 @@ namespace iText.Layout {
             CreateDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void LargeTableTest01() {
             String testName = "largeTableTest01.pdf";
@@ -97,8 +98,6 @@ namespace iText.Layout {
                 , testName + "_diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void LargeTableTest02() {
             String testName = "largeTableTest02.pdf";
@@ -122,8 +121,81 @@ namespace iText.Layout {
                 , testName + "_diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
+        [NUnit.Framework.Test]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.LAST_ROW_IS_NOT_COMPLETE)]
+        public virtual void LargeTableWithEmptyLastRowTest() {
+            String testName = "largeTableWithEmptyLastRowTest.pdf";
+            String outFileName = destinationFolder + testName;
+            String cmpFileName = sourceFolder + "cmp_" + testName;
+            PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outFileName));
+            Document doc = new Document(pdfDoc);
+            Table table = new Table(UnitValue.CreatePercentArray(5), true);
+            doc.Add(table);
+            for (int i = 0; i < 20; i++) {
+                for (int j = 0; j < 5; j++) {
+                    table.AddCell(new Cell().Add(new Paragraph(MessageFormatUtil.Format("Cell {0}, {1}", i + 1, j + 1))));
+                }
+                if (i % 10 == 0) {
+                    table.Flush();
+                }
+            }
+            table.StartNewRow();
+            table.Complete();
+            doc.Add(new Table(UnitValue.CreatePercentArray(1)).UseAllAvailableWidth().SetBorder(new SolidBorder(ColorConstants
+                .ORANGE, 2)).AddCell("Is my occupied area correct?"));
+            doc.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
+                , testName + "_diff"));
+        }
+
+        [NUnit.Framework.Test]
+        //TODO DEVSIX-6025 Unexpected NPE, when trying to flush after starting new row
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.LAST_ROW_IS_NOT_COMPLETE, Count = 2)]
+        public virtual void FlushingLargeTableAfterStartingNewRowTest() {
+            String testName = "flushingLargeTableAfterStartingNewRowTest.pdf";
+            String outFileName = destinationFolder + testName;
+            String cmpFileName = sourceFolder + "cmp_" + testName;
+            PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outFileName));
+            Document doc = new Document(pdfDoc);
+            Table table = new Table(UnitValue.CreatePercentArray(5), true);
+            doc.Add(table);
+            table.AddCell(new Cell().Add(new Paragraph("Hello")));
+            table.AddCell(new Cell().Add(new Paragraph("World")));
+            table.StartNewRow();
+            NUnit.Framework.Assert.Catch(typeof(NullReferenceException), () => table.Flush());
+            table.Complete();
+            doc.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
+                , testName + "_diff"));
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.LAST_ROW_IS_NOT_COMPLETE)]
+        public virtual void LargeTableWithCollapsedFooterTest() {
+            String testName = "largeTableWithCollapsedFooterTest.pdf";
+            String outFileName = destinationFolder + testName;
+            String cmpFileName = sourceFolder + "cmp_" + testName;
+            PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outFileName));
+            Document doc = new Document(pdfDoc);
+            Table table = new Table(UnitValue.CreatePercentArray(5), true);
+            doc.Add(table);
+            for (int i = 0; i < 20; i++) {
+                for (int j = 0; j < 5; j++) {
+                    table.AddCell(new Cell().Add(new Paragraph(MessageFormatUtil.Format("Cell {0}, {1}", i + 1, j + 1))));
+                }
+                if (i % 10 == 0) {
+                    table.Flush();
+                }
+            }
+            table.StartNewRow();
+            Cell cell = new Cell(1, 5).Add(new Paragraph("Collapsed footer"));
+            table.AddFooterCell(cell);
+            table.Complete();
+            doc.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
+                , testName + "_diff"));
+        }
+
         [NUnit.Framework.Test]
         public virtual void LargeTableWithHeaderFooterTest01A() {
             String testName = "largeTableWithHeaderFooterTest01A.pdf";
@@ -151,8 +223,6 @@ namespace iText.Layout {
                 , testName + "_diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void LargeTableWithHeaderFooterTest01ASeparated() {
             String testName = "largeTableWithHeaderFooterTest01ASeparated.pdf";
@@ -183,8 +253,6 @@ namespace iText.Layout {
                 , testName + "_diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void LargeTableWithHeaderFooterTest01B() {
             String testName = "largeTableWithHeaderFooterTest01B.pdf";
@@ -215,10 +283,9 @@ namespace iText.Layout {
                 , testName + "_diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void LargeTableWithHeaderFooterTest01C() {
+            // TODO DEVSIX-5868 Look at page 2: large table's vertical borders are shorter in length than expected
             String testName = "largeTableWithHeaderFooterTest01C.pdf";
             String outFileName = destinationFolder + testName;
             String cmpFileName = sourceFolder + "cmp_" + testName;
@@ -247,8 +314,6 @@ namespace iText.Layout {
                 , testName + "_diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         [NUnit.Framework.Ignore("DEVSIX-1778")]
         public virtual void LargeTableWithHeaderFooterTest01CForcedPlacement() {
@@ -305,8 +370,6 @@ namespace iText.Layout {
                 , testName + "_diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void LargeTableWithHeaderFooterTest01D() {
             String testName = "largeTableWithHeaderFooterTest01D.pdf";
@@ -339,8 +402,6 @@ namespace iText.Layout {
                 , testName + "_diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void LargeTableWithHeaderFooterTest01DSeparated() {
             String testName = "largeTableWithHeaderFooterTest01DSeparated.pdf";
@@ -374,8 +435,6 @@ namespace iText.Layout {
                 , testName + "_diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void LargeTableWithHeaderFooterTest01E() {
             String testName = "largeTableWithHeaderFooterTest01E.pdf";
@@ -407,8 +466,6 @@ namespace iText.Layout {
                 , testName + "_diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void LargeTableWithHeaderFooterTest01ESeparated() {
             String testName = "largeTableWithHeaderFooterTest01ESeparated.pdf";
@@ -443,8 +500,6 @@ namespace iText.Layout {
                 , testName + "_diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void LargeTableWithHeaderFooterTest02() {
             String testName = "largeTableWithHeaderFooterTest02.pdf";
@@ -474,8 +529,6 @@ namespace iText.Layout {
                 , testName + "_diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void LargeTableWithHeaderFooterTest03() {
             String testName = "largeTableWithHeaderFooterTest03.pdf";
@@ -505,8 +558,6 @@ namespace iText.Layout {
                 , testName + "_diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void LargeTableWithHeaderFooterTest04() {
             String testName = "largeTableWithHeaderFooterTest04.pdf";
@@ -533,8 +584,6 @@ namespace iText.Layout {
                 , testName + "_diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void LargeTableWithLayoutResultNothingTest01() {
             String testName = "largeTableWithLayoutResultNothingTest01.pdf";
@@ -543,8 +592,8 @@ namespace iText.Layout {
             PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outFileName));
             Document doc = new Document(pdfDoc, PageSize.A1.Rotate());
             float[] colWidths = new float[] { 300, 150, 50, 100 };
-            int numOfColumns = colWidths.Length - 1;
             // the second column has colspan value as 2
+            int numOfColumns = colWidths.Length - 1;
             int numOfRowsInARowGroup = 4;
             int[] widthsArray = new int[] { 10, 50, 1, 100 };
             // please also look at tableWithLayoutResultNothingTest01
@@ -567,8 +616,6 @@ namespace iText.Layout {
                 , testName + "_diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TableWithLayoutResultNothingTest01() {
             String testName = "tableWithLayoutResultNothingTest01.pdf";
@@ -600,10 +647,8 @@ namespace iText.Layout {
                 , testName + "_diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA, Count = 1)]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA, Count = 1)]
         public virtual void LargeTableWithLayoutResultNothingTest02() {
             String testName = "largeTableWithLayoutResultNothingTest02.pdf";
             String outFileName = destinationFolder + testName;
@@ -628,8 +673,6 @@ namespace iText.Layout {
                 , testName + "_diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void LargeTableWithLayoutResultNothingTest03() {
             String testName = "largeTableWithLayoutResultNothingTest03.pdf";
@@ -692,20 +735,73 @@ namespace iText.Layout {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void LargeTableSplitTest01() {
-            // TODO(DEVSIX-1664)
             String testName = "largeTableSplitTest01.pdf";
+            String outFileName = destinationFolder + testName;
+            String cmpFileName = sourceFolder + "cmp_" + testName;
+            LargeTableSplitTest(outFileName, 100, 1, false, false);
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
+                , testName + "_diff"));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void LargeTableSplitSeparateTest() {
+            String testName = "largeTableSplitSeparateTest.pdf";
+            String outFileName = destinationFolder + testName;
+            String cmpFileName = sourceFolder + "cmp_" + testName;
+            LargeTableSplitTest(outFileName, 100, 1, false, true);
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
+                , testName + "_diff"));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void LargeTableSplitFooterTest() {
+            String testName = "largeTableSplitFooterTest.pdf";
+            String outFileName = destinationFolder + testName;
+            String cmpFileName = sourceFolder + "cmp_" + testName;
+            LargeTableSplitTest(outFileName, 280, 6, true, false);
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
+                , testName + "_diff"));
+        }
+
+        private void LargeTableSplitTest(String outFileName, float pageHeight, float rowsNumber, bool addFooter, bool
+             separate) {
+            PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outFileName));
+            Document doc = new Document(pdfDoc, new PageSize(595, pageHeight));
+            float[] colWidths = new float[] { 200, -1, 20, 40 };
+            Table table = new Table(UnitValue.CreatePointArray(colWidths), true);
+            if (addFooter) {
+                Cell cell = new Cell(1, 4).Add(new Paragraph("Table footer: continue on next page"));
+                table.AddFooterCell(cell);
+            }
+            if (separate) {
+                table.SetBorderCollapse(BorderCollapsePropertyValue.SEPARATE);
+            }
+            doc.Add(table);
+            for (int i = 0; i < rowsNumber; i++) {
+                table.AddCell(new Cell().Add(new Paragraph("Cell" + (i * 4 + 0))));
+                table.AddCell(new Cell().Add(new Paragraph("Cell" + (i * 4 + 1))));
+                table.AddCell(new Cell().Add(new Paragraph("Cell" + (i * 4 + 2))));
+                table.AddCell(new Cell().Add(new Paragraph("Cell" + (i * 4 + 3))));
+                table.Flush();
+            }
+            table.Complete();
+            doc.Close();
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void LargeTableWithTableBorderSplitTest() {
+            // TODO DEVSIX-5865 Table last horizontal border is drawn twice: at final Table#flush and then at Table#complete
+            String testName = "largeTableWithTableBorderSplitTest.pdf";
             String outFileName = destinationFolder + testName;
             String cmpFileName = sourceFolder + "cmp_" + testName;
             PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outFileName));
             Document doc = new Document(pdfDoc, new PageSize(595, 100));
             float[] colWidths = new float[] { 200, -1, 20, 40 };
-            // please also look at tableOnDifferentPages01
             Table table = new Table(UnitValue.CreatePointArray(colWidths), true);
             doc.Add(table);
+            table.SetBorder(new SolidBorder(ColorConstants.BLUE, 2));
             for (int i = 0; i < 1; i++) {
                 table.AddCell(new Cell().Add(new Paragraph("Cell" + (i * 4 + 0))));
                 table.AddCell(new Cell().Add(new Paragraph("Cell" + (i * 4 + 1))));
@@ -716,11 +812,216 @@ namespace iText.Layout {
             table.Complete();
             doc.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
-                , testName + "_diff"));
+                ));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
+        [NUnit.Framework.Test]
+        public virtual void LargeTableWithTableBorderSplitTest02() {
+            // TODO DEVSIX-5865 Table last horizontal border is drawn twice: at final Table#flush and then at Table#complete
+            String testName = "largeTableWithTableBorderSplitTest02.pdf";
+            String outFileName = destinationFolder + testName;
+            String cmpFileName = sourceFolder + "cmp_" + testName;
+            PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outFileName));
+            Document doc = new Document(pdfDoc, new PageSize(595, 100));
+            Table table = new Table(2, true);
+            doc.Add(table);
+            table.SetBorder(new SolidBorder(ColorConstants.BLUE, 2));
+            table.AddCell(new Cell().SetBackgroundColor(ColorConstants.RED).SetHeight(50).SetMargin(0).SetPadding(0));
+            table.AddCell(new Cell().SetBackgroundColor(ColorConstants.RED).SetHeight(50).SetMargin(0).SetPadding(0));
+            table.Flush();
+            table.Complete();
+            doc.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
+                ));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void LargeTableWithCellBordersSplitTest1() {
+            // TODO DEVSIX-5866 at #complete left border is initialized as null
+            String testName = "largeTableWithCellBordersSplitTest1.pdf";
+            String outFileName = destinationFolder + testName;
+            String cmpFileName = sourceFolder + "cmp_" + testName;
+            PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outFileName));
+            Document doc = new Document(pdfDoc);
+            float[] colWidths = new float[] { 30, 30, 30 };
+            Table table = new Table(colWidths, true).SetWidth(290);
+            doc.Add(table);
+            table.AddCell(new Cell().Add(new Paragraph("Cell" + 0)).SetPadding(0).SetMargin(0).SetBorder(new SolidBorder
+                (ColorConstants.MAGENTA, 50)).SetBorderBottom(new SolidBorder(ColorConstants.BLUE, 50)));
+            table.AddCell(new Cell().Add(new Paragraph("Cell" + 1)).SetPadding(0).SetMargin(0).SetBorder(new SolidBorder
+                (ColorConstants.MAGENTA, 50)).SetBorderBottom(new SolidBorder(ColorConstants.RED, 50)));
+            table.AddCell(new Cell().Add(new Paragraph("Cell" + 3)).SetPadding(0).SetMargin(0).SetBorder(new SolidBorder
+                (ColorConstants.MAGENTA, 50)).SetBorderBottom(new SolidBorder(ColorConstants.BLUE, 50)));
+            table.Flush();
+            table.Complete();
+            doc.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
+                ));
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
+        public virtual void LargeTableWithCellBordersSplitTest() {
+            // TODO DEVSIX-5866 at #complete left border is initialized as null
+            String testName = "largeTableWithCellBordersSplitTest.pdf";
+            String outFileName = destinationFolder + testName;
+            String cmpFileName = sourceFolder + "cmp_" + testName;
+            PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outFileName));
+            Document doc = new Document(pdfDoc, new PageSize(595, 100));
+            float[] colWidths = new float[] { 200, -1, 20, 40 };
+            Table table = new Table(UnitValue.CreatePointArray(colWidths), true);
+            doc.Add(table);
+            table.AddCell(new Cell().Add(new Paragraph("Cell" + 0)).SetBorderBottom(new SolidBorder(ColorConstants.BLUE
+                , 2)));
+            table.AddCell(new Cell().Add(new Paragraph("Cell" + 1)).SetBorderBottom(new SolidBorder(ColorConstants.RED
+                , 5)));
+            table.AddCell(new Cell().Add(new Paragraph("Cell" + 2)).SetBorderBottom(new SolidBorder(ColorConstants.GREEN
+                , 7)));
+            table.AddCell(new Cell().Add(new Paragraph("Cell" + 3)).SetBorderBottom(new SolidBorder(ColorConstants.BLUE
+                , 10)));
+            table.Flush();
+            table.Complete();
+            doc.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
+                ));
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
+        public virtual void LargeTableWithCellBordersSplitTest02() {
+            // TODO DEVSIX-5866 at #complete left border is initialized as null
+            String testName = "largeTableWithCellBordersSplitTest02.pdf";
+            String outFileName = destinationFolder + testName;
+            String cmpFileName = sourceFolder + "cmp_" + testName;
+            PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outFileName));
+            Document doc = new Document(pdfDoc, new PageSize(595, 100));
+            float[] colWidths = new float[] { 200, 40 };
+            Table table = new Table(UnitValue.CreatePointArray(colWidths), true);
+            doc.Add(table);
+            table.AddCell(new Cell().Add(new Paragraph("Cell" + 0)).SetBackgroundColor(ColorConstants.YELLOW).SetBorderBottom
+                (new SolidBorder(ColorConstants.BLUE, 2)));
+            table.AddCell(new Cell().Add(new Paragraph("Cell" + 3)).SetBackgroundColor(ColorConstants.YELLOW).SetBorderBottom
+                (new SolidBorder(ColorConstants.BLUE, 10)));
+            table.Flush();
+            doc.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
+                ));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void SimpleLargeTableDifferentCellBottomBorderTest() {
+            // TODO DEVSIX-5866 at #complete left border is initialized as null
+            String testName = "simpleLargeTableDifferentCellBottomBorderTest.pdf";
+            String outFileName = destinationFolder + testName;
+            String cmpFileName = sourceFolder + "cmp_" + testName;
+            PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outFileName));
+            Document doc = new Document(pdfDoc);
+            Table table = new Table(2, true);
+            doc.Add(table);
+            table.AddCell(new Cell().Add(new Paragraph("Cell" + 0)).SetHeight(30).SetMargin(0).SetPadding(0).SetBackgroundColor
+                (ColorConstants.RED).SetBorder(new SolidBorder(ColorConstants.BLUE, 10)));
+            table.AddCell(new Cell().Add(new Paragraph("Cell" + 1)).SetHeight(30).SetMargin(0).SetPadding(0).SetBackgroundColor
+                (ColorConstants.RED).SetBorder(new SolidBorder(10)).SetBorderBottom(new SolidBorder(ColorConstants.BLUE
+                , 100)));
+            table.Flush();
+            table.Complete();
+            doc.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
+                ));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void LargeTableSplitFooter2Test() {
+            // TODO DEVSIX-5867 footer's top / table body's bottom border gets drawn twice at different coordinates
+            //  (Look at yellow border at page 2: it might not be tat obvious, however, there are two yelow borders
+            //  there which overlap each other a bit)
+            String testName = "largeTableSplitFooter2Test.pdf";
+            String outFileName = destinationFolder + testName;
+            String cmpFileName = sourceFolder + "cmp_" + testName;
+            PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outFileName));
+            Document doc = new Document(pdfDoc, new PageSize(595, 400));
+            float[] colWidths = new float[] { 100 };
+            Table table = new Table(UnitValue.CreatePointArray(colWidths), true);
+            doc.Add(table);
+            table.AddFooterCell(new Cell().Add(new Paragraph("Footer")).SetBorderTop(new SolidBorder(ColorConstants.YELLOW
+                , 15)).SetBorderBottom(new SolidBorder(ColorConstants.GREEN, 35)));
+            table.AddCell(new Cell().Add(new Paragraph("Cell1")).SetHeight(400).SetBorderBottom(new SolidBorder(ColorConstants
+                .BLUE, 20)));
+            table.Flush();
+            table.AddCell(new Cell().Add(new Paragraph("Cell2")).SetHeight(200).SetBorderTop(new SolidBorder(ColorConstants
+                .RED, 10)));
+            table.Complete();
+            doc.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
+                ));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void LargeTableSplitFooter2ATest() {
+            // TODO DEVSIX-5867 footer's top / table body's bottom border gets drawn twice at different coordinates
+            //  (Look at yellow border: it might not be tat obvious, however, there are two yelow borders
+            //  there which overlap each other a bit)
+            String testName = "largeTableSplitFooter2ATest.pdf";
+            String outFileName = destinationFolder + testName;
+            String cmpFileName = sourceFolder + "cmp_" + testName;
+            PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outFileName));
+            Document doc = new Document(pdfDoc);
+            Table table = new Table(1, true);
+            doc.Add(table);
+            table.AddFooterCell(new Cell().Add(new Paragraph("Footer")).SetBorderTop(new SolidBorder(ColorConstants.YELLOW
+                , 15)));
+            table.AddCell(new Cell().Add(new Paragraph("Cell1")).SetHeight(50).SetBorderBottom(new SolidBorder(ColorConstants
+                .BLUE, 20)));
+            table.Flush();
+            table.AddCell(new Cell().Add(new Paragraph("Cell2")).SetHeight(50));
+            table.Complete();
+            doc.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
+                ));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void LargeTableSplitFooter2BTest() {
+            // TODO DEVSIX-5869 large table's width should not change between flushes
+            String testName = "largeTableSplitFooter2BTest.pdf";
+            String outFileName = destinationFolder + testName;
+            String cmpFileName = sourceFolder + "cmp_" + testName;
+            PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outFileName));
+            Document doc = new Document(pdfDoc, new PageSize(595, 900));
+            AddSpecificTableConsideringFlushes(doc, false, false);
+            doc.Add(new AreaBreak());
+            AddSpecificTableConsideringFlushes(doc, true, false);
+            doc.Add(new AreaBreak());
+            AddSpecificTableConsideringFlushes(doc, false, true);
+            doc.Add(new AreaBreak());
+            AddSpecificTableConsideringFlushes(doc, true, true);
+            doc.Add(new AreaBreak());
+            doc.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
+                ));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void LargeTableCollapsingSplitTest() {
+            String testName = "largeTableCollapsingSplitTest.pdf";
+            String outFileName = destinationFolder + testName;
+            String cmpFileName = sourceFolder + "cmp_" + testName;
+            PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outFileName));
+            Document doc = new Document(pdfDoc, new PageSize(595, 400));
+            float[] colWidths = new float[] { 100 };
+            Table table = new Table(UnitValue.CreatePointArray(colWidths), true);
+            doc.Add(table);
+            table.AddCell(new Cell().Add(new Paragraph("Cell1")).SetHeight(1000).SetBorderBottom(new SolidBorder(ColorConstants
+                .BLUE, 20)));
+            table.Flush();
+            table.AddCell(new Cell().Add(new Paragraph("Cell2")).SetHeight(1000).SetBorderTop(new SolidBorder(ColorConstants
+                .RED, 40)));
+            table.Complete();
+            doc.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
+                ));
+        }
+
         [NUnit.Framework.Test]
         public virtual void LargeTableOnDifferentPages01() {
             String testName = "largeTableOnDifferentPages01.pdf";
@@ -750,8 +1051,6 @@ namespace iText.Layout {
                 , testName + "_diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TableOnDifferentPages01() {
             String testName = "tableOnDifferentPages01.pdf";
@@ -777,8 +1076,6 @@ namespace iText.Layout {
                 , testName + "_diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void LargeTableOnDifferentPages01A() {
             String testName = "largeTableOnDifferentPages01A.pdf";
@@ -805,8 +1102,6 @@ namespace iText.Layout {
                 , testName + "_diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TableOnDifferentPages02() {
             String testName = "tableOnDifferentPages02.pdf";
@@ -832,10 +1127,8 @@ namespace iText.Layout {
                 , testName + "_diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.LAST_ROW_IS_NOT_COMPLETE, Count = 1)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.LAST_ROW_IS_NOT_COMPLETE, Count = 1)]
         public virtual void ReuseLargeTableTest01() {
             String testName = "reuseLargeTableTest01.pdf";
             String outFileName = destinationFolder + testName;
@@ -874,7 +1167,7 @@ namespace iText.Layout {
                 doc.Add(table);
             }
             catch (PdfException e) {
-                if (!e.Message.Equals(PdfException.CannotAddCellToCompletedLargeTable)) {
+                if (!e.Message.Equals(LayoutExceptionMessageConstant.CANNOT_ADD_CELL_TO_COMPLETED_LARGE_TABLE)) {
                     throw;
                 }
             }
@@ -883,8 +1176,6 @@ namespace iText.Layout {
                 , testName + "_diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void LargeEmptyTableTest() {
             String testName = "largeEmptyTableTest.pdf";
@@ -904,10 +1195,8 @@ namespace iText.Layout {
                 , testName + "_diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.LAST_ROW_IS_NOT_COMPLETE, Count = 8)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.LAST_ROW_IS_NOT_COMPLETE, Count = 8)]
         public virtual void LargeEmptyTableTest02() {
             String testName = "largeEmptyTableTest02.pdf";
             String outFileName = destinationFolder + testName;
@@ -978,10 +1267,8 @@ namespace iText.Layout {
                 , testName + "_diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.LAST_ROW_IS_NOT_COMPLETE, Count = 8)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.LAST_ROW_IS_NOT_COMPLETE, Count = 8)]
         public virtual void LargeEmptyTableTest02Separated() {
             String testName = "largeEmptyTableTest02Separated.pdf";
             String outFileName = destinationFolder + testName;
@@ -1051,6 +1338,47 @@ namespace iText.Layout {
             doc.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
                 , testName + "_diff"));
+        }
+
+        [NUnit.Framework.Test]
+        // TODO DEVSIX-3953 Footer is not placed on the first page in case of large table, but fits the page for a usual table
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
+        public virtual void LargeTableFooterNotFitTest() {
+            String testName = "largeTableFooterNotFitTest.pdf";
+            String outFileName = destinationFolder + testName;
+            String cmpFileName = sourceFolder + "cmp_" + testName;
+            PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outFileName));
+            Document doc = new Document(pdfDoc, new PageSize(595, 100));
+            Table table = new Table(1, true);
+            Cell footerCell = new Cell().Add(new Paragraph("Table footer: continue on next page"));
+            table.AddFooterCell(footerCell);
+            doc.Add(table);
+            table.AddCell(new Cell().Add(new Paragraph("Cell")).SetBackgroundColor(ColorConstants.RED));
+            // If one comments flush, then the table fits the page
+            table.Flush();
+            table.Complete();
+            doc.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
+                , testName + "_diff"));
+        }
+
+        private static void AddSpecificTableConsideringFlushes(Document doc, bool flushFirst, bool flushSecond) {
+            Table table = new Table(UnitValue.CreatePercentArray(1), true);
+            doc.Add(table);
+            table.AddFooterCell(new Cell().Add(new Paragraph("Footer")).SetBorderTop(new SolidBorder(ColorConstants.YELLOW
+                , 15)).SetHeight(100).SetMargin(0).SetPadding(0));
+            table.AddCell(new Cell().Add(new Paragraph("Cell1")).SetHeight(100).SetMargin(0).SetPadding(0).SetBackgroundColor
+                (ColorConstants.RED));
+            if (flushFirst) {
+                table.Flush();
+            }
+            table.AddCell(new Cell().Add(new Paragraph("Cell2")).SetHeight(100).SetMargin(0).SetPadding(0).SetBackgroundColor
+                (ColorConstants.RED).SetBorderLeft(new SolidBorder(ColorConstants.GREEN, 50)).SetBorderRight(new SolidBorder
+                (ColorConstants.GREEN, 50)).SetBorderTop(new SolidBorder(ColorConstants.MAGENTA, 10)));
+            if (flushSecond) {
+                table.Flush();
+            }
+            table.Complete();
         }
     }
 }

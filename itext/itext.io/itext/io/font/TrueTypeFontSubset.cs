@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,16 +43,20 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
+using iText.Commons.Utils;
 using iText.IO.Source;
-using iText.IO.Util;
 
 namespace iText.IO.Font {
     /// <summary>Subsets a True Type font by removing the unneeded glyphs from the font.</summary>
     /// <author>Paulo Soares</author>
     internal class TrueTypeFontSubset {
+        // If it's a regular font subset, we should not add `name` and `post`,
+        // because information in these tables maybe irrelevant for a subset.
         private static readonly String[] TABLE_NAMES_SUBSET = new String[] { "cvt ", "fpgm", "glyf", "head", "hhea"
             , "hmtx", "loca", "maxp", "prep", "cmap", "OS/2" };
 
+        // In case ttc file with subset = false (#directoryOffset > 0) `name` and `post` shall be included,
+        // because it's actually a full font.
         private static readonly String[] TABLE_NAMES = new String[] { "cvt ", "fpgm", "glyf", "head", "hhea", "hmtx"
             , "loca", "maxp", "prep", "cmap", "OS/2", "name", "post" };
 
@@ -128,10 +132,6 @@ namespace iText.IO.Font {
         /// <param name="glyphsUsed">the glyphs used</param>
         internal TrueTypeFontSubset(String fileName, RandomAccessFileOrArray rf, ICollection<int> glyphsUsed, int 
             directoryOffset, bool subset) {
-            // If it's a regular font subset, we should not add `name` and `post`,
-            // because information in these tables maybe irrelevant for a subset.
-            // In case ttc file with subset = false (#directoryOffset > 0) `name` and `post` shall be included,
-            // because it's actually a full font.
             this.fileName = fileName;
             this.rf = rf;
             this.glyphsUsed = new HashSet<int>(glyphsUsed);
@@ -148,7 +148,6 @@ namespace iText.IO.Font {
 
         /// <summary>Does the actual work of subsetting the font.</summary>
         /// <returns>the subset font</returns>
-        /// <exception cref="System.IO.IOException">on error</exception>
         internal virtual byte[] Process() {
             try {
                 CreateTableDirectory();
@@ -168,7 +167,6 @@ namespace iText.IO.Font {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private void AssembleFont() {
             int[] tableLocation;
             int fullFontSize = 0;
@@ -256,13 +254,13 @@ namespace iText.IO.Font {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private void CreateTableDirectory() {
             tableDirectory = new Dictionary<String, int[]>();
             rf.Seek(directoryOffset);
             int id = rf.ReadInt();
             if (id != 0x00010000) {
-                throw new iText.IO.IOException(iText.IO.IOException.NotAtTrueTypeFile).SetMessageParams(fileName);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.NotAtTrueTypeFile).SetMessageParams
+                    (fileName);
             }
             int num_tables = rf.ReadUnsignedShort();
             rf.SkipBytes(6);
@@ -276,19 +274,18 @@ namespace iText.IO.Font {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private void ReadLoca() {
             int[] tableLocation = tableDirectory.Get("head");
             if (tableLocation == null) {
-                throw new iText.IO.IOException(iText.IO.IOException.TableDoesNotExistsIn).SetMessageParams("head", fileName
-                    );
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.TableDoesNotExistsIn).SetMessageParams
+                    ("head", fileName);
             }
             rf.Seek(tableLocation[TABLE_OFFSET] + HEAD_LOCA_FORMAT_OFFSET);
             locaShortTable = rf.ReadUnsignedShort() == 0;
             tableLocation = tableDirectory.Get("loca");
             if (tableLocation == null) {
-                throw new iText.IO.IOException(iText.IO.IOException.TableDoesNotExistsIn).SetMessageParams("loca", fileName
-                    );
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.TableDoesNotExistsIn).SetMessageParams
+                    ("loca", fileName);
             }
             rf.Seek(tableLocation[TABLE_OFFSET]);
             if (locaShortTable) {
@@ -307,7 +304,6 @@ namespace iText.IO.Font {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private void CreateNewGlyphTables() {
             newLocaTable = new int[locaTable.Length];
             int[] activeGlyphs = new int[glyphsInList.Count];
@@ -360,12 +356,11 @@ namespace iText.IO.Font {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private void FlatGlyphs() {
             int[] tableLocation = tableDirectory.Get("glyf");
             if (tableLocation == null) {
-                throw new iText.IO.IOException(iText.IO.IOException.TableDoesNotExistsIn).SetMessageParams("glyf", fileName
-                    );
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.TableDoesNotExistsIn).SetMessageParams
+                    ("glyf", fileName);
             }
             int glyph0 = 0;
             if (!glyphsUsed.Contains(glyph0)) {
@@ -380,11 +375,10 @@ namespace iText.IO.Font {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private void CheckGlyphComposite(int glyph) {
             int start = locaTable[glyph];
+            // no contour
             if (start == locaTable[glyph + 1]) {
-                // no contour
                 return;
             }
             rf.Seek(tableGlyphOffset + start);
@@ -436,15 +430,14 @@ namespace iText.IO.Font {
         /// <c>String</c>
         /// read
         /// </returns>
-        /// <exception cref="System.IO.IOException">the font file could not be read</exception>
         private String ReadStandardString(int length) {
             byte[] buf = new byte[length];
             rf.ReadFully(buf);
             try {
-                return iText.IO.Util.JavaUtil.GetStringForBytes(buf, PdfEncodings.WINANSI);
+                return iText.Commons.Utils.JavaUtil.GetStringForBytes(buf, PdfEncodings.WINANSI);
             }
             catch (Exception e) {
-                throw new iText.IO.IOException("TrueType font", e);
+                throw new iText.IO.Exceptions.IOException("TrueType font", e);
             }
         }
 

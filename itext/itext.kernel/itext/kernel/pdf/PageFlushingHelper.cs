@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,9 +42,9 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using iText.IO.Util;
-using iText.Kernel;
+using iText.Commons.Utils;
 using iText.Kernel.Events;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf.Layer;
 
 namespace iText.Kernel.Pdf {
@@ -57,13 +57,11 @@ namespace iText.Kernel.Pdf {
     /// ,
     /// <see cref="ReleaseDeep(int)"/>
     /// ,
-    /// <see cref="AppendModeFlush(int)"/>
-    /// .
-    /// <p>
+    /// <see cref="AppendModeFlush(int)"/>.
+    /// <para />
     /// Each approach is designed to be most suitable for specific modes of document processing. There are four document
     /// processing modes: reading, writing, stamping and append mode.
-    /// </p>
-    /// <p>
+    /// <para />
     /// Reading mode: The
     /// <see cref="PdfDocument"/>
     /// instance is initialized using only
@@ -71,8 +69,7 @@ namespace iText.Kernel.Pdf {
     /// by
     /// <see cref="PdfDocument.PdfDocument(PdfReader)"/>
     /// constructor.
-    /// </p>
-    /// <p>
+    /// <para />
     /// Writing mode: The
     /// <see cref="PdfDocument"/>
     /// instance is initialized using only
@@ -80,8 +77,7 @@ namespace iText.Kernel.Pdf {
     /// by
     /// <see cref="PdfDocument.PdfDocument(PdfWriter)"/>
     /// constructor.
-    /// </p>
-    /// <p>
+    /// <para />
     /// Stamping mode: The
     /// <see cref="PdfDocument"/>
     /// instance is initialized using both
@@ -99,8 +95,7 @@ namespace iText.Kernel.Pdf {
     /// by the end of
     /// <see cref="PdfDocument.Close()"/>
     /// call.
-    /// </p>
-    /// <p>
+    /// <para />
     /// Append mode: The
     /// <see cref="PdfDocument"/>
     /// instance is initialized using both
@@ -117,18 +112,16 @@ namespace iText.Kernel.Pdf {
     /// This mode preserves the document intact with all its data, but adds additional data at the end of the file,
     /// which "overrides" and introduces amends to the original document. In this mode it's not required to rewrite the
     /// complete document which can be highly beneficial for big PDF documents handling.
-    /// </p>
-    /// <p>
+    /// <para />
     /// The
     /// <see cref="PageFlushingHelper"/>
     /// class operates with two concepts of PDF objects states: flushed and released objects.
-    /// <p>
+    /// <para />
     /// Flushed object is the one which is finalized and has been completely written to the output stream. This frees its
     /// memory but makes it impossible to modify it or read data from it. Whenever there is an attempt to modify or to fetch
     /// flushed object inner contents an exception will be thrown. Flushing is only possible for objects in the writing
     /// and stamping modes, also its possible to flush modified objects in append mode.
-    /// </p>
-    /// <p>
+    /// <para />
     /// Released object is the one which has not been modified and has been "detached" from the
     /// <see cref="PdfDocument"/>
     /// , making it
@@ -140,12 +133,10 @@ namespace iText.Kernel.Pdf {
     /// <see cref="PdfDocument.Close()"/>
     /// in stamping mode all released objects
     /// will be re-read.
-    /// </p>
-    /// <p>
+    /// <para />
     /// The
     /// <see cref="PageFlushingHelper"/>
     /// class doesn't work with PdfADocument instances.
-    /// </p>
     /// </remarks>
     public class PageFlushingHelper {
         private static readonly PageFlushingHelper.DeepFlushingContext pageContext;
@@ -158,13 +149,13 @@ namespace iText.Kernel.Pdf {
 
         private bool release;
 
+        // only PdfDictionary/PdfStream or PdfArray can be in this set.
+        // Explicitly using HashSet for as field type for the sake of autoporting.
         private HashSet<PdfObject> currNestedObjParents = new HashSet<PdfObject>();
 
         private ICollection<PdfIndirectReference> layersRefs = new HashSet<PdfIndirectReference>();
 
         public PageFlushingHelper(PdfDocument pdfDoc) {
-            // only PdfDictionary/PdfStream or PdfArray can be in this set.
-            // Explicitly using HashSet for as field type for the sake of autoporting.
             this.pdfDoc = pdfDoc;
         }
 
@@ -172,7 +163,7 @@ namespace iText.Kernel.Pdf {
         /// <remarks>
         /// Flushes to the output stream all objects belonging to the given page. This frees the memory taken by those
         /// objects, but makes it impossible to modify them or read data from them.
-        /// <p>
+        /// <para />
         /// This method is mainly designed for writing and stamping modes. It will throw an exception for documents
         /// opened in reading mode (see
         /// <see cref="PageFlushingHelper"/>
@@ -180,8 +171,7 @@ namespace iText.Kernel.Pdf {
         /// mode if new pages are added or existing pages are heavily modified and
         /// <see cref="AppendModeFlush(int)"/>
         /// is not enough.
-        /// </p>
-        /// <p>
+        /// <para />
         /// This method is highly effective in freeing the memory and works properly for the vast majority of documents
         /// and use cases, however it can potentially cause failures. If document handling fails with exception after
         /// using this method, one should re-process the document with a "safe flushing" alternative
@@ -190,13 +180,11 @@ namespace iText.Kernel.Pdf {
         /// or consider using append mode and
         /// <see cref="AppendModeFlush(int)"/>
         /// method).
-        /// </p>
-        /// <p>
+        /// <para />
         /// The unsafety comes from the possibility of objects being shared between pages and the fact that object data
         /// cannot be read after the flushing. Whenever flushed object is attempted to be modified or its data is fetched
         /// the exception will be thrown (flushed object can be added to the other objects, though).
-        /// </p>
-        /// <p>
+        /// <para />
         /// In stamping/append mode the issue occurs if some object is shared between two or more pages, and the first page
         /// is flushed, and later for processing of the second page this object is required to be read/modified. Normally only
         /// page resources (like images and fonts) are shared, which are often not required for page processing: for example
@@ -205,25 +193,22 @@ namespace iText.Kernel.Pdf {
         /// page contents parsing: text extraction, any general
         /// <see cref="iText.Kernel.Pdf.Canvas.Parser.PdfCanvasProcessor"/>
         /// class usage, usage of pdfSweep addon.
-        /// </p>
-        /// <p>
+        /// <para />
         /// In writing mode this method normally will work without issues: by default iText creates page objects in such way
         /// that they are independent from each other. Again, the resources can be shared, but as mentioned above
         /// it's safe to add already flushed resources to the other pages because this doesn't require reading data from them.
-        /// </p>
-        /// <p>
+        /// <para />
         /// For append mode only modified objects are flushed, all others are released and can be re-read later on.
-        /// </p>
-        /// <p>
+        /// <para />
         /// This method shall be used only when it's known that the page and its inner structures processing is finished.
         /// This includes reading data from pages, page modification and page handling via addons/utilities.
-        /// </p>
         /// </remarks>
         /// <param name="pageNum">the page number which low level objects structure is to be flushed to the output stream.
         ///     </param>
         public virtual void UnsafeFlushDeep(int pageNum) {
             if (pdfDoc.GetWriter() == null) {
-                throw new ArgumentException(PdfException.FlushingHelperFLushingModeIsNotForDocReadingMode);
+                throw new ArgumentException(KernelExceptionMessageConstant.FLUSHING_HELPER_FLUSHING_MODE_IS_NOT_FOR_DOC_READING_MODE
+                    );
             }
             release = false;
             FlushPage(pageNum);
@@ -234,27 +219,23 @@ namespace iText.Kernel.Pdf {
         /// <remarks>
         /// Releases memory taken by all not modified objects belonging to the given page, including the page dictionary itself.
         /// This affects only the objects that are read from the existing input PDF.
-        /// <p>
+        /// <para />
         /// This method is mainly designed for reading mode and also can be used in append mode (see
         /// <see cref="PageFlushingHelper"/>
         /// for more details on modes). In append mode modified objects will be kept in memory.
         /// The page and all its inner structure objects can be re-read again.
-        /// </p>
-        /// <p>
+        /// <para />
         /// This method will not have any effect in the writing mode. It is also not advised to be used in stamping mode:
         /// even though it will indeed release the objects, they will be definitely re-read again on document closing, which
         /// would affect performance.
-        /// </p>
-        /// <p>
+        /// <para />
         /// When using this method in append mode (or in stamping mode), be careful not to try to modify the object instances
         /// obtained before the releasing! See
         /// <see cref="PageFlushingHelper"/>
         /// for details on released objects state.
-        /// </p>
-        /// <p>
+        /// <para />
         /// This method shall be used only when it's known that the page and its inner structures processing is finished.
         /// This includes reading data from pages, page modification and page handling via addons/utilities.
-        /// </p>
         /// </remarks>
         /// <param name="pageNum">the page number which low level objects structure is to be released from memory.</param>
         public virtual void ReleaseDeep(int pageNum) {
@@ -265,11 +246,16 @@ namespace iText.Kernel.Pdf {
         /// <summary>
         /// Flushes to the output stream modified objects that can belong only to the given page, which makes this method
         /// "safe" compared to the
+        /// <see cref="UnsafeFlushDeep(int)"/>.
+        /// </summary>
+        /// <remarks>
+        /// Flushes to the output stream modified objects that can belong only to the given page, which makes this method
+        /// "safe" compared to the
         /// <see cref="UnsafeFlushDeep(int)"/>
         /// . Flushed object frees the memory, but it's impossible to
         /// modify such objects or read data from them. This method releases all other page structure objects that are not
         /// modified.
-        /// <p>
+        /// <para />
         /// This method is mainly designed for the append mode. It is similar to the
         /// <see cref="PdfPage.Flush()"/>
         /// , but it
@@ -282,23 +268,21 @@ namespace iText.Kernel.Pdf {
         /// for more details on modes). It is also not advised to be used in stamping mode: even though it will indeed
         /// release the objects and free the memory, the released objects will definitely be re-read again on document
         /// closing, which would affect performance.
-        /// </p>
-        /// <p>
+        /// <para />
         /// When using this method in append mode (or in stamping mode), be careful not to try to modify the object instances
         /// obtained before this method call! See
         /// <see cref="PageFlushingHelper"/>
         /// for details on released and flushed objects state.
-        /// </p>
-        /// <p>
+        /// <para />
         /// This method shall be used only when it's known that the page and its inner structures processing is finished.
         /// This includes reading data from pages, page modification and page handling via addons/utilities.
-        /// </p>
-        /// </summary>
+        /// </remarks>
         /// <param name="pageNum">the page number which low level objects structure is to be flushed or released from memory.
         ///     </param>
         public virtual void AppendModeFlush(int pageNum) {
             if (pdfDoc.GetWriter() == null) {
-                throw new ArgumentException(PdfException.FlushingHelperFLushingModeIsNotForDocReadingMode);
+                throw new ArgumentException(KernelExceptionMessageConstant.FLUSHING_HELPER_FLUSHING_MODE_IS_NOT_FOR_DOC_READING_MODE
+                    );
             }
             PdfPage page = pdfDoc.GetPage(pageNum);
             if (page.IsFlushed()) {
@@ -323,12 +307,12 @@ namespace iText.Kernel.Pdf {
                         ArrayFlushIfModified((PdfArray)contentsDirectObj);
                     }
                     else {
+                        // already checked that modified
                         contentsDirectObj.Flush();
                     }
                 }
             }
             else {
-                // already checked that modified
                 if (contents is PdfArray) {
                     ArrayFlushIfModified((PdfArray)contents);
                 }
@@ -367,8 +351,8 @@ namespace iText.Kernel.Pdf {
             PdfDictionary pageDict = page.GetPdfObject();
             // Using PdfPage package internal methods in order to avoid PdfResources initialization: initializing PdfResources
             // limits processing possibilities only to cases in which resources and specific resource type dictionaries are not flushed.
-            PdfDictionary resourcesDict = page.InitResources(false);
             // inits /Resources dict entry if not inherited and not created yet
+            PdfDictionary resourcesDict = page.InitResources(false);
             PdfResources resources = page.GetResources(false);
             if (resources != null && resources.IsModified() && !resources.IsReadOnly()) {
                 resourcesDict = resources.GetPdfObject();
@@ -530,42 +514,43 @@ namespace iText.Kernel.Pdf {
             IDictionary<PdfName, PageFlushingHelper.DeepFlushingContext> NO_INNER_CONTEXTS = JavaCollectionsUtil.EmptyMap
                 <PdfName, PageFlushingHelper.DeepFlushingContext>();
             // --- action dictionary context ---
-            PageFlushingHelper.DeepFlushingContext actionContext = new PageFlushingHelper.DeepFlushingContext(new LinkedHashSet
-                <PdfName>(JavaUtil.ArraysAsList(PdfName.D, PdfName.SD, PdfName.Dp, PdfName.B, PdfName.Annotation, PdfName
-                .T, PdfName.AN, PdfName.TA)), NO_INNER_CONTEXTS);
-            // actions keys flushing blacklist
-            PageFlushingHelper.DeepFlushingContext aaContext = new PageFlushingHelper.DeepFlushingContext(actionContext
-                );
-            // all inner entries leading to this context
+            PageFlushingHelper.DeepFlushingContext actionContext = new PageFlushingHelper.DeepFlushingContext(
+                        // actions keys flushing blacklist
+                        new LinkedHashSet<PdfName>(JavaUtil.ArraysAsList(PdfName.D, PdfName.SD, PdfName.Dp, PdfName.B, PdfName.Annotation
+                , PdfName.T, PdfName.AN, PdfName.TA)), NO_INNER_CONTEXTS);
+            PageFlushingHelper.DeepFlushingContext aaContext = new PageFlushingHelper.DeepFlushingContext(
+                        // all inner entries leading to this context
+                        actionContext);
             // ---
             // --- annotation dictionary context ---
             LinkedDictionary<PdfName, PageFlushingHelper.DeepFlushingContext> annotInnerContexts = new LinkedDictionary
                 <PdfName, PageFlushingHelper.DeepFlushingContext>();
-            PageFlushingHelper.DeepFlushingContext annotsContext = new PageFlushingHelper.DeepFlushingContext(new LinkedHashSet
-                <PdfName>(JavaUtil.ArraysAsList(PdfName.P, PdfName.Popup, PdfName.Dest, PdfName.Parent, PdfName.V)), annotInnerContexts
-                );
-            // annotations flushing blacklist
-            // keys that belong to form fields which can be merged with widget annotations
+            PageFlushingHelper.DeepFlushingContext annotsContext = new PageFlushingHelper.DeepFlushingContext(
+                        // annotations flushing blacklist
+                        new LinkedHashSet<PdfName>(JavaUtil.ArraysAsList(PdfName.P, PdfName.Popup, PdfName.Dest, PdfName.Parent, PdfName
+                .V)), 
+                        // keys that belong to form fields which can be merged with widget annotations
+                        annotInnerContexts);
             annotInnerContexts.Put(PdfName.A, actionContext);
             annotInnerContexts.Put(PdfName.PA, actionContext);
             annotInnerContexts.Put(PdfName.AA, aaContext);
             // ---
             // --- separation info dictionary context ---
-            PageFlushingHelper.DeepFlushingContext sepInfoContext = new PageFlushingHelper.DeepFlushingContext(new LinkedHashSet
-                <PdfName>(JavaCollectionsUtil.SingletonList(PdfName.Pages)), NO_INNER_CONTEXTS);
-            // separation info dict flushing blacklist
+            PageFlushingHelper.DeepFlushingContext sepInfoContext = new PageFlushingHelper.DeepFlushingContext(
+                        // separation info dict flushing blacklist
+                        new LinkedHashSet<PdfName>(JavaCollectionsUtil.SingletonList(PdfName.Pages)), NO_INNER_CONTEXTS);
             // ---
             // --- bead dictionary context ---
-            PageFlushingHelper.DeepFlushingContext bContext = new PageFlushingHelper.DeepFlushingContext(ALL_KEYS_IN_BLACK_LIST
-                , NO_INNER_CONTEXTS);
-            // bead dict flushing blacklist
+            PageFlushingHelper.DeepFlushingContext bContext = new PageFlushingHelper.DeepFlushingContext(
+                        // bead dict flushing blacklist
+                        ALL_KEYS_IN_BLACK_LIST, NO_INNER_CONTEXTS);
             // ---
             // --- pres steps dictionary context ---
             LinkedDictionary<PdfName, PageFlushingHelper.DeepFlushingContext> presStepsInnerContexts = new LinkedDictionary
                 <PdfName, PageFlushingHelper.DeepFlushingContext>();
-            PageFlushingHelper.DeepFlushingContext presStepsContext = new PageFlushingHelper.DeepFlushingContext(new LinkedHashSet
-                <PdfName>(JavaCollectionsUtil.SingletonList(PdfName.Prev)), presStepsInnerContexts);
-            // pres step dict flushing blacklist
+            PageFlushingHelper.DeepFlushingContext presStepsContext = new PageFlushingHelper.DeepFlushingContext(
+                        // pres step dict flushing blacklist
+                        new LinkedHashSet<PdfName>(JavaCollectionsUtil.SingletonList(PdfName.Prev)), presStepsInnerContexts);
             presStepsInnerContexts.Put(PdfName.NA, actionContext);
             presStepsInnerContexts.Put(PdfName.PA, actionContext);
             // ---
@@ -584,16 +569,16 @@ namespace iText.Kernel.Pdf {
         }
 
         private class DeepFlushingContext {
+            // null stands for every key to be in black list
             internal ICollection<PdfName> blackList;
 
+            // null stands for every key to be taking unconditional context
             internal IDictionary<PdfName, PageFlushingHelper.DeepFlushingContext> innerContexts;
 
             internal PageFlushingHelper.DeepFlushingContext unconditionalInnerContext;
 
             public DeepFlushingContext(ICollection<PdfName> blackList, IDictionary<PdfName, PageFlushingHelper.DeepFlushingContext
                 > innerContexts) {
-                // null stands for every key to be in black list
-                // null stands for every key to be taking unconditional context
                 this.blackList = blackList;
                 this.innerContexts = innerContexts;
             }

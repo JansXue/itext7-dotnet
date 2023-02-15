@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,11 +42,15 @@ address: sales@itextpdf.com
 */
 using System;
 using System.IO;
-using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.X509;
+using NUnit.Framework;
+using iText.Bouncycastleconnector;
+using iText.Commons.Bouncycastle;
+using iText.Commons.Bouncycastle.Cert;
+using iText.Commons.Bouncycastle.Crypto;
 using iText.IO.Font.Constants;
-using iText.Kernel;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Font;
+using iText.Kernel.Logs;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Filespec;
 using iText.Kernel.Utils;
@@ -75,306 +79,242 @@ namespace iText.Kernel.Crypto {
     /// Extension (JCE) Unlimited Strength Jurisdiction Policy Files. These JARs
     /// are available for download from http://java.oracle.com/ in eligible countries.
     /// </remarks>
+    [NUnit.Framework.Category("BouncyCastleIntegrationTest")]
     public class PdfEncryptionTest : ExtendedITextTest {
+        private static readonly IBouncyCastleFactory FACTORY = BouncyCastleFactoryCreator.GetFactory();
+
         public static readonly String destinationFolder = NUnit.Framework.TestContext.CurrentContext.TestDirectory
              + "/test/itext/kernel/crypto/PdfEncryptionTest/";
 
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/kernel/crypto/PdfEncryptionTest/";
 
-        public static readonly char[] PRIVATE_KEY_PASS = "kspass".ToCharArray();
+        public static readonly char[] PRIVATE_KEY_PASS = "testpassphrase".ToCharArray();
 
         public static readonly String CERT = sourceFolder + "test.cer";
 
-        public static readonly String PRIVATE_KEY = sourceFolder + "test.p12";
+        public static readonly String PRIVATE_KEY = sourceFolder + "test.pem";
 
         internal const String pageTextContent = "Hello world!";
 
+        // Custom entry in Info dictionary is used because standard entried are gone into metadata in PDF 2.0
         internal const String customInfoEntryKey = "Custom";
 
         internal const String customInfoEntryValue = "String";
 
         /// <summary>User password.</summary>
-        public static byte[] USER = "Hello".GetBytes(iText.IO.Util.EncodingUtil.ISO_8859_1);
+        public static byte[] USER = "Hello".GetBytes(iText.Commons.Utils.EncodingUtil.ISO_8859_1);
 
         /// <summary>Owner password.</summary>
-        public static byte[] OWNER = "World".GetBytes(iText.IO.Util.EncodingUtil.ISO_8859_1);
+        public static byte[] OWNER = "World".GetBytes(iText.Commons.Utils.EncodingUtil.ISO_8859_1);
 
-        private ICipherParameters privateKey;
+        private IPrivateKey privateKey;
 
-        // Custom entry in Info dictionary is used because standard entried are gone into metadata in PDF 2.0
         [NUnit.Framework.OneTimeSetUp]
         public static void BeforeClass() {
             CreateOrClearDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void EncryptWithPasswordStandard128() {
             String filename = "encryptWithPasswordStandard128.pdf";
             int encryptionType = EncryptionConstants.STANDARD_ENCRYPTION_128;
             EncryptWithPassword2(filename, encryptionType, CompressionConstants.DEFAULT_COMPRESSION);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void EncryptWithPasswordStandard40() {
             String filename = "encryptWithPasswordStandard40.pdf";
             int encryptionType = EncryptionConstants.STANDARD_ENCRYPTION_40;
             EncryptWithPassword2(filename, encryptionType, CompressionConstants.DEFAULT_COMPRESSION);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void EncryptWithPasswordStandard128NoCompression() {
             String filename = "encryptWithPasswordStandard128NoCompression.pdf";
             int encryptionType = EncryptionConstants.STANDARD_ENCRYPTION_128;
             EncryptWithPassword2(filename, encryptionType, CompressionConstants.NO_COMPRESSION);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void EncryptWithPasswordStandard40NoCompression() {
             String filename = "encryptWithPasswordStandard40NoCompression.pdf";
             int encryptionType = EncryptionConstants.STANDARD_ENCRYPTION_40;
             EncryptWithPassword2(filename, encryptionType, CompressionConstants.NO_COMPRESSION);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void EncryptWithPasswordAes128() {
             String filename = "encryptWithPasswordAes128.pdf";
             int encryptionType = EncryptionConstants.ENCRYPTION_AES_128;
             EncryptWithPassword2(filename, encryptionType, CompressionConstants.DEFAULT_COMPRESSION);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void EncryptWithPasswordAes256() {
             String filename = "encryptWithPasswordAes256.pdf";
             int encryptionType = EncryptionConstants.ENCRYPTION_AES_256;
             EncryptWithPassword2(filename, encryptionType, CompressionConstants.DEFAULT_COMPRESSION);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void EncryptWithPasswordAes128NoCompression() {
             String filename = "encryptWithPasswordAes128NoCompression.pdf";
             int encryptionType = EncryptionConstants.ENCRYPTION_AES_128;
             EncryptWithPassword2(filename, encryptionType, CompressionConstants.NO_COMPRESSION);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void EncryptWithPasswordAes256NoCompression() {
             String filename = "encryptWithPasswordAes256NoCompression.pdf";
             int encryptionType = EncryptionConstants.ENCRYPTION_AES_256;
             EncryptWithPassword2(filename, encryptionType, CompressionConstants.NO_COMPRESSION);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void EncryptWithCertificateStandard128() {
             String filename = "encryptWithCertificateStandard128.pdf";
             int encryptionType = EncryptionConstants.STANDARD_ENCRYPTION_128;
             EncryptWithCertificate(filename, encryptionType, CompressionConstants.DEFAULT_COMPRESSION);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void EncryptWithCertificateStandard40() {
             String filename = "encryptWithCertificateStandard40.pdf";
             int encryptionType = EncryptionConstants.STANDARD_ENCRYPTION_40;
             EncryptWithCertificate(filename, encryptionType, CompressionConstants.DEFAULT_COMPRESSION);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void EncryptWithCertificateStandard128NoCompression() {
             String filename = "encryptWithCertificateStandard128NoCompression.pdf";
             int encryptionType = EncryptionConstants.STANDARD_ENCRYPTION_128;
             EncryptWithCertificate(filename, encryptionType, CompressionConstants.NO_COMPRESSION);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void EncryptWithCertificateStandard40NoCompression() {
             String filename = "encryptWithCertificateStandard40NoCompression.pdf";
             int encryptionType = EncryptionConstants.STANDARD_ENCRYPTION_40;
             EncryptWithCertificate(filename, encryptionType, CompressionConstants.NO_COMPRESSION);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void EncryptWithCertificateAes128() {
             String filename = "encryptWithCertificateAes128.pdf";
             int encryptionType = EncryptionConstants.ENCRYPTION_AES_128;
             EncryptWithCertificate(filename, encryptionType, CompressionConstants.DEFAULT_COMPRESSION);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void EncryptWithCertificateAes256() {
             String filename = "encryptWithCertificateAes256.pdf";
             int encryptionType = EncryptionConstants.ENCRYPTION_AES_256;
             EncryptWithCertificate(filename, encryptionType, CompressionConstants.DEFAULT_COMPRESSION);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void EncryptWithCertificateAes128NoCompression() {
             String filename = "encryptWithCertificateAes128NoCompression.pdf";
             int encryptionType = EncryptionConstants.ENCRYPTION_AES_128;
             EncryptWithCertificate(filename, encryptionType, CompressionConstants.NO_COMPRESSION);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void EncryptWithCertificateAes256NoCompression() {
             String filename = "encryptWithCertificateAes256NoCompression.pdf";
             int encryptionType = EncryptionConstants.ENCRYPTION_AES_256;
             EncryptWithCertificate(filename, encryptionType, CompressionConstants.NO_COMPRESSION);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void OpenEncryptedDocWithoutPassword() {
-            NUnit.Framework.Assert.That(() =>  {
-                PdfDocument doc = new PdfDocument(new PdfReader(sourceFolder + "encryptedWithPasswordStandard40.pdf"));
-                doc.Close();
+            using (PdfReader reader = new PdfReader(sourceFolder + "encryptedWithPasswordStandard40.pdf")) {
+                Exception e = NUnit.Framework.Assert.Catch(typeof(BadPasswordException), () => new PdfDocument(reader));
+                NUnit.Framework.Assert.AreEqual(KernelExceptionMessageConstant.BAD_USER_PASSWORD, e.Message);
             }
-            , NUnit.Framework.Throws.InstanceOf<BadPasswordException>().With.Message.EqualTo(BadPasswordException.BadUserPassword))
-;
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void OpenEncryptedDocWithWrongPassword() {
-            NUnit.Framework.Assert.That(() =>  {
-                PdfReader reader = new PdfReader(sourceFolder + "encryptedWithPasswordStandard40.pdf", new ReaderProperties
-                    ().SetPassword("wrong_password".GetBytes(iText.IO.Util.EncodingUtil.ISO_8859_1)));
-                PdfDocument doc = new PdfDocument(reader);
-                doc.Close();
+            using (PdfReader reader = new PdfReader(sourceFolder + "encryptedWithPasswordStandard40.pdf", new ReaderProperties
+                ().SetPassword("wrong_password".GetBytes(iText.Commons.Utils.EncodingUtil.ISO_8859_1)))) {
+                Exception e = NUnit.Framework.Assert.Catch(typeof(BadPasswordException), () => new PdfDocument(reader));
+                NUnit.Framework.Assert.AreEqual(KernelExceptionMessageConstant.BAD_USER_PASSWORD, e.Message);
             }
-            , NUnit.Framework.Throws.InstanceOf<BadPasswordException>().With.Message.EqualTo(BadPasswordException.BadUserPassword))
-;
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void OpenEncryptedDocWithoutCertificate() {
-            NUnit.Framework.Assert.That(() =>  {
-                PdfDocument doc = new PdfDocument(new PdfReader(sourceFolder + "encryptedWithCertificateAes128.pdf"));
-                doc.Close();
+            using (PdfReader reader = new PdfReader(sourceFolder + "encryptedWithCertificateAes128.pdf")) {
+                Exception e = NUnit.Framework.Assert.Catch(typeof(PdfException), () => new PdfDocument(reader));
+                NUnit.Framework.Assert.AreEqual(KernelExceptionMessageConstant.CERTIFICATE_IS_NOT_PROVIDED_DOCUMENT_IS_ENCRYPTED_WITH_PUBLIC_KEY_CERTIFICATE
+                    , e.Message);
             }
-            , NUnit.Framework.Throws.InstanceOf<PdfException>().With.Message.EqualTo(PdfException.CertificateIsNotProvidedDocumentIsEncryptedWithPublicKeyCertificate))
-;
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="Java.Security.Cert.CertificateException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void OpenEncryptedDocWithoutPrivateKey() {
-            NUnit.Framework.Assert.That(() =>  {
-                PdfReader reader = new PdfReader(sourceFolder + "encryptedWithCertificateAes128.pdf", new ReaderProperties
-                    ().SetPublicKeySecurityParams(GetPublicCertificate(sourceFolder + "wrong.cer"), null));
-                PdfDocument doc = new PdfDocument(reader);
-                doc.Close();
+            using (PdfReader reader = new PdfReader(sourceFolder + "encryptedWithCertificateAes128.pdf", new ReaderProperties
+                ().SetPublicKeySecurityParams(GetPublicCertificate(sourceFolder + "wrong.cer"), null))) {
+                Exception e = NUnit.Framework.Assert.Catch(typeof(PdfException), () => new PdfDocument(reader));
+                NUnit.Framework.Assert.AreEqual(KernelExceptionMessageConstant.BAD_CERTIFICATE_AND_KEY, e.Message);
             }
-            , NUnit.Framework.Throws.InstanceOf<PdfException>().With.Message.EqualTo(PdfException.BadCertificateAndKey))
-;
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void OpenEncryptedDocWithWrongCertificate() {
-            NUnit.Framework.Assert.That(() =>  {
-                PdfReader reader = new PdfReader(sourceFolder + "encryptedWithCertificateAes128.pdf", new ReaderProperties
-                    ().SetPublicKeySecurityParams(GetPublicCertificate(sourceFolder + "wrong.cer"), GetPrivateKey()));
-                PdfDocument doc = new PdfDocument(reader);
-                doc.Close();
+            using (PdfReader reader = new PdfReader(sourceFolder + "encryptedWithCertificateAes128.pdf", new ReaderProperties
+                ().SetPublicKeySecurityParams(GetPublicCertificate(sourceFolder + "wrong.cer"), GetPrivateKey()))) {
+                Exception e = NUnit.Framework.Assert.Catch(typeof(PdfException), () => new PdfDocument(reader));
+                NUnit.Framework.Assert.AreEqual(KernelExceptionMessageConstant.BAD_CERTIFICATE_AND_KEY, e.Message);
             }
-            , NUnit.Framework.Throws.InstanceOf<PdfException>().With.Message.EqualTo(PdfException.BadCertificateAndKey))
-;
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void OpenEncryptedDocWithWrongPrivateKey() {
-            NUnit.Framework.Assert.That(() =>  {
-                PdfReader reader = new PdfReader(sourceFolder + "encryptedWithCertificateAes128.pdf", new ReaderProperties
-                    ().SetPublicKeySecurityParams(GetPublicCertificate(CERT), CryptoUtil.ReadPrivateKeyFromPkcs12KeyStore(
-                    new FileStream(sourceFolder + "wrong.p12", FileMode.Open, FileAccess.Read), "demo", "password".ToCharArray
-                    ())));
-                PdfDocument doc = new PdfDocument(reader);
-                doc.Close();
+            using (PdfReader reader = new PdfReader(sourceFolder + "encryptedWithCertificateAes128.pdf", new ReaderProperties
+                ().SetPublicKeySecurityParams(GetPublicCertificate(CERT), PemFileHelper.ReadPrivateKeyFromPemFile(new 
+                FileStream(sourceFolder + "wrong.pem", FileMode.Open, FileAccess.Read), PRIVATE_KEY_PASS)))) {
+                Exception e = NUnit.Framework.Assert.Catch(typeof(PdfException), () => new PdfDocument(reader));
+                NUnit.Framework.Assert.AreEqual(KernelExceptionMessageConstant.PDF_DECRYPTION, e.Message);
             }
-            , NUnit.Framework.Throws.InstanceOf<PdfException>().With.Message.EqualTo(PdfException.PdfDecryption))
-;
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void OpenEncryptedDocWithWrongCertificateAndPrivateKey() {
-            NUnit.Framework.Assert.That(() =>  {
-                PdfReader reader = new PdfReader(sourceFolder + "encryptedWithCertificateAes128.pdf", new ReaderProperties
-                    ().SetPublicKeySecurityParams(GetPublicCertificate(sourceFolder + "wrong.cer"), CryptoUtil.ReadPrivateKeyFromPkcs12KeyStore
-                    (new FileStream(sourceFolder + "wrong.p12", FileMode.Open, FileAccess.Read), "demo", "password".ToCharArray
-                    ())));
-                PdfDocument doc = new PdfDocument(reader);
-                doc.Close();
+            using (PdfReader reader = new PdfReader(sourceFolder + "encryptedWithCertificateAes128.pdf", new ReaderProperties
+                ().SetPublicKeySecurityParams(GetPublicCertificate(sourceFolder + "wrong.cer"), PemFileHelper.ReadPrivateKeyFromPemFile
+                (new FileStream(sourceFolder + "wrong.pem", FileMode.Open, FileAccess.Read), PRIVATE_KEY_PASS)))) {
+                Exception e = NUnit.Framework.Assert.Catch(typeof(PdfException), () => new PdfDocument(reader));
+                NUnit.Framework.Assert.AreEqual(KernelExceptionMessageConstant.BAD_CERTIFICATE_AND_KEY, e.Message);
             }
-            , NUnit.Framework.Throws.InstanceOf<PdfException>().With.Message.EqualTo(PdfException.BadCertificateAndKey))
-;
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void MetadataReadingInEncryptedDoc() {
             PdfReader reader = new PdfReader(sourceFolder + "encryptedWithPlainMetadata.pdf", new ReaderProperties().SetPassword
                 (OWNER));
@@ -386,10 +326,8 @@ namespace iText.Kernel.Crypto {
             NUnit.Framework.Assert.AreEqual("iText 7", creatorToolXmp.GetValue());
         }
 
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void CopyEncryptedDocument() {
             PdfDocument srcDoc = new PdfDocument(new PdfReader(sourceFolder + "encryptedWithCertificateAes128.pdf", new 
                 ReaderProperties().SetPublicKeySecurityParams(GetPublicCertificate(CERT), GetPrivateKey())));
@@ -407,10 +345,8 @@ namespace iText.Kernel.Crypto {
                  + "cmp_" + fileName, destinationFolder, "diff_"));
         }
 
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void OpenDocNoUserPassword() {
             String fileName = "noUserPassword.pdf";
             PdfDocument document = new PdfDocument(new PdfReader(sourceFolder + fileName));
@@ -418,26 +354,21 @@ namespace iText.Kernel.Crypto {
             CheckDecryptedWithPasswordContent(sourceFolder + fileName, null, pageTextContent);
         }
 
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void StampDocNoUserPassword() {
-            NUnit.Framework.Assert.That(() =>  {
-                String fileName = "stampedNoPassword.pdf";
-                PdfDocument document = new PdfDocument(new PdfReader(sourceFolder + "noUserPassword.pdf"), new PdfWriter(destinationFolder
-                     + fileName));
-                document.Close();
+            String fileName = "stampedNoPassword.pdf";
+            using (PdfReader reader = new PdfReader(sourceFolder + "noUserPassword.pdf")) {
+                using (PdfWriter writer = new PdfWriter(destinationFolder + fileName)) {
+                    Exception e = NUnit.Framework.Assert.Catch(typeof(BadPasswordException), () => new PdfDocument(reader, writer
+                        ));
+                    NUnit.Framework.Assert.AreEqual(BadPasswordException.PdfReaderNotOpenedWithOwnerPassword, e.Message);
+                }
             }
-            , NUnit.Framework.Throws.InstanceOf<BadPasswordException>().With.Message.EqualTo(BadPasswordException.PdfReaderNotOpenedWithOwnerPassword))
-;
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void EncryptWithPasswordAes128EmbeddedFilesOnly() {
             String filename = "encryptWithPasswordAes128EmbeddedFilesOnly.pdf";
             int encryptionType = EncryptionConstants.ENCRYPTION_AES_128 | EncryptionConstants.EMBEDDED_FILES_ONLY;
@@ -456,37 +387,31 @@ namespace iText.Kernel.Crypto {
                 , null, null));
             page.Flush();
             document.Close();
-            //NOTE: Specific crypto filters for EFF StmF and StrF are not supported at the moment. iText don't distinguish objects based on their semantic role
-            //      because of this we can't read streams correctly and corrupt such documents on stamping.
-            bool ERROR_IS_EXPECTED = true;
+            //TODO DEVSIX-5355 Specific crypto filters for EFF StmF and StrF are not supported at the moment.
+            // However we can read embedded files only mode.
+            bool ERROR_IS_EXPECTED = false;
             CheckDecryptedWithPasswordContent(destinationFolder + filename, OWNER, textContent, ERROR_IS_EXPECTED);
             CheckDecryptedWithPasswordContent(destinationFolder + filename, USER, textContent, ERROR_IS_EXPECTED);
         }
 
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void EncryptAes256Pdf2NotEncryptMetadata() {
             String filename = "encryptAes256Pdf2NotEncryptMetadata.pdf";
             int encryptionType = EncryptionConstants.ENCRYPTION_AES_256 | EncryptionConstants.DO_NOT_ENCRYPT_METADATA;
             EncryptWithPassword2(filename, encryptionType, CompressionConstants.DEFAULT_COMPRESSION);
         }
 
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void EncryptAes256Pdf2NotEncryptMetadata02() {
             String filename = "encryptAes256Pdf2NotEncryptMetadata02.pdf";
             int encryptionType = EncryptionConstants.ENCRYPTION_AES_256 | EncryptionConstants.DO_NOT_ENCRYPT_METADATA;
             EncryptWithPassword(filename, encryptionType, CompressionConstants.DEFAULT_COMPRESSION, true);
         }
 
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void EncryptAes256EncryptedStampingPreserve() {
             String filename = "encryptAes256EncryptedStampingPreserve.pdf";
             String src = sourceFolder + "encryptedWithPlainMetadata.pdf";
@@ -502,10 +427,8 @@ namespace iText.Kernel.Crypto {
             }
         }
 
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void EncryptAes256EncryptedStampingUpdate() {
             String filename = "encryptAes256EncryptedStampingUpdate.pdf";
             String src = sourceFolder + "encryptedWithPlainMetadata.pdf";
@@ -522,30 +445,24 @@ namespace iText.Kernel.Crypto {
             }
         }
 
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void EncryptAes256FullCompression() {
             String filename = "encryptAes256FullCompression.pdf";
             int encryptionType = EncryptionConstants.ENCRYPTION_AES_256;
             EncryptWithPassword2(filename, encryptionType, CompressionConstants.DEFAULT_COMPRESSION, true);
         }
 
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void EncryptWithPasswordAes256Pdf2() {
             String filename = "encryptWithPasswordAes256Pdf2.pdf";
             int encryptionType = EncryptionConstants.ENCRYPTION_AES_256;
             EncryptWithPassword2(filename, encryptionType, CompressionConstants.DEFAULT_COMPRESSION, true);
         }
 
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         [LogMessage(VersionConforming.DEPRECATED_ENCRYPTION_ALGORITHMS)]
         public virtual void EncryptWithPasswordAes128Pdf2() {
             String filename = "encryptWithPasswordAes128Pdf2.pdf";
@@ -553,10 +470,8 @@ namespace iText.Kernel.Crypto {
             EncryptWithPassword2(filename, encryptionType, CompressionConstants.DEFAULT_COMPRESSION, true);
         }
 
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         [LogMessage(VersionConforming.DEPRECATED_ENCRYPTION_ALGORITHMS)]
         public virtual void StampAndUpdateVersionPreserveStandard40() {
             String filename = "stampAndUpdateVersionPreserveStandard40.pdf";
@@ -567,10 +482,8 @@ namespace iText.Kernel.Crypto {
             CompareEncryptedPdf(filename);
         }
 
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         [LogMessage(VersionConforming.DEPRECATED_AES256_REVISION)]
         public virtual void StampAndUpdateVersionPreserveAes256() {
             String filename = "stampAndUpdateVersionPreserveAes256.pdf";
@@ -581,10 +494,8 @@ namespace iText.Kernel.Crypto {
             CompareEncryptedPdf(filename);
         }
 
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void StampAndUpdateVersionNewAes256() {
             String filename = "stampAndUpdateVersionNewAes256.pdf";
             PdfDocument doc = new PdfDocument(new PdfReader(sourceFolder + "encryptedWithPasswordAes256.pdf", new ReaderProperties
@@ -594,10 +505,8 @@ namespace iText.Kernel.Crypto {
             CompareEncryptedPdf(filename);
         }
 
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void EncryptAes256Pdf2Permissions() {
             String filename = "encryptAes256Pdf2Permissions.pdf";
             int permissions = EncryptionConstants.ALLOW_FILL_IN | EncryptionConstants.ALLOW_SCREENREADERS | EncryptionConstants
@@ -611,8 +520,8 @@ namespace iText.Kernel.Crypto {
             CompareEncryptedPdf(filename);
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void EncryptWithPasswordAes128NoMetadataCompression() {
             String srcFilename = "srcEncryptWithPasswordAes128NoMetadataCompression.pdf";
             PdfReader reader = new PdfReader(sourceFolder + srcFilename, new ReaderProperties());
@@ -632,16 +541,19 @@ namespace iText.Kernel.Crypto {
             NUnit.Framework.Assert.IsNull(compareTool.CompareByContent(outPdf, cmpPdf, destinationFolder, "diff_"));
         }
 
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
+        [NUnit.Framework.Test]
+        public virtual void CheckMD5LogAbsenceInUnapprovedMode() {
+            NUnit.Framework.Assume.That(!FACTORY.IsInApprovedOnlyMode());
+            String fileName = "noUserPassword.pdf";
+            using (PdfDocument document = new PdfDocument(new PdfReader(sourceFolder + fileName))) {
+            }
+        }
+
+        // this test checks log message absence
         public virtual void EncryptWithPassword2(String filename, int encryptionType, int compression) {
             EncryptWithPassword2(filename, encryptionType, compression, false);
         }
 
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         public virtual void EncryptWithPassword2(String filename, int encryptionType, int compression, bool isPdf2
             ) {
             int permissions = EncryptionConstants.ALLOW_SCREENREADERS;
@@ -663,16 +575,10 @@ namespace iText.Kernel.Crypto {
             CheckEncryptedWithPasswordDocumentAppending(filename, OWNER);
         }
 
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         public virtual void EncryptWithPassword(String filename, int encryptionType, int compression) {
             EncryptWithPassword(filename, encryptionType, compression, false);
         }
 
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         public virtual void EncryptWithPassword(String filename, int encryptionType, int compression, bool fullCompression
             ) {
             String outFileName = destinationFolder + filename;
@@ -691,15 +597,11 @@ namespace iText.Kernel.Crypto {
             CheckEncryptedWithPasswordDocumentAppending(filename, OWNER);
         }
 
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
         public virtual void EncryptWithCertificate(String filename, int encryptionType, int compression) {
             String outFileName = destinationFolder + filename;
             int permissions = EncryptionConstants.ALLOW_SCREENREADERS;
-            X509Certificate cert = GetPublicCertificate(CERT);
-            PdfWriter writer = new PdfWriter(outFileName, new WriterProperties().SetPublicKeyEncryption(new X509Certificate
+            IX509Certificate cert = GetPublicCertificate(CERT);
+            PdfWriter writer = new PdfWriter(outFileName, new WriterProperties().SetPublicKeyEncryption(new IX509Certificate
                 [] { cert }, new int[] { permissions }, encryptionType).AddXmpMetadata());
             writer.SetCompressionLevel(compression);
             PdfDocument document = new PdfDocument(writer);
@@ -721,36 +623,30 @@ namespace iText.Kernel.Crypto {
             CheckEncryptedWithCertificateDocumentAppending(filename, cert);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="Java.Security.Cert.CertificateException"/>
-        public virtual X509Certificate GetPublicCertificate(String path) {
+        public virtual IX509Certificate GetPublicCertificate(String path) {
             FileStream @is = new FileStream(path, FileMode.Open, FileAccess.Read);
             return CryptoUtil.ReadPublicCertificate(@is);
         }
 
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
-        /// <exception cref="System.IO.IOException"/>
-        public virtual ICipherParameters GetPrivateKey() {
+        public virtual IPrivateKey GetPrivateKey() {
             if (privateKey == null) {
-                privateKey = CryptoUtil.ReadPrivateKeyFromPkcs12KeyStore(new FileStream(PRIVATE_KEY, FileMode.Open, FileAccess.Read
-                    ), "sandbox", PRIVATE_KEY_PASS);
+                privateKey = PemFileHelper.ReadPrivateKeyFromPemFile(new FileStream(PRIVATE_KEY, FileMode.Open, FileAccess.Read
+                    ), PRIVATE_KEY_PASS);
             }
             return privateKey;
         }
 
-        /// <exception cref="System.IO.IOException"/>
         public static void CheckDecryptedWithPasswordContent(String src, byte[] password, String pageContent) {
             CheckDecryptedWithPasswordContent(src, password, pageContent, false);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private static void CheckDecryptedWithPasswordContent(String src, byte[] password, String pageContent, bool
              expectError) {
             PdfReader reader = new PdfReader(src, new ReaderProperties().SetPassword(password));
             PdfDocument document = new PdfDocument(reader);
             PdfPage page = document.GetPage(1);
-            bool expectedContentFound = iText.IO.Util.JavaUtil.GetStringForBytes(page.GetStreamBytes(0)).Contains(pageContent
-                );
+            bool expectedContentFound = iText.Commons.Utils.JavaUtil.GetStringForBytes(page.GetStreamBytes(0)).Contains
+                (pageContent);
             String actualCustomInfoEntry = document.GetTrailer().GetAsDictionary(PdfName.Info).GetAsString(new PdfName
                 (customInfoEntryKey)).ToUnicodeString();
             if (!expectError) {
@@ -759,21 +655,19 @@ namespace iText.Kernel.Crypto {
             }
             else {
                 NUnit.Framework.Assert.IsFalse(expectedContentFound, "Expected content: \n" + pageContent);
-                NUnit.Framework.Assert.AreNotEqual("Encrypted custom", customInfoEntryValue, actualCustomInfoEntry);
+                NUnit.Framework.Assert.AreNotEqual(customInfoEntryValue, actualCustomInfoEntry, "Encrypted custom");
             }
             document.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
-        public virtual void CheckDecryptedWithCertificateContent(String filename, X509Certificate certificate, String
+        public virtual void CheckDecryptedWithCertificateContent(String filename, IX509Certificate certificate, String
              pageContent) {
             String src = destinationFolder + filename;
             PdfReader reader = new PdfReader(src, new ReaderProperties().SetPublicKeySecurityParams(certificate, GetPrivateKey
                 ()));
             PdfDocument document = new PdfDocument(reader);
             PdfPage page = document.GetPage(1);
-            String s = iText.IO.Util.JavaUtil.GetStringForBytes(page.GetStreamBytes(0));
+            String s = iText.Commons.Utils.JavaUtil.GetStringForBytes(page.GetStreamBytes(0));
             NUnit.Framework.Assert.IsTrue(s.Contains(pageContent), "Expected content: \n" + pageContent);
             NUnit.Framework.Assert.AreEqual(customInfoEntryValue, document.GetTrailer().GetAsDictionary(PdfName.Info).
                 GetAsString(new PdfName(customInfoEntryKey)).ToUnicodeString(), "Encrypted custom");
@@ -781,8 +675,6 @@ namespace iText.Kernel.Crypto {
         }
 
         // basically this is comparing content of decrypted by itext document with content of encrypted document
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         public virtual void CheckEncryptedWithPasswordDocumentStamping(String filename, byte[] password) {
             String srcFileName = destinationFolder + filename;
             String outFileName = destinationFolder + "stamped_" + filename;
@@ -798,10 +690,7 @@ namespace iText.Kernel.Crypto {
         }
 
         // basically this is comparing content of decrypted by itext document with content of encrypted document
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
-        public virtual void CheckEncryptedWithCertificateDocumentStamping(String filename, X509Certificate certificate
+        public virtual void CheckEncryptedWithCertificateDocumentStamping(String filename, IX509Certificate certificate
             ) {
             String srcFileName = destinationFolder + filename;
             String outFileName = destinationFolder + "stamped_" + filename;
@@ -818,8 +707,6 @@ namespace iText.Kernel.Crypto {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         public virtual void CheckEncryptedWithPasswordDocumentAppending(String filename, byte[] password) {
             String srcFileName = destinationFolder + filename;
             String outFileName = destinationFolder + "appended_" + filename;
@@ -838,10 +725,7 @@ namespace iText.Kernel.Crypto {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
-        public virtual void CheckEncryptedWithCertificateDocumentAppending(String filename, X509Certificate certificate
+        public virtual void CheckEncryptedWithCertificateDocumentAppending(String filename, IX509Certificate certificate
             ) {
             String srcFileName = destinationFolder + filename;
             String outFileName = destinationFolder + "appended_" + filename;
@@ -872,15 +756,13 @@ namespace iText.Kernel.Crypto {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         internal static void WriteTextBytesOnPageContent(PdfPage page, String text) {
             page.GetFirstContentStream().GetOutputStream().WriteBytes(("q\n" + "BT\n" + "36 706 Td\n" + "0 0 Td\n" + "/F1 24 Tf\n"
-                 + "(" + text + ")Tj\n" + "0 0 Td\n" + "ET\n" + "Q ").GetBytes(iText.IO.Util.EncodingUtil.ISO_8859_1));
+                 + "(" + text + ")Tj\n" + "0 0 Td\n" + "ET\n" + "Q ").GetBytes(iText.Commons.Utils.EncodingUtil.ISO_8859_1
+                ));
             page.GetResources().AddFont(page.GetDocument(), PdfFontFactory.CreateFont(StandardFonts.HELVETICA));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         internal static void CompareEncryptedPdf(String filename) {
             CheckDecryptedWithPasswordContent(destinationFolder + filename, OWNER, pageTextContent);
             CheckDecryptedWithPasswordContent(destinationFolder + filename, USER, pageTextContent);

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,22 +41,22 @@ source product.
 For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
-using Org.BouncyCastle.X509;
+using iText.Commons.Bouncycastle.Cert;
 
 namespace iText.Kernel.Crypto.Securityhandler {
     public class PublicKeyRecipient {
-        private X509Certificate certificate = null;
+        private IX509Certificate certificate = null;
 
         private int permission = 0;
 
         protected internal byte[] cms = null;
 
-        public PublicKeyRecipient(X509Certificate certificate, int permission) {
+        public PublicKeyRecipient(IX509Certificate certificate, int permission) {
             this.certificate = certificate;
             this.permission = permission;
         }
 
-        public virtual X509Certificate GetCertificate() {
+        public virtual IX509Certificate GetCertificate() {
             return certificate;
         }
 

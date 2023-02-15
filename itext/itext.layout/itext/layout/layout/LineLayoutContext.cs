@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -47,19 +47,29 @@ using iText.Layout.Margincollapse;
 namespace iText.Layout.Layout {
     /// <summary>
     /// Represents the context for content of a line
-    /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)">layouting</see>
-    /// .
+    /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)">layouting</see>.
     /// </summary>
     public class LineLayoutContext : LayoutContext {
         private bool floatOverflowedToNextPageWithNothing = false;
 
         private float textIndent;
 
+        /// <summary>Creates the context for content of a line.</summary>
+        /// <param name="area">for the content to be placed on</param>
+        /// <param name="marginsCollapseInfo">the info about margins collapsing</param>
+        /// <param name="floatedRendererAreas">
+        /// list of
+        /// <see cref="iText.Kernel.Geom.Rectangle"/>
+        /// objects
+        /// </param>
+        /// <param name="clippedHeight">indicates whether the height is clipped or not</param>
         public LineLayoutContext(LayoutArea area, MarginsCollapseInfo marginsCollapseInfo, IList<Rectangle> floatedRendererAreas
             , bool clippedHeight)
             : base(area, marginsCollapseInfo, floatedRendererAreas, clippedHeight) {
         }
 
+        /// <summary>Creates the context for content of a line.</summary>
+        /// <param name="layoutContext">the context for content layouting</param>
         public LineLayoutContext(LayoutContext layoutContext)
             : base(layoutContext.area, layoutContext.marginsCollapseInfo, layoutContext.floatRendererAreas, layoutContext
                 .clippedHeight) {
@@ -76,8 +86,7 @@ namespace iText.Layout.Layout {
 
         /// <summary>
         /// Changes the value of property specified by
-        /// <see cref="IsFloatOverflowedToNextPageWithNothing()"/>
-        /// .
+        /// <see cref="IsFloatOverflowedToNextPageWithNothing()"/>.
         /// </summary>
         /// <param name="floatOverflowedToNextPageWithNothing">true if some floating element already completely overflowed.
         ///     </param>

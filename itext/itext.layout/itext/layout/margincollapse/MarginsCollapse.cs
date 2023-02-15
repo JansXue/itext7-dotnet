@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -66,11 +66,13 @@ namespace iText.Layout.Margincollapse {
             return maxPositiveMargin + minNegativeMargin;
         }
 
+        /// <summary>
+        /// Creates a "deep copy" of this MarginsCollapse, meaning the object returned by this method will be independent
+        /// of the object being cloned.
+        /// </summary>
+        /// <returns>the copied MarginsCollapse.</returns>
         public virtual MarginsCollapse Clone() {
-            MarginsCollapse collapse = new MarginsCollapse();
-            collapse.maxPositiveMargin = this.maxPositiveMargin;
-            collapse.minNegativeMargin = this.minNegativeMargin;
-            return collapse;
+            return (iText.Layout.Margincollapse.MarginsCollapse) MemberwiseClone();
         }
     }
 }

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,14 +41,17 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
+using System.Collections.Generic;
 using System.IO;
+using iText.Commons.Utils;
 using iText.IO.Source;
-using iText.IO.Util;
+using iText.Kernel.Pdf.Annot;
 using iText.Kernel.Utils;
 using iText.Test;
 using iText.Test.Attributes;
 
 namespace iText.Kernel.Pdf {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class PdfCopyTest : ExtendedITextTest {
         public static readonly String destinationFolder = NUnit.Framework.TestContext.CurrentContext.TestDirectory
              + "/test/itext/kernel/pdf/PdfCopyTest/";
@@ -61,10 +64,9 @@ namespace iText.Kernel.Pdf {
             CreateOrClearDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.SOURCE_DOCUMENT_HAS_ACROFORM_DICTIONARY)]
-        [LogMessage(iText.IO.LogMessageConstant.MAKE_COPY_OF_CATALOG_DICTIONARY_IS_FORBIDDEN)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.SOURCE_DOCUMENT_HAS_ACROFORM_DICTIONARY)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.MAKE_COPY_OF_CATALOG_DICTIONARY_IS_FORBIDDEN)]
         public virtual void CopySignedDocuments() {
             PdfDocument pdfDoc1 = new PdfDocument(new PdfReader(sourceFolder + "hello_signed.pdf"));
             PdfDocument pdfDoc2 = new PdfDocument(new PdfWriter(destinationFolder + "copySignedDocuments.pdf"));
@@ -78,7 +80,6 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.IsTrue(sigRef.Get(PdfName.Data).IsNull());
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void Copying1() {
             PdfDocument pdfDoc1 = new PdfDocument(new PdfWriter(destinationFolder + "copying1_1.pdf"));
@@ -105,7 +106,6 @@ namespace iText.Kernel.Pdf {
             pdfDocument.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void Copying2() {
             PdfDocument pdfDoc1 = new PdfDocument(new PdfWriter(destinationFolder + "copying2_1.pdf"));
@@ -130,13 +130,12 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.AreEqual(false, reader.HasRebuiltXref(), "Rebuilt");
             for (int i = 0; i < 5; i++) {
                 byte[] bytes = pdfDocument.GetPage(i + 1).GetContentBytes();
-                NUnit.Framework.Assert.AreEqual("%page " + (i * 2 + 1).ToString() + "\n", iText.IO.Util.JavaUtil.GetStringForBytes
+                NUnit.Framework.Assert.AreEqual("%page " + (i * 2 + 1).ToString() + "\n", iText.Commons.Utils.JavaUtil.GetStringForBytes
                     (bytes));
             }
             pdfDocument.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void Copying3() {
             PdfDocument pdfDoc = new PdfDocument(new PdfWriter(destinationFolder + "copying3_1.pdf"));
@@ -150,8 +149,8 @@ namespace iText.Kernel.Pdf {
             page.GetPdfObject().Put(new PdfName("HelloWorldClone"), (PdfObject)helloWorld.Clone());
             pdfDoc.Close();
             PdfReader reader = new PdfReader(destinationFolder + "copying3_1.pdf");
-            NUnit.Framework.Assert.AreEqual(false, reader.HasRebuiltXref(), "Rebuilt");
             pdfDoc = new PdfDocument(reader);
+            NUnit.Framework.Assert.AreEqual(false, reader.HasRebuiltXref(), "Rebuilt");
             PdfDictionary dic0 = pdfDoc.GetPage(1).GetPdfObject().GetAsDictionary(new PdfName("HelloWorld"));
             NUnit.Framework.Assert.AreEqual(4, dic0.GetIndirectReference().GetObjNumber());
             NUnit.Framework.Assert.AreEqual(0, dic0.GetIndirectReference().GetGenNumber());
@@ -181,10 +180,8 @@ namespace iText.Kernel.Pdf {
             pdfDoc.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.SOURCE_DOCUMENT_HAS_ACROFORM_DICTIONARY)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.SOURCE_DOCUMENT_HAS_ACROFORM_DICTIONARY)]
         public virtual void CopyDocumentsWithFormFieldsTest() {
             String filename = sourceFolder + "fieldsOn2-sPage.pdf";
             PdfDocument sourceDoc = new PdfDocument(new PdfReader(filename));
@@ -197,8 +194,6 @@ namespace iText.Kernel.Pdf {
                 , sourceFolder + "cmp_copyDocumentsWithFormFields.pdf", destinationFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CopySamePageWithAnnotationsSeveralTimes() {
             String filename = sourceFolder + "rotated_annotation.pdf";
@@ -213,8 +208,6 @@ namespace iText.Kernel.Pdf {
                 , sourceFolder + "cmp_copySamePageWithAnnotationsSeveralTimes.pdf", destinationFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CopyIndirectInheritablePageEntriesTest01() {
             String src = sourceFolder + "indirectPageProps.pdf";
@@ -229,7 +222,47 @@ namespace iText.Kernel.Pdf {
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(dest, cmp, destinationFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
+        [NUnit.Framework.Test]
+        public virtual void CopyPageNoRotationToDocWithRotationInKidsPageTest() {
+            String src = sourceFolder + "srcFileWithSetRotation.pdf";
+            String dest = destinationFolder + "copyPageNoRotationToDocWithRotationInKidsPage.pdf";
+            String cmp = sourceFolder + "cmp_copyPageNoRotationToDocWithRotationInKidsPage.pdf";
+            PdfDocument pdfDoc = new PdfDocument(new PdfReader(src), new PdfWriter(dest));
+            PdfDocument sourceDoc = new PdfDocument(new PdfReader(sourceFolder + "noRotationProp.pdf"));
+            sourceDoc.CopyPagesTo(1, sourceDoc.GetNumberOfPages(), pdfDoc);
+            sourceDoc.Close();
+            pdfDoc.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(dest, cmp, destinationFolder));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void CopyPageNoRotationToDocWithRotationInPagesDictTest() {
+            //TODO: update cmp-files when DEVSIX-3635 will be fixed
+            String src = sourceFolder + "indirectPageProps.pdf";
+            String dest = destinationFolder + "copyPageNoRotationToDocWithRotationInPagesDict.pdf";
+            String cmp = sourceFolder + "cmp_copyPageNoRotationToDocWithRotationInPagesDict.pdf";
+            PdfDocument pdfDoc = new PdfDocument(new PdfReader(src), new PdfWriter(dest));
+            PdfDocument sourceDoc = new PdfDocument(new PdfReader(sourceFolder + "noRotationProp.pdf"));
+            sourceDoc.CopyPagesTo(1, sourceDoc.GetNumberOfPages(), pdfDoc);
+            sourceDoc.Close();
+            pdfDoc.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(dest, cmp, destinationFolder));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void CopyPageWithRotationInPageToDocWithRotationInPagesDictTest() {
+            String src = sourceFolder + "indirectPageProps.pdf";
+            String dest = destinationFolder + "copyPageWithRotationInPageToDocWithRotationInPagesDict.pdf";
+            String cmp = sourceFolder + "cmp_copyPageWithRotationInPageToDocWithRotationInPagesDict.pdf";
+            PdfDocument pdfDoc = new PdfDocument(new PdfReader(src), new PdfWriter(dest));
+            PdfDocument sourceDoc = new PdfDocument(new PdfReader(sourceFolder + "srcFileCopyPageWithSetRotationValueInKids.pdf"
+                ));
+            sourceDoc.CopyPagesTo(1, sourceDoc.GetNumberOfPages(), pdfDoc);
+            sourceDoc.Close();
+            pdfDoc.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(dest, cmp, destinationFolder));
+        }
+
         [NUnit.Framework.Test]
         public virtual void CopySelfContainedObject() {
             ByteArrayOutputStream inputBytes = new ByteArrayOutputStream();
@@ -255,6 +288,54 @@ namespace iText.Kernel.Pdf {
                 ());
             destDoc.Close();
             srcDoc.Close();
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void CopyDifferentRangesOfPagesWithBookmarksTest() {
+            String outFileName = destinationFolder + "copyDifferentRangesOfPagesWithBookmarksTest.pdf";
+            String cmpFileName = sourceFolder + "cmp_copyDifferentRangesOfPagesWithBookmarksTest.pdf";
+            PdfDocument targetPdf = new PdfDocument(new PdfWriter(outFileName));
+            targetPdf.InitializeOutlines();
+            PdfDocument sourcePdf = new PdfDocument(new PdfReader(sourceFolder + "sameDocWithBookmarksPdf.pdf"));
+            sourcePdf.InitializeOutlines();
+            int sourcePdfLength = sourcePdf.GetNumberOfPages();
+            int sourcePdfOutlines = sourcePdf.GetOutlines(false).GetAllChildren().Count;
+            sourcePdf.CopyPagesTo(3, sourcePdfLength, targetPdf);
+            sourcePdf.CopyPagesTo(1, 2, targetPdf);
+            int targetOutlines = targetPdf.GetOutlines(false).GetAllChildren().Count;
+            NUnit.Framework.Assert.AreEqual(sourcePdfOutlines, targetOutlines);
+            sourcePdf.Close();
+            targetPdf.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
+                ));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void CopyPagesLinkAnnotationTest() {
+            // TODO DEVSIX-577. Update cmp
+            String outFileName = destinationFolder + "copyPagesLinkAnnotationTest.pdf";
+            String cmpFileName = sourceFolder + "cmp_copyPagesLinkAnnotationTest.pdf";
+            PdfDocument targetPdf = new PdfDocument(new PdfWriter(outFileName));
+            PdfDocument linkAnotPdf = new PdfDocument(new PdfReader(sourceFolder + "pdfLinkAnnotationTest.pdf"));
+            int linkPdfLength = linkAnotPdf.GetNumberOfPages();
+            linkAnotPdf.CopyPagesTo(3, linkPdfLength, targetPdf);
+            linkAnotPdf.CopyPagesTo(1, 2, targetPdf);
+            IList<PdfAnnotation> annotations = GetPdfAnnotations(targetPdf);
+            NUnit.Framework.Assert.AreEqual(0, annotations.Count, "The number of merged annotations are not the same."
+                );
+            linkAnotPdf.Close();
+            targetPdf.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
+                ));
+        }
+
+        private IList<PdfAnnotation> GetPdfAnnotations(PdfDocument pdfDoc) {
+            int number = pdfDoc.GetNumberOfPages();
+            List<PdfAnnotation> annotations = new List<PdfAnnotation>();
+            for (int i = 1; i <= number; i++) {
+                annotations.AddAll(pdfDoc.GetPage(i).GetAnnotations());
+            }
+            return annotations;
         }
     }
 }

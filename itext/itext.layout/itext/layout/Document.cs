@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,10 +42,11 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-using iText.Kernel;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using iText.Layout.Element;
+using iText.Layout.Exceptions;
 using iText.Layout.Properties;
 using iText.Layout.Renderer;
 
@@ -56,42 +57,28 @@ namespace iText.Layout {
     /// mainly operates high-level operations e.g. setting page size and rotation,
     /// adding elements, and writing text at specific coordinates. It has no
     /// knowledge of the actual PDF concepts and syntax.
-    /// <p>
+    /// <para />
     /// A
     /// <see cref="Document"/>
     /// 's rendering behavior can be modified by extending
     /// <see cref="iText.Layout.Renderer.DocumentRenderer"/>
     /// and setting an instance of this newly created with
-    /// <see cref="SetRenderer(iText.Layout.Renderer.DocumentRenderer)"></see>
-    /// .
+    /// <see cref="SetRenderer(iText.Layout.Renderer.DocumentRenderer)"></see>.
     /// </remarks>
     public class Document : RootElement<iText.Layout.Document> {
-        [System.ObsoleteAttribute(@"To be removed in 7.2. Use iText.Layout.Properties.Property.MARGIN_LEFT instead."
-            )]
-        protected internal float leftMargin = 36;
-
-        [System.ObsoleteAttribute(@"To be removed in 7.2. Use iText.Layout.Properties.Property.MARGIN_RIGHT instead."
-            )]
-        protected internal float rightMargin = 36;
-
-        [System.ObsoleteAttribute(@"To be removed in 7.2. Use iText.Layout.Properties.Property.MARGIN_TOP instead."
-            )]
-        protected internal float topMargin = 36;
-
-        [System.ObsoleteAttribute(@"To be removed in 7.2. Use iText.Layout.Properties.Property.MARGIN_BOTTOM instead."
-            )]
-        protected internal float bottomMargin = 36;
-
         /// <summary>
+        /// Creates a document from a
+        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>.
+        /// </summary>
+        /// <remarks>
         /// Creates a document from a
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
         /// . Initializes the first page
         /// with the
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
         /// 's current default
-        /// <see cref="iText.Kernel.Geom.PageSize"/>
-        /// .
-        /// </summary>
+        /// <see cref="iText.Kernel.Geom.PageSize"/>.
+        /// </remarks>
         /// <param name="pdfDoc">the in-memory representation of the PDF document</param>
         public Document(PdfDocument pdfDoc)
             : this(pdfDoc, pdfDoc.GetDefaultPageSize()) {
@@ -101,8 +88,7 @@ namespace iText.Layout {
         /// Creates a document from a
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
         /// with a manually set
-        /// <see cref="iText.Kernel.Geom.PageSize"/>
-        /// .
+        /// <see cref="iText.Kernel.Geom.PageSize"/>.
         /// </summary>
         /// <param name="pdfDoc">the in-memory representation of the PDF document</param>
         /// <param name="pageSize">the page size</param>
@@ -114,8 +100,7 @@ namespace iText.Layout {
         /// Creates a document from a
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
         /// with a manually set
-        /// <see cref="iText.Kernel.Geom.PageSize"/>
-        /// .
+        /// <see cref="iText.Kernel.Geom.PageSize"/>.
         /// </summary>
         /// <param name="pdfDoc">the in-memory representation of the PDF document</param>
         /// <param name="pageSize">the page size</param>
@@ -180,11 +165,16 @@ namespace iText.Layout {
         /// <summary>
         /// Changes the
         /// <see cref="iText.Layout.Renderer.DocumentRenderer"/>
+        /// at runtime.
+        /// </summary>
+        /// <remarks>
+        /// Changes the
+        /// <see cref="iText.Layout.Renderer.DocumentRenderer"/>
         /// at runtime. Use this to customize
         /// the Document's
         /// <see cref="iText.Layout.Renderer.IRenderer"/>
         /// behavior.
-        /// </summary>
+        /// </remarks>
         /// <param name="documentRenderer">the DocumentRenderer to set</param>
         public virtual void SetRenderer(DocumentRenderer documentRenderer) {
             this.rootRenderer = documentRenderer;
@@ -206,19 +196,26 @@ namespace iText.Layout {
         /// Performs an entire recalculation of the document flow, taking into
         /// account all its current child elements. May become very
         /// resource-intensive for large documents.
-        /// <p>
+        /// <para />
         /// Do not use when you have set
         /// <see cref="RootElement{T}.immediateFlush"/>
-        /// to <code>true</code>.
+        /// to <c>true</c>.
         /// </remarks>
         public virtual void Relayout() {
             if (immediateFlush) {
                 throw new InvalidOperationException("Operation not supported with immediate flush");
             }
+            if (rootRenderer is DocumentRenderer) {
+                ((DocumentRenderer)rootRenderer).GetTargetCounterHandler().PrepareHandlerToRelayout();
+            }
             IRenderer nextRelayoutRenderer = rootRenderer != null ? rootRenderer.GetNextRenderer() : null;
             if (nextRelayoutRenderer == null || !(nextRelayoutRenderer is RootRenderer)) {
                 nextRelayoutRenderer = new DocumentRenderer(this, immediateFlush);
             }
+            // Even though #relayout() only makes sense when immediateFlush=false and therefore no elements
+            // should have been written to document, still empty pages are created during layout process
+            // because we need to know the effective page size which may differ from page to page.
+            // Therefore, we remove all the pages that might have been created before proceeding to relayout elements.
             while (pdfDocument.GetNumberOfPages() > 0) {
                 pdfDocument.RemovePage(pdfDocument.GetNumberOfPages());
             }
@@ -229,59 +226,55 @@ namespace iText.Layout {
         }
 
         /// <summary>Gets the left margin, measured in points</summary>
-        /// <returns>a <code>float</code> containing the left margin value</returns>
+        /// <returns>a <c>float</c> containing the left margin value</returns>
         public virtual float GetLeftMargin() {
             float? property = this.GetProperty<float?>(Property.MARGIN_LEFT);
             return (float)(property != null ? property : this.GetDefaultProperty<float>(Property.MARGIN_LEFT));
         }
 
         /// <summary>Sets the left margin, measured in points</summary>
-        /// <param name="leftMargin">a <code>float</code> containing the new left margin value</param>
+        /// <param name="leftMargin">a <c>float</c> containing the new left margin value</param>
         public virtual void SetLeftMargin(float leftMargin) {
             SetProperty(Property.MARGIN_LEFT, leftMargin);
-            this.leftMargin = leftMargin;
         }
 
         /// <summary>Gets the right margin, measured in points</summary>
-        /// <returns>a <code>float</code> containing the right margin value</returns>
+        /// <returns>a <c>float</c> containing the right margin value</returns>
         public virtual float GetRightMargin() {
             float? property = this.GetProperty<float?>(Property.MARGIN_RIGHT);
             return (float)(property != null ? property : this.GetDefaultProperty<float>(Property.MARGIN_RIGHT));
         }
 
         /// <summary>Sets the right margin, measured in points</summary>
-        /// <param name="rightMargin">a <code>float</code> containing the new right margin value</param>
+        /// <param name="rightMargin">a <c>float</c> containing the new right margin value</param>
         public virtual void SetRightMargin(float rightMargin) {
             SetProperty(Property.MARGIN_RIGHT, rightMargin);
-            this.rightMargin = rightMargin;
         }
 
         /// <summary>Gets the top margin, measured in points</summary>
-        /// <returns>a <code>float</code> containing the top margin value</returns>
+        /// <returns>a <c>float</c> containing the top margin value</returns>
         public virtual float GetTopMargin() {
             float? property = this.GetProperty<float?>(Property.MARGIN_TOP);
             return (float)(property != null ? property : this.GetDefaultProperty<float>(Property.MARGIN_TOP));
         }
 
         /// <summary>Sets the top margin, measured in points</summary>
-        /// <param name="topMargin">a <code>float</code> containing the new top margin value</param>
+        /// <param name="topMargin">a <c>float</c> containing the new top margin value</param>
         public virtual void SetTopMargin(float topMargin) {
             SetProperty(Property.MARGIN_TOP, topMargin);
-            this.topMargin = topMargin;
         }
 
         /// <summary>Gets the bottom margin, measured in points</summary>
-        /// <returns>a <code>float</code> containing the bottom margin value</returns>
+        /// <returns>a <c>float</c> containing the bottom margin value</returns>
         public virtual float GetBottomMargin() {
             float? property = this.GetProperty<float?>(Property.MARGIN_BOTTOM);
             return (float)(property != null ? property : this.GetDefaultProperty<float>(Property.MARGIN_BOTTOM));
         }
 
         /// <summary>Sets the bottom margin, measured in points</summary>
-        /// <param name="bottomMargin">a <code>float</code> containing the new bottom margin value</param>
+        /// <param name="bottomMargin">a <c>float</c> containing the new bottom margin value</param>
         public virtual void SetBottomMargin(float bottomMargin) {
             SetProperty(Property.MARGIN_BOTTOM, bottomMargin);
-            this.bottomMargin = bottomMargin;
         }
 
         /// <summary>Convenience method to set all margins with one method.</summary>
@@ -343,7 +336,7 @@ namespace iText.Layout {
         /// <summary>Checks whether a method is invoked at the closed document</summary>
         protected internal virtual void CheckClosingStatus() {
             if (GetPdfDocument().IsClosed()) {
-                throw new PdfException(PdfException.DocumentClosedItIsImpossibleToExecuteAction);
+                throw new PdfException(LayoutExceptionMessageConstant.DOCUMENT_CLOSED_IT_IS_IMPOSSIBLE_TO_EXECUTE_ACTION);
             }
         }
     }

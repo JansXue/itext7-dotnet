@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -51,7 +51,6 @@ namespace iText.IO.Font.Otf {
     public class GposLookupType4 : OpenTableLookup {
         private readonly IList<GposLookupType4.MarkToBase> marksbases;
 
-        /// <exception cref="System.IO.IOException"/>
         public GposLookupType4(OpenTypeFontTableReader openReader, int lookupFlag, int[] subTableLocations)
             : base(openReader, lookupFlag, subTableLocations) {
             marksbases = new List<GposLookupType4.MarkToBase>();
@@ -83,7 +82,7 @@ namespace iText.IO.Font.Otf {
                             break;
                         }
                         // not mark => base glyph
-                        if (!mb.marks.ContainsKey(gi.glyph.GetCode())) {
+                        if (openReader.GetGlyphClass(gi.glyph.GetCode()) != OtfClass.GLYPH_MARK) {
                             break;
                         }
                     }
@@ -116,11 +115,10 @@ namespace iText.IO.Font.Otf {
             return changed;
         }
 
-        /// <exception cref="System.IO.IOException"/>
         protected internal override void ReadSubTable(int subTableLocation) {
             openReader.rf.Seek(subTableLocation);
+            // skip format, always 1
             openReader.rf.ReadUnsignedShort();
-            //skip format, always 1
             int markCoverageLocation = openReader.rf.ReadUnsignedShort() + subTableLocation;
             int baseCoverageLocation = openReader.rf.ReadUnsignedShort() + subTableLocation;
             int classCount = openReader.rf.ReadUnsignedShort();

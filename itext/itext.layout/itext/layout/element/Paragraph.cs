@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,7 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.Kernel.Pdf.Tagging;
 using iText.Kernel.Pdf.Tagutils;
 using iText.Layout.Properties;
@@ -60,8 +60,7 @@ namespace iText.Layout.Element {
     /// It is a
     /// <see cref="BlockElement{T}"/>
     /// which essentially acts as a container for
-    /// <see cref="ILeafElement">leaf elements</see>
-    /// .
+    /// <see cref="ILeafElement">leaf elements</see>.
     /// </remarks>
     public class Paragraph : BlockElement<iText.Layout.Element.Paragraph> {
         protected internal DefaultAccessibilityProperties tagProperties;
@@ -88,27 +87,55 @@ namespace iText.Layout.Element {
             Add(text);
         }
 
-        /// <summary>Adds a piece of text to the Paragraph</summary>
+        /// <summary>
+        /// Adds a piece of text to this
+        /// <see cref="Paragraph"/>.
+        /// </summary>
         /// <param name="text">
         /// the content to be added, as a
         /// <see cref="System.String"/>
         /// </param>
-        /// <returns>this Paragraph</returns>
+        /// <returns>
+        /// this
+        /// <see cref="Paragraph"/>
+        /// </returns>
         public virtual iText.Layout.Element.Paragraph Add(String text) {
             return Add(new Text(text));
         }
 
-        /// <summary>Adds a layout element to the Paragraph.</summary>
+        /// <summary>
+        /// Adds a
+        /// <see cref="ILeafElement">element</see>
+        /// to this
+        /// <see cref="Paragraph"/>.
+        /// </summary>
         /// <param name="element">
         /// the content to be added, any
         /// <see cref="ILeafElement"/>
         /// </param>
-        /// <returns>this Paragraph</returns>
+        /// <returns>
+        /// this
+        /// <see cref="Paragraph"/>
+        /// </returns>
         public virtual iText.Layout.Element.Paragraph Add(ILeafElement element) {
             childElements.Add(element);
             return this;
         }
 
+        /// <summary>
+        /// Adds an
+        /// <see cref="IBlockElement">element</see>
+        /// to this
+        /// <see cref="Paragraph"/>.
+        /// </summary>
+        /// <param name="element">
+        /// the content to be added, any
+        /// <see cref="IBlockElement"/>
+        /// </param>
+        /// <returns>
+        /// this
+        /// <see cref="Paragraph"/>
+        /// </returns>
         public virtual iText.Layout.Element.Paragraph Add(IBlockElement element) {
             childElements.Add(element);
             return this;
@@ -117,11 +144,18 @@ namespace iText.Layout.Element {
         /// <summary>
         /// Adds a
         /// <see cref="System.Collections.IList{E}"/>
-        /// of layout elements to the Paragraph.
+        /// of layout elements to this
+        /// <see cref="Paragraph"/>.
         /// </summary>
-        /// 
-        /// 
-        /// <returns>this Paragraph</returns>
+        /// <param name="elements">the content to be added</param>
+        /// <typeparam name="T2">
+        /// any
+        /// <see cref="ILeafElement"/>
+        /// </typeparam>
+        /// <returns>
+        /// this
+        /// <see cref="Paragraph"/>
+        /// </returns>
         public virtual iText.Layout.Element.Paragraph AddAll<T2>(IList<T2> elements)
             where T2 : ILeafElement {
             foreach (ILeafElement element in elements) {
@@ -130,13 +164,19 @@ namespace iText.Layout.Element {
             return this;
         }
 
-        /// <summary>Adds an unspecified amount of tabstop elements as properties to the Paragraph.</summary>
+        /// <summary>
+        /// Adds an unspecified amount of tabstop elements as properties to this
+        /// <see cref="Paragraph"/>.
+        /// </summary>
         /// <param name="tabStops">
         /// the
         /// <see cref="TabStop">tabstop(s)</see>
         /// to be added as properties
         /// </param>
-        /// <returns>this Paragraph</returns>
+        /// <returns>
+        /// this
+        /// <see cref="Paragraph"/>
+        /// </returns>
         /// <seealso cref="TabStop"/>
         public virtual iText.Layout.Element.Paragraph AddTabStops(params TabStop[] tabStops) {
             AddTabStopsAsProperty(JavaUtil.ArraysAsList(tabStops));
@@ -146,14 +186,18 @@ namespace iText.Layout.Element {
         /// <summary>
         /// Adds a
         /// <see cref="System.Collections.IList{E}"/>
-        /// of tabstop elements as properties to the Paragraph.
+        /// of tabstop elements as properties to this
+        /// <see cref="Paragraph"/>.
         /// </summary>
         /// <param name="tabStops">
         /// the list of
         /// <see cref="TabStop"/>
         /// s to be added as properties
         /// </param>
-        /// <returns>this Paragraph</returns>
+        /// <returns>
+        /// this
+        /// <see cref="Paragraph"/>
+        /// </returns>
         /// <seealso cref="TabStop"/>
         public virtual iText.Layout.Element.Paragraph AddTabStops(IList<TabStop> tabStops) {
             AddTabStopsAsProperty(tabStops);
@@ -208,16 +252,51 @@ namespace iText.Layout.Element {
 
         /// <summary>
         /// Sets the indent value for the first line of the
-        /// <see cref="Paragraph"/>
-        /// .
+        /// <see cref="Paragraph"/>.
         /// </summary>
         /// <param name="indent">
         /// the indent value that must be applied to the first line of
-        /// the Paragraph, as a <code>float</code>
+        /// the Paragraph, as a <c>float</c>
         /// </param>
         /// <returns>this Paragraph</returns>
         public virtual iText.Layout.Element.Paragraph SetFirstLineIndent(float indent) {
             SetProperty(Property.FIRST_LINE_INDENT, indent);
+            return this;
+        }
+
+        /// <summary>
+        /// Sets orphans restriction on a
+        /// <see cref="Paragraph"/>.
+        /// </summary>
+        /// <param name="orphansControl">
+        /// an instance of
+        /// <see cref="iText.Layout.Properties.ParagraphOrphansControl"/>.
+        /// </param>
+        /// <returns>
+        /// this
+        /// <see cref="Paragraph"/>
+        /// instance.
+        /// </returns>
+        public virtual iText.Layout.Element.Paragraph SetOrphansControl(ParagraphOrphansControl orphansControl) {
+            SetProperty(Property.ORPHANS_CONTROL, orphansControl);
+            return this;
+        }
+
+        /// <summary>
+        /// Sets widows restriction on a
+        /// <see cref="Paragraph"/>.
+        /// </summary>
+        /// <param name="widowsControl">
+        /// an instance of
+        /// <see cref="iText.Layout.Properties.ParagraphWidowsControl"/>.
+        /// </param>
+        /// <returns>
+        /// this
+        /// <see cref="Paragraph"/>
+        /// instance.
+        /// </returns>
+        public virtual iText.Layout.Element.Paragraph SetWidowsControl(ParagraphWidowsControl widowsControl) {
+            SetProperty(Property.WIDOWS_CONTROL, widowsControl);
             return this;
         }
 

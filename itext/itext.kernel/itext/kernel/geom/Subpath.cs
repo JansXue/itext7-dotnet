@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -56,8 +56,13 @@ namespace iText.Kernel.Geom {
         public Subpath() {
         }
 
-        /// <summary>Copy constuctor.</summary>
-        /// <param name="subpath"/>
+        /// <summary>Copy constructor.</summary>
+        /// <param name="subpath">
+        /// 
+        /// <see cref="Subpath"/>
+        /// which contents will be used to create this
+        /// <see cref="Subpath"/>
+        /// </param>
         public Subpath(iText.Kernel.Geom.Subpath subpath) {
             this.startPoint = subpath.startPoint;
             this.segments.AddAll(subpath.GetSegments());
@@ -65,24 +70,27 @@ namespace iText.Kernel.Geom {
         }
 
         /// <summary>Constructs a new subpath starting at the given point.</summary>
+        /// <param name="startPoint">the point this subpath starts at</param>
         public Subpath(Point startPoint)
             : this((float)startPoint.GetX(), (float)startPoint.GetY()) {
         }
 
         /// <summary>Constructs a new subpath starting at the given point.</summary>
+        /// <param name="startPointX">x-coordinate of the start point of subpath</param>
+        /// <param name="startPointY">y-coordinate of the start point of subpath</param>
         public Subpath(float startPointX, float startPointY) {
             this.startPoint = new Point(startPointX, startPointY);
         }
 
         /// <summary>Sets the start point of the subpath.</summary>
-        /// <param name="startPoint"/>
+        /// <param name="startPoint">the point this subpath starts at</param>
         public virtual void SetStartPoint(Point startPoint) {
             SetStartPoint((float)startPoint.GetX(), (float)startPoint.GetY());
         }
 
         /// <summary>Sets the start point of the subpath.</summary>
-        /// <param name="x"/>
-        /// <param name="y"/>
+        /// <param name="x">x-coordinate of the start pint</param>
+        /// <param name="y">y-coordinate of the start pint</param>
         public virtual void SetStartPoint(float x, float y) {
             this.startPoint = new Point(x, y);
         }
@@ -135,28 +143,28 @@ namespace iText.Kernel.Geom {
         }
 
         /// <returns>
-        /// <CODE>true</CODE> if this subpath contains only one point and it is not closed,
-        /// <CODE>false</CODE> otherwise
+        /// <c>true</c> if this subpath contains only one point and it is not closed,
+        /// <c>false</c> otherwise
         /// </returns>
         public virtual bool IsSinglePointOpen() {
             return segments.Count == 0 && !closed;
         }
 
         /// <returns>
-        /// <CODE>true</CODE> if this subpath contains only one point and it is closed,
-        /// <CODE>false</CODE> otherwise
+        /// <c>true</c> if this subpath contains only one point and it is closed,
+        /// <c>false</c> otherwise
         /// </returns>
         public virtual bool IsSinglePointClosed() {
             return segments.Count == 0 && closed;
         }
 
-        /// <summary>Returns a <CODE>boolean</CODE> value indicating whether the subpath must be closed or not.</summary>
+        /// <summary>Returns a <c>boolean</c> value indicating whether the subpath must be closed or not.</summary>
         /// <remarks>
-        /// Returns a <CODE>boolean</CODE> value indicating whether the subpath must be closed or not.
+        /// Returns a <c>boolean</c> value indicating whether the subpath must be closed or not.
         /// Ignore this value if the subpath is a rectangle because in this case it is already closed
-        /// (of course if you paint the path using <CODE>re</CODE> operator)
+        /// (of course if you paint the path using <c>re</c> operator)
         /// </remarks>
-        /// <returns><CODE>boolean</CODE> value indicating whether the path must be closed or not.</returns>
+        /// <returns><c>boolean</c> value indicating whether the path must be closed or not.</returns>
         public virtual bool IsClosed() {
             return closed;
         }
@@ -165,17 +173,18 @@ namespace iText.Kernel.Geom {
         /// See
         /// <see cref="IsClosed()"/>
         /// </summary>
+        /// <param name="closed"><c>boolean</c> value indicating whether the path is closed or not.</param>
         public virtual void SetClosed(bool closed) {
             this.closed = closed;
         }
 
-        /// <summary>Returns a <CODE>boolean</CODE> indicating whether the subpath is degenerate or not.</summary>
+        /// <summary>Returns a <c>boolean</c> indicating whether the subpath is degenerate or not.</summary>
         /// <remarks>
-        /// Returns a <CODE>boolean</CODE> indicating whether the subpath is degenerate or not.
+        /// Returns a <c>boolean</c> indicating whether the subpath is degenerate or not.
         /// A degenerate subpath is the subpath consisting of a single-point closed path or of
         /// two or more points at the same coordinates.
         /// </remarks>
-        /// <returns><CODE>boolean</CODE> value indicating whether the path is degenerate or not.</returns>
+        /// <returns><c>boolean</c> value indicating whether the path is degenerate or not.</returns>
         public virtual bool IsDegenerate() {
             if (segments.Count > 0 && closed) {
                 return false;

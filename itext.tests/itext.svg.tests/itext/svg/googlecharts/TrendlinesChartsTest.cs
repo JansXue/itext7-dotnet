@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,56 +45,42 @@ using iText.Svg.Renderers;
 using iText.Test;
 
 namespace iText.Svg.Googlecharts {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class TrendlinesChartsTest : SvgIntegrationTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
-            .CurrentContext.TestDirectory) + "/resources/itext/svg/googlecharts/trendlines_charts/";
+            .CurrentContext.TestDirectory) + "/resources/itext/svg/googlecharts/TrendlinesChartsTest/";
 
         public static readonly String destinationFolder = NUnit.Framework.TestContext.CurrentContext.TestDirectory
-             + "/test/itext/svg/googlecharts/trendlines_charts/";
+             + "/test/itext/svg/googlecharts/TrendlinesChartsTest/";
 
         [NUnit.Framework.OneTimeSetUp]
         public static void BeforeClass() {
             ITextTest.CreateDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        public virtual void Trendlines_chart() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "trendlines_chart");
+        public virtual void TrendlinesChart() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "trendlinesChart");
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        public virtual void Trendlines2_chart() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "trendlines2_chart");
+        public virtual void Trendlines2Chart() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "trendlines2Chart");
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        public virtual void Trendlines3_chart() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "trendlines3_chart");
+        public virtual void Trendlines3Chart() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "trendlines3Chart");
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        public virtual void Trendlines4_chart() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "trendlines4_chart");
+        public virtual void Trendlines4Chart() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "trendlines4Chart");
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        public virtual void Trendlines5_chart() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "trendlines5_chart");
+        public virtual void Trendlines5Chart() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "trendlines5Chart");
         }
     }
 }

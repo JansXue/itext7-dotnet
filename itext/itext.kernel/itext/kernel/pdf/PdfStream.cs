@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,15 +43,18 @@ address: sales@itextpdf.com
 */
 using System;
 using System.IO;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
 using iText.IO.Source;
-using iText.Kernel;
+using iText.Kernel.Exceptions;
+using iText.Kernel.Utils;
 
 namespace iText.Kernel.Pdf {
     /// <summary>Representation of a stream as described in the PDF Specification.</summary>
     public class PdfStream : PdfDictionary {
         protected internal int compressionLevel;
 
+        // Output stream associated with PDF stream.
         protected internal PdfOutputStream outputStream;
 
         private Stream inputStream;
@@ -67,14 +70,12 @@ namespace iText.Kernel.Pdf {
         /// </summary>
         /// <param name="bytes">
         /// initial content of
-        /// <see cref="PdfOutputStream"/>
-        /// .
+        /// <see cref="PdfOutputStream"/>.
         /// </param>
         /// <param name="compressionLevel">the compression level (0 = best speed, 9 = best compression, -1 is default)
         ///     </param>
         public PdfStream(byte[] bytes, int compressionLevel)
             : base() {
-            // Output stream associated with PDF stream.
             SetState(MUST_BE_INDIRECT);
             this.compressionLevel = compressionLevel;
             if (bytes != null && bytes.Length > 0) {
@@ -107,13 +108,19 @@ namespace iText.Kernel.Pdf {
         /// in.close();
         /// </pre>
         /// </remarks>
+        /// <param name="doc">
+        /// the
+        /// <see cref="PdfDocument">pdf document</see>
+        /// in which this stream lies
+        /// </param>
         /// <param name="inputStream">the data to write to this stream</param>
         /// <param name="compressionLevel">the compression level (0 = best speed, 9 = best compression, -1 is default)
         ///     </param>
         public PdfStream(PdfDocument doc, Stream inputStream, int compressionLevel)
             : base() {
             if (doc == null) {
-                throw new PdfException(PdfException.CannotCreatePdfStreamByInputStreamWithoutPdfDocument);
+                throw new PdfException(KernelExceptionMessageConstant.CANNOT_CREATE_PDFSTREAM_BY_INPUT_STREAM_WITHOUT_PDF_DOCUMENT
+                    );
             }
             MakeIndirect(doc);
             if (inputStream == null) {
@@ -138,6 +145,11 @@ namespace iText.Kernel.Pdf {
         /// in.close();
         /// </pre>
         /// </remarks>
+        /// <param name="doc">
+        /// the
+        /// <see cref="PdfDocument">pdf document</see>
+        /// in which this stream lies
+        /// </param>
         /// <param name="inputStream">the data to write to this stream</param>
         public PdfStream(PdfDocument doc, Stream inputStream)
             : this(doc, inputStream, CompressionConstants.UNDEFINED_COMPRESSION) {
@@ -165,9 +177,9 @@ namespace iText.Kernel.Pdf {
             SetState(MUST_BE_INDIRECT);
         }
 
+        //NOTE This constructor only for PdfReader.
         internal PdfStream(long offset, PdfDictionary keys)
             : base() {
-            //NOTE This constructor only for PdfReader.
             this.compressionLevel = CompressionConstants.UNDEFINED_COMPRESSION;
             this.offset = offset;
             PutAll(keys);
@@ -190,8 +202,7 @@ namespace iText.Kernel.Pdf {
         /// <remarks>
         /// Gets compression level of this PdfStream.
         /// For more details @see
-        /// <see cref="Java.Util.Zip.Deflater"/>
-        /// .
+        /// <see cref="iText.IO.Source.DeflaterOutputStream"/>.
         /// </remarks>
         /// <returns>compression level.</returns>
         public virtual int GetCompressionLevel() {
@@ -202,8 +213,7 @@ namespace iText.Kernel.Pdf {
         /// <remarks>
         /// Sets compression level of this PdfStream.
         /// For more details @see
-        /// <see cref="Java.Util.Zip.Deflater"/>
-        /// .
+        /// <see cref="iText.IO.Source.DeflaterOutputStream"/>.
         /// </remarks>
         /// <param name="compressionLevel">the compression level (0 = best speed, 9 = best compression, -1 is default)
         ///     </param>
@@ -220,12 +230,38 @@ namespace iText.Kernel.Pdf {
         }
 
         /// <summary>Gets decoded stream bytes.</summary>
-        /// <returns>byte[]</returns>
+        /// <remarks>
+        /// Gets decoded stream bytes.
+        /// Note,
+        /// <see cref="PdfName.DCTDecode"/>
+        /// and
+        /// <see cref="PdfName.JPXDecode"/>
+        /// filters will be ignored.
+        /// </remarks>
+        /// <returns>
+        /// byte content of the
+        /// <c>PdfStream</c>
+        /// . Byte content will be
+        /// <see langword="null"/>
+        /// ,
+        /// if the
+        /// <c>PdfStream</c>
+        /// was created by
+        /// <c>InputStream</c>.
+        /// </returns>
         public virtual byte[] GetBytes() {
             return GetBytes(true);
         }
 
         /// <summary>Gets stream bytes.</summary>
+        /// <remarks>
+        /// Gets stream bytes.
+        /// Note,
+        /// <see cref="PdfName.DCTDecode"/>
+        /// and
+        /// <see cref="PdfName.JPXDecode"/>
+        /// filters will be ignored.
+        /// </remarks>
         /// <param name="decoded">true if to get decoded stream bytes, otherwise false.</param>
         /// <returns>
         /// byte content of the
@@ -236,16 +272,15 @@ namespace iText.Kernel.Pdf {
         /// if the
         /// <c>PdfStream</c>
         /// was created by
-        /// <c>InputStream</c>
-        /// .
+        /// <c>InputStream</c>.
         /// </returns>
         public virtual byte[] GetBytes(bool decoded) {
             if (IsFlushed()) {
-                throw new PdfException(PdfException.CannotOperateWithFlushedPdfStream);
+                throw new PdfException(KernelExceptionMessageConstant.CANNOT_OPERATE_WITH_FLUSHED_PDF_STREAM);
             }
             if (inputStream != null) {
-                LogManager.GetLogger(typeof(iText.Kernel.Pdf.PdfStream)).Warn("PdfStream was created by InputStream." + "getBytes() always returns null in this case"
-                    );
+                ITextLogManager.GetLogger(typeof(iText.Kernel.Pdf.PdfStream)).LogWarning("PdfStream was created by InputStream."
+                     + "getBytes() always returns null in this case");
                 return null;
             }
             byte[] bytes = null;
@@ -260,7 +295,7 @@ namespace iText.Kernel.Pdf {
                     }
                 }
                 catch (System.IO.IOException ioe) {
-                    throw new PdfException(PdfException.CannotGetPdfStreamBytes, ioe, this);
+                    throw new PdfException(KernelExceptionMessageConstant.CANNOT_GET_PDF_STREAM_BYTES, ioe, this);
                 }
             }
             else {
@@ -273,7 +308,7 @@ namespace iText.Kernel.Pdf {
                             bytes = reader.ReadStreamBytes(this, decoded);
                         }
                         catch (System.IO.IOException ioe) {
-                            throw new PdfException(PdfException.CannotGetPdfStreamBytes, ioe, this);
+                            throw new PdfException(KernelExceptionMessageConstant.CANNOT_GET_PDF_STREAM_BYTES, ioe, this);
                         }
                     }
                 }
@@ -281,20 +316,20 @@ namespace iText.Kernel.Pdf {
             return bytes;
         }
 
-        /// <summary>Sets <code>bytes</code> as stream's content.</summary>
+        /// <summary>Sets <c>bytes</c> as stream's content.</summary>
         /// <remarks>
-        /// Sets <code>bytes</code> as stream's content.
-        /// Could not be used with streams which were created by <code>InputStream</code>.
+        /// Sets <c>bytes</c> as stream's content.
+        /// Could not be used with streams which were created by <c>InputStream</c>.
         /// </remarks>
-        /// <param name="bytes">new content for stream; if <code>null</code> then stream's content will be discarded</param>
+        /// <param name="bytes">new content for stream; if <c>null</c> then stream's content will be discarded</param>
         public virtual void SetData(byte[] bytes) {
             SetData(bytes, false);
         }
 
-        /// <summary>Sets or appends <code>bytes</code> to stream content.</summary>
+        /// <summary>Sets or appends <c>bytes</c> to stream content.</summary>
         /// <remarks>
-        /// Sets or appends <code>bytes</code> to stream content.
-        /// Could not be used with streams which were created by <code>InputStream</code>.
+        /// Sets or appends <c>bytes</c> to stream content.
+        /// Could not be used with streams which were created by <c>InputStream</c>.
         /// </remarks>
         /// <param name="bytes">
         /// New content for stream. These bytes are considered to be a raw data (i.e. not encoded/compressed/encrypted)
@@ -303,18 +338,19 @@ namespace iText.Kernel.Pdf {
         /// <see cref="SetCompressionLevel(int)"/>
         /// and
         /// is handled on stream writing to the output document.
-        /// If <code>null</code> and <code>append</code> is false then stream's content will be discarded.
+        /// If <c>null</c> and <c>append</c> is false then stream's content will be discarded.
         /// </param>
         /// <param name="append">
-        /// If set to true then <code>bytes</code> will be appended to the end,
+        /// If set to true then <c>bytes</c> will be appended to the end,
         /// rather then replace original content. The original content will be decoded if needed.
         /// </param>
         public virtual void SetData(byte[] bytes, bool append) {
             if (IsFlushed()) {
-                throw new PdfException(PdfException.CannotOperateWithFlushedPdfStream);
+                throw new PdfException(KernelExceptionMessageConstant.CANNOT_OPERATE_WITH_FLUSHED_PDF_STREAM);
             }
             if (inputStream != null) {
-                throw new PdfException(PdfException.CannotSetDataToPdfStreamWhichWasCreatedByInputStream);
+                throw new PdfException(KernelExceptionMessageConstant.CANNOT_SET_DATA_TO_PDF_STREAM_WHICH_WAS_CREATED_BY_INPUT_STREAM
+                    );
             }
             bool outputStreamIsUninitialized = outputStream == null;
             if (outputStreamIsUninitialized) {
@@ -330,7 +366,8 @@ namespace iText.Kernel.Pdf {
                         oldBytes = GetBytes();
                     }
                     catch (PdfException ex) {
-                        throw new PdfException(PdfException.CannotReadAStreamInOrderToAppendNewBytes, ex);
+                        throw new PdfException(KernelExceptionMessageConstant.CANNOT_READ_A_STREAM_IN_ORDER_TO_APPEND_NEW_BYTES, ex
+                            );
                     }
                     outputStream.AssignBytes(oldBytes, oldBytes.Length);
                 }
@@ -362,13 +399,18 @@ namespace iText.Kernel.Pdf {
         }
 
         /// <summary>Update length manually in case its correction.</summary>
+        /// <param name="length">the new length</param>
         /// <seealso cref="PdfReader.CheckPdfStreamLength(PdfStream)"/>
         protected internal virtual void UpdateLength(int length) {
             this.length = length;
         }
 
         protected internal override void CopyContent(PdfObject from, PdfDocument document) {
-            base.CopyContent(from, document);
+            CopyContent(from, document, NullCopyFilter.GetInstance());
+        }
+
+        protected internal override void CopyContent(PdfObject from, PdfDocument document, ICopyFilter copyFilter) {
+            base.CopyContent(from, document, copyFilter);
             iText.Kernel.Pdf.PdfStream stream = (iText.Kernel.Pdf.PdfStream)from;
             System.Diagnostics.Debug.Assert(inputStream == null, "Try to copy the PdfStream that has been just created."
                 );
@@ -377,7 +419,7 @@ namespace iText.Kernel.Pdf {
                 outputStream.Write(bytes);
             }
             catch (System.IO.IOException ioe) {
-                throw new PdfException(PdfException.CannotCopyObjectContent, ioe, stream);
+                throw new PdfException(KernelExceptionMessageConstant.CANNOT_COPY_OBJECT_CONTENT, ioe, stream);
             }
         }
 
@@ -397,7 +439,7 @@ namespace iText.Kernel.Pdf {
                 }
             }
             catch (System.IO.IOException e) {
-                throw new PdfException(PdfException.IoException, e);
+                throw new PdfException(KernelExceptionMessageConstant.IO_EXCEPTION, e);
             }
         }
 

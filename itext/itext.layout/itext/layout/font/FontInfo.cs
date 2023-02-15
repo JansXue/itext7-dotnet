@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,6 +43,7 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using iText.Commons.Utils;
 using iText.IO.Font;
 using iText.IO.Util;
 
@@ -51,21 +52,24 @@ namespace iText.Layout.Font {
     /// Contains all font related data to create
     /// <see cref="iText.IO.Font.FontProgram"/>
     /// and
-    /// <see cref="iText.Kernel.Font.PdfFont"/>
-    /// .
+    /// <see cref="iText.Kernel.Font.PdfFont"/>.
+    /// </summary>
+    /// <remarks>
+    /// Contains all font related data to create
+    /// <see cref="iText.IO.Font.FontProgram"/>
+    /// and
+    /// <see cref="iText.Kernel.Font.PdfFont"/>.
     /// <see cref="iText.IO.Font.FontProgramDescriptor"/>
     /// fetches with
-    /// <see cref="iText.IO.Font.FontProgramDescriptorFactory"/>
-    /// .
-    /// </summary>
+    /// <see cref="iText.IO.Font.FontProgramDescriptorFactory"/>.
+    /// </remarks>
     /// <seealso cref="FontProvider.GetPdfFont(FontInfo)"/>
     /// <seealso cref="FontProvider.GetPdfFont(FontInfo, FontSet)">
-    /// <p>
     /// Note,
     /// <see cref="GetAlias()"/>
     /// and
     /// <see cref="GetDescriptor()"/>
-    /// do not taken into account in
+    /// are not taken into account in
     /// <see cref="Equals(System.Object)"/>
     /// ,
     /// the same font with different aliases will have equal FontInfo's,
@@ -159,10 +163,14 @@ namespace iText.Layout.Font {
         /// Gets path to font, if
         /// <see cref="FontInfo"/>
         /// was created by String.
-        /// Note, to get PostScript or full name, use
-        /// <see cref="GetDescriptor()"/>
-        /// .
         /// </summary>
+        /// <remarks>
+        /// Gets path to font, if
+        /// <see cref="FontInfo"/>
+        /// was created by String.
+        /// Note, to get PostScript or full name, use
+        /// <see cref="GetDescriptor()"/>.
+        /// </remarks>
         /// <returns>the font name</returns>
         public String GetFontName() {
             return fontName;
@@ -172,9 +180,9 @@ namespace iText.Layout.Font {
         /// Gets font data, if
         /// <see cref="FontInfo"/>
         /// was created with
-        /// <c>byte[]</c>
-        /// .
+        /// <c>byte[]</c>.
         /// </summary>
+        /// <returns>font data</returns>
         public byte[] GetFontData() {
             return fontData;
         }

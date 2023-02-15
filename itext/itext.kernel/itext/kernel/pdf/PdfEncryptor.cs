@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,7 +45,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using iText.Kernel.Counter.Event;
+using iText.Bouncycastleconnector;
+using iText.Commons.Actions.Contexts;
+using iText.Commons.Bouncycastle;
 
 namespace iText.Kernel.Pdf {
     /// <summary>
@@ -58,6 +60,9 @@ namespace iText.Kernel.Pdf {
     /// It is also possible to change the info dictionary.
     /// </remarks>
     public sealed class PdfEncryptor {
+        private static readonly IBouncyCastleFactory BOUNCY_CASTLE_FACTORY = BouncyCastleFactoryCreator.GetFactory
+            ();
+
         private IMetaInfo metaInfo;
 
         private EncryptionProperties properties;
@@ -70,8 +75,7 @@ namespace iText.Kernel.Pdf {
         /// <param name="os">the output destination</param>
         /// <param name="properties">
         /// encryption properties. See
-        /// <see cref="EncryptionProperties"/>
-        /// .
+        /// <see cref="EncryptionProperties"/>.
         /// </param>
         /// <param name="newInfo">
         /// an optional
@@ -91,8 +95,7 @@ namespace iText.Kernel.Pdf {
         /// <param name="os">the output destination</param>
         /// <param name="properties">
         /// encryption properties. See
-        /// <see cref="EncryptionProperties"/>
-        /// .
+        /// <see cref="EncryptionProperties"/>.
         /// </param>
         public static void Encrypt(PdfReader reader, Stream os, EncryptionProperties properties) {
             Encrypt(reader, os, properties, null);
@@ -191,7 +194,7 @@ namespace iText.Kernel.Pdf {
 
         /// <summary>
         /// Sets the
-        /// <see cref="iText.Kernel.Counter.Event.IMetaInfo"/>
+        /// <see cref="iText.Commons.Actions.Contexts.IMetaInfo"/>
         /// that will be used during
         /// <see cref="PdfDocument"/>
         /// creation.
@@ -236,14 +239,21 @@ namespace iText.Kernel.Pdf {
         public void Encrypt(PdfReader reader, Stream os, IDictionary<String, String> newInfo) {
             WriterProperties writerProperties = new WriterProperties();
             writerProperties.encryptionProperties = properties;
-            PdfWriter writer = new PdfWriter(os, writerProperties);
             StampingProperties stampingProperties = new StampingProperties();
             stampingProperties.SetEventCountingMetaInfo(metaInfo);
-            PdfDocument document = new PdfDocument(reader, writer, stampingProperties);
-            document.GetDocumentInfo().SetMoreInfo(newInfo);
-            document.Close();
+            try {
+                using (PdfWriter writer = new PdfWriter(os, writerProperties)) {
+                    using (PdfDocument document = new PdfDocument(reader, writer, stampingProperties)) {
+                        document.GetDocumentInfo().SetMoreInfo(newInfo);
+                    }
+                }
+            }
+            catch (System.IO.IOException) {
+            }
         }
 
+        //The close() method of OutputStream throws an exception, but we don't need to do anything in this case,
+        // because OutputStream#close() does nothing.
         /// <summary>Entry point to encrypt a PDF document.</summary>
         /// <param name="reader">the read PDF</param>
         /// <param name="os">the output destination</param>

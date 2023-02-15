@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,12 +41,14 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
+using iText.Forms.Logs;
 using iText.Kernel.Pdf;
 using iText.Kernel.Utils;
 using iText.Test;
 using iText.Test.Attributes;
 
 namespace iText.Forms {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class FlatteningTest : ExtendedITextTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/forms/FlatteningTest/";
@@ -59,24 +61,19 @@ namespace iText.Forms {
             CreateOrClearDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        public virtual void FormFlatteningTestWithAPWithoutSubtype() {
-            String filename = "job_application_filled";
-            String src = sourceFolder + filename + ".pdf";
-            String dest = destinationFolder + filename + "_flattened.pdf";
-            String cmp = sourceFolder + "cmp_" + filename + "_flattened.pdf";
+        public virtual void FlatteningFormFieldNoSubtypeInAPTest() {
+            String src = sourceFolder + "formFieldNoSubtypeInAPTest.pdf";
+            String dest = destinationFolder + "flatteningFormFieldNoSubtypeInAPTest.pdf";
+            String cmp = sourceFolder + "cmp_flatteningFormFieldNoSubtypeInAPTest.pdf";
             PdfDocument doc = new PdfDocument(new PdfReader(src), new PdfWriter(dest));
             PdfAcroForm.GetAcroForm(doc, false).FlattenFields();
             doc.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(dest, cmp, destinationFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.N_ENTRY_IS_REQUIRED_FOR_APPEARANCE_DICTIONARY)]
+        [LogMessage(FormsLogMessageConstants.N_ENTRY_IS_REQUIRED_FOR_APPEARANCE_DICTIONARY)]
         public virtual void FormFlatteningTestWithoutNEntry() {
             String filename = "formFlatteningTestWithoutNEntry";
             String src = sourceFolder + filename + ".pdf";

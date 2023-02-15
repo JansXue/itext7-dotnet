@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,14 +42,14 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
+using iText.Commons.Utils;
 using iText.IO.Util;
 using iText.Kernel.Geom;
 
 namespace iText.Layout.Layout {
     /// <summary>
     /// Represents the area for content
-    /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)">layouting</see>
-    /// .
+    /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)">layouting</see>.
     /// </summary>
     public class LayoutArea {
         /// <summary>The number of page on which the area is located.</summary>
@@ -60,8 +60,7 @@ namespace iText.Layout.Layout {
 
         /// <summary>
         /// Creates the area for content
-        /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)">layouting</see>
-        /// .
+        /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)">layouting</see>.
         /// </summary>
         /// <param name="pageNumber">the number of page on which the area is located.</param>
         /// <param name="bBox">the area's bounding box</param>
@@ -91,15 +90,20 @@ namespace iText.Layout.Layout {
         /// <see cref="iText.Kernel.Geom.Rectangle">box</see>
         /// which bounds the area.
         /// </summary>
-        /// <param name="bbox"/>
+        /// <param name="bbox">the area's bounding box</param>
         public virtual void SetBBox(Rectangle bbox) {
             this.bBox = bbox;
         }
 
-        /// <summary><inheritDoc/></summary>
+        /// <summary>
+        /// Creates a "deep copy" of this LayoutArea, meaning the object returned by this method will be independent
+        /// of the object being cloned.
+        /// </summary>
+        /// <returns>the copied LayoutArea.</returns>
         public virtual iText.Layout.Layout.LayoutArea Clone() {
-            iText.Layout.Layout.LayoutArea area = new iText.Layout.Layout.LayoutArea(pageNumber, bBox.Clone());
-            return area;
+            iText.Layout.Layout.LayoutArea clone = (iText.Layout.Layout.LayoutArea) MemberwiseClone();
+            clone.bBox = bBox.Clone();
+            return clone;
         }
 
         /// <summary><inheritDoc/></summary>

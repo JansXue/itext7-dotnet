@@ -1,9 +1,8 @@
 %PDF-1.7
 %‚„œ”
 5 0 obj
-<</Length 27>>stream
+<</Length 12>>stream
 q
-1 0 0 1 0 0 cm
 /Fm1 Do
 Q
 
@@ -16,7 +15,7 @@ endobj
 <</Pages 2 0 R/Type/Catalog>>
 endobj
 3 0 obj
-<</CreationDate(D:20190107165440+01'00')/ModDate(D:20190107165440+01'00')/Producer(iTextÆ 7.1.5-SNAPSHOT ©2000-2019 iText Group NV \(AGPL-version\))>>
+<</CreationDate(D:20211018115831+03'00')/ModDate(D:20211018115831+03'00')/Producer(iTextÆ Core 7.2.1-SNAPSHOT \(AGPL version\) ©2000-2021 iText Group NV)>>
 endobj
 2 0 obj
 <</Count 1/Kids[4 0 R]/Type/Pages>>
@@ -33,7 +32,10 @@ Q
 endstream
 endobj
 7 0 obj
-<</BBox[0 0 375 337.5]/Length 689/Resources<<>>/Subtype/Form/Type/XObject>>stream
+<</BBox[0 0 375 337.5]/Length 690/Resources<<>>/Subtype/Form/Type/XObject>>stream
+0 0 375 337.5 re
+W
+n
 q
 0 0 0 rg
 q
@@ -46,13 +48,11 @@ q
 225 0.72 l
 37.5 75 l
 B
-h
 Q
 q
 0 0 0 RG
 2.25 w
 q
-1 w
 % ellipse
 39.75 75 m
 39.75 76.24 38.74 77.25 37.5 77.25 c
@@ -60,10 +60,8 @@ q
 35.25 73.76 36.26 72.75 37.5 72.75 c
 38.74 72.75 39.75 73.76 39.75 75 c
 B
-h
 Q
 q
-1 w
 % ellipse
 189.75 225 m
 189.75 226.24 188.74 227.25 187.5 227.25 c
@@ -71,10 +69,8 @@ q
 185.25 223.76 186.26 222.75 187.5 222.75 c
 188.74 222.75 189.75 223.76 189.75 225 c
 B
-h
 Q
 q
-1 w
 % ellipse
 227.25 0.72 m
 227.25 1.96 226.24 2.97 225 2.97 c
@@ -82,7 +78,6 @@ q
 222.75 -0.52264 223.76 -1.53 225 -1.53 c
 226.24 -1.53 227.25 -0.52264 227.25 0.72 c
 B
-h
 Q
 Q
 Q
@@ -92,16 +87,16 @@ endobj
 xref
 0 8
 0000000000 65535 f 
-0000000226 00000 n 
-0000000437 00000 n 
-0000000271 00000 n 
-0000000089 00000 n 
+0000000211 00000 n 
+0000000427 00000 n 
+0000000256 00000 n 
+0000000074 00000 n 
 0000000015 00000 n 
-0000000488 00000 n 
-0000000675 00000 n 
+0000000478 00000 n 
+0000000665 00000 n 
 trailer
-<</ID [<1d2c2edd94c2baa470e0227c2fff9e5c><1d2c2edd94c2baa470e0227c2fff9e5c>]/Info 3 0 R/Root 1 0 R/Size 8>>
-%iText-7.1.5-SNAPSHOT
+<</ID [<252247210c3b6ab594a29c562fb9d0e7><252247210c3b6ab594a29c562fb9d0e7>]/Info 3 0 R/Root 1 0 R/Size 8>>
+%iText-Core-7.2.1-SNAPSHOT
 startxref
-1472
+1463
 %%EOF

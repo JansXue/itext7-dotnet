@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,8 +43,9 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Common.Logging;
-using iText.IO.Util;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas;
@@ -57,6 +58,7 @@ using iText.StyledXmlParser.Node.Impl.Jsoup;
 using iText.StyledXmlParser.Resolver.Resource;
 using iText.Svg;
 using iText.Svg.Exceptions;
+using iText.Svg.Logs;
 using iText.Svg.Processors;
 using iText.Svg.Processors.Impl;
 using iText.Svg.Renderers;
@@ -74,11 +76,12 @@ namespace iText.Svg.Converter {
         private SvgConverter() {
         }
 
-        private static readonly ILog LOGGER = LogManager.GetLogger(typeof(iText.Svg.Converter.SvgConverter));
+        private static readonly ILogger LOGGER = ITextLogManager.GetLogger(typeof(iText.Svg.Converter.SvgConverter
+            ));
 
         private static void CheckNull(Object o) {
             if (o == null) {
-                throw new SvgProcessingException(SvgLogMessageConstant.PARAMETER_CANNOT_BE_NULL);
+                throw new SvgProcessingException(SvgExceptionMessageConstant.PARAMETER_CANNOT_BE_NULL);
             }
         }
 
@@ -119,7 +122,7 @@ namespace iText.Svg.Converter {
         /// Draws a String containing valid SVG to a document, on a given page
         /// number on the provided x and y coordinate.
         /// </summary>
-        /// <param name="content">the Stream object containing valid SVG content</param>
+        /// <param name="content">the String value containing valid SVG content</param>
         /// <param name="document">
         /// the
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
@@ -136,7 +139,7 @@ namespace iText.Svg.Converter {
         /// Draws a String containing valid SVG to a document, on a given page
         /// number on the provided x and y coordinate.
         /// </summary>
-        /// <param name="content">the Stream object containing valid SVG content</param>
+        /// <param name="content">the String value containing valid SVG content</param>
         /// <param name="document">
         /// the
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
@@ -156,14 +159,17 @@ namespace iText.Svg.Converter {
         /// Draws a Stream containing valid SVG to a document, on a given page
         /// number ate the origni of the page.
         /// </summary>
-        /// <param name="stream">the Stream object containing valid SVG content</param>
+        /// <param name="stream">
+        /// the
+        /// <see cref="System.IO.Stream">Stream</see>
+        /// containing valid SVG content
+        /// </param>
         /// <param name="document">
         /// the
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
         /// instance to draw on
         /// </param>
         /// <param name="pageNo">the page to draw on</param>
-        /// <exception cref="System.IO.IOException">when the Stream cannot be read correctly</exception>
         public static void DrawOnDocument(Stream stream, PdfDocument document, int pageNo) {
             DrawOnDocument(stream, document, pageNo, 0, 0);
         }
@@ -172,7 +178,11 @@ namespace iText.Svg.Converter {
         /// Draws a Stream containing valid SVG to a document, on a given page
         /// number on the provided x and y coordinate.
         /// </summary>
-        /// <param name="stream">the Stream object containing valid SVG content</param>
+        /// <param name="stream">
+        /// the
+        /// <see cref="System.IO.Stream">Stream</see>
+        /// containing valid SVG content
+        /// </param>
         /// <param name="document">
         /// the
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
@@ -181,7 +191,6 @@ namespace iText.Svg.Converter {
         /// <param name="pageNo">the page to draw on</param>
         /// <param name="x">x-coordinate of the location to draw at</param>
         /// <param name="y">y-coordinate of the location to draw at</param>
-        /// <exception cref="System.IO.IOException">when the Stream cannot be read correctly</exception>
         public static void DrawOnDocument(Stream stream, PdfDocument document, int pageNo, float x, float y) {
             CheckNull(document);
             DrawOnPage(stream, document.GetPage(pageNo), x, y);
@@ -191,7 +200,11 @@ namespace iText.Svg.Converter {
         /// Draws a Stream containing valid SVG to a document, on a given page
         /// number on the provided x and y coordinate.
         /// </summary>
-        /// <param name="stream">the Stream object containing valid SVG content</param>
+        /// <param name="stream">
+        /// the
+        /// <see cref="System.IO.Stream">Stream</see>
+        /// containing valid SVG content
+        /// </param>
         /// <param name="document">
         /// the
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
@@ -199,7 +212,6 @@ namespace iText.Svg.Converter {
         /// </param>
         /// <param name="pageNo">the page to draw on</param>
         /// <param name="props">a container for extra properties that customize the behavior</param>
-        /// <exception cref="System.IO.IOException">when the Stream cannot be read correctly</exception>
         public static void DrawOnDocument(Stream stream, PdfDocument document, int pageNo, ISvgConverterProperties
              props) {
             DrawOnDocument(stream, document, pageNo, 0, 0, props);
@@ -209,7 +221,11 @@ namespace iText.Svg.Converter {
         /// Draws a Stream containing valid SVG to a document, on a given page
         /// number on the provided x and y coordinate.
         /// </summary>
-        /// <param name="stream">the Stream object containing valid SVG content</param>
+        /// <param name="stream">
+        /// the
+        /// <see cref="System.IO.Stream">Stream</see>
+        /// containing valid SVG content
+        /// </param>
         /// <param name="document">
         /// the
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
@@ -219,7 +235,6 @@ namespace iText.Svg.Converter {
         /// <param name="x">x-coordinate of the location to draw at</param>
         /// <param name="y">y-coordinate of the location to draw at</param>
         /// <param name="props">a container for extra properties that customize the behavior</param>
-        /// <exception cref="System.IO.IOException">when the Stream cannot be read correctly</exception>
         public static void DrawOnDocument(Stream stream, PdfDocument document, int pageNo, float x, float y, ISvgConverterProperties
              props) {
             CheckNull(document);
@@ -290,7 +305,6 @@ namespace iText.Svg.Converter {
         /// <see cref="iText.Kernel.Pdf.PdfPage"/>
         /// instance to draw on
         /// </param>
-        /// <exception cref="System.IO.IOException">when the Stream cannot be read correctly</exception>
         public static void DrawOnPage(Stream stream, PdfPage page) {
             DrawOnPage(stream, page, 0, 0);
         }
@@ -308,7 +322,6 @@ namespace iText.Svg.Converter {
         /// </param>
         /// <param name="x">x-coordinate of the location to draw at</param>
         /// <param name="y">y-coordinate of the location to draw at</param>
-        /// <exception cref="System.IO.IOException">when the Stream cannot be read correctly</exception>
         public static void DrawOnPage(Stream stream, PdfPage page, float x, float y) {
             CheckNull(page);
             DrawOnCanvas(stream, new PdfCanvas(page), x, y);
@@ -326,7 +339,6 @@ namespace iText.Svg.Converter {
         /// instance to draw on
         /// </param>
         /// <param name="props">a container for extra properties that customize the behavior</param>
-        /// <exception cref="System.IO.IOException">when the Stream cannot be read correctly</exception>
         public static void DrawOnPage(Stream stream, PdfPage page, ISvgConverterProperties props) {
             DrawOnPage(stream, page, 0, 0, props);
         }
@@ -345,7 +357,6 @@ namespace iText.Svg.Converter {
         /// <param name="x">x-coordinate of the location to draw at</param>
         /// <param name="y">y-coordinate of the location to draw at</param>
         /// <param name="props">a container for extra properties that customize the behavior</param>
-        /// <exception cref="System.IO.IOException">when the Stream cannot be read correctly</exception>
         public static void DrawOnPage(Stream stream, PdfPage page, float x, float y, ISvgConverterProperties props
             ) {
             CheckNull(page);
@@ -416,7 +427,6 @@ namespace iText.Svg.Converter {
         /// <see cref="iText.Kernel.Pdf.Canvas.PdfCanvas"/>
         /// instance to draw on
         /// </param>
-        /// <exception cref="System.IO.IOException">when the Stream cannot be read correctly</exception>
         public static void DrawOnCanvas(Stream stream, PdfCanvas canvas) {
             DrawOnCanvas(stream, canvas, 0, 0);
         }
@@ -434,7 +444,6 @@ namespace iText.Svg.Converter {
         /// </param>
         /// <param name="x">x-coordinate of the location to draw at</param>
         /// <param name="y">y-coordinate of the location to draw at</param>
-        /// <exception cref="System.IO.IOException">when the Stream cannot be read correctly</exception>
         public static void DrawOnCanvas(Stream stream, PdfCanvas canvas, float x, float y) {
             CheckNull(canvas);
             Draw(ConvertToXObject(stream, canvas.GetDocument()), canvas, x, y);
@@ -452,7 +461,6 @@ namespace iText.Svg.Converter {
         /// instance to draw on
         /// </param>
         /// <param name="props">a container for extra properties that customize the behavior</param>
-        /// <exception cref="System.IO.IOException">when the Stream cannot be read correctly</exception>
         public static void DrawOnCanvas(Stream stream, PdfCanvas canvas, ISvgConverterProperties props) {
             DrawOnCanvas(stream, canvas, 0, 0, props);
         }
@@ -472,7 +480,6 @@ namespace iText.Svg.Converter {
         /// <param name="x">x-coordinate of the location to draw at</param>
         /// <param name="y">y-coordinate of the location to draw at</param>
         /// <param name="props">a container for extra properties that customize the behavior</param>
-        /// <exception cref="System.IO.IOException">when the Stream cannot be read correctly</exception>
         public static void DrawOnCanvas(Stream stream, PdfCanvas canvas, float x, float y, ISvgConverterProperties
              props) {
             CheckNull(canvas);
@@ -483,8 +490,7 @@ namespace iText.Svg.Converter {
         /// Converts SVG stored in a
         /// <see cref="System.IO.FileInfo"/>
         /// to a PDF
-        /// <see cref="System.IO.FileInfo"/>
-        /// .
+        /// <see cref="System.IO.FileInfo"/>.
         /// </summary>
         /// <param name="svgFile">
         /// the
@@ -496,7 +502,6 @@ namespace iText.Svg.Converter {
         /// <see cref="System.IO.FileInfo"/>
         /// containing the resulting PDF
         /// </param>
-        /// <exception cref="System.IO.IOException">Signals that an I/O exception has occurred.</exception>
         public static void CreatePdf(FileInfo svgFile, FileInfo pdfFile) {
             CreatePdf(svgFile, pdfFile, null, null);
         }
@@ -508,8 +513,7 @@ namespace iText.Svg.Converter {
         /// <see cref="System.IO.FileInfo"/>
         /// ,
         /// using specific
-        /// <see cref="iText.Svg.Processors.ISvgConverterProperties"/>
-        /// .
+        /// <see cref="iText.Svg.Processors.ISvgConverterProperties"/>.
         /// </summary>
         /// <param name="svgFile">
         /// the
@@ -524,9 +528,8 @@ namespace iText.Svg.Converter {
         /// <param name="props">
         /// a
         /// <see cref="iText.Svg.Processors.ISvgConverterProperties"/>
-        /// instance
+        /// an instance for extra properties to customize the behavior
         /// </param>
-        /// <exception cref="System.IO.IOException">Signals that an I/O exception has occurred.</exception>
         public static void CreatePdf(FileInfo svgFile, FileInfo pdfFile, ISvgConverterProperties props) {
             CreatePdf(svgFile, pdfFile, props, null);
         }
@@ -555,7 +558,6 @@ namespace iText.Svg.Converter {
         /// <see cref="iText.Kernel.Pdf.WriterProperties"/>
         /// for the pdf document
         /// </param>
-        /// <exception cref="System.IO.IOException">Signals that an I/O exception has occurred.</exception>
         public static void CreatePdf(FileInfo svgFile, FileInfo pdfFile, WriterProperties writerProps) {
             CreatePdf(svgFile, pdfFile, null, writerProps);
         }
@@ -569,8 +571,7 @@ namespace iText.Svg.Converter {
         /// using specific
         /// <see cref="iText.Svg.Processors.ISvgConverterProperties"/>
         /// and
-        /// <see cref="iText.Kernel.Pdf.WriterProperties"/>
-        /// .
+        /// <see cref="iText.Kernel.Pdf.WriterProperties"/>.
         /// </summary>
         /// <param name="svgFile">
         /// the
@@ -585,22 +586,21 @@ namespace iText.Svg.Converter {
         /// <param name="props">
         /// a
         /// <see cref="iText.Svg.Processors.ISvgConverterProperties"/>
-        /// instance
+        /// an instance for extra properties to customize the behavior
         /// </param>
         /// <param name="writerProps">
         /// a
         /// <see cref="iText.Kernel.Pdf.WriterProperties"/>
         /// for the pdf document
         /// </param>
-        /// <exception cref="System.IO.IOException">Signals that an I/O exception has occurred.</exception>
         public static void CreatePdf(FileInfo svgFile, FileInfo pdfFile, ISvgConverterProperties props, WriterProperties
              writerProps) {
             if (props == null) {
-                props = new SvgConverterProperties().SetBaseUri(FileUtil.GetParentDirectory(svgFile));
+                props = new SvgConverterProperties().SetBaseUri(FileUtil.GetParentDirectoryUri(svgFile));
             }
             else {
                 if (props.GetBaseUri() == null || String.IsNullOrEmpty(props.GetBaseUri())) {
-                    String baseUri = FileUtil.GetParentDirectory(svgFile);
+                    String baseUri = FileUtil.GetParentDirectoryUri(svgFile);
                     props = ConvertToSvgConverterProps(props, baseUri);
                 }
             }
@@ -616,9 +616,13 @@ namespace iText.Svg.Converter {
         /// Copies properties from custom ISvgConverterProperties into new SvgConverterProperties.
         /// Since ISvgConverterProperties itself is immutable we have to do it.
         /// </remarks>
-        /// <param name="props"/>
-        /// <param name="baseUri"/>
-        /// <returns/>
+        /// <param name="props">
+        /// 
+        /// <see cref="iText.Svg.Processors.ISvgConverterProperties"/>
+        /// an instance for extra properties to customize the behavior
+        /// </param>
+        /// <param name="baseUri">the directory of new SvgConverterProperties</param>
+        /// <returns>new SvgConverterProperties.</returns>
         private static SvgConverterProperties ConvertToSvgConverterProps(ISvgConverterProperties props, String baseUri
             ) {
             return new SvgConverterProperties().SetBaseUri(baseUri).SetMediaDeviceDescription(props.GetMediaDeviceDescription
@@ -634,7 +638,6 @@ namespace iText.Svg.Converter {
         /// containing the SVG
         /// </param>
         /// <param name="pdfDest">PDF destination outputStream</param>
-        /// <exception cref="System.IO.IOException">when the one of the streams cannot be read correctly</exception>
         public static void CreatePdf(Stream svgStream, Stream pdfDest) {
             CreatePdf(svgStream, pdfDest, null, null);
         }
@@ -647,10 +650,9 @@ namespace iText.Svg.Converter {
         /// containing the SVG
         /// </param>
         /// <param name="pdfDest">PDF destination outputStream</param>
-        /// <param name="writerprops">writerproperties for the pdf document</param>
-        /// <exception cref="System.IO.IOException">when the one of the streams cannot be read correctly</exception>
-        public static void CreatePdf(Stream svgStream, Stream pdfDest, WriterProperties writerprops) {
-            CreatePdf(svgStream, pdfDest, null, writerprops);
+        /// <param name="writerProps">writer properties for the pdf document</param>
+        public static void CreatePdf(Stream svgStream, Stream pdfDest, WriterProperties writerProps) {
+            CreatePdf(svgStream, pdfDest, null, writerProps);
         }
 
         /// <summary>Create a single page pdf containing the SVG on its page using the default processing and drawing logic
@@ -662,11 +664,10 @@ namespace iText.Svg.Converter {
         /// </param>
         /// <param name="pdfDest">PDF destination outputStream</param>
         /// <param name="props">
-        /// Svg
+        /// 
         /// <see cref="iText.Svg.Processors.ISvgConverterProperties"/>
-        /// to change default behaviour
+        /// an instance for extra properties to customize the behavior
         /// </param>
-        /// <exception cref="System.IO.IOException">when the one of the streams cannot be read correctly</exception>
         public static void CreatePdf(Stream svgStream, Stream pdfDest, ISvgConverterProperties props) {
             CreatePdf(svgStream, pdfDest, props, null);
         }
@@ -678,64 +679,64 @@ namespace iText.Svg.Converter {
         /// <see cref="System.IO.Stream">Stream</see>
         /// containing the SVG
         /// </param>
+        /// <param name="pdfDest">PDF destination outputStream</param>
         /// <param name="props">
         /// 
         /// <see cref="iText.Svg.Processors.ISvgConverterProperties"/>
-        /// to change default behaviour
+        /// an instance for extra properties to customize the behavior
         /// </param>
-        /// <param name="pdfDest">PDF destination outputStream</param>
         /// <param name="writerProps">
         /// 
         /// <see cref="iText.Kernel.Pdf.WriterProperties"/>
         /// for the pdf document
         /// </param>
-        /// <exception cref="System.IO.IOException">
-        /// when the one of the streams cannot be read correctly
-        /// public static void createPdf(InputStream svgStream,ISvgConverterProperties props, OutputStream pdfDest) throws IOException {
-        /// createPdf(svgStream,props,pdfDest,null);
-        /// }
-        /// <p>
-        /// /
-        /// Create a single page pdf containing the SVG on its page using the default processing and drawing logic
-        /// </exception>
-        /// <exception cref="System.IO.IOException">when the one of the streams cannot be read correctly</exception>
         public static void CreatePdf(Stream svgStream, Stream pdfDest, ISvgConverterProperties props, WriterProperties
              writerProps) {
-            //create doc
+            // Create doc
             if (writerProps == null) {
                 writerProps = new WriterProperties();
             }
-            PdfDocument pdfDocument = new PdfDocument(new PdfWriter(pdfDest, writerProps));
-            //TODO DEVSIX-2095
-            //process
-            ISvgProcessorResult processorResult = Process(Parse(svgStream, props), props);
-            ISvgNodeRenderer topSvgRenderer = processorResult.GetRootRenderer();
-            String baseUri = TryToExtractBaseUri(props);
-            SvgDrawContext drawContext = new SvgDrawContext(new ResourceResolver(baseUri), processorResult.GetFontProvider
-                ());
-            drawContext.AddNamedObjects(processorResult.GetNamedObjects());
-            //Add temp fonts
-            drawContext.SetTempFonts(processorResult.GetTempFonts());
-            //Extract topmost dimensions
-            CheckNull(topSvgRenderer);
-            CheckNull(pdfDocument);
-            float width;
-            float height;
-            float[] wh = ExtractWidthAndHeight(topSvgRenderer);
-            width = wh[0];
-            height = wh[1];
-            //adjust pagesize and create new page
-            pdfDocument.SetDefaultPageSize(new PageSize(width, height));
-            PdfPage page = pdfDocument.AddNewPage();
-            PdfCanvas pageCanvas = new PdfCanvas(page);
-            //Add to the first page
-            PdfFormXObject xObject = ConvertToXObject(topSvgRenderer, pdfDocument, drawContext);
-            //Draw
-            Draw(xObject, pageCanvas);
-            pdfDocument.Close();
+            using (PdfWriter writer = new PdfWriter(pdfDest, writerProps)) {
+                using (PdfDocument pdfDocument = new PdfDocument(writer)) {
+                    // Process
+                    ISvgProcessorResult processorResult = Process(Parse(svgStream, props), props);
+                    ResourceResolver resourceResolver = iText.Svg.Converter.SvgConverter.GetResourceResolver(processorResult, 
+                        props);
+                    SvgDrawContext drawContext = new SvgDrawContext(resourceResolver, processorResult.GetFontProvider());
+                    if (processorResult is SvgProcessorResult) {
+                        drawContext.SetCssContext(((SvgProcessorResult)processorResult).GetContext().GetCssContext());
+                    }
+                    drawContext.AddNamedObjects(processorResult.GetNamedObjects());
+                    // Add temp fonts
+                    drawContext.SetTempFonts(processorResult.GetTempFonts());
+                    ISvgNodeRenderer topSvgRenderer = processorResult.GetRootRenderer();
+                    // Extract topmost dimensions
+                    CheckNull(topSvgRenderer);
+                    CheckNull(pdfDocument);
+                    float width;
+                    float height;
+                    float[] wh = ExtractWidthAndHeight(topSvgRenderer);
+                    width = wh[0];
+                    height = wh[1];
+                    // Adjust pagesize and create new page
+                    pdfDocument.SetDefaultPageSize(new PageSize(width, height));
+                    PdfPage page = pdfDocument.AddNewPage();
+                    PdfCanvas pageCanvas = new PdfCanvas(page);
+                    // Add to the first page
+                    PdfFormXObject xObject = ConvertToXObject(topSvgRenderer, pdfDocument, drawContext);
+                    // Draw
+                    Draw(xObject, pageCanvas);
+                }
+            }
         }
 
         /// <summary>
+        /// Converts a String containing valid SVG content to an
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfFormXObject">XObject</see>
+        /// that can then be used on the passed
+        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>.
+        /// </summary>
+        /// <remarks>
         /// Converts a String containing valid SVG content to an
         /// <see cref="iText.Kernel.Pdf.Xobject.PdfFormXObject">XObject</see>
         /// that can then be used on the passed
@@ -743,25 +744,23 @@ namespace iText.Svg.Converter {
         /// . This method does NOT manipulate the
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
         /// in any way.
-        /// <p>
+        /// <para />
         /// This method (or its overloads) is the best method to use if you want to
         /// reuse the same SVG image multiple times on the same
-        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
-        /// .
-        /// <p>
+        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>.
+        /// <para />
         /// If you want to reuse this object on other
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
         /// instances,
         /// please either use any of the
-        /// <see cref="Process(iText.StyledXmlParser.Node.INode)"/>
+        /// <see cref="Process(iText.StyledXmlParser.Node.INode, iText.Svg.Processors.ISvgConverterProperties)"/>
         /// overloads in this same
         /// class and convert its result to an XObject with
         /// <see cref="ConvertToXObject(iText.Svg.Renderers.ISvgNodeRenderer, iText.Kernel.Pdf.PdfDocument)"/>
         /// , or look into
         /// using
-        /// <see cref="iText.Kernel.Pdf.PdfObject.CopyTo(iText.Kernel.Pdf.PdfDocument)"/>
-        /// .
-        /// </summary>
+        /// <see cref="iText.Kernel.Pdf.PdfObject.CopyTo(iText.Kernel.Pdf.PdfDocument)"/>.
+        /// </remarks>
         /// <param name="content">the String value containing valid SVG content</param>
         /// <param name="document">
         /// the
@@ -782,29 +781,33 @@ namespace iText.Svg.Converter {
         /// Converts a String containing valid SVG content to an
         /// <see cref="iText.Kernel.Pdf.Xobject.PdfFormXObject">XObject</see>
         /// that can then be used on the passed
+        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>.
+        /// </summary>
+        /// <remarks>
+        /// Converts a String containing valid SVG content to an
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfFormXObject">XObject</see>
+        /// that can then be used on the passed
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
         /// . This method does NOT manipulate the
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
         /// in any way.
-        /// <p>
+        /// <para />
         /// This method (or its overloads) is the best method to use if you want to
         /// reuse the same SVG image multiple times on the same
-        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
-        /// .
-        /// <p>
+        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>.
+        /// <para />
         /// If you want to reuse this object on other
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
         /// instances,
         /// please either use any of the
-        /// <see cref="Process(iText.StyledXmlParser.Node.INode)"/>
+        /// <see cref="Process(iText.StyledXmlParser.Node.INode, iText.Svg.Processors.ISvgConverterProperties)"/>
         /// overloads in this same
         /// class and convert its result to an XObject with
         /// <see cref="ConvertToXObject(iText.Svg.Renderers.ISvgNodeRenderer, iText.Kernel.Pdf.PdfDocument)"/>
         /// , or look into
         /// using
-        /// <see cref="iText.Kernel.Pdf.PdfObject.CopyTo(iText.Kernel.Pdf.PdfDocument)"/>
-        /// .
-        /// </summary>
+        /// <see cref="iText.Kernel.Pdf.PdfObject.CopyTo(iText.Kernel.Pdf.PdfDocument)"/>.
+        /// </remarks>
         /// <param name="content">the String value containing valid SVG content</param>
         /// <param name="document">
         /// the
@@ -814,7 +817,7 @@ namespace iText.Svg.Converter {
         /// <param name="props">
         /// 
         /// <see cref="iText.Svg.Processors.ISvgConverterProperties"/>
-        /// to customize the behavior
+        /// an instance for extra properties to customize the behavior
         /// </param>
         /// <returns>
         /// a
@@ -833,33 +836,37 @@ namespace iText.Svg.Converter {
         /// Converts a String containing valid SVG content to an
         /// <see cref="iText.Kernel.Pdf.Xobject.PdfFormXObject">XObject</see>
         /// that can then be used on the passed
+        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>.
+        /// </summary>
+        /// <remarks>
+        /// Converts a String containing valid SVG content to an
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfFormXObject">XObject</see>
+        /// that can then be used on the passed
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
         /// . This method does NOT manipulate the
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
         /// in any way.
-        /// <p>
+        /// <para />
         /// This method (or its overloads) is the best method to use if you want to
         /// reuse the same SVG image multiple times on the same
-        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
-        /// .
-        /// <p>
+        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>.
+        /// <para />
         /// If you want to reuse this object on other
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
         /// instances,
         /// please either use any of the
-        /// <see cref="Process(iText.StyledXmlParser.Node.INode)"/>
+        /// <see cref="Process(iText.StyledXmlParser.Node.INode, iText.Svg.Processors.ISvgConverterProperties)"/>
         /// overloads in this same
         /// class and convert its result to an XObject with
         /// <see cref="ConvertToXObject(iText.Svg.Renderers.ISvgNodeRenderer, iText.Kernel.Pdf.PdfDocument)"/>
         /// , or look into
         /// using
-        /// <see cref="iText.Kernel.Pdf.PdfObject.CopyTo(iText.Kernel.Pdf.PdfDocument)"/>
-        /// .
-        /// </summary>
+        /// <see cref="iText.Kernel.Pdf.PdfObject.CopyTo(iText.Kernel.Pdf.PdfDocument)"/>.
+        /// </remarks>
         /// <param name="stream">
         /// the
         /// <see cref="System.IO.Stream">Stream</see>
-        /// object containing valid SVG content
+        /// containing valid SVG content
         /// </param>
         /// <param name="document">
         /// the
@@ -869,7 +876,7 @@ namespace iText.Svg.Converter {
         /// <param name="props">
         /// 
         /// <see cref="iText.Svg.Processors.ISvgConverterProperties"/>
-        /// to customize the behavior
+        /// an instance for extra properties to customize the behavior
         /// </param>
         /// <returns>
         /// a
@@ -877,7 +884,6 @@ namespace iText.Svg.Converter {
         /// containing the PDF instructions
         /// corresponding to the passed SVG content
         /// </returns>
-        /// <exception cref="System.IO.IOException">when the Stream cannot be read correctly</exception>
         public static PdfFormXObject ConvertToXObject(Stream stream, PdfDocument document, ISvgConverterProperties
              props) {
             CheckNull(stream);
@@ -888,12 +894,12 @@ namespace iText.Svg.Converter {
         //Private converter for unification
         private static PdfFormXObject ConvertToXObject(ISvgProcessorResult processorResult, PdfDocument document, 
             ISvgConverterProperties props) {
-            String baseUri = "";
-            if (props != null) {
-                baseUri = props.GetBaseUri();
+            ResourceResolver resourceResolver = iText.Svg.Converter.SvgConverter.GetResourceResolver(processorResult, 
+                props);
+            SvgDrawContext drawContext = new SvgDrawContext(resourceResolver, processorResult.GetFontProvider());
+            if (processorResult is SvgProcessorResult) {
+                drawContext.SetCssContext(((SvgProcessorResult)processorResult).GetContext().GetCssContext());
             }
-            SvgDrawContext drawContext = new SvgDrawContext(new ResourceResolver(baseUri), processorResult.GetFontProvider
-                ());
             drawContext.SetTempFonts(processorResult.GetTempFonts());
             drawContext.AddNamedObjects(processorResult.GetNamedObjects());
             return ConvertToXObject(processorResult.GetRootRenderer(), document, drawContext);
@@ -903,33 +909,37 @@ namespace iText.Svg.Converter {
         /// Converts a String containing valid SVG content to an
         /// <see cref="iText.Kernel.Pdf.Xobject.PdfFormXObject">XObject</see>
         /// that can then be used on the passed
+        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>.
+        /// </summary>
+        /// <remarks>
+        /// Converts a String containing valid SVG content to an
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfFormXObject">XObject</see>
+        /// that can then be used on the passed
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
         /// . This method does NOT manipulate the
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
         /// in any way.
-        /// <p>
+        /// <para />
         /// This method (or its overloads) is the best method to use if you want to
         /// reuse the same SVG image multiple times on the same
-        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
-        /// .
-        /// <p>
+        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>.
+        /// <para />
         /// If you want to reuse this object on other
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
         /// instances,
         /// please either use any of the
-        /// <see cref="Process(iText.StyledXmlParser.Node.INode)"/>
+        /// <see cref="Process(iText.StyledXmlParser.Node.INode, iText.Svg.Processors.ISvgConverterProperties)"/>
         /// overloads in this same
         /// class and convert its result to an XObject with
         /// <see cref="ConvertToXObject(iText.Svg.Renderers.ISvgNodeRenderer, iText.Kernel.Pdf.PdfDocument)"/>
         /// , or look into
         /// using
-        /// <see cref="iText.Kernel.Pdf.PdfObject.CopyTo(iText.Kernel.Pdf.PdfDocument)"/>
-        /// .
-        /// </summary>
+        /// <see cref="iText.Kernel.Pdf.PdfObject.CopyTo(iText.Kernel.Pdf.PdfDocument)"/>.
+        /// </remarks>
         /// <param name="stream">
         /// the
         /// <see cref="System.IO.Stream">Stream</see>
-        /// object containing valid SVG content
+        /// containing valid SVG content
         /// </param>
         /// <param name="document">
         /// the
@@ -942,7 +952,6 @@ namespace iText.Svg.Converter {
         /// containing the PDF instructions
         /// corresponding to the passed SVG content
         /// </returns>
-        /// <exception cref="System.IO.IOException">when the Stream cannot be read correctly</exception>
         public static PdfFormXObject ConvertToXObject(Stream stream, PdfDocument document) {
             return ConvertToXObject(stream, document, null);
         }
@@ -951,30 +960,38 @@ namespace iText.Svg.Converter {
         /// Converts a String containing valid SVG content to an
         /// <see cref="iText.Kernel.Pdf.Xobject.PdfFormXObject">XObject</see>
         /// that can then be used on the passed
+        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>.
+        /// </summary>
+        /// <remarks>
+        /// Converts a String containing valid SVG content to an
+        /// <see cref="iText.Kernel.Pdf.Xobject.PdfFormXObject">XObject</see>
+        /// that can then be used on the passed
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
         /// . This method does NOT manipulate the
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
         /// in any way.
-        /// <p>
+        /// <para />
         /// This method (or its overloads) is the best method to use if you want to
         /// reuse the same SVG image multiple times on the same
-        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
-        /// .
-        /// <p>
+        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>.
+        /// <para />
         /// If you want to reuse this object on other
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
         /// instances,
         /// please either use any of the
-        /// <see cref="Process(iText.StyledXmlParser.Node.INode)"/>
+        /// <see cref="Process(iText.StyledXmlParser.Node.INode, iText.Svg.Processors.ISvgConverterProperties)"/>
         /// overloads in this same
         /// class and convert its result to an XObject with
         /// <see cref="ConvertToXObject(iText.Svg.Renderers.ISvgNodeRenderer, iText.Kernel.Pdf.PdfDocument)"/>
         /// , or look into
         /// using
-        /// <see cref="iText.Kernel.Pdf.PdfObject.CopyTo(iText.Kernel.Pdf.PdfDocument)"/>
-        /// .
-        /// </summary>
-        /// <param name="stream">the Stream object containing valid SVG content</param>
+        /// <see cref="iText.Kernel.Pdf.PdfObject.CopyTo(iText.Kernel.Pdf.PdfDocument)"/>.
+        /// </remarks>
+        /// <param name="stream">
+        /// the
+        /// <see cref="System.IO.Stream">Stream</see>
+        /// containing valid SVG content
+        /// </param>
         /// <param name="document">
         /// the
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
@@ -983,10 +1000,8 @@ namespace iText.Svg.Converter {
         /// <returns>
         /// a
         /// <see cref="iText.Layout.Element.Image">Image</see>
-        /// containing the PDF instructions
-        /// corresponding to the passed SVG content
+        /// containing the PDF instructions corresponding to the passed SVG content
         /// </returns>
-        /// <exception cref="System.IO.IOException">when the Stream cannot be read correctly</exception>
         public static Image ConvertToImage(Stream stream, PdfDocument document) {
             return new Image(ConvertToXObject(stream, document));
         }
@@ -995,33 +1010,37 @@ namespace iText.Svg.Converter {
         /// Converts a String containing valid SVG content to an
         /// <see cref="iText.Layout.Element.Image">image</see>
         /// that can then be used on the passed
+        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>.
+        /// </summary>
+        /// <remarks>
+        /// Converts a String containing valid SVG content to an
+        /// <see cref="iText.Layout.Element.Image">image</see>
+        /// that can then be used on the passed
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
         /// . This method does NOT manipulate the
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
         /// in any way.
-        /// <p>
+        /// <para />
         /// This method (or its overloads) is the best method to use if you want to
         /// reuse the same SVG image multiple times on the same
-        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
-        /// .
-        /// <p>
+        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>.
+        /// <para />
         /// If you want to reuse this object on other
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
         /// instances,
         /// please either use any of the
-        /// <see cref="Process(iText.StyledXmlParser.Node.INode)"/>
+        /// <see cref="Process(iText.StyledXmlParser.Node.INode, iText.Svg.Processors.ISvgConverterProperties)"/>
         /// overloads in this same
         /// class and convert its result to an XObject with
         /// <see cref="ConvertToXObject(iText.Svg.Renderers.ISvgNodeRenderer, iText.Kernel.Pdf.PdfDocument)"/>
         /// , or look into
         /// using
-        /// <see cref="iText.Kernel.Pdf.PdfObject.CopyTo(iText.Kernel.Pdf.PdfDocument)"/>
-        /// .
-        /// </summary>
+        /// <see cref="iText.Kernel.Pdf.PdfObject.CopyTo(iText.Kernel.Pdf.PdfDocument)"/>.
+        /// </remarks>
         /// <param name="stream">
         /// the
         /// <see cref="System.IO.Stream">Stream</see>
-        /// object containing valid SVG content
+        /// containing valid SVG content
         /// </param>
         /// <param name="document">
         /// the
@@ -1031,15 +1050,13 @@ namespace iText.Svg.Converter {
         /// <param name="props">
         /// 
         /// <see cref="iText.Svg.Processors.ISvgConverterProperties"/>
-        /// to customize the behavior
+        /// an instance for extra properties to customize the behavior
         /// </param>
         /// <returns>
         /// a
         /// <see cref="iText.Layout.Element.Image">Image</see>
-        /// containing the PDF instructions
-        /// corresponding to the passed SVG content
+        /// containing the PDF instructions corresponding to the passed SVG content
         /// </returns>
-        /// <exception cref="System.IO.IOException">when the Stream cannot be read correctly</exception>
         public static Image ConvertToImage(Stream stream, PdfDocument document, ISvgConverterProperties props) {
             return new Image(ConvertToXObject(stream, document, props));
         }
@@ -1048,14 +1065,15 @@ namespace iText.Svg.Converter {
         * This method is kept private, because there is little purpose in exposing it.
         */
         private static void Draw(PdfFormXObject pdfForm, PdfCanvas canvas) {
-            canvas.AddXObject(pdfForm, 0, 0);
+            Draw(pdfForm, canvas, 0, 0);
         }
 
         /*
         * This method is kept private, because there is little purpose in exposing it.
         */
-        private static void Draw(PdfFormXObject pdfForm, PdfCanvas canvas, float x, float y) {
-            canvas.AddXObject(pdfForm, x, y);
+        internal static void Draw(PdfFormXObject pdfForm, PdfCanvas canvas, float x, float y) {
+            canvas.AddXObjectAt(pdfForm, x + (pdfForm.GetBBox() == null ? 0 : pdfForm.GetBBox().GetAsNumber(0).FloatValue
+                ()), y + (pdfForm.GetBBox() == null ? 0 : pdfForm.GetBBox().GetAsNumber(1).FloatValue()));
         }
 
         /// <summary>
@@ -1065,23 +1083,21 @@ namespace iText.Svg.Converter {
         /// <remarks>
         /// This method draws a NodeRenderer tree to a canvas that is tied to the
         /// passed document.
-        /// <p>
+        /// <para />
         /// This method (or its overloads) is the best method to use if you want to
         /// reuse the same SVG image multiple times on the same
-        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
-        /// .
-        /// <p>
+        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>.
+        /// <para />
         /// If you want to reuse this object on other
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
         /// instances,
         /// please either use any of the
-        /// <see cref="Process(iText.StyledXmlParser.Node.INode)"/>
+        /// <see cref="Process(iText.StyledXmlParser.Node.INode, iText.Svg.Processors.ISvgConverterProperties)"/>
         /// overloads in this same
         /// class and convert its result to an XObject with
         /// this method, or look into
         /// using
-        /// <see cref="iText.Kernel.Pdf.PdfObject.CopyTo(iText.Kernel.Pdf.PdfDocument)"/>
-        /// .
+        /// <see cref="iText.Kernel.Pdf.PdfObject.CopyTo(iText.Kernel.Pdf.PdfDocument)"/>.
         /// </remarks>
         /// <param name="topSvgRenderer">
         /// the
@@ -1112,23 +1128,21 @@ namespace iText.Svg.Converter {
         /// <remarks>
         /// This method draws a NodeRenderer tree to a canvas that is tied to the
         /// passed document.
-        /// <p>
+        /// <para />
         /// This method (or its overloads) is the best method to use if you want to
         /// reuse the same SVG image multiple times on the same
-        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
-        /// .
-        /// <p>
+        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>.
+        /// <para />
         /// If you want to reuse this object on other
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
         /// instances,
         /// please either use any of the
-        /// <see cref="Process(iText.StyledXmlParser.Node.INode)"/>
+        /// <see cref="Process(iText.StyledXmlParser.Node.INode, iText.Svg.Processors.ISvgConverterProperties)"/>
         /// overloads in this same
         /// class and convert its result to an XObject with
         /// this method, or look into
         /// using
-        /// <see cref="iText.Kernel.Pdf.PdfObject.CopyTo(iText.Kernel.Pdf.PdfDocument)"/>
-        /// .
+        /// <see cref="iText.Kernel.Pdf.PdfObject.CopyTo(iText.Kernel.Pdf.PdfDocument)"/>.
         /// </remarks>
         /// <param name="topSvgRenderer">
         /// the
@@ -1167,16 +1181,25 @@ namespace iText.Svg.Converter {
         /// <see cref="iText.Svg.Processors.Impl.DefaultSvgProcessor"/>
         /// )
         /// The parsing of the stream is done using UTF-8 as the default charset.
+        /// </summary>
+        /// <remarks>
+        /// Parse and process an Inputstream containing an SVG, using the default Svg processor (
+        /// <see cref="iText.Svg.Processors.Impl.DefaultSvgProcessor"/>
+        /// )
+        /// The parsing of the stream is done using UTF-8 as the default charset.
         /// The properties used by the processor are the
         /// <see cref="iText.Svg.Processors.Impl.SvgConverterProperties"/>
-        /// </summary>
-        /// <param name="svgStream">Input stream containing the SVG to parse and process</param>
+        /// </remarks>
+        /// <param name="svgStream">
+        /// 
+        /// <see cref="System.IO.Stream">Stream</see>
+        /// containing the SVG to parse and process
+        /// </param>
         /// <returns>
         /// 
         /// <see cref="iText.Svg.Processors.ISvgProcessorResult"/>
         /// containing the root renderer and metadata of the svg
         /// </returns>
-        /// <exception cref="System.IO.IOException">when the Stream cannot be read correctly</exception>
         public static ISvgProcessorResult ParseAndProcess(Stream svgStream) {
             return ParseAndProcess(svgStream, null);
         }
@@ -1194,18 +1217,23 @@ namespace iText.Svg.Converter {
         /// <param name="props">
         /// 
         /// <see cref="iText.Svg.Processors.ISvgConverterProperties"/>
-        /// used by the processor
+        /// an instance for extra properties to customize the behavior
         /// </param>
         /// <returns>
         /// 
         /// <see cref="iText.Svg.Processors.ISvgProcessorResult"/>
         /// containing the root renderer and metadata of the svg
         /// </returns>
-        /// <exception cref="System.IO.IOException">when the Stream cannot be read correctly</exception>
         public static ISvgProcessorResult ParseAndProcess(Stream svgStream, ISvgConverterProperties props) {
             IXmlParser parser = new JsoupXmlParser();
-            String charset = TryToExtractCharset(props);
-            INode nodeTree = parser.Parse(svgStream, charset);
+            String charset = iText.Svg.Converter.SvgConverter.TryToExtractCharset(props);
+            INode nodeTree;
+            try {
+                nodeTree = parser.Parse(svgStream, charset);
+            }
+            catch (Exception e) {
+                throw new SvgProcessingException(SvgExceptionMessageConstant.FAILED_TO_PARSE_INPUTSTREAM, e);
+            }
             return new DefaultSvgProcessor().Process(nodeTree, props);
         }
 
@@ -1215,24 +1243,17 @@ namespace iText.Svg.Converter {
         /// to convert an XML
         /// DOM tree to a node renderer tree.
         /// </summary>
-        /// <param name="root">the XML DOM tree</param>
-        /// <returns>a node renderer tree corresponding to the passed XML DOM tree</returns>
-        public static ISvgProcessorResult Process(INode root) {
-            CheckNull(root);
-            return new DefaultSvgProcessor().Process(root);
-        }
-
-        /// <summary>
+        /// <remarks>
         /// Use the default implementation of
         /// <see cref="iText.Svg.Processors.ISvgProcessor"/>
         /// to convert an XML
         /// DOM tree to a node renderer tree. The passed properties can modify the default behaviour
-        /// </summary>
+        /// </remarks>
         /// <param name="root">the XML DOM tree</param>
         /// <param name="props">
         /// 
         /// <see cref="iText.Svg.Processors.ISvgConverterProperties"/>
-        /// to customize the behavior
+        /// an instance for extra properties to customize the behavior
         /// </param>
         /// <returns>a node renderer tree corresponding to the passed XML DOM tree</returns>
         public static ISvgProcessorResult Process(INode root, ISvgConverterProperties props) {
@@ -1259,16 +1280,14 @@ namespace iText.Svg.Converter {
         /// Parse a Stream containing valid SVG into an XML DOM node, using the
         /// default JSoup XML parser. This method will assume that the encoding of
         /// the Stream is
-        /// <c>UTF-8</c>
-        /// .
+        /// <c>UTF-8</c>.
         /// </remarks>
         /// <param name="stream">
         /// the
         /// <see cref="System.IO.Stream">Stream</see>
-        /// object containing valid SVG content
+        /// containing valid SVG content
         /// </param>
         /// <returns>an XML DOM tree corresponding to the passed String input</returns>
-        /// <exception cref="System.IO.IOException">when the Stream cannot be read correctly</exception>
         public static INode Parse(Stream stream) {
             CheckNull(stream);
             return Parse(stream, null);
@@ -1292,20 +1311,19 @@ namespace iText.Svg.Converter {
         /// <param name="stream">
         /// the
         /// <see cref="System.IO.Stream">Stream</see>
-        /// object containing valid SVG content
+        /// containing valid SVG content
         /// </param>
         /// <param name="props">
         /// 
         /// <see cref="iText.Svg.Processors.ISvgConverterProperties"/>
-        /// to customize the behavior
+        /// an instance for extra properties to customize the behavior
         /// </param>
         /// <returns>an XML DOM tree corresponding to the passed String input</returns>
-        /// <exception cref="System.IO.IOException">when the Stream cannot be read correctly</exception>
         public static INode Parse(Stream stream, ISvgConverterProperties props) {
             CheckNull(stream);
             // props is allowed to be null
             IXmlParser xmlParser = new JsoupXmlParser();
-            return xmlParser.Parse(stream, TryToExtractCharset(props));
+            return xmlParser.Parse(stream, iText.Svg.Converter.SvgConverter.TryToExtractCharset(props));
         }
 
         /// <summary>
@@ -1313,19 +1331,28 @@ namespace iText.Svg.Converter {
         /// defaulting to respective viewbox values if either one is not present or
         /// to browser default if viewbox is missing as well
         /// </summary>
-        /// <param name="topSvgRenderer"/>
+        /// <param name="topSvgRenderer">
+        /// the
+        /// <see cref="iText.Svg.Renderers.ISvgNodeRenderer"/>
+        /// instance that contains
+        /// the renderer tree
+        /// </param>
         /// <returns>float[2], width is in position 0, height in position 1</returns>
         public static float[] ExtractWidthAndHeight(ISvgNodeRenderer topSvgRenderer) {
             float[] res = new float[2];
             bool viewBoxPresent = false;
             //Parse viewbox
             String vbString = topSvgRenderer.GetAttribute(SvgConstants.Attributes.VIEWBOX);
+            // TODO: DEVSIX-3923 remove normalization (.toLowerCase)
+            if (vbString == null) {
+                vbString = topSvgRenderer.GetAttribute(SvgConstants.Attributes.VIEWBOX.ToLowerInvariant());
+            }
             float[] values = new float[] { 0, 0, 0, 0 };
             if (vbString != null) {
                 IList<String> valueStrings = SvgCssUtils.SplitValueList(vbString);
                 values = new float[valueStrings.Count];
                 for (int i = 0; i < values.Length; i++) {
-                    values[i] = CssUtils.ParseAbsoluteLength(valueStrings[i]);
+                    values[i] = CssDimensionParsingUtils.ParseAbsoluteLength(valueStrings[i]);
                 }
                 viewBoxPresent = true;
             }
@@ -1340,13 +1367,13 @@ namespace iText.Svg.Converter {
                 }
                 else {
                     //Log Warning
-                    LOGGER.Warn(SvgLogMessageConstant.MISSING_WIDTH);
+                    LOGGER.LogWarning(SvgLogMessageConstant.MISSING_WIDTH);
                     //Set to browser default
-                    width = CssUtils.ParseAbsoluteLength("300px");
+                    width = CssDimensionParsingUtils.ParseAbsoluteLength("300px");
                 }
             }
             else {
-                width = CssUtils.ParseAbsoluteLength(wString);
+                width = CssDimensionParsingUtils.ParseAbsoluteLength(wString);
             }
             hString = topSvgRenderer.GetAttribute(SvgConstants.Attributes.HEIGHT);
             if (hString == null) {
@@ -1355,43 +1382,46 @@ namespace iText.Svg.Converter {
                 }
                 else {
                     //Log Warning
-                    LOGGER.Warn(SvgLogMessageConstant.MISSING_HEIGHT);
+                    LOGGER.LogWarning(SvgLogMessageConstant.MISSING_HEIGHT);
                     //Set to browser default
-                    height = CssUtils.ParseAbsoluteLength("150px");
+                    height = CssDimensionParsingUtils.ParseAbsoluteLength("150px");
                 }
             }
             else {
-                height = CssUtils.ParseAbsoluteLength(hString);
+                height = CssDimensionParsingUtils.ParseAbsoluteLength(hString);
             }
             res[0] = width;
             res[1] = height;
             return res;
         }
 
+        internal static ResourceResolver GetResourceResolver(ISvgProcessorResult processorResult, ISvgConverterProperties
+             props) {
+            if (processorResult is SvgProcessorResult) {
+                return ((SvgProcessorResult)processorResult).GetContext().GetResourceResolver();
+            }
+            return CreateResourceResolver(props);
+        }
+
         /// <summary>
         /// Tries to extract charset from
-        /// <seealso>ISvgConverterProperties</seealso>
-        /// .
+        /// <see cref="iText.Svg.Processors.ISvgConverterProperties"/>.
         /// </summary>
-        /// <param name="props">converter properties</param>
-        /// <returns>charset  | null</returns>
+        /// <param name="props">
+        /// 
+        /// <see cref="iText.Svg.Processors.ISvgConverterProperties"/>
+        /// an instance for extra properties to customize the behavior
+        /// </param>
+        /// <returns>charset | null</returns>
         private static String TryToExtractCharset(ISvgConverterProperties props) {
             return props != null ? props.GetCharset() : null;
         }
 
-        /// <summary>
-        /// Tries to extract baseUri from
-        /// <seealso>ISvgConverterProperties</seealso>
-        /// .
-        /// </summary>
-        /// <param name="props">converter properties</param>
-        /// <returns>baseUrl  | null</returns>
-        private static String TryToExtractBaseUri(ISvgConverterProperties props) {
-            if (props == null || props.GetBaseUri() == null) {
-                return null;
+        private static ResourceResolver CreateResourceResolver(ISvgConverterProperties props) {
+            if (props == null) {
+                return new ResourceResolver(null);
             }
-            String baseUrl = props.GetBaseUri().Trim();
-            return String.IsNullOrEmpty(baseUrl) ? null : baseUrl;
+            return new ResourceResolver(props.GetBaseUri(), props.GetResourceRetriever());
         }
     }
 }

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,7 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.StyledXmlParser.Css;
 using iText.StyledXmlParser.Css.Resolve.Shorthand;
 
@@ -77,10 +77,10 @@ namespace iText.StyledXmlParser.Css.Resolve.Shorthand.Impl {
         * @see com.itextpdf.styledxmlparser.css.resolve.shorthand.IShorthandResolver#resolveShorthand(java.lang.String)
         */
         public virtual IList<CssDeclaration> ResolveShorthand(String shorthandExpression) {
-            String[] props = iText.IO.Util.StringUtil.Split(shorthandExpression, "\\s*\\/\\s*");
+            String[] props = iText.Commons.Utils.StringUtil.Split(shorthandExpression, "\\/");
             String[][] properties = new String[props.Length][];
             for (int i = 0; i < props.Length; i++) {
-                properties[i] = iText.IO.Util.StringUtil.Split(props[i], "\\s+");
+                properties[i] = iText.Commons.Utils.StringUtil.Split(props[i].Trim(), "\\s+");
             }
             String[] resultExpressions = new String[4];
             for (int i = 0; i < resultExpressions.Length; i++) {

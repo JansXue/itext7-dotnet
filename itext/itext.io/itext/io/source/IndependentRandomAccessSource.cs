@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -58,13 +58,11 @@ namespace iText.IO.Source {
         }
 
         /// <summary><inheritDoc/></summary>
-        /// <exception cref="System.IO.IOException"/>
         public virtual int Get(long position) {
             return source.Get(position);
         }
 
         /// <summary><inheritDoc/></summary>
-        /// <exception cref="System.IO.IOException"/>
         public virtual int Get(long position, byte[] bytes, int off, int len) {
             return source.Get(position, bytes, off, len);
         }
@@ -75,7 +73,6 @@ namespace iText.IO.Source {
         }
 
         /// <summary>Does nothing - the underlying source is not closed</summary>
-        /// <exception cref="System.IO.IOException"/>
         public virtual void Close() {
         }
         // do not close the source

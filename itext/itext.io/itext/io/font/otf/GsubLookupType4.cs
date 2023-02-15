@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -54,7 +54,6 @@ namespace iText.IO.Font.Otf {
         /// </remarks>
         private IDictionary<int, IList<int[]>> ligatures;
 
-        /// <exception cref="System.IO.IOException"/>
         public GsubLookupType4(OpenTypeFontTableReader openReader, int lookupFlag, int[] subTableLocations)
             : base(openReader, lookupFlag, subTableLocations) {
             ligatures = new Dictionary<int, IList<int[]>>();
@@ -62,7 +61,6 @@ namespace iText.IO.Font.Otf {
         }
 
         public override bool TransformOne(GlyphLine line) {
-            //TODO >
             if (line.idx >= line.end) {
                 return false;
             }
@@ -96,11 +94,10 @@ namespace iText.IO.Font.Otf {
             return changed;
         }
 
-        /// <exception cref="System.IO.IOException"/>
         protected internal override void ReadSubTable(int subTableLocation) {
             openReader.rf.Seek(subTableLocation);
+            // subformat - always 1
             openReader.rf.ReadShort();
-            //subformat - always 1
             int coverage = openReader.rf.ReadUnsignedShort() + subTableLocation;
             int ligSetCount = openReader.rf.ReadUnsignedShort();
             int[] ligatureSet = new int[ligSetCount];

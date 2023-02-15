@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -87,7 +87,7 @@ namespace iText.StyledXmlParser.Css.Selector.Item {
             IElementNode element = (IElementNode)node;
             String classAttr = element.GetAttribute(CommonAttributeConstants.CLASS);
             if (classAttr != null && classAttr.Length > 0) {
-                String[] classNames = iText.IO.Util.StringUtil.Split(classAttr, " ");
+                String[] classNames = iText.Commons.Utils.StringUtil.Split(classAttr, " ");
                 foreach (String currClassName in classNames) {
                     if (this.className.Equals(currClassName.Trim())) {
                         return true;

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -104,7 +104,6 @@ namespace iText.IO.Image {
         /// Load data by URL. url must be not null.
         /// Note, this method doesn't check if data or url is null.
         /// </remarks>
-        /// <exception cref="System.IO.IOException"/>
         internal virtual void LoadData() {
             Stream input = null;
             try {

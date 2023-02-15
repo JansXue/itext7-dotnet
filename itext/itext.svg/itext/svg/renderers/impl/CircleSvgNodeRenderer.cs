@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -54,14 +54,14 @@ namespace iText.Svg.Renderers.Impl {
             cx = 0;
             cy = 0;
             if (GetAttribute(SvgConstants.Attributes.CX) != null) {
-                cx = CssUtils.ParseAbsoluteLength(GetAttribute(SvgConstants.Attributes.CX));
+                cx = CssDimensionParsingUtils.ParseAbsoluteLength(GetAttribute(SvgConstants.Attributes.CX));
             }
             if (GetAttribute(SvgConstants.Attributes.CY) != null) {
-                cy = CssUtils.ParseAbsoluteLength(GetAttribute(SvgConstants.Attributes.CY));
+                cy = CssDimensionParsingUtils.ParseAbsoluteLength(GetAttribute(SvgConstants.Attributes.CY));
             }
-            if (GetAttribute(SvgConstants.Attributes.R) != null && CssUtils.ParseAbsoluteLength(GetAttribute(SvgConstants.Attributes
-                .R)) > 0) {
-                rx = CssUtils.ParseAbsoluteLength(GetAttribute(SvgConstants.Attributes.R));
+            if (GetAttribute(SvgConstants.Attributes.R) != null && CssDimensionParsingUtils.ParseAbsoluteLength(GetAttribute
+                (SvgConstants.Attributes.R)) > 0) {
+                rx = CssDimensionParsingUtils.ParseAbsoluteLength(GetAttribute(SvgConstants.Attributes.R));
                 ry = rx;
             }
             else {

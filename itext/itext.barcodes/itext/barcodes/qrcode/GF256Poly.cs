@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,12 +45,13 @@ using System;
 using System.Text;
 
 namespace iText.Barcodes.Qrcode {
-    /// <summary><p>Represents a polynomial whose coefficients are elements of GF(256).</summary>
+    /// <summary>Represents a polynomial whose coefficients are elements of GF(256).</summary>
     /// <remarks>
-    /// <p>Represents a polynomial whose coefficients are elements of GF(256).
-    /// Instances of this class are immutable.</p>
-    /// <p>Much credit is due to William Rucklidge since portions of this code are an indirect
-    /// port of his C++ Reed-Solomon implementation.</p>
+    /// Represents a polynomial whose coefficients are elements of GF(256).
+    /// Instances of this class are immutable.
+    /// <para />
+    /// Much credit is due to William Rucklidge since portions of this code are an indirect
+    /// port of his C++ Reed-Solomon implementation.
     /// </remarks>
     /// <author>Sean Owen</author>
     internal sealed class GF256Poly {
@@ -68,11 +69,6 @@ namespace iText.Barcodes.Qrcode {
         /// coefficients as ints representing elements of GF(256), arranged
         /// from most significant (highest-power term) coefficient to least significant
         /// </param>
-        /// <exception cref="System.ArgumentException">
-        /// if argument is null or empty,
-        /// or if leading coefficient is 0 and this is not a
-        /// constant polynomial (that is, it is not the monomial "0")
-        /// </exception>
         internal GF256Poly(GF256 field, int[] coefficients) {
             if (coefficients == null || coefficients.Length == 0) {
                 throw new ArgumentException();

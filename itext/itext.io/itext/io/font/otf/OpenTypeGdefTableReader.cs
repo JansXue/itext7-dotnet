@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,11 +45,11 @@ using iText.IO.Source;
 
 namespace iText.IO.Font.Otf {
     public class OpenTypeGdefTableReader {
-        private readonly int FLAG_IGNORE_BASE = 2;
+        internal const int FLAG_IGNORE_BASE = 2;
 
-        private readonly int FLAG_IGNORE_LIGATURE = 4;
+        internal const int FLAG_IGNORE_LIGATURE = 4;
 
-        private readonly int FLAG_IGNORE_MARK = 8;
+        internal const int FLAG_IGNORE_MARK = 8;
 
         private readonly int tableLocation;
 
@@ -64,17 +64,16 @@ namespace iText.IO.Font.Otf {
             this.tableLocation = tableLocation;
         }
 
-        /// <exception cref="System.IO.IOException"/>
         public virtual void ReadTable() {
             if (tableLocation > 0) {
                 rf.Seek(tableLocation);
+                // version, we only support 0x00010000
                 rf.ReadUnsignedInt();
-                //version, we only support 0x00010000
                 int glyphClassDefOffset = rf.ReadUnsignedShort();
+                // skip Attachment Point List Table
                 rf.ReadUnsignedShort();
-                //skip Attachment Point List Table
+                // skip Ligature Caret List Table
                 rf.ReadUnsignedShort();
-                //skip Ligature Caret List Table
                 int markAttachClassDefOffset = rf.ReadUnsignedShort();
                 if (glyphClassDefOffset > 0) {
                     glyphClass = OtfClass.Create(rf, glyphClassDefOffset + tableLocation);
@@ -98,8 +97,16 @@ namespace iText.IO.Font.Otf {
                     return true;
                 }
             }
-            if (markAttachmentClass != null && markAttachmentClass.GetOtfClass(glyph) > 0 && (flag >> 8) > 0) {
-                return markAttachmentClass.GetOtfClass(glyph) != (flag >> 8);
+            int markAttachmentType = (flag >> 8);
+            // If MarkAttachmentType is non-zero, then mark attachment classes must be defined in the
+            // Mark Attachment Class Definition Table in the GDEF table. When processing glyph sequences,
+            // a lookup must ignore any mark glyphs that are not in the specified mark attachment class;
+            // only marks of the specified type are processed.
+            if (markAttachmentType != 0 && glyphClass != null) {
+                int currentGlyphClass = glyphClass.GetOtfClass(glyph);
+                // Will be 0 in case the class is not defined for this particular glyph
+                int glyphMarkAttachmentClass = markAttachmentClass != null ? markAttachmentClass.GetOtfClass(glyph) : 0;
+                return currentGlyphClass == OtfClass.GLYPH_MARK && glyphMarkAttachmentClass != markAttachmentType;
             }
             return false;
         }

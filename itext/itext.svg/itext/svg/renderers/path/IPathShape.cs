@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -82,5 +82,10 @@ namespace iText.Svg.Renderers.Path {
         /// <remarks>Returns true when this shape is a relative operator. False if it is an absolute operator.</remarks>
         /// <returns>true if relative, false if absolute</returns>
         bool IsRelative();
+
+        /// <summary>Get bounding rectangle of the current path shape.</summary>
+        /// <param name="lastPoint">start point for this shape</param>
+        /// <returns>calculated rectangle</returns>
+        Rectangle GetPathShapeRectangle(Point lastPoint);
     }
 }

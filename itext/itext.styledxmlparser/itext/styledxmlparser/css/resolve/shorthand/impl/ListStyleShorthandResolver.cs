@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,9 +42,10 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.StyledXmlParser.Css;
 using iText.StyledXmlParser.Css.Resolve.Shorthand;
+using iText.StyledXmlParser.Css.Util;
 
 namespace iText.StyledXmlParser.Css.Resolve.Shorthand.Impl {
     /// <summary>
@@ -53,17 +54,17 @@ namespace iText.StyledXmlParser.Css.Resolve.Shorthand.Impl {
     /// </summary>
     public class ListStyleShorthandResolver : IShorthandResolver {
         /// <summary>The list style types (disc, decimal,...).</summary>
-        private static readonly ICollection<String> LIST_STYLE_TYPE_VALUES = new HashSet<String>(JavaUtil.ArraysAsList
-            (CommonCssConstants.DISC, CommonCssConstants.ARMENIAN, CommonCssConstants.CIRCLE, CommonCssConstants.CJK_IDEOGRAPHIC
-            , CommonCssConstants.DECIMAL, CommonCssConstants.DECIMAL_LEADING_ZERO, CommonCssConstants.GEORGIAN, CommonCssConstants
-            .HEBREW, CommonCssConstants.HIRAGANA, CommonCssConstants.HIRAGANA_IROHA, CommonCssConstants.LOWER_ALPHA
-            , CommonCssConstants.LOWER_GREEK, CommonCssConstants.LOWER_LATIN, CommonCssConstants.LOWER_ROMAN, CommonCssConstants
-            .NONE, CommonCssConstants.SQUARE, CommonCssConstants.UPPER_ALPHA, CommonCssConstants.UPPER_LATIN, CommonCssConstants
-            .UPPER_ROMAN));
+        private static readonly ICollection<String> LIST_STYLE_TYPE_VALUES = JavaCollectionsUtil.UnmodifiableSet(new 
+            HashSet<String>(JavaUtil.ArraysAsList(CommonCssConstants.DISC, CommonCssConstants.ARMENIAN, CommonCssConstants
+            .CIRCLE, CommonCssConstants.CJK_IDEOGRAPHIC, CommonCssConstants.DECIMAL, CommonCssConstants.DECIMAL_LEADING_ZERO
+            , CommonCssConstants.GEORGIAN, CommonCssConstants.HEBREW, CommonCssConstants.HIRAGANA, CommonCssConstants
+            .HIRAGANA_IROHA, CommonCssConstants.LOWER_ALPHA, CommonCssConstants.LOWER_GREEK, CommonCssConstants.LOWER_LATIN
+            , CommonCssConstants.LOWER_ROMAN, CommonCssConstants.NONE, CommonCssConstants.SQUARE, CommonCssConstants
+            .UPPER_ALPHA, CommonCssConstants.UPPER_LATIN, CommonCssConstants.UPPER_ROMAN)));
 
         /// <summary>The list style positions (inside, outside).</summary>
-        private static readonly ICollection<String> LIST_STYLE_POSITION_VALUES = new HashSet<String>(JavaUtil.ArraysAsList
-            (CommonCssConstants.INSIDE, CommonCssConstants.OUTSIDE));
+        private static readonly ICollection<String> LIST_STYLE_POSITION_VALUES = JavaCollectionsUtil.UnmodifiableSet
+            (new HashSet<String>(JavaUtil.ArraysAsList(CommonCssConstants.INSIDE, CommonCssConstants.OUTSIDE)));
 
         /* (non-Javadoc)
         * @see com.itextpdf.styledxmlparser.css.resolve.shorthand.IShorthandResolver#resolveShorthand(java.lang.String)
@@ -75,12 +76,13 @@ namespace iText.StyledXmlParser.Css.Resolve.Shorthand.Impl {
                     new CssDeclaration(CommonCssConstants.LIST_STYLE_POSITION, shorthandExpression), new CssDeclaration(CommonCssConstants
                     .LIST_STYLE_IMAGE, shorthandExpression));
             }
-            String[] props = iText.IO.Util.StringUtil.Split(shorthandExpression, "\\s+");
+            IList<String> props = CssUtils.ExtractShorthandProperties(shorthandExpression)[0];
             String listStyleTypeValue = null;
             String listStylePositionValue = null;
             String listStyleImageValue = null;
             foreach (String value in props) {
-                if (value.Contains("url(") || CommonCssConstants.NONE.Equals(value) && listStyleTypeValue != null) {
+                if (value.Contains("url(") || CssGradientUtil.IsCssLinearGradientValue(value) || (CommonCssConstants.NONE.
+                    Equals(value) && listStyleTypeValue != null)) {
                     listStyleImageValue = value;
                 }
                 else {

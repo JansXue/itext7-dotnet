@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -69,7 +69,7 @@ namespace iText.Forms.Fields {
             : base(pdfObject) {
         }
 
-        /// <summary>Returns <code>Tx</code>, the form type for textual form fields.</summary>
+        /// <summary>Returns <c>Tx</c>, the form type for textual form fields.</summary>
         /// <returns>
         /// the form type, as a
         /// <see cref="iText.Kernel.Pdf.PdfName"/>

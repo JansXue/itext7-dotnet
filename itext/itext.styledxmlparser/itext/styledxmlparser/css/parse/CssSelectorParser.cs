@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,28 +43,32 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.StyledXmlParser.Css.Selector.Item;
 using iText.StyledXmlParser.Css.Util;
+using iText.StyledXmlParser.Exceptions;
 
 namespace iText.StyledXmlParser.Css.Parse {
     /// <summary>Utilities class to parse a CSS selector.</summary>
     public sealed class CssSelectorParser {
         /// <summary>Set of legacy pseudo elements (first-line, first-letter, before, after).</summary>
-        private static readonly ICollection<String> legacyPseudoElements = new HashSet<String>();
+        private static readonly ICollection<String> LEGACY_PSEUDO_ELEMENTS;
 
         static CssSelectorParser() {
-            legacyPseudoElements.Add("first-line");
-            legacyPseudoElements.Add("first-letter");
-            legacyPseudoElements.Add("before");
-            legacyPseudoElements.Add("after");
+            // HashSet is required in order to autoport correctly in .Net
+            HashSet<String> tempSet = new HashSet<String>();
+            tempSet.Add("first-line");
+            tempSet.Add("first-letter");
+            tempSet.Add("before");
+            tempSet.Add("after");
+            LEGACY_PSEUDO_ELEMENTS = JavaCollectionsUtil.UnmodifiableSet(tempSet);
         }
 
         /// <summary>The pattern string for selectors.</summary>
         private const String SELECTOR_PATTERN_STR = "(\\*)|([_a-zA-Z][\\w-]*)|(\\.[_a-zA-Z][\\w-]*)|(#[_a-z][\\w-]*)|(\\[[_a-zA-Z][\\w-]*(([~^$*|])?=((\"[^\"]+\")|([^\"]+)|('[^']+')|(\"\")|('')))?\\])|(::?[a-zA-Z-]*)|( )|(\\+)|(>)|(~)";
 
         /// <summary>The pattern for selectors.</summary>
-        private static readonly Regex selectorPattern = iText.IO.Util.StringUtil.RegexCompile(SELECTOR_PATTERN_STR
+        private static readonly Regex selectorPattern = iText.Commons.Utils.StringUtil.RegexCompile(SELECTOR_PATTERN_STR
             );
 
         /// <summary>
@@ -86,32 +90,29 @@ namespace iText.StyledXmlParser.Css.Parse {
         /// </returns>
         public static IList<ICssSelectorItem> ParseSelectorItems(String selector) {
             IList<ICssSelectorItem> selectorItems = new List<ICssSelectorItem>();
-            CssSelectorParserMatch match = new CssSelectorParserMatch(selector, selectorPattern);
+            Matcher match = iText.Commons.Utils.Matcher.Match(selectorPattern, selector);
             bool tagSelectorDescription = false;
-            while (match.Success()) {
-                String selectorItem = match.GetValue();
+            while (match.Find()) {
+                String selectorItem = match.Group(0);
                 char firstChar = selectorItem[0];
                 switch (firstChar) {
                     case '#': {
-                        match.Next();
                         selectorItems.Add(new CssIdSelectorItem(selectorItem.Substring(1)));
                         break;
                     }
 
                     case '.': {
-                        match.Next();
                         selectorItems.Add(new CssClassSelectorItem(selectorItem.Substring(1)));
                         break;
                     }
 
                     case '[': {
-                        match.Next();
                         selectorItems.Add(new CssAttributeSelectorItem(selectorItem));
                         break;
                     }
 
                     case ':': {
-                        AppendPseudoSelector(selectorItems, selectorItem, match);
+                        AppendPseudoSelector(selectorItems, selectorItem, match, selector);
                         break;
                     }
 
@@ -119,9 +120,8 @@ namespace iText.StyledXmlParser.Css.Parse {
                     case '+':
                     case '>':
                     case '~': {
-                        match.Next();
                         if (selectorItems.Count == 0) {
-                            throw new ArgumentException(MessageFormatUtil.Format("Invalid token detected in the start of the selector string: {0}"
+                            throw new ArgumentException(MessageFormatUtil.Format(StyledXmlParserExceptionMessage.INVALID_TOKEN_AT_THE_BEGINNING_OF_SELECTOR
                                 , firstChar));
                         }
                         ICssSelectorItem lastItem = selectorItems[selectorItems.Count - 1];
@@ -149,7 +149,6 @@ namespace iText.StyledXmlParser.Css.Parse {
 
                     default: {
                         //and case '*':
-                        match.Next();
                         if (tagSelectorDescription) {
                             throw new InvalidOperationException("Invalid selector string");
                         }
@@ -165,23 +164,57 @@ namespace iText.StyledXmlParser.Css.Parse {
             return selectorItems;
         }
 
-        /// <summary>
-        /// Resolves a pseudo selector, appends it to list and updates
-        /// <see cref="CssSelectorParserMatch"/>
-        /// in process.
-        /// </summary>
+        /// <summary>Resolves a pseudo selector and appends it to list.</summary>
         /// <param name="selectorItems">list of items to which new selector will be added to</param>
         /// <param name="pseudoSelector">the pseudo selector</param>
         /// <param name="match">
         /// the corresponding
-        /// <see cref="CssSelectorParserMatch"/>
-        /// that will be updated.
+        /// <see cref="iText.Commons.Utils.Matcher"/>.
         /// </param>
-        private static void AppendPseudoSelector(IList<ICssSelectorItem> selectorItems, String pseudoSelector, CssSelectorParserMatch
-             match) {
+        /// <param name="source">is the original source</param>
+        private static void AppendPseudoSelector(IList<ICssSelectorItem> selectorItems, String pseudoSelector, Matcher
+             match, String source) {
             pseudoSelector = pseudoSelector.ToLowerInvariant();
-            int start = match.GetIndex() + pseudoSelector.Length;
-            String source = match.GetSource();
+            pseudoSelector = HandleBracketsOfPseudoSelector(pseudoSelector, match, source);
+            /*
+            This :: notation is introduced by the current document in order to establish a discrimination between
+            pseudo-classes and pseudo-elements.
+            For compatibility with existing style sheets, user agents must also accept the previous one-colon
+            notation for pseudo-elements introduced in CSS levels 1 and 2 (namely, :first-line, :first-letter, :before and :after).
+            This compatibility is not allowed for the new pseudo-elements introduced in this specification.
+            */
+            if (pseudoSelector.StartsWith("::")) {
+                selectorItems.Add(new CssPseudoElementSelectorItem(pseudoSelector.Substring(2)));
+            }
+            else {
+                if (pseudoSelector.StartsWith(":") && LEGACY_PSEUDO_ELEMENTS.Contains(pseudoSelector.Substring(1))) {
+                    selectorItems.Add(new CssPseudoElementSelectorItem(pseudoSelector.Substring(1)));
+                }
+                else {
+                    ICssSelectorItem pseudoClassSelectorItem = CssPseudoClassSelectorItem.Create(pseudoSelector.Substring(1));
+                    if (pseudoClassSelectorItem == null) {
+                        throw new ArgumentException(MessageFormatUtil.Format(iText.StyledXmlParser.Logs.StyledXmlParserLogMessageConstant
+                            .UNSUPPORTED_PSEUDO_CSS_SELECTOR, pseudoSelector));
+                    }
+                    selectorItems.Add(pseudoClassSelectorItem);
+                }
+            }
+        }
+
+        /// <summary>Resolves a pseudo selector if it contains brackets.</summary>
+        /// <remarks>
+        /// Resolves a pseudo selector if it contains brackets. Updates internal state of
+        /// <see cref="iText.Commons.Utils.Matcher"/>
+        /// if necessary.
+        /// </remarks>
+        /// <param name="pseudoSelector">the pseudo selector</param>
+        /// <param name="match">
+        /// the corresponding
+        /// <see cref="iText.Commons.Utils.Matcher"/>.
+        /// </param>
+        /// <param name="source">is the original source</param>
+        private static String HandleBracketsOfPseudoSelector(String pseudoSelector, Matcher match, String source) {
+            int start = match.Start() + pseudoSelector.Length;
             if (start < source.Length && source[start] == '(') {
                 int bracketDepth = 1;
                 int curr = start + 1;
@@ -202,39 +235,11 @@ namespace iText.StyledXmlParser.Css.Parse {
                     ++curr;
                 }
                 if (bracketDepth == 0) {
-                    match.Next(curr);
+                    match.Region(curr, source.Length);
                     pseudoSelector += source.JSubstring(start, curr);
                 }
-                else {
-                    match.Next();
-                }
             }
-            else {
-                match.Next();
-            }
-            /*
-            This :: notation is introduced by the current document in order to establish a discrimination between
-            pseudo-classes and pseudo-elements.
-            For compatibility with existing style sheets, user agents must also accept the previous one-colon
-            notation for pseudo-elements introduced in CSS levels 1 and 2 (namely, :first-line, :first-letter, :before and :after).
-            This compatibility is not allowed for the new pseudo-elements introduced in this specification.
-            */
-            if (pseudoSelector.StartsWith("::")) {
-                selectorItems.Add(new CssPseudoElementSelectorItem(pseudoSelector.Substring(2)));
-            }
-            else {
-                if (pseudoSelector.StartsWith(":") && legacyPseudoElements.Contains(pseudoSelector.Substring(1))) {
-                    selectorItems.Add(new CssPseudoElementSelectorItem(pseudoSelector.Substring(1)));
-                }
-                else {
-                    ICssSelectorItem pseudoClassSelectorItem = CssPseudoClassSelectorItem.Create(pseudoSelector.Substring(1));
-                    if (pseudoClassSelectorItem == null) {
-                        throw new ArgumentException(MessageFormatUtil.Format(iText.StyledXmlParser.LogMessageConstant.UNSUPPORTED_PSEUDO_CSS_SELECTOR
-                            , pseudoSelector));
-                    }
-                    selectorItems.Add(pseudoClassSelectorItem);
-                }
-            }
+            return pseudoSelector;
         }
     }
 }

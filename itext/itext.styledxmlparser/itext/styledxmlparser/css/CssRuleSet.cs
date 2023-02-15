@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,7 +44,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.StyledXmlParser.Css.Media;
 using iText.StyledXmlParser.Css.Selector;
 using iText.StyledXmlParser.Node;
@@ -53,7 +53,7 @@ namespace iText.StyledXmlParser.Css {
     /// <summary>Class to store a CSS rule set.</summary>
     public class CssRuleSet : CssStatement {
         /// <summary>Pattern to match "important" in a rule declaration.</summary>
-        private static readonly Regex importantMatcher = iText.IO.Util.StringUtil.RegexCompile(".*!\\s*important$"
+        private static readonly Regex IMPORTANT_MATCHER = iText.Commons.Utils.StringUtil.RegexCompile(".*!\\s*important$"
             );
 
         /// <summary>The CSS selector.</summary>
@@ -69,13 +69,18 @@ namespace iText.StyledXmlParser.Css {
         /// Creates a new
         /// <see cref="CssRuleSet"/>
         /// from selector and raw list of declarations.
+        /// </summary>
+        /// <remarks>
+        /// Creates a new
+        /// <see cref="CssRuleSet"/>
+        /// from selector and raw list of declarations.
         /// The declarations are split into normal and important under the hood.
         /// To construct the
         /// <see cref="CssRuleSet"/>
         /// instance from normal and important declarations, see
         /// <see cref="CssRuleSet(iText.StyledXmlParser.Css.Selector.ICssSelector, System.Collections.Generic.IList{E}, System.Collections.Generic.IList{E})
         ///     "/>
-        /// </summary>
+        /// </remarks>
         /// <param name="selector">the CSS selector</param>
         /// <param name="declarations">the CSS declarations</param>
         public CssRuleSet(ICssSelector selector, IList<CssDeclaration> declarations) {
@@ -154,8 +159,8 @@ namespace iText.StyledXmlParser.Css {
             > normalDeclarations, IList<CssDeclaration> importantDeclarations) {
             foreach (CssDeclaration declaration in declarations) {
                 int exclIndex = declaration.GetExpression().IndexOf('!');
-                if (exclIndex > 0 && iText.IO.Util.StringUtil.Match(importantMatcher, declaration.GetExpression()).Success
-                    ) {
+                if (exclIndex > 0 && iText.Commons.Utils.Matcher.Match(IMPORTANT_MATCHER, declaration.GetExpression()).Matches
+                    ()) {
                     importantDeclarations.Add(new CssDeclaration(declaration.GetProperty(), declaration.GetExpression().JSubstring
                         (0, exclIndex).Trim()));
                 }

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -51,9 +51,18 @@ namespace iText.Kernel.Pdf.Annot {
         }
 
         /// <summary>
-        /// see
-        /// <see cref="PdfAnnotation.MakeAnnotation(iText.Kernel.Pdf.PdfObject)"/>
+        /// Instantiates a new
+        /// <see cref="PdfTextAnnotation"/>
+        /// instance based on
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// instance, that represents existing annotation object in the document.
         /// </summary>
+        /// <param name="pdfObject">
+        /// the
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// representing annotation object
+        /// </param>
+        /// <seealso cref="PdfAnnotation.MakeAnnotation(iText.Kernel.Pdf.PdfObject)"/>
         protected internal PdfTextAnnotation(PdfDictionary pdfObject)
             : base(pdfObject) {
         }
@@ -107,8 +116,7 @@ namespace iText.Kernel.Pdf.Annot {
         /// <remarks>
         /// The name of an icon that is used in displaying the annotation.
         /// Possible values are described in
-        /// <see cref="SetIconName(iText.Kernel.Pdf.PdfName)"/>
-        /// .
+        /// <see cref="SetIconName(iText.Kernel.Pdf.PdfName)"/>.
         /// </remarks>
         /// <returns>
         /// a
@@ -124,15 +132,22 @@ namespace iText.Kernel.Pdf.Annot {
         /// a
         /// <see cref="iText.Kernel.Pdf.PdfName"/>
         /// that specifies the icon for displaying annotation. Possible values are:
-        /// <ul>
-        /// <li>Comment</li>
-        /// <li>Key</li>
-        /// <li>Note</li>
-        /// <li>Help</li>
-        /// <li>NewParagraph</li>
-        /// <li>Paragraph</li>
-        /// <li>Insert</li>
-        /// </ul>
+        /// <list type="bullet">
+        /// <item><description>Comment
+        /// </description></item>
+        /// <item><description>Key
+        /// </description></item>
+        /// <item><description>Note
+        /// </description></item>
+        /// <item><description>Help
+        /// </description></item>
+        /// <item><description>NewParagraph
+        /// </description></item>
+        /// <item><description>Paragraph
+        /// </description></item>
+        /// <item><description>Insert
+        /// </description></item>
+        /// </list>
         /// </param>
         /// <returns>
         /// this

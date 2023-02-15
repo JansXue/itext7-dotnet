@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,28 +42,31 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
+using iText.Commons.Utils;
 using iText.IO.Font.Otf;
-using iText.IO.Util;
 using iText.Kernel.Font;
 
 namespace iText.Layout.Font {
     /// <summary>
     /// Complex FontSelectorStrategy split text based on
-    /// <see cref="iText.IO.Util.UnicodeScript?"/>
-    /// .
+    /// <see cref="iText.Commons.Utils.UnicodeScript?"/>.
+    /// </summary>
+    /// <remarks>
+    /// Complex FontSelectorStrategy split text based on
+    /// <see cref="iText.Commons.Utils.UnicodeScript?"/>.
     /// If unicode script changes, a new font will be found.
     /// If there is no suitable font, only one notdef glyph from
     /// <see cref="FontSelector.BestMatch()"/>
     /// will be added.
-    /// </summary>
+    /// </remarks>
     public class ComplexFontSelectorStrategy : FontSelectorStrategy {
         private PdfFont font;
 
         private FontSelector selector;
 
-        public ComplexFontSelectorStrategy(String text, FontSelector selector, FontProvider provider, FontSet tempFonts
+        public ComplexFontSelectorStrategy(String text, FontSelector selector, FontProvider provider, FontSet additionalFonts
             )
-            : base(text, provider, tempFonts) {
+            : base(text, provider, additionalFonts) {
             this.font = null;
             this.selector = selector;
         }

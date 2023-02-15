@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -52,11 +52,11 @@ namespace iText.IO.Image {
                 throw new ArgumentException("Raw image expected.");
             }
             // will also have the CCITT parameters
-            int colorSpace = image.GetColorSpace();
+            int colorSpace = image.GetColorEncodingComponentsNumber();
             int typeCCITT = image.GetTypeCcitt();
             if (typeCCITT > 0xff) {
                 if (!image.IsMask()) {
-                    image.SetColorSpace(1);
+                    image.SetColorEncodingComponentsNumber(1);
                 }
                 image.SetBpc(1);
                 image.SetFilter("CCITTFaxDecode");
@@ -109,7 +109,7 @@ namespace iText.IO.Image {
                     image.SetImageAttributes(additional);
                 }
                 if (image.IsMask() && (image.GetBpc() == 1 || image.GetBpc() > 8)) {
-                    image.SetColorSpace(-1);
+                    image.SetColorEncodingComponentsNumber(-1);
                 }
                 if (image.IsDeflated()) {
                     image.SetFilter("FlateDecode");
@@ -118,24 +118,23 @@ namespace iText.IO.Image {
         }
 
         /// <summary>Update original image with Raw Image parameters.</summary>
-        /// <param name="image"/>
+        /// <param name="image">to update its parameters with Raw Image parameters.</param>
         /// <param name="width">the exact width of the image</param>
         /// <param name="height">the exact height of the image</param>
         /// <param name="components">1,3 or 4 for GrayScale, RGB and CMYK</param>
         /// <param name="bpc">bits per component. Must be 1,2,4 or 8</param>
         /// <param name="data">the image data</param>
-        /// <exception cref="iText.IO.IOException">on error</exception>
         protected internal static void UpdateRawImageParameters(RawImageData image, int width, int height, int components
             , int bpc, byte[] data) {
             image.SetHeight(height);
             image.SetWidth(width);
             if (components != 1 && components != 3 && components != 4) {
-                throw new iText.IO.IOException(iText.IO.IOException.ComponentsMustBe1_3Or4);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.ComponentsMustBe1_3Or4);
             }
             if (bpc != 1 && bpc != 2 && bpc != 4 && bpc != 8) {
-                throw new iText.IO.IOException(iText.IO.IOException.BitsPerComponentMustBe1_2_4or8);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.BitsPerComponentMustBe1_2_4or8);
             }
-            image.SetColorSpace(components);
+            image.SetColorEncodingComponentsNumber(components);
             image.SetBpc(bpc);
             image.data = data;
         }
@@ -143,7 +142,8 @@ namespace iText.IO.Image {
         protected internal static void UpdateRawImageParameters(RawImageData image, int width, int height, int components
             , int bpc, byte[] data, int[] transparency) {
             if (transparency != null && transparency.Length != components * 2) {
-                throw new iText.IO.IOException(iText.IO.IOException.TransparencyLengthMustBeEqualTo2WithCcittImages);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.TransparencyLengthMustBeEqualTo2WithCcittImages
+                    );
             }
             if (components == 1 && bpc == 1) {
                 byte[] g4 = CCITTG4Encoder.Compress(data, width, height);
@@ -159,7 +159,8 @@ namespace iText.IO.Image {
         protected internal static void UpdateRawImageParameters(RawImageData image, int width, int height, bool reverseBits
             , int typeCCITT, int parameters, byte[] data, int[] transparency) {
             if (transparency != null && transparency.Length != 2) {
-                throw new iText.IO.IOException(iText.IO.IOException.TransparencyLengthMustBeEqualTo2WithCcittImages);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.TransparencyLengthMustBeEqualTo2WithCcittImages
+                    );
             }
             UpdateCcittImageParameters(image, width, height, reverseBits, typeCCITT, parameters, data);
             image.SetTransparency(transparency);
@@ -169,7 +170,7 @@ namespace iText.IO.Image {
             reverseBits, int typeCcitt, int parameters, byte[] data) {
             if (typeCcitt != RawImageData.CCITTG4 && typeCcitt != RawImageData.CCITTG3_1D && typeCcitt != RawImageData
                 .CCITTG3_2D) {
-                throw new iText.IO.IOException(iText.IO.IOException.CcittCompressionTypeMustBeCcittg4Ccittg3_1dOrCcittg3_2d
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.CcittCompressionTypeMustBeCcittg4Ccittg3_1dOrCcittg3_2d
                     );
             }
             if (reverseBits) {
@@ -177,7 +178,7 @@ namespace iText.IO.Image {
             }
             image.SetHeight(height);
             image.SetWidth(width);
-            image.SetColorSpace(parameters);
+            image.SetColorEncodingComponentsNumber(parameters);
             image.SetTypeCcitt(typeCcitt);
             image.data = data;
         }

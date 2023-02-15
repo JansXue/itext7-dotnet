@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -48,11 +48,11 @@ using iText.Kernel.Pdf.Canvas.Parser.Listener;
 using iText.Test;
 
 namespace iText.Kernel.Pdf.Canvas.Parser {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class FilteredTextEventListenerTest : ExtendedITextTest {
         private static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/kernel/parser/FilteredTextEventListenerTest/";
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TestRegion() {
             PdfDocument doc = new PdfDocument(new PdfReader(sourceFolder + "in.pdf"));
@@ -62,7 +62,6 @@ namespace iText.Kernel.Pdf.Canvas.Parser {
             NUnit.Framework.Assert.IsFalse(TextIsInRectangle(doc, "Upper Right", upperLeft));
         }
 
-        /// <exception cref="System.Exception"/>
         private bool TextIsInRectangle(PdfDocument doc, String text, Rectangle rect) {
             FilteredTextEventListener filterListener = new FilteredTextEventListener(new LocationTextExtractionStrategy
                 (), new TextRegionEventFilter(rect));

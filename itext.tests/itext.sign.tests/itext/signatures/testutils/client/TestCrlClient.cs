@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,41 +42,45 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.X509;
-using iText.IO.Util;
-using iText.Kernel;
+using System.Linq;
+using iText.Commons.Bouncycastle.Cert;
+using iText.Commons.Bouncycastle.Crypto;
+using iText.Commons.Utils;
+using iText.Kernel.Exceptions;
 using iText.Signatures;
 using iText.Signatures.Testutils.Builder;
 
 namespace iText.Signatures.Testutils.Client {
     public class TestCrlClient : ICrlClient {
-        private readonly TestCrlBuilder crlBuilder;
+        private readonly IList<TestCrlBuilder> crlBuilders;
 
-        private readonly ICipherParameters caPrivateKey;
-
-        /// <exception cref="Org.BouncyCastle.Security.Certificates.CertificateEncodingException"/>
-        public TestCrlClient(TestCrlBuilder crlBuilder, ICipherParameters caPrivateKey) {
-            this.crlBuilder = crlBuilder;
-            this.caPrivateKey = caPrivateKey;
+        public TestCrlClient() {
+            crlBuilders = new List<TestCrlBuilder>();
         }
 
-        /// <exception cref="Org.BouncyCastle.Security.Certificates.CertificateEncodingException"/>
-        public TestCrlClient(X509Certificate caCert, ICipherParameters caPrivateKey) {
-            this.crlBuilder = new TestCrlBuilder(caCert, DateTimeUtil.GetCurrentUtcTime().AddDays(-1));
-            this.caPrivateKey = caPrivateKey;
+        public virtual iText.Signatures.Testutils.Client.TestCrlClient AddBuilderForCertIssuer(TestCrlBuilder crlBuilder
+            ) {
+            crlBuilders.Add(crlBuilder);
+            return this;
         }
 
-        public virtual ICollection<byte[]> GetEncoded(X509Certificate checkCert, String url) {
-            ICollection<byte[]> crls = null;
-            try {
-                byte[] crl = crlBuilder.MakeCrl(caPrivateKey);
-                crls = JavaCollectionsUtil.SingletonList(crl);
+        public virtual iText.Signatures.Testutils.Client.TestCrlClient AddBuilderForCertIssuer(IX509Certificate issuerCert
+            , IPrivateKey issuerPrivateKey) {
+            DateTime yesterday = DateTimeUtil.GetCurrentUtcTime().AddDays(-1);
+            crlBuilders.Add(new TestCrlBuilder(issuerCert, issuerPrivateKey, yesterday));
+            return this;
+        }
+
+        public virtual ICollection<byte[]> GetEncoded(IX509Certificate checkCert, String url) {
+            return crlBuilders.Select((testCrlBuilder) => {
+                try {
+                    return testCrlBuilder.MakeCrl();
+                }
+                catch (Exception ignore) {
+                    throw new PdfException(ignore);
+                }
             }
-            catch (Exception ignore) {
-                throw new PdfException(ignore);
-            }
-            return crls;
+            ).ToList();
         }
     }
 }

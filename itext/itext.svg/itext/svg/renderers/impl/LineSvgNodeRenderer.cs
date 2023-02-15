@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,38 +42,45 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
+using iText.Kernel.Geom;
 using iText.Kernel.Pdf.Canvas;
 using iText.StyledXmlParser.Css.Util;
 using iText.Svg;
 using iText.Svg.Renderers;
+using iText.Svg.Utils;
 
 namespace iText.Svg.Renderers.Impl {
     /// <summary>
     /// <see cref="iText.Svg.Renderers.ISvgNodeRenderer"/>
     /// implementation for the &lt;line&gt; tag.
     /// </summary>
-    public class LineSvgNodeRenderer : AbstractSvgNodeRenderer {
+    public class LineSvgNodeRenderer : AbstractSvgNodeRenderer, IMarkerCapable {
+        private float x1 = 0f;
+
+        private float y1 = 0f;
+
+        private float x2 = 0f;
+
+        private float y2 = 0f;
+
         protected internal override void DoDraw(SvgDrawContext context) {
             PdfCanvas canvas = context.GetCurrentCanvas();
             canvas.WriteLiteral("% line\n");
-            if (attributesAndStyles.Count > 0) {
-                float x1 = 0f;
-                float y1 = 0f;
-                float x2 = 0f;
-                float y2 = 0f;
-                if (attributesAndStyles.ContainsKey(SvgConstants.Attributes.X1)) {
-                    x1 = GetAttribute(attributesAndStyles, SvgConstants.Attributes.X1);
-                }
-                if (attributesAndStyles.ContainsKey(SvgConstants.Attributes.Y1)) {
-                    y1 = GetAttribute(attributesAndStyles, SvgConstants.Attributes.Y1);
-                }
-                if (attributesAndStyles.ContainsKey(SvgConstants.Attributes.X2)) {
-                    x2 = GetAttribute(attributesAndStyles, SvgConstants.Attributes.X2);
-                }
-                if (attributesAndStyles.ContainsKey(SvgConstants.Attributes.Y2)) {
-                    y2 = GetAttribute(attributesAndStyles, SvgConstants.Attributes.Y2);
-                }
+            if (SetParameterss()) {
                 canvas.MoveTo(x1, y1).LineTo(x2, y2);
+            }
+        }
+
+        public override Rectangle GetObjectBoundingBox(SvgDrawContext context) {
+            if (SetParameterss()) {
+                float x = Math.Min(x1, x2);
+                float y = Math.Min(y1, y2);
+                float width = Math.Abs(x1 - x2);
+                float height = Math.Abs(y1 - y2);
+                return new Rectangle(x, y, width, height);
+            }
+            else {
+                return null;
             }
         }
 
@@ -84,7 +91,7 @@ namespace iText.Svg.Renderers.Impl {
         internal virtual float GetAttribute(IDictionary<String, String> attributes, String key) {
             String value = attributes.Get(key);
             if (value != null && !String.IsNullOrEmpty(value)) {
-                return CssUtils.ParseAbsoluteLength(attributes.Get(key));
+                return CssDimensionParsingUtils.ParseAbsoluteLength(attributes.Get(key));
             }
             return 0;
         }
@@ -93,6 +100,52 @@ namespace iText.Svg.Renderers.Impl {
             LineSvgNodeRenderer copy = new LineSvgNodeRenderer();
             DeepCopyAttributesAndStyles(copy);
             return copy;
+        }
+
+        public virtual void DrawMarker(SvgDrawContext context, MarkerVertexType markerVertexType) {
+            String moveX = null;
+            String moveY = null;
+            if (MarkerVertexType.MARKER_START.Equals(markerVertexType)) {
+                moveX = this.attributesAndStyles.Get(SvgConstants.Attributes.X1);
+                moveY = this.attributesAndStyles.Get(SvgConstants.Attributes.Y1);
+            }
+            else {
+                if (MarkerVertexType.MARKER_END.Equals(markerVertexType)) {
+                    moveX = this.attributesAndStyles.Get(SvgConstants.Attributes.X2);
+                    moveY = this.attributesAndStyles.Get(SvgConstants.Attributes.Y2);
+                }
+            }
+            if (moveX != null && moveY != null) {
+                MarkerSvgNodeRenderer.DrawMarker(context, moveX, moveY, markerVertexType, this);
+            }
+        }
+
+        public virtual double GetAutoOrientAngle(MarkerSvgNodeRenderer marker, bool reverse) {
+            Vector v = new Vector(GetAttribute(this.attributesAndStyles, SvgConstants.Attributes.X2) - GetAttribute(this
+                .attributesAndStyles, SvgConstants.Attributes.X1), GetAttribute(this.attributesAndStyles, SvgConstants.Attributes
+                .Y2) - GetAttribute(this.attributesAndStyles, SvgConstants.Attributes.Y1), 0f);
+            Vector xAxis = new Vector(1, 0, 0);
+            double rotAngle = SvgCoordinateUtils.CalculateAngleBetweenTwoVectors(xAxis, v);
+            return v.Get(1) >= 0 && !reverse ? rotAngle : rotAngle * -1f;
+        }
+
+        private bool SetParameterss() {
+            if (attributesAndStyles.Count > 0) {
+                if (attributesAndStyles.ContainsKey(SvgConstants.Attributes.X1)) {
+                    this.x1 = GetAttribute(attributesAndStyles, SvgConstants.Attributes.X1);
+                }
+                if (attributesAndStyles.ContainsKey(SvgConstants.Attributes.Y1)) {
+                    this.y1 = GetAttribute(attributesAndStyles, SvgConstants.Attributes.Y1);
+                }
+                if (attributesAndStyles.ContainsKey(SvgConstants.Attributes.X2)) {
+                    this.x2 = GetAttribute(attributesAndStyles, SvgConstants.Attributes.X2);
+                }
+                if (attributesAndStyles.ContainsKey(SvgConstants.Attributes.Y2)) {
+                    this.y2 = GetAttribute(attributesAndStyles, SvgConstants.Attributes.Y2);
+                }
+                return true;
+            }
+            return false;
         }
     }
 }

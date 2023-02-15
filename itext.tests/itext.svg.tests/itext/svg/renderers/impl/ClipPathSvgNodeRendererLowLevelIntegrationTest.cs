@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -51,12 +51,12 @@ using iText.Svg;
 using iText.Svg.Renderers;
 
 namespace iText.Svg.Renderers.Impl {
-    public class ClipPathSvgNodeRendererLowLevelIntegrationTest {
+    [NUnit.Framework.Category("IntegrationTest")]
+    public class ClipPathSvgNodeRendererLowLevelIntegrationTest : SvgIntegrationTest {
         private PdfCanvas cv;
 
         private SvgDrawContext sdc;
 
-        /// <exception cref="System.IO.FileNotFoundException"/>
         [NUnit.Framework.SetUp]
         public virtual void SetupDrawContextAndCanvas() {
             sdc = new SvgDrawContext(new ResourceResolver(""), new FontProvider());
@@ -97,7 +97,7 @@ namespace iText.Svg.Renderers.Impl {
             rectRenderer.SetAttribute(SvgConstants.Attributes.HEIGHT, "400");
             clipRenderer.AddChild(rectRenderer);
             clipRenderer.Draw(sdc);
-            NUnit.Framework.Assert.AreEqual("q\n% rect\n0 0 300 300 re\nW\nn\nQ\n", iText.IO.Util.JavaUtil.GetStringForBytes
+            NUnit.Framework.Assert.AreEqual("q\n% rect\n0 0 300 300 re\nW\nn\nQ\n", iText.Commons.Utils.JavaUtil.GetStringForBytes
                 (cv.GetContentStream().GetBytes()));
         }
 
@@ -111,7 +111,7 @@ namespace iText.Svg.Renderers.Impl {
             rectRenderer.SetAttribute(SvgConstants.Attributes.HEIGHT, "400");
             clipRenderer.AddChild(rectRenderer);
             clipRenderer.Draw(sdc);
-            NUnit.Framework.Assert.AreEqual("q\n% rect\n0 0 300 300 re\nW\nn\nQ\n", iText.IO.Util.JavaUtil.GetStringForBytes
+            NUnit.Framework.Assert.AreEqual("q\n% rect\n0 0 300 300 re\nW\nn\nQ\n", iText.Commons.Utils.JavaUtil.GetStringForBytes
                 (cv.GetContentStream().GetBytes()));
         }
 
@@ -125,7 +125,7 @@ namespace iText.Svg.Renderers.Impl {
             rectRenderer.SetAttribute(SvgConstants.Attributes.CLIP_RULE, SvgConstants.Values.FILL_RULE_EVEN_ODD);
             clipRenderer.AddChild(rectRenderer);
             clipRenderer.Draw(sdc);
-            NUnit.Framework.Assert.AreEqual("q\n% rect\n0 0 300 300 re\nW*\nn\nQ\n", iText.IO.Util.JavaUtil.GetStringForBytes
+            NUnit.Framework.Assert.AreEqual("q\n% rect\n0 0 300 300 re\nW*\nn\nQ\n", iText.Commons.Utils.JavaUtil.GetStringForBytes
                 (cv.GetContentStream().GetBytes()));
         }
 
@@ -145,8 +145,8 @@ namespace iText.Svg.Renderers.Impl {
             String expected = "q\n" + "% rect\n" + "0 0 60 60 re\n" + "W\n" + "n\n" + "0 0 0 rg\n" + "% ellipse\n" + "63 0 m\n"
                  + "63 34.79 34.79 63 0 63 c\n" + "-34.79 63 -63 34.79 -63 0 c\n" + "-63 -34.79 -34.79 -63 0 -63 c\n" 
                 + "34.79 -63 63 -34.79 63 0 c\n" + "f\n" + "Q\n";
-            NUnit.Framework.Assert.AreEqual(expected, iText.IO.Util.JavaUtil.GetStringForBytes(cv.GetContentStream().GetBytes
-                ()));
+            NUnit.Framework.Assert.AreEqual(expected, iText.Commons.Utils.JavaUtil.GetStringForBytes(cv.GetContentStream
+                ().GetBytes()));
         }
 
         [NUnit.Framework.Test]
@@ -168,8 +168,8 @@ namespace iText.Svg.Renderers.Impl {
             String expected = "0 0 0 rg\n" + "q\n" + "q\n" + "% rect\n" + "0 0 60 60 re\n" + "W\n" + "n\n" + "% ellipse\n"
                  + "63 0 m\n" + "63 34.79 34.79 63 0 63 c\n" + "-34.79 63 -63 34.79 -63 0 c\n" + "-63 -34.79 -34.79 -63 0 -63 c\n"
                  + "34.79 -63 63 -34.79 63 0 c\n" + "f\n" + "Q\n" + "Q\n";
-            NUnit.Framework.Assert.AreEqual(expected, iText.IO.Util.JavaUtil.GetStringForBytes(cv.GetContentStream().GetBytes
-                ()));
+            NUnit.Framework.Assert.AreEqual(expected, iText.Commons.Utils.JavaUtil.GetStringForBytes(cv.GetContentStream
+                ().GetBytes()));
         }
 
         [NUnit.Framework.Test]
@@ -198,8 +198,8 @@ namespace iText.Svg.Renderers.Impl {
                  + "34.79 -63 63 -34.79 63 0 c\n" + "f\n" + "Q\n" + "q\n" + "% rect\n" + "0 0 60 60 re\n" + "W\n" + "n\n"
                  + "% ellipse\n" + "63 0 m\n" + "63 34.79 34.79 63 0 63 c\n" + "-34.79 63 -63 34.79 -63 0 c\n" + "-63 -34.79 -34.79 -63 0 -63 c\n"
                  + "34.79 -63 63 -34.79 63 0 c\n" + "f\n" + "Q\n" + "Q\n";
-            NUnit.Framework.Assert.AreEqual(expected, iText.IO.Util.JavaUtil.GetStringForBytes(cv.GetContentStream().GetBytes
-                ()));
+            NUnit.Framework.Assert.AreEqual(expected, iText.Commons.Utils.JavaUtil.GetStringForBytes(cv.GetContentStream
+                ().GetBytes()));
         }
     }
 }

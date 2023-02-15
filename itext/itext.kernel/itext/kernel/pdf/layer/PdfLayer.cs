@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,8 +43,8 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
+using iText.Commons.Utils;
 using iText.IO.Font;
-using iText.IO.Util;
 using iText.Kernel.Pdf;
 
 namespace iText.Kernel.Pdf.Layer {
@@ -106,7 +106,7 @@ namespace iText.Kernel.Pdf.Layer {
         /// under the same title heading.
         /// </remarks>
         /// <param name="title">the title text</param>
-        /// <param name="document">the <CODE>PdfDocument</CODE></param>
+        /// <param name="document">the <c>PdfDocument</c></param>
         /// <returns>the title layer</returns>
         public static iText.Kernel.Pdf.Layer.PdfLayer CreateTitle(String title, PdfDocument document) {
             iText.Kernel.Pdf.Layer.PdfLayer layer = CreateTitleSilent(title, document);
@@ -125,7 +125,7 @@ namespace iText.Kernel.Pdf.Layer {
         /// in the array should be ON at a time: if one group is turned
         /// ON, all others must be turned OFF.
         /// </remarks>
-        /// <param name="document">the <CODE>PdfDocument</CODE></param>
+        /// <param name="document">the <c>PdfDocument</c></param>
         /// <param name="group">the radio group</param>
         public static void AddOCGRadioGroup(PdfDocument document, IList<iText.Kernel.Pdf.Layer.PdfLayer> group) {
             document.GetCatalog().GetOCProperties(true).AddOCGRadioGroup(group);
@@ -178,7 +178,7 @@ namespace iText.Kernel.Pdf.Layer {
         /// Gets whether the layer is currently locked or not. If the layer is locked,
         /// it will not be possible to change its state (on/off) in a viewer.
         /// </remarks>
-        /// <returns>true of the layer is currently locked, false otherwise.</returns>
+        /// <returns>true if the layer is currently locked, false otherwise.</returns>
         public virtual bool IsLocked() {
             return locked;
         }
@@ -190,6 +190,7 @@ namespace iText.Kernel.Pdf.Layer {
         /// of a viewer application. Producers can use this entry to prevent the visibility
         /// of content that depends on these groups from being changed by users.
         /// </remarks>
+        /// <param name="locked">sets whether the layer is currently locked or not</param>
         public virtual void SetLocked(bool locked) {
             if (this.IsLocked() != locked) {
                 FetchOCProperties().SetModified();
@@ -205,7 +206,7 @@ namespace iText.Kernel.Pdf.Layer {
 
         /// <summary>Sets the visibility of the layer in Acrobat's layer panel.</summary>
         /// <remarks>
-        /// Sets the visibility of the layer in Acrobat's layer panel. If <CODE>false</CODE>
+        /// Sets the visibility of the layer in Acrobat's layer panel. If <c>false</c>
         /// the layer cannot be directly manipulated by the user. Note that any children layers will
         /// also be absent from the panel.
         /// </remarks>
@@ -220,21 +221,30 @@ namespace iText.Kernel.Pdf.Layer {
         /// <summary>Gets a collection of current intents specified for this layer.</summary>
         /// <remarks>
         /// Gets a collection of current intents specified for this layer.
-        /// The default value is PdfName.View, so it will be the only element of the
-        /// resultant colletion if no intents are currently specified.
+        /// The default value is
+        /// <see cref="iText.Kernel.Pdf.PdfName.View"/>
+        /// , so it will be the only element of the
+        /// resultant collection if no intents are currently specified.
         /// </remarks>
         /// <returns>the collection of intents.</returns>
         public virtual ICollection<PdfName> GetIntents() {
             PdfObject intent = GetPdfObject().Get(PdfName.Intent);
             if (intent is PdfName) {
-                return JavaUtil.ArraysAsList((PdfName)intent);
+                return JavaCollectionsUtil.SingletonList((PdfName)intent);
             }
             else {
                 if (intent is PdfArray) {
-                    return (ICollection<PdfName>)intent;
+                    PdfArray intentArr = (PdfArray)intent;
+                    ICollection<PdfName> intentsCollection = new List<PdfName>(intentArr.Size());
+                    foreach (PdfObject i in intentArr) {
+                        if (i is PdfName) {
+                            intentsCollection.Add((PdfName)i);
+                        }
+                    }
+                    return intentsCollection;
                 }
             }
-            return JavaUtil.ArraysAsList(PdfName.View);
+            return JavaCollectionsUtil.SingletonList(PdfName.View);
         }
 
         /// <summary>Sets the intents of the layer.</summary>
@@ -248,13 +258,12 @@ namespace iText.Kernel.Pdf.Layer {
                     GetPdfObject().Put(PdfName.Intent, intents[0]);
                 }
                 else {
-                    if (intents.Count > 1) {
-                        PdfArray array = new PdfArray();
-                        foreach (PdfName intent in intents) {
-                            array.Add(intent);
-                        }
-                        GetPdfObject().Put(PdfName.Intent, array);
+                    // intents.size() > 1
+                    PdfArray array = new PdfArray();
+                    foreach (PdfName intent in intents) {
+                        array.Add(intent);
                     }
+                    GetPdfObject().Put(PdfName.Intent, array);
                 }
             }
             GetPdfObject().SetModified();
@@ -267,8 +276,8 @@ namespace iText.Kernel.Pdf.Layer {
         /// <param name="creator">a text string specifying the application that created the group</param>
         /// <param name="subtype">
         /// a string defining the type of content controlled by the group. Suggested
-        /// values include but are not limited to <B>Artwork</B>, for graphic-design or publishing
-        /// applications, and <B>Technical</B>, for technical designs such as building plans or
+        /// values include but are not limited to <b>Artwork</b>, for graphic-design or publishing
+        /// applications, and <b>Technical</b>, for technical designs such as building plans or
         /// schematics
         /// </param>
         public virtual void SetCreatorInfo(String creator, String subtype) {
@@ -286,7 +295,7 @@ namespace iText.Kernel.Pdf.Layer {
         /// </summary>
         /// <param name="lang">
         /// a language string which specifies a language and possibly a locale
-        /// (for example, <B>es-MX</B> represents Mexican Spanish)
+        /// (for example, <b>es-MX</b> represents Mexican Spanish)
         /// </param>
         /// <param name="preferred">
         /// used by viewer applications when there is a partial match but no exact
@@ -353,7 +362,7 @@ namespace iText.Kernel.Pdf.Layer {
         /// </summary>
         /// <param name="subtype">
         /// a name specifying the kind of content controlled by the group;
-        /// for example, <B>Trapping</B>, <B>PrintersMarks</B> and <B>Watermark</B>
+        /// for example, <b>Trapping</b>, <b>PrintersMarks</b> and <b>Watermark</b>
         /// </param>
         /// <param name="printState">
         /// indicates that the group should be
@@ -391,7 +400,7 @@ namespace iText.Kernel.Pdf.Layer {
         /// the name(s) of the individual, position or organization
         /// </param>
         public virtual void SetUser(String type, params String[] names) {
-            if (type == null || !type.Equals("Ind") && !type.Equals("Ttl") && !type.Equals("Org")) {
+            if (type == null || !"Ind".Equals(type) && !"Ttl".Equals(type) && !"Org".Equals(type)) {
                 throw new ArgumentException("Illegal type argument");
             }
             if (names == null || names.Length == 0) {
@@ -434,6 +443,7 @@ namespace iText.Kernel.Pdf.Layer {
         }
 
         /// <summary>Gets the title of the layer if it is a title layer, or null if it is a usual layer.</summary>
+        /// <returns>the title of the layer if it is a title layer, or null if it is a usual layer</returns>
         public virtual String GetTitle() {
             return title;
         }
@@ -453,6 +463,16 @@ namespace iText.Kernel.Pdf.Layer {
             return true;
         }
 
+        /// <summary>
+        /// Gets the
+        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
+        /// that owns that layer.
+        /// </summary>
+        /// <returns>
+        /// the
+        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
+        /// that owns that layer
+        /// </returns>
         protected internal virtual PdfDocument GetDocument() {
             return GetPdfObject().GetIndirectReference().GetDocument();
         }

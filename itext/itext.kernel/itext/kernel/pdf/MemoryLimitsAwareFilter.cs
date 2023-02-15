@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,10 +45,7 @@ using iText.Kernel.Pdf.Filters;
 
 namespace iText.Kernel.Pdf {
     /// <summary>Handles memory limits aware processing.</summary>
-    /// <seealso>
-    /// 
-    /// <see cref="MemoryLimitsAwareHandler"/>
-    /// </seealso>
+    /// <seealso cref="MemoryLimitsAwareHandler"/>
     public abstract class MemoryLimitsAwareFilter : IFilterHandler {
         /// <summary>
         /// Creates a

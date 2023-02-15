@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -130,7 +130,7 @@ namespace iText.Layout.Element {
         }
 
         /// <summary>Customizes the index of the first item in the list.</summary>
-        /// <param name="start">the custom index, as an <code>int</code></param>
+        /// <param name="start">the custom index, as an <c>int</c></param>
         /// <returns>this list.</returns>
         public virtual iText.Layout.Element.List SetItemStartIndex(int start) {
             SetProperty(Property.LIST_START, start);
@@ -219,7 +219,7 @@ namespace iText.Layout.Element {
         /// means that the items will be aligned as follows:
         /// 9.  Item 9
         /// 10. Item 10
-        /// <p>
+        /// <para />
         /// Whereas
         /// <see cref="iText.Layout.Properties.ListSymbolAlignment.RIGHT"/>
         /// means the items will be aligned as follows:
@@ -238,7 +238,7 @@ namespace iText.Layout.Element {
         /// <see cref="ListItem"/>
         /// symbols.
         /// </summary>
-        /// <returns>the indent offset as a <code>float</code>.</returns>
+        /// <returns>the indent offset as a <c>float</c>.</returns>
         public virtual float? GetSymbolIndent() {
             return this.GetProperty<float?>(Property.LIST_SYMBOL_INDENT);
         }

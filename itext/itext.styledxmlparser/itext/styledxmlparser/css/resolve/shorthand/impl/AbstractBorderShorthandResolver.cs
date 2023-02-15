@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,8 +42,9 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Common.Logging;
-using iText.IO.Util;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
 using iText.StyledXmlParser.Css;
 using iText.StyledXmlParser.Css.Resolve.Shorthand;
 using iText.StyledXmlParser.Css.Util;
@@ -80,19 +81,19 @@ namespace iText.StyledXmlParser.Css.Resolve.Shorthand.Impl {
                 return JavaUtil.ArraysAsList(new CssDeclaration(widthPropName, shorthandExpression), new CssDeclaration(stylePropName
                     , shorthandExpression), new CssDeclaration(colorPropName, shorthandExpression));
             }
-            String[] props = iText.IO.Util.StringUtil.Split(shorthandExpression, "\\s+");
+            IList<String> props = CssUtils.ExtractShorthandProperties(shorthandExpression)[0];
             String borderColorValue = null;
             String borderStyleValue = null;
             String borderWidthValue = null;
             foreach (String value in props) {
                 if (CommonCssConstants.INITIAL.Equals(value) || CommonCssConstants.INHERIT.Equals(value)) {
-                    ILog logger = LogManager.GetLogger(typeof(AbstractBorderShorthandResolver));
-                    logger.Warn(MessageFormatUtil.Format(iText.StyledXmlParser.LogMessageConstant.INVALID_CSS_PROPERTY_DECLARATION
+                    ILogger logger = ITextLogManager.GetLogger(typeof(AbstractBorderShorthandResolver));
+                    logger.LogWarning(MessageFormatUtil.Format(iText.StyledXmlParser.Logs.StyledXmlParserLogMessageConstant.INVALID_CSS_PROPERTY_DECLARATION
                         , shorthandExpression));
                     return JavaCollectionsUtil.EmptyList<CssDeclaration>();
                 }
-                if (CommonCssConstants.BORDER_WIDTH_VALUES.Contains(value) || CssUtils.IsNumericValue(value) || CssUtils.IsMetricValue
-                    (value) || CssUtils.IsRelativeValue(value)) {
+                if (CommonCssConstants.BORDER_WIDTH_VALUES.Contains(value) || CssTypesValidationUtils.IsNumber(value) || CssTypesValidationUtils
+                    .IsMetricValue(value) || CssTypesValidationUtils.IsRelativeValue(value)) {
                     borderWidthValue = value;
                 }
                 else {
@@ -101,7 +102,7 @@ namespace iText.StyledXmlParser.Css.Resolve.Shorthand.Impl {
                         borderStyleValue = value;
                     }
                     else {
-                        if (CssUtils.IsColorProperty(value)) {
+                        if (CssTypesValidationUtils.IsColorProperty(value)) {
                             borderColorValue = value;
                         }
                     }

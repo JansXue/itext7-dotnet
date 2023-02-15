@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -40,46 +40,14 @@ source product.
 For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
-using System;
-using System.Collections.Generic;
 using iText.StyledXmlParser.Css;
-using iText.StyledXmlParser.Css.Validate.Impl.Datatype;
-using iText.StyledXmlParser.Css.Validate.Impl.Declaration;
+using iText.StyledXmlParser.Css.Validate.Impl;
 
 namespace iText.StyledXmlParser.Css.Validate {
-    /// <summary>Class that bundles all the CSS declaration validators.</summary>
+    /// <summary>Class that holds CSS declaration validator.</summary>
     public class CssDeclarationValidationMaster {
-        /// <summary>A map containing all the CSS declaration validators.</summary>
-        private static readonly IDictionary<String, ICssDeclarationValidator> DEFAULT_VALIDATORS;
-
-        static CssDeclarationValidationMaster() {
-            // TODO lazy initialization?
-            ICssDeclarationValidator colorCommonValidator = new MultiTypeDeclarationValidator(new CssEnumValidator(CommonCssConstants
-                .TRANSPARENT, CommonCssConstants.INITIAL, CommonCssConstants.INHERIT, CommonCssConstants.CURRENTCOLOR)
-                , new CssColorValidator());
-            DEFAULT_VALIDATORS = new Dictionary<String, ICssDeclarationValidator>();
-            DEFAULT_VALIDATORS.Put(CommonCssConstants.BACKGROUND_COLOR, colorCommonValidator);
-            DEFAULT_VALIDATORS.Put(CommonCssConstants.COLOR, colorCommonValidator);
-            DEFAULT_VALIDATORS.Put(CommonCssConstants.BORDER_COLOR, colorCommonValidator);
-            DEFAULT_VALIDATORS.Put(CommonCssConstants.BORDER_BOTTOM_COLOR, colorCommonValidator);
-            DEFAULT_VALIDATORS.Put(CommonCssConstants.BORDER_TOP_COLOR, colorCommonValidator);
-            DEFAULT_VALIDATORS.Put(CommonCssConstants.BORDER_LEFT_COLOR, colorCommonValidator);
-            DEFAULT_VALIDATORS.Put(CommonCssConstants.BORDER_RIGHT_COLOR, colorCommonValidator);
-            DEFAULT_VALIDATORS.Put(CommonCssConstants.FLOAT, new SingleTypeDeclarationValidator(new CssEnumValidator(CommonCssConstants
-                .LEFT, CommonCssConstants.RIGHT, CommonCssConstants.NONE, CommonCssConstants.INHERIT, CommonCssConstants
-                .CENTER)));
-            /*center comes from legacy*/
-            DEFAULT_VALIDATORS.Put(CommonCssConstants.PAGE_BREAK_BEFORE, new SingleTypeDeclarationValidator(new CssEnumValidator
-                (CommonCssConstants.AUTO, CommonCssConstants.ALWAYS, CommonCssConstants.AVOID, CommonCssConstants.LEFT
-                , CommonCssConstants.RIGHT)));
-            DEFAULT_VALIDATORS.Put(CommonCssConstants.PAGE_BREAK_AFTER, new SingleTypeDeclarationValidator(new CssEnumValidator
-                (CommonCssConstants.AUTO, CommonCssConstants.ALWAYS, CommonCssConstants.AVOID, CommonCssConstants.LEFT
-                , CommonCssConstants.RIGHT)));
-            DEFAULT_VALIDATORS.Put(CommonCssConstants.QUOTES, new MultiTypeDeclarationValidator(new CssEnumValidator(CommonCssConstants
-                .INITIAL, CommonCssConstants.INHERIT, CommonCssConstants.NONE), new CssQuotesValidator()));
-            DEFAULT_VALIDATORS.Put(CommonCssConstants.TRANSFORM, new SingleTypeDeclarationValidator(new CssTransformValidator
-                ()));
-        }
+        /// <summary>A validator containing all the CSS declaration validators.</summary>
+        private static ICssDeclarationValidator VALIDATOR = new CssDefaultValidator();
 
         /// <summary>
         /// Creates a new
@@ -93,8 +61,22 @@ namespace iText.StyledXmlParser.Css.Validate {
         /// <param name="declaration">the CSS declaration</param>
         /// <returns>true, if the validation was successful</returns>
         public static bool CheckDeclaration(CssDeclaration declaration) {
-            ICssDeclarationValidator validator = DEFAULT_VALIDATORS.Get(declaration.GetProperty());
-            return validator == null || validator.IsValid(declaration);
+            return VALIDATOR.IsValid(declaration);
+        }
+
+        /// <summary>Sets new validator for CSS declarations.</summary>
+        /// <param name="validator">
+        /// validator for CSS declarations:
+        /// use
+        /// <see cref="iText.StyledXmlParser.Css.Validate.Impl.CssDefaultValidator"/>
+        /// instance to
+        /// use default validation,
+        /// use
+        /// <see cref="iText.StyledXmlParser.Css.Validate.Impl.CssDeviceCmykAwareValidator"/>
+        /// instance to support device-cmyk feature
+        /// </param>
+        public static void SetValidator(ICssDeclarationValidator validator) {
+            VALIDATOR = validator;
         }
     }
 }

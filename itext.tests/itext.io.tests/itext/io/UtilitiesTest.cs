@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,15 +41,22 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using iText.IO.Util;
+using iText.Test;
 
 namespace iText.IO {
-    public class UtilitiesTest {
+    [NUnit.Framework.Category("UnitTest")]
+    public class UtilitiesTest : ExtendedITextTest {
         [NUnit.Framework.Test]
         public virtual void TestShortener() {
             byte[] src = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
             byte[] dest = new byte[] { 1, 2, 3, 4, 5 };
             byte[] test = ArrayUtil.ShortenArray(src, 5);
             NUnit.Framework.Assert.AreEqual(dest, test);
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void InvalidResource() {
+            NUnit.Framework.Assert.IsNull(ResourceUtil.GetResourceStream("some-random-resource.zzz"));
         }
     }
 }

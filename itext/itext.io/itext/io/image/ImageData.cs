@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,8 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
 using iText.IO.Colors;
 using iText.IO.Source;
 using iText.IO.Util;
@@ -71,7 +72,8 @@ namespace iText.IO.Image {
 
         protected internal int bpc = 1;
 
-        protected internal int colorSpace = -1;
+        /// <summary>Is the number of components used to encode colorspace.</summary>
+        protected internal int colorEncodingComponentsNumber = -1;
 
         protected internal float[] decode;
 
@@ -192,12 +194,16 @@ namespace iText.IO.Image {
             return originalType;
         }
 
-        public virtual int GetColorSpace() {
-            return colorSpace;
+        /// <summary>Gets the number of components used to encode colorspace.</summary>
+        /// <returns>the number of components used to encode colorspace</returns>
+        public virtual int GetColorEncodingComponentsNumber() {
+            return colorEncodingComponentsNumber;
         }
 
-        public virtual void SetColorSpace(int colorSpace) {
-            this.colorSpace = colorSpace;
+        /// <summary>Sets the number of components used to encode colorspace.</summary>
+        /// <param name="colorEncodingComponentsNumber">the number of components used to encode colorspace</param>
+        public virtual void SetColorEncodingComponentsNumber(int colorEncodingComponentsNumber) {
+            this.colorEncodingComponentsNumber = colorEncodingComponentsNumber;
         }
 
         public virtual byte[] GetData() {
@@ -210,7 +216,7 @@ namespace iText.IO.Image {
                     return true;
                 }
             }
-            return colorSpace == 1;
+            return colorEncodingComponentsNumber == 1;
         }
 
         public virtual bool IsMask() {
@@ -223,10 +229,12 @@ namespace iText.IO.Image {
 
         public virtual void SetImageMask(iText.IO.Image.ImageData imageMask) {
             if (this.mask) {
-                throw new iText.IO.IOException(iText.IO.IOException.ImageMaskCannotContainAnotherImageMask);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.ImageMaskCannotContainAnotherImageMask
+                    );
             }
             if (!imageMask.mask) {
-                throw new iText.IO.IOException(iText.IO.IOException.ImageIsNotMaskYouMustCallImageDataMakeMask);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.ImageIsNotMaskYouMustCallImageDataMakeMask
+                    );
             }
             this.imageMask = imageMask;
         }
@@ -237,7 +245,7 @@ namespace iText.IO.Image {
 
         public virtual void MakeMask() {
             if (!CanBeMask()) {
-                throw new iText.IO.IOException(iText.IO.IOException.ThisImageCanNotBeAnImageMask);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.ThisImageCanNotBeAnImageMask);
             }
             mask = true;
         }
@@ -313,13 +321,13 @@ namespace iText.IO.Image {
         /// <summary>Checks if image can be inline</summary>
         /// <returns>if the image can be inline</returns>
         public virtual bool CanImageBeInline() {
-            ILog logger = LogManager.GetLogger(typeof(iText.IO.Image.ImageData));
+            ILogger logger = ITextLogManager.GetLogger(typeof(iText.IO.Image.ImageData));
             if (imageSize > 4096) {
-                logger.Warn(iText.IO.LogMessageConstant.IMAGE_SIZE_CANNOT_BE_MORE_4KB);
+                logger.LogWarning(iText.IO.Logs.IoLogMessageConstant.IMAGE_SIZE_CANNOT_BE_MORE_4KB);
                 return false;
             }
             if (imageMask != null) {
-                logger.Warn(iText.IO.LogMessageConstant.IMAGE_HAS_MASK);
+                logger.LogWarning(iText.IO.Logs.IoLogMessageConstant.IMAGE_HAS_MASK);
                 return false;
             }
             return true;
@@ -330,7 +338,6 @@ namespace iText.IO.Image {
         /// Load data from URL. url must be not null.
         /// Note, this method doesn't check if data or url is null.
         /// </remarks>
-        /// <exception cref="System.IO.IOException"/>
         internal virtual void LoadData() {
             RandomAccessFileOrArray raf = new RandomAccessFileOrArray(new RandomAccessSourceFactory().CreateSource(url
                 ));

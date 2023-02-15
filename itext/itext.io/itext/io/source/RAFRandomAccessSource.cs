@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -57,22 +57,21 @@ namespace iText.IO.Source {
         /// <summary>The length of the underling RAF.</summary>
         /// <remarks>
         /// The length of the underling RAF.  Note that the length is cached at construction time to avoid the possibility
-        /// of java.io.IOExceptions when reading the length.
+        /// of
+        /// <see cref="System.IO.IOException"/>
+        /// s when reading the length.
         /// </remarks>
         private readonly long length;
 
         /// <summary>Creates this object</summary>
         /// <param name="raf">the source for this RandomAccessSource</param>
-        /// <exception cref="System.IO.IOException">if the RAF can't be read</exception>
         public RAFRandomAccessSource(FileStream raf) {
             this.raf = raf;
             length = raf.Length;
         }
 
         /// <summary><inheritDoc/></summary>
-        /// <exception cref="System.IO.IOException"/>
         public virtual int Get(long position) {
-            // TODO: test to make sure we are handling the length properly (i.e. is raf.length() the last byte in the file, or one past the last byte?)
             if (position > length) {
                 return -1;
             }
@@ -84,7 +83,6 @@ namespace iText.IO.Source {
         }
 
         /// <summary><inheritDoc/></summary>
-        /// <exception cref="System.IO.IOException"/>
         public virtual int Get(long position, byte[] bytes, int off, int len) {
             if (position > length) {
                 return -1;
@@ -100,15 +98,20 @@ namespace iText.IO.Source {
         /// <inheritDoc/>
         /// Note: the length is determined when the
         /// <see cref="RAFRandomAccessSource"/>
+        /// is constructed.
+        /// </summary>
+        /// <remarks>
+        /// <inheritDoc/>
+        /// Note: the length is determined when the
+        /// <see cref="RAFRandomAccessSource"/>
         /// is constructed.  If the file length changes
         /// after construction, that change will not be reflected in this call.
-        /// </summary>
+        /// </remarks>
         public virtual long Length() {
             return length;
         }
 
         /// <summary>Closes the underlying RandomAccessFile</summary>
-        /// <exception cref="System.IO.IOException"/>
         public virtual void Close() {
             raf.Dispose();
         }

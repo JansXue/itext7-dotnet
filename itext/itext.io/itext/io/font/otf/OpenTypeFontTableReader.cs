@@ -1,7 +1,7 @@
 /*
 *
 * This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 * Authors: Bruno Lowagie, Paulo Soares, et al.
 *
 * This program is free software; you can redistribute it and/or modify
@@ -65,7 +65,6 @@ namespace iText.IO.Font.Otf {
 
         private readonly int unitsPerEm;
 
-        /// <exception cref="System.IO.IOException"/>
         protected internal OpenTypeFontTableReader(RandomAccessFileOrArray rf, int tableLocation, OpenTypeGdefTableReader
              gdef, IDictionary<int, Glyph> indexGlyphMap, int unitsPerEm) {
             this.rf = rf;
@@ -147,7 +146,6 @@ namespace iText.IO.Font.Otf {
         }
 
         public virtual IList<OpenTableLookup> GetLookups(FeatureRecord feature) {
-            //TODO see getLookups(FeatureRecord[]) method. Is it realy make sense to order features?
             IList<OpenTableLookup> ret = new List<OpenTableLookup>(feature.lookups.Length);
             foreach (int idx in feature.lookups) {
                 ret.Add(lookupList[idx]);
@@ -168,53 +166,60 @@ namespace iText.IO.Font.Otf {
         }
 
         public virtual LanguageRecord GetLanguageRecord(String otfScriptTag) {
-            LanguageRecord languageRecord = null;
-            if (otfScriptTag != null) {
-                foreach (ScriptRecord record in GetScriptRecords()) {
-                    if (otfScriptTag.Equals(record.tag)) {
-                        languageRecord = record.defaultLanguage;
-                        break;
+            return GetLanguageRecord(otfScriptTag, null);
+        }
+
+        public virtual LanguageRecord GetLanguageRecord(String otfScriptTag, String langTag) {
+            if (otfScriptTag == null) {
+                return null;
+            }
+            foreach (ScriptRecord record in GetScriptRecords()) {
+                if (!otfScriptTag.Equals(record.tag)) {
+                    continue;
+                }
+                if (langTag == null) {
+                    return record.defaultLanguage;
+                }
+                foreach (LanguageRecord lang in record.languages) {
+                    if (langTag.Equals(lang.tag)) {
+                        return lang;
                     }
                 }
             }
-            return languageRecord;
+            return null;
         }
 
-        /// <exception cref="System.IO.IOException"/>
         protected internal abstract OpenTableLookup ReadLookupTable(int lookupType, int lookupFlag, int[] subTableLocations
             );
 
-        /// <exception cref="System.IO.IOException"/>
         protected internal OtfClass ReadClassDefinition(int classLocation) {
             return OtfClass.Create(rf, classLocation);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         protected internal int[] ReadUShortArray(int size, int location) {
             return OtfReadCommon.ReadUShortArray(rf, size, location);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         protected internal int[] ReadUShortArray(int size) {
             return OtfReadCommon.ReadUShortArray(rf, size);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         protected internal virtual void ReadCoverages(int[] locations, IList<ICollection<int>> coverage) {
             OtfReadCommon.ReadCoverages(rf, locations, coverage);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         protected internal IList<int> ReadCoverageFormat(int coverageLocation) {
             return OtfReadCommon.ReadCoverageFormat(rf, coverageLocation);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         protected internal virtual SubstLookupRecord[] ReadSubstLookupRecords(int substCount) {
             return OtfReadCommon.ReadSubstLookupRecords(rf, substCount);
         }
 
-        /// <exception cref="System.IO.IOException"/>
+        protected internal virtual PosLookupRecord[] ReadPosLookupRecords(int substCount) {
+            return OtfReadCommon.ReadPosLookupRecords(rf, substCount);
+        }
+
         protected internal virtual TagAndLocation[] ReadTagAndLocations(int baseLocation) {
             int count = rf.ReadUnsignedShort();
             TagAndLocation[] tagslLocs = new TagAndLocation[count];
@@ -234,14 +239,12 @@ namespace iText.IO.Font.Otf {
         /// <see cref="ReadLookupTable(int, int, int[])"/>
         /// method.
         /// </remarks>
-        /// <exception cref="FontReadingException"/>
-        /// <exception cref="iText.IO.Font.Otf.FontReadingException"/>
         internal void StartReadingTable() {
             try {
                 rf.Seek(tableLocation);
                 /*int version =*/
+                // version not used
                 rf.ReadInt();
-                //version not used
                 int scriptListOffset = rf.ReadUnsignedShort();
                 int featureListOffset = rf.ReadUnsignedShort();
                 int lookupListOffset = rf.ReadUnsignedShort();
@@ -257,7 +260,6 @@ namespace iText.IO.Font.Otf {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private void ReadLookupListTable(int lookupListTableLocation) {
             lookupList = new List<OpenTableLookup>();
             rf.Seek(lookupListTableLocation);
@@ -265,15 +267,14 @@ namespace iText.IO.Font.Otf {
             int[] lookupTableLocations = ReadUShortArray(lookupCount, lookupListTableLocation);
             // read LookUp tables
             foreach (int lookupLocation in lookupTableLocations) {
+                // be tolerant to NULL offset in LookupList table
                 if (lookupLocation == 0) {
-                    // be tolerant to NULL offset in LookupList table
                     continue;
                 }
                 ReadLookupTable(lookupLocation);
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private void ReadLookupTable(int lookupTableLocation) {
             rf.Seek(lookupTableLocation);
             int lookupType = rf.ReadUnsignedShort();

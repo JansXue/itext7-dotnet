@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -50,6 +50,7 @@ using iText.Kernel.Utils;
 using iText.Test;
 
 namespace iText.Kernel.Pdf.Xobject {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class CreateImageStreamTest : ExtendedITextTest {
         private static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/kernel/pdf/xobject/CreateImageStreamTest/";
@@ -62,8 +63,6 @@ namespace iText.Kernel.Pdf.Xobject {
             CreateOrClearDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CompareColorspacesTest() {
             String[] imgFiles = new String[] { "adobe.png", "anon.gif", "anon.jpg", "anon.png", "gamma.png", "odd.png"
@@ -78,71 +77,60 @@ namespace iText.Kernel.Pdf.Xobject {
                 String imgFile = imgFiles[i];
                 PdfImageXObject imageXObject = new PdfImageXObject(ImageDataFactory.Create(sourceFolder + "compare_colorspaces/"
                      + imgFile));
-                canvas.AddXObject(imageXObject, 50 + i * 40, 550, 40);
+                canvas.AddXObjectFittedIntoRectangle(imageXObject, new Rectangle(50 + i * 40, 550, 40, 160));
             }
             pdfDocument.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(@out, cmp, destinationFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void CreateDictionaryFromMapIntArrayTest() {
             TestSingleImage("createDictionaryFromMapIntArrayTest.png");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ImgCalrgb() {
             TestSingleImage("img_calrgb.png");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ImgCmyk() {
             TestSingleImage("img_cmyk.tif");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ImgCmykIcc() {
             TestSingleImage("img_cmyk_icc.tif");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ImgIndexed() {
             TestSingleImage("img_indexed.png");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ImgRgb() {
             TestSingleImage("img_rgb.png");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ImgRgbIcc() {
             TestSingleImage("img_rgb_icc.png");
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
+        [NUnit.Framework.Test]
+        public virtual void AddPngImageIndexedColorspaceTest() {
+            TestSingleImage("pngImageIndexedColorspace.png");
+        }
+
         private void TestSingleImage(String imgName) {
             String @out = destinationFolder + imgName.JSubstring(0, imgName.Length - 4) + ".pdf";
             String cmp = sourceFolder + "cmp_" + imgName.JSubstring(0, imgName.Length - 4) + ".pdf";
             ImageData img = ImageDataFactory.Create(sourceFolder + imgName);
             PdfDocument pdfDocument = new PdfDocument(new PdfWriter(@out));
             PdfImageXObject imageXObject = new PdfImageXObject(img);
-            new PdfCanvas(pdfDocument.AddNewPage(new PageSize(img.GetWidth(), img.GetHeight()))).AddXObject(imageXObject
-                , 0, 0, img.GetWidth());
+            new PdfCanvas(pdfDocument.AddNewPage(new PageSize(img.GetWidth(), img.GetHeight()))).AddXObjectFittedIntoRectangle
+                (imageXObject, new Rectangle(0, 0, img.GetWidth(), img.GetHeight()));
             pdfDocument.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(@out, cmp, destinationFolder, "diff_"));
         }

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,38 +44,65 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using Common.Logging;
-using iText.IO.Util;
-using iText.Kernel;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Filespec;
 
 namespace iText.Kernel.Pdf.Tagging {
+    /// <summary>Represents a wrapper-class for structure tree root dictionary.</summary>
+    /// <remarks>Represents a wrapper-class for structure tree root dictionary. See ISO-32000-1 "14.7.2 Structure hierarchy".
+    ///     </remarks>
     public class PdfStructTreeRoot : PdfObjectWrapper<PdfDictionary>, IStructureNode {
         private PdfDocument document;
 
         private ParentTreeHandler parentTreeHandler;
 
+        private PdfStructIdTree idTree = null;
+
         private static IDictionary<String, PdfName> staticRoleNames = new ConcurrentDictionary<String, PdfName>();
 
+        /// <summary>Creates a new structure tree root instance, this initializes empty logical structure in the document.
+        ///     </summary>
+        /// <remarks>
+        /// Creates a new structure tree root instance, this initializes empty logical structure in the document.
+        /// This class also handles global state of parent tree, so it's not expected to create multiple instances
+        /// of this class. Instead, use
+        /// <see cref="iText.Kernel.Pdf.PdfDocument.GetStructTreeRoot()"/>.
+        /// </remarks>
+        /// <param name="document">a document to which new instance of struct tree root will be bound</param>
         public PdfStructTreeRoot(PdfDocument document)
             : this((PdfDictionary)new PdfDictionary().MakeIndirect(document), document) {
             GetPdfObject().Put(PdfName.Type, PdfName.StructTreeRoot);
         }
 
-        public PdfStructTreeRoot(PdfDictionary pdfObject, PdfDocument document)
-            : base(pdfObject) {
+        /// <summary>Creates wrapper instance for already existing logical structure tree root in the document.</summary>
+        /// <remarks>
+        /// Creates wrapper instance for already existing logical structure tree root in the document.
+        /// This class also handles global state of parent tree, so it's not expected to create multiple instances
+        /// of this class. Instead, use
+        /// <see cref="iText.Kernel.Pdf.PdfDocument.GetStructTreeRoot()"/>.
+        /// </remarks>
+        /// <param name="structTreeRootDict">a dictionary that defines document structure tree root</param>
+        /// <param name="document">a document, which contains given structure tree root dictionary</param>
+        public PdfStructTreeRoot(PdfDictionary structTreeRootDict, PdfDocument document)
+            : base(structTreeRootDict) {
             this.document = document;
             if (this.document == null) {
-                EnsureObjectIsAddedToDocument(pdfObject);
-                this.document = pdfObject.GetIndirectReference().GetDocument();
+                EnsureObjectIsAddedToDocument(structTreeRootDict);
+                this.document = structTreeRootDict.GetIndirectReference().GetDocument();
             }
             SetForbidRelease();
             parentTreeHandler = new ParentTreeHandler(this);
+            // Always init role map dictionary in order to avoid inconsistency, because
+            // iText often initializes it during role mapping resolution anyway.
+            // In future, better way might be to not write it to the document needlessly
+            // and avoid possible redundant modifications in append mode.
             GetRoleMap();
         }
 
-        // TODO may be remove?
         public static PdfName ConvertRoleToPdfName(String role) {
             PdfName name = PdfName.staticNames.Get(role);
             if (name != null) {
@@ -149,9 +176,9 @@ namespace iText.Kernel.Pdf.Tagging {
             PdfDictionary roleMap = GetRoleMap();
             PdfObject prevVal = roleMap.Put(ConvertRoleToPdfName(fromRole), ConvertRoleToPdfName(toRole));
             if (prevVal != null && prevVal is PdfName) {
-                ILog logger = LogManager.GetLogger(typeof(iText.Kernel.Pdf.Tagging.PdfStructTreeRoot));
-                logger.Warn(String.Format(iText.IO.LogMessageConstant.MAPPING_IN_STRUCT_ROOT_OVERWRITTEN, fromRole, prevVal
-                    , toRole));
+                ILogger logger = ITextLogManager.GetLogger(typeof(iText.Kernel.Pdf.Tagging.PdfStructTreeRoot));
+                logger.LogWarning(String.Format(iText.IO.Logs.IoLogMessageConstant.MAPPING_IN_STRUCT_ROOT_OVERWRITTEN, fromRole
+                    , prevVal, toRole));
             }
             if (roleMap.IsIndirect()) {
                 roleMap.SetModified();
@@ -207,8 +234,14 @@ namespace iText.Kernel.Pdf.Tagging {
         /// Adds a
         /// <see cref="PdfNamespace"/>
         /// to the list of the namespaces used within the document.
-        /// <p>This value has meaning only for the PDF documents of version <b>2.0 and higher</b>.</p>
         /// </summary>
+        /// <remarks>
+        /// Adds a
+        /// <see cref="PdfNamespace"/>
+        /// to the list of the namespaces used within the document.
+        /// <para />
+        /// This value has meaning only for the PDF documents of version <b>2.0 and higher</b>.
+        /// </remarks>
         /// <param name="namespace">
         /// a
         /// <see cref="PdfNamespace"/>
@@ -249,18 +282,25 @@ namespace iText.Kernel.Pdf.Tagging {
         /// <see cref="iText.Kernel.Pdf.Filespec.PdfFileSpec"/>
         /// objects, where each specified file
         /// is a pronunciation lexicon, which is an XML file conforming to the Pronunciation Lexicon Specification (PLS) Version 1.0.
-        /// These pronunciation lexicons may be used as pronunciation hints when the document’s content is presented via
-        /// text-to-speech. Where two or more pronunciation lexicons apply to the same text, the first match – as defined by
-        /// the order of entries in the array and the order of entries inside the pronunciation lexicon file – should be used.
-        /// <p>
-        /// See ISO 32000-2 14.9.6, "Pronunciation hints".
         /// </summary>
-        /// <returns>
+        /// <remarks>
         /// A
         /// <see cref="System.Collections.IList{E}"/>
         /// containing one or more
         /// <see cref="iText.Kernel.Pdf.Filespec.PdfFileSpec"/>
-        /// .
+        /// objects, where each specified file
+        /// is a pronunciation lexicon, which is an XML file conforming to the Pronunciation Lexicon Specification (PLS) Version 1.0.
+        /// These pronunciation lexicons may be used as pronunciation hints when the document’s content is presented via
+        /// text-to-speech. Where two or more pronunciation lexicons apply to the same text, the first match – as defined by
+        /// the order of entries in the array and the order of entries inside the pronunciation lexicon file – should be used.
+        /// <para />
+        /// See ISO 32000-2 14.9.6, "Pronunciation hints".
+        /// </remarks>
+        /// <returns>
+        /// A
+        /// <see cref="System.Collections.IList{E}"/>
+        /// containing one or more
+        /// <see cref="iText.Kernel.Pdf.Filespec.PdfFileSpec"/>.
         /// </returns>
         public virtual IList<PdfFileSpec> GetPronunciationLexiconsList() {
             PdfArray pronunciationLexicons = GetPdfObject().GetAsArray(PdfName.PronunciationLexicon);
@@ -280,11 +320,16 @@ namespace iText.Kernel.Pdf.Tagging {
         /// Adds a single
         /// <see cref="iText.Kernel.Pdf.Filespec.PdfFileSpec"/>
         /// object, which specifies XML file conforming to PLS.
-        /// For more info see
-        /// <see cref="GetPronunciationLexiconsList()"/>
-        /// .
-        /// <p>This value has meaning only for the PDF documents of version <b>2.0 and higher</b>.</p>
         /// </summary>
+        /// <remarks>
+        /// Adds a single
+        /// <see cref="iText.Kernel.Pdf.Filespec.PdfFileSpec"/>
+        /// object, which specifies XML file conforming to PLS.
+        /// For more info see
+        /// <see cref="GetPronunciationLexiconsList()"/>.
+        /// <para />
+        /// This value has meaning only for the PDF documents of version <b>2.0 and higher</b>.
+        /// </remarks>
         /// <param name="pronunciationLexiconFileSpec">
         /// a
         /// <see cref="iText.Kernel.Pdf.Filespec.PdfFileSpec"/>
@@ -327,9 +372,17 @@ namespace iText.Kernel.Pdf.Tagging {
         /// lead to the ConcurrentModificationException, because returned collection is backed by the internal list of the
         /// actual page tags.
         /// </remarks>
+        /// <param name="page">
+        /// 
+        /// <see cref="iText.Kernel.Pdf.PdfPage"/>
+        /// to obtain unmodifiable collection of marked content references
+        /// </param>
+        /// <returns>the unmodifiable collection of marked content references on page, if no Mcrs defined returns null
+        ///     </returns>
         public virtual ICollection<PdfMcr> GetPageMarkedContentReferences(PdfPage page) {
-            IDictionary<int, PdfMcr> pageMcrs = GetParentTreeHandler().GetPageMarkedContentReferences(page);
-            return pageMcrs != null ? JavaCollectionsUtil.UnmodifiableCollection(pageMcrs.Values) : null;
+            ParentTreeHandler.PageMcrsContainer pageMcrs = GetParentTreeHandler().GetPageMarkedContentReferences(page);
+            return pageMcrs != null ? JavaCollectionsUtil.UnmodifiableCollection(pageMcrs.GetAllMcrsAsCollection()) : 
+                null;
         }
 
         public virtual PdfMcr FindMcrByMcid(PdfDictionary pageDict, int mcid) {
@@ -351,6 +404,9 @@ namespace iText.Kernel.Pdf.Tagging {
             GetPdfObject().Put(PdfName.ParentTree, GetParentTreeHandler().BuildParentTree());
             GetPdfObject().Put(PdfName.ParentTreeNextKey, new PdfNumber((int)GetDocument().GetNextStructParentIndex())
                 );
+            if (this.idTree != null && this.idTree.IsModified()) {
+                GetPdfObject().Put(PdfName.IDTree, this.idTree.BuildTree().MakeIndirect(GetDocument()));
+            }
             if (!GetDocument().IsAppendMode()) {
                 FlushAllKids(this);
             }
@@ -359,13 +415,16 @@ namespace iText.Kernel.Pdf.Tagging {
 
         /// <summary>
         /// Copies structure to a
-        /// <paramref name="destDocument"/>
-        /// .
+        /// <paramref name="destDocument"/>.
+        /// </summary>
+        /// <remarks>
+        /// Copies structure to a
+        /// <paramref name="destDocument"/>.
         /// NOTE: Works only for
         /// <see cref="PdfStructTreeRoot"/>
         /// that is read from the document opened in reading mode,
         /// otherwise an exception is thrown.
-        /// </summary>
+        /// </remarks>
         /// <param name="destDocument">document to copy structure to. Shall not be current document.</param>
         /// <param name="page2page">association between original page and copied page.</param>
         public virtual void CopyTo(PdfDocument destDocument, IDictionary<PdfPage, PdfPage> page2page) {
@@ -376,11 +435,16 @@ namespace iText.Kernel.Pdf.Tagging {
         /// Copies structure to a
         /// <paramref name="destDocument"/>
         /// and insert it in a specified position in the document.
+        /// </summary>
+        /// <remarks>
+        /// Copies structure to a
+        /// <paramref name="destDocument"/>
+        /// and insert it in a specified position in the document.
         /// NOTE: Works only for
         /// <see cref="PdfStructTreeRoot"/>
         /// that is read from the document opened in reading mode,
         /// otherwise an exception is thrown.
-        /// </summary>
+        /// </remarks>
         /// <param name="destDocument">document to copy structure to.</param>
         /// <param name="insertBeforePage">indicates where the structure to be inserted.</param>
         /// <param name="page2page">association between original page and copied page.</param>
@@ -393,7 +457,7 @@ namespace iText.Kernel.Pdf.Tagging {
         ///     </summary>
         /// <remarks>
         /// Moves structure associated with specified page and insert it in a specified position in the document.
-        /// <p>
+        /// <para />
         /// NOTE: Works only for document with not flushed pages.
         /// </remarks>
         /// <param name="fromPage">page which tag structure will be moved</param>
@@ -401,7 +465,8 @@ namespace iText.Kernel.Pdf.Tagging {
         public virtual void Move(PdfPage fromPage, int insertBeforePage) {
             for (int i = 1; i <= GetDocument().GetNumberOfPages(); ++i) {
                 if (GetDocument().GetPage(i).IsFlushed()) {
-                    throw new PdfException(MessageFormatUtil.Format(PdfException.CannotMovePagesInPartlyFlushedDocument, i));
+                    throw new PdfException(MessageFormatUtil.Format(KernelExceptionMessageConstant.CANNOT_MOVE_PAGES_IN_PARTLY_FLUSHED_DOCUMENT
+                        , i));
                 }
             }
             StructureTreeCopier.Move(GetDocument(), fromPage, insertBeforePage);
@@ -420,29 +485,22 @@ namespace iText.Kernel.Pdf.Tagging {
             return document;
         }
 
-        /// <summary>
-        /// <p>
-        /// Adds file associated with structure tree root and identifies the relationship between them.
-        /// </summary>
+        /// <summary>Adds file associated with structure tree root and identifies the relationship between them.</summary>
         /// <remarks>
-        /// <p>
         /// Adds file associated with structure tree root and identifies the relationship between them.
-        /// </p>
-        /// <p>
+        /// <para />
         /// Associated files may be used in Pdf/A-3 and Pdf 2.0 documents.
         /// The method adds file to array value of the AF key in the structure tree root dictionary.
         /// If description is provided, it also will add file description to catalog Names tree.
-        /// </p>
-        /// <p>
+        /// <para />
         /// For associated files their associated file specification dictionaries shall include the AFRelationship key
-        /// </p>
         /// </remarks>
         /// <param name="description">the file description</param>
         /// <param name="fs">file specification dictionary of associated file</param>
         public virtual void AddAssociatedFile(String description, PdfFileSpec fs) {
             if (null == ((PdfDictionary)fs.GetPdfObject()).Get(PdfName.AFRelationship)) {
-                ILog logger = LogManager.GetLogger(typeof(iText.Kernel.Pdf.Tagging.PdfStructTreeRoot));
-                logger.Error(iText.IO.LogMessageConstant.ASSOCIATED_FILE_SPEC_SHALL_INCLUDE_AFRELATIONSHIP);
+                ILogger logger = ITextLogManager.GetLogger(typeof(iText.Kernel.Pdf.Tagging.PdfStructTreeRoot));
+                logger.LogError(iText.IO.Logs.IoLogMessageConstant.ASSOCIATED_FILE_SPEC_SHALL_INCLUDE_AFRELATIONSHIP);
             }
             if (null != description) {
                 GetDocument().GetCatalog().GetNameTree(PdfName.EmbeddedFiles).AddEntry(description, fs.GetPdfObject());
@@ -456,20 +514,17 @@ namespace iText.Kernel.Pdf.Tagging {
         }
 
         /// <summary>
-        /// <p>
+        /// <para />
         /// Adds file associated with structure tree root and identifies the relationship between them.
         /// </summary>
         /// <remarks>
-        /// <p>
+        /// <para />
         /// Adds file associated with structure tree root and identifies the relationship between them.
-        /// </p>
-        /// <p>
+        /// <para />
         /// Associated files may be used in Pdf/A-3 and Pdf 2.0 documents.
         /// The method adds file to array value of the AF key in the structure tree root dictionary.
-        /// </p>
-        /// <p>
+        /// <para />
         /// For associated files their associated file specification dictionaries shall include the AFRelationship key
-        /// </p>
         /// </remarks>
         /// <param name="fs">file specification dictionary of associated file</param>
         public virtual void AddAssociatedFile(PdfFileSpec fs) {
@@ -477,8 +532,8 @@ namespace iText.Kernel.Pdf.Tagging {
         }
 
         /// <summary>Returns files associated with structure tree root.</summary>
-        /// <param name="create">iText will create AF array if it doesn't exist and create value is true</param>
-        /// <returns>associated files array.</returns>
+        /// <param name="create">defines whether AF arrays will be created if it doesn't exist</param>
+        /// <returns>associated files array</returns>
         public virtual PdfArray GetAssociatedFiles(bool create) {
             PdfArray afArray = GetPdfObject().GetAsArray(PdfName.AF);
             if (afArray == null && create) {
@@ -486,6 +541,40 @@ namespace iText.Kernel.Pdf.Tagging {
                 GetPdfObject().Put(PdfName.AF, afArray);
             }
             return afArray;
+        }
+
+        /// <summary>
+        /// Returns the document's structure element ID tree wrapped in a
+        /// <see cref="PdfStructIdTree"/>
+        /// object.
+        /// </summary>
+        /// <remarks>
+        /// Returns the document's structure element ID tree wrapped in a
+        /// <see cref="PdfStructIdTree"/>
+        /// object. If no such tree exists, it is initialized. The initialization happens lazily,
+        /// and does not trigger any PDF object changes unless populated.
+        /// </remarks>
+        /// <returns>
+        /// the
+        /// <see cref="PdfStructIdTree"/>
+        /// of the document
+        /// </returns>
+        public virtual PdfStructIdTree GetIdTree() {
+            if (this.idTree == null) {
+                // Attempt to parse the ID tree in the document if there is one
+                PdfDictionary idTreeDict = this.GetPdfObject().GetAsDictionary(PdfName.IDTree);
+                if (idTreeDict == null) {
+                    // No tree found -> initialise one
+                    // Don't call setModified() here, registering the first ID will
+                    // take care of that for us.
+                    // The ID tree will be registered at flush time.
+                    this.idTree = new PdfStructIdTree(document);
+                }
+                else {
+                    this.idTree = PdfStructIdTree.ReadFromDictionary(document, idTreeDict);
+                }
+            }
+            return this.idTree;
         }
 
         internal virtual ParentTreeHandler GetParentTreeHandler() {
@@ -501,7 +590,7 @@ namespace iText.Kernel.Pdf.Tagging {
             }
             if (PdfStructElem.IsStructElem(structElem)) {
                 if (GetPdfObject().GetIndirectReference() == null) {
-                    throw new PdfException(PdfException.StructureElementDictionaryShallBeAnIndirectObjectInOrderToHaveChildren
+                    throw new PdfException(KernelExceptionMessageConstant.STRUCTURE_ELEMENT_DICTIONARY_SHALL_BE_AN_INDIRECT_OBJECT_IN_ORDER_TO_HAVE_CHILDREN
                         );
                 }
                 structElem.Put(PdfName.P, GetPdfObject());

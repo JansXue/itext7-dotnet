@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,7 +41,6 @@ source product.
 For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
-using iText.Kernel;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Annot;
 
@@ -65,24 +64,11 @@ namespace iText.Kernel.Pdf.Tagging {
         }
 
         public override PdfDictionary GetPageObject() {
-            PdfDictionary page = ((PdfDictionary)GetPdfObject()).GetAsDictionary(PdfName.Pg);
-            if (page == null) {
-                page = parent.GetPdfObject().GetAsDictionary(PdfName.Pg);
-            }
-            return page;
+            return base.GetPageObject();
         }
 
         public virtual PdfDictionary GetReferencedObject() {
             return ((PdfDictionary)GetPdfObject()).GetAsDictionary(PdfName.Obj);
-        }
-
-        private static PdfDocument GetDocEnsureIndirect(PdfStructElem structElem) {
-            PdfIndirectReference indRef = structElem.GetPdfObject().GetIndirectReference();
-            if (indRef == null) {
-                throw new PdfException(PdfException.StructureElementDictionaryShallBeAnIndirectObjectInOrderToHaveChildren
-                    );
-            }
-            return indRef.GetDocument();
         }
     }
 }

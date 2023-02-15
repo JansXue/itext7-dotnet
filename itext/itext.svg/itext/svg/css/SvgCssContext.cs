@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -40,17 +40,31 @@ source product.
 For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
+using System;
 using iText.StyledXmlParser.Css.Resolve;
+using iText.StyledXmlParser.Css.Util;
+using iText.Svg;
 
 namespace iText.Svg.Css {
     /// <summary>
     /// Context necessary for evaluating certain Css statements whose final values depends on other statements
-    /// e.g.
-    /// </summary>
-    /// <remarks>
-    /// Context necessary for evaluating certain Css statements whose final values depends on other statements
     /// e.g. relative font-size statements.
-    /// </remarks>
+    /// </summary>
     public class SvgCssContext : AbstractCssContext {
+        /// <summary>The root font size value in pt.</summary>
+        private float rootFontSize = CssDimensionParsingUtils.ParseAbsoluteFontSize(CssDefaults.GetDefaultValue(SvgConstants.Attributes
+            .FONT_SIZE));
+
+        /// <summary>Gets the root font size.</summary>
+        /// <returns>the root font size in pt</returns>
+        public virtual float GetRootFontSize() {
+            return rootFontSize;
+        }
+
+        /// <summary>Sets the root font size.</summary>
+        /// <param name="fontSizeStr">the new root font size</param>
+        public virtual void SetRootFontSize(String fontSizeStr) {
+            this.rootFontSize = CssDimensionParsingUtils.ParseAbsoluteFontSize(fontSizeStr);
+        }
     }
 }

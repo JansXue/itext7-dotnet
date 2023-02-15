@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -74,8 +74,9 @@ namespace iText.Kernel.Numbering {
         private GeorgianNumbering() {
         }
 
-        /// <summary>Returns a georgian numeral representation of an integer.</summary>
+        /// <summary>Converts the given number to its georgian numeral representation.</summary>
         /// <param name="number">a number greater than zero to be converted to georgian notation</param>
+        /// <returns>a georgian numeral representation of an integer.</returns>
         public static String ToGeorgian(int number) {
             StringBuilder result = new StringBuilder();
             for (int i = DIGITS.Length - 1; i >= 0; i--) {

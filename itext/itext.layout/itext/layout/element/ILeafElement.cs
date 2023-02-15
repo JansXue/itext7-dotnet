@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -46,11 +46,17 @@ namespace iText.Layout.Element {
     /// A marker subinterface of
     /// <see cref="IElement"/>
     /// that specifies that the layout object
+    /// is, by definition, on the lowest tier in the object hierarchy.
+    /// </summary>
+    /// <remarks>
+    /// A marker subinterface of
+    /// <see cref="IElement"/>
+    /// that specifies that the layout object
     /// is, by definition, on the lowest tier in the object hierarchy. A
     /// <see cref="ILeafElement">leaf element</see>
     /// must not act as a container for other
     /// elements.
-    /// </summary>
+    /// </remarks>
     public interface ILeafElement : IElement {
     }
 }

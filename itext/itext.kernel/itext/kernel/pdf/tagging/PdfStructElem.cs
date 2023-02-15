@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,9 +43,10 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Common.Logging;
-using iText.IO.Util;
-using iText.Kernel;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Annot;
 using iText.Kernel.Pdf.Filespec;
@@ -54,7 +55,7 @@ namespace iText.Kernel.Pdf.Tagging {
     /// <summary>A wrapper for structure element dictionaries (ISO-32000 14.7.2 "Structure Hierarchy").</summary>
     /// <remarks>
     /// A wrapper for structure element dictionaries (ISO-32000 14.7.2 "Structure Hierarchy").
-    /// <p>
+    /// <para />
     /// The logical structure of a document shall be described by a hierarchy of objects called
     /// the structure hierarchy or structure tree. At the root of the hierarchy shall be a dictionary object
     /// called the structure tree root (see
@@ -77,7 +78,7 @@ namespace iText.Kernel.Pdf.Tagging {
         public PdfStructElem(PdfDocument document, PdfName role, PdfAnnotation annot)
             : this(document, role) {
             if (annot.GetPage() == null) {
-                throw new PdfException(PdfException.AnnotationShallHaveReferenceToPage);
+                throw new PdfException(KernelExceptionMessageConstant.ANNOTATION_SHALL_HAVE_REFERENCE_TO_PAGE);
             }
             // Explicitly using object indirect reference here in order to correctly process released objects.
             GetPdfObject().Put(PdfName.Pg, annot.GetPage().GetPdfObject().GetIndirectReference());
@@ -89,14 +90,27 @@ namespace iText.Kernel.Pdf.Tagging {
             GetPdfObject().Put(PdfName.S, role);
         }
 
-        /// <summary>Method to to distinguish struct elements from other elements of the logical tree (like mcr or struct tree root).
+        /// <summary>Method to distinguish struct elements from other elements of the logical tree (like mcr or struct tree root).
         ///     </summary>
+        /// <param name="dictionary">
+        /// the
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// to check on containing struct elements
+        /// </param>
+        /// <returns>
+        /// if the type of
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// is StructElem or
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// contains the required key S
+        /// then true, otherwise false
+        /// </returns>
         public static bool IsStructElem(PdfDictionary dictionary) {
+            // S is required key of the struct elem
             return (PdfName.StructElem.Equals(dictionary.GetAsName(PdfName.Type)) || dictionary.ContainsKey(PdfName.S)
                 );
         }
 
-        // required key of the struct elem
         /// <summary>Gets attributes object.</summary>
         /// <param name="createNewIfNull">
         /// sometimes attributes object may not exist.
@@ -149,6 +163,40 @@ namespace iText.Kernel.Pdf.Tagging {
 
         public virtual void SetE(PdfString e) {
             Put(PdfName.E, e);
+        }
+
+        /// <summary>Gets the structure element's ID string, if it has one.</summary>
+        /// <returns>the structure element's ID string, or null if there is none</returns>
+        public virtual PdfString GetStructureElementId() {
+            return GetPdfObject().GetAsString(PdfName.ID);
+        }
+
+        /// <summary>Sets the structure element's ID string.</summary>
+        /// <remarks>
+        /// Sets the structure element's ID string.
+        /// This value can be used by other structure elements to reference this one.
+        /// </remarks>
+        /// <param name="id">the element's ID string to be set</param>
+        public virtual void SetStructureElementId(PdfString id) {
+            PdfStructIdTree idTree = GetDocument().GetStructTreeRoot().GetIdTree();
+            if (id == null) {
+                PdfObject orig = GetPdfObject().Remove(PdfName.ID);
+                if (orig is PdfString) {
+                    idTree.RemoveEntry((PdfString)orig);
+                }
+            }
+            else {
+                PdfObject orig = GetPdfObject().Get(PdfName.ID);
+                if (id.Equals(orig)) {
+                    // nothing to do, the ID is already set to the appropriate value
+                    return;
+                }
+                if (orig is PdfString) {
+                    idTree.RemoveEntry((PdfString)orig);
+                }
+                idTree.AddEntry(id, this.GetPdfObject());
+                GetPdfObject().Put(PdfName.ID, id);
+            }
         }
 
         public virtual PdfName GetRole() {
@@ -319,8 +367,15 @@ namespace iText.Kernel.Pdf.Tagging {
         /// <see cref="iText.Kernel.Pdf.PdfName.Ref"/>
         /// identifies the structure element to which the item of content, contained
         /// within this structure element, refers (e.g. footnotes, endnotes, sidebars, etc.).
-        /// <p>This value has meaning only for the PDF documents of version <b>2.0 and higher</b>.</p>
         /// </summary>
+        /// <remarks>
+        /// A
+        /// <see cref="iText.Kernel.Pdf.PdfName.Ref"/>
+        /// identifies the structure element to which the item of content, contained
+        /// within this structure element, refers (e.g. footnotes, endnotes, sidebars, etc.).
+        /// <para />
+        /// This value has meaning only for the PDF documents of version <b>2.0 and higher</b>.
+        /// </remarks>
         /// <param name="ref">
         /// a
         /// <see cref="PdfStructElem"/>
@@ -328,7 +383,8 @@ namespace iText.Kernel.Pdf.Tagging {
         /// </param>
         public virtual void AddRef(iText.Kernel.Pdf.Tagging.PdfStructElem @ref) {
             if (!@ref.GetPdfObject().IsIndirect()) {
-                throw new PdfException(PdfException.RefArrayItemsInStructureElementDictionaryShallBeIndirectObjects);
+                throw new PdfException(KernelExceptionMessageConstant.REF_ARRAY_ITEMS_IN_STRUCTURE_ELEMENT_DICTIONARY_SHALL_BE_INDIRECT_OBJECTS
+                    );
             }
             VersionConforming.ValidatePdfVersionForDictEntry(GetDocument(), PdfVersion.PDF_2_0, PdfName.Ref, PdfName.StructElem
                 );
@@ -359,7 +415,8 @@ namespace iText.Kernel.Pdf.Tagging {
         /// <summary>A namespace this element belongs to (see ISO 32000-2 14.7.4, "Namespaces").</summary>
         /// <remarks>
         /// A namespace this element belongs to (see ISO 32000-2 14.7.4, "Namespaces").
-        /// <p>This value has meaning only for the PDF documents of version <b>2.0 and higher</b>.</p>
+        /// <para />
+        /// This value has meaning only for the PDF documents of version <b>2.0 and higher</b>.
         /// </remarks>
         /// <param name="namespace">
         /// a
@@ -383,7 +440,8 @@ namespace iText.Kernel.Pdf.Tagging {
         /// <remarks>
         /// Attribute for a structure element that may be used as pronunciation hint. It is an exact replacement for content
         /// enclosed by the structure element and its children.
-        /// <p>This value has meaning only for the PDF documents of version <b>2.0 and higher</b>.</p>
+        /// <para />
+        /// This value has meaning only for the PDF documents of version <b>2.0 and higher</b>.
         /// </remarks>
         /// <param name="elementPhoneme">
         /// a
@@ -416,29 +474,39 @@ namespace iText.Kernel.Pdf.Tagging {
         /// Attribute for a structure element that indicates the phonetic alphabet used by a
         /// <see cref="iText.Kernel.Pdf.PdfName.Phoneme"/>
         /// attribute.
-        /// Applies to the structure element and its children, except where overridden by a child structure element.
-        /// <p>This value has meaning only for the PDF documents of version <b>2.0 and higher</b>.</p>
         /// </summary>
+        /// <remarks>
+        /// Attribute for a structure element that indicates the phonetic alphabet used by a
+        /// <see cref="iText.Kernel.Pdf.PdfName.Phoneme"/>
+        /// attribute.
+        /// Applies to the structure element and its children, except where overridden by a child structure element.
+        /// <para />
+        /// This value has meaning only for the PDF documents of version <b>2.0 and higher</b>.
+        /// </remarks>
         /// <param name="phoneticAlphabet">
         /// the
         /// <see cref="iText.Kernel.Pdf.PdfName"/>
         /// which defines phonetic alphabet used by a
         /// <see cref="iText.Kernel.Pdf.PdfName.Phoneme"/>
         /// attribute. Possible values are:
-        /// <ul>
-        /// <li>
+        /// <list type="bullet">
+        /// <item><description>
         /// <see cref="iText.Kernel.Pdf.PdfName.ipa"/>
-        /// for the International Phonetic Alphabet by the International Phonetic Association;</li>
-        /// <li>
+        /// for the International Phonetic Alphabet by the International Phonetic Association;
+        /// </description></item>
+        /// <item><description>
         /// <see cref="iText.Kernel.Pdf.PdfName.x_sampa"/>
-        /// for Extended Speech Assessment Methods Phonetic Alphabet (X-SAMPA);</li>
-        /// <li>
+        /// for Extended Speech Assessment Methods Phonetic Alphabet (X-SAMPA);
+        /// </description></item>
+        /// <item><description>
         /// <see cref="iText.Kernel.Pdf.PdfName.zh_Latn_pinyin"/>
-        /// for Pinyin Latin romanization (Mandarin);</li>
-        /// <li>
+        /// for Pinyin Latin romanization (Mandarin);
+        /// </description></item>
+        /// <item><description>
         /// <see cref="iText.Kernel.Pdf.PdfName.zh_Latn_wadegile"/>
-        /// for Wade-Giles romanization (Mandarin).</li>
-        /// </ul>
+        /// for Wade-Giles romanization (Mandarin).
+        /// </description></item>
+        /// </list>
         /// Other values may be used.
         /// </param>
         public virtual void SetPhoneticAlphabet(PdfName phoneticAlphabet) {
@@ -451,8 +519,13 @@ namespace iText.Kernel.Pdf.Tagging {
         /// Attribute for a structure element that indicates the phonetic alphabet used by a
         /// <see cref="iText.Kernel.Pdf.PdfName.Phoneme"/>
         /// attribute.
-        /// Applies to the structure element and its children, except where overridden by a child structure element.
         /// </summary>
+        /// <remarks>
+        /// Attribute for a structure element that indicates the phonetic alphabet used by a
+        /// <see cref="iText.Kernel.Pdf.PdfName.Phoneme"/>
+        /// attribute.
+        /// Applies to the structure element and its children, except where overridden by a child structure element.
+        /// </remarks>
         /// <returns>
         /// the
         /// <see cref="iText.Kernel.Pdf.PdfName"/>
@@ -469,29 +542,22 @@ namespace iText.Kernel.Pdf.Tagging {
             return GetPdfObject().GetAsName(PdfName.PhoneticAlphabet);
         }
 
-        /// <summary>
-        /// <p>
-        /// Adds file associated with structure element and identifies the relationship between them.
-        /// </summary>
+        /// <summary>Adds file associated with structure element and identifies the relationship between them.</summary>
         /// <remarks>
-        /// <p>
         /// Adds file associated with structure element and identifies the relationship between them.
-        /// </p>
-        /// <p>
+        /// <para />
         /// Associated files may be used in Pdf/A-3 and Pdf 2.0 documents.
         /// The method adds file to array value of the AF key in the structure element dictionary.
         /// If description is provided, it also will add file description to catalog Names tree.
-        /// </p>
-        /// <p>
+        /// <para />
         /// For associated files their associated file specification dictionaries shall include the AFRelationship key
-        /// </p>
         /// </remarks>
         /// <param name="description">the file description</param>
         /// <param name="fs">file specification dictionary of associated file</param>
         public virtual void AddAssociatedFile(String description, PdfFileSpec fs) {
             if (null == ((PdfDictionary)fs.GetPdfObject()).Get(PdfName.AFRelationship)) {
-                ILog logger = LogManager.GetLogger(typeof(iText.Kernel.Pdf.Tagging.PdfStructElem));
-                logger.Error(iText.IO.LogMessageConstant.ASSOCIATED_FILE_SPEC_SHALL_INCLUDE_AFRELATIONSHIP);
+                ILogger logger = ITextLogManager.GetLogger(typeof(iText.Kernel.Pdf.Tagging.PdfStructElem));
+                logger.LogError(iText.IO.Logs.IoLogMessageConstant.ASSOCIATED_FILE_SPEC_SHALL_INCLUDE_AFRELATIONSHIP);
             }
             if (null != description) {
                 GetDocument().GetCatalog().GetNameTree(PdfName.EmbeddedFiles).AddEntry(description, fs.GetPdfObject());
@@ -505,20 +571,17 @@ namespace iText.Kernel.Pdf.Tagging {
         }
 
         /// <summary>
-        /// <p>
+        /// <para />
         /// Adds file associated with structure element and identifies the relationship between them.
         /// </summary>
         /// <remarks>
-        /// <p>
+        /// <para />
         /// Adds file associated with structure element and identifies the relationship between them.
-        /// </p>
-        /// <p>
+        /// <para />
         /// Associated files may be used in Pdf/A-3 and Pdf 2.0 documents.
         /// The method adds file to array value of the AF key in the structure element dictionary.
-        /// </p>
-        /// <p>
+        /// <para />
         /// For associated files their associated file specification dictionaries shall include the AFRelationship key
-        /// </p>
         /// </remarks>
         /// <param name="fs">file specification dictionary of associated file</param>
         public virtual void AddAssociatedFile(PdfFileSpec fs) {
@@ -526,8 +589,8 @@ namespace iText.Kernel.Pdf.Tagging {
         }
 
         /// <summary>Returns files associated with structure element.</summary>
-        /// <param name="create">iText will create AF array if it doesn't exist and create value is true</param>
-        /// <returns>associated files array.</returns>
+        /// <param name="create">defines whether AF arrays will be created if it doesn't exist</param>
+        /// <returns>associated files array</returns>
         public virtual PdfArray GetAssociatedFiles(bool create) {
             PdfArray afArray = GetPdfObject().GetAsArray(PdfName.AF);
             if (afArray == null && create) {
@@ -558,10 +621,11 @@ namespace iText.Kernel.Pdf.Tagging {
 
         internal static void AddKidObject(PdfDictionary parent, int index, PdfObject kid) {
             if (parent.IsFlushed()) {
-                throw new PdfException(PdfException.CannotAddKidToTheFlushedElement);
+                throw new PdfException(KernelExceptionMessageConstant.CANNOT_ADD_KID_TO_THE_FLUSHED_ELEMENT);
             }
             if (!parent.ContainsKey(PdfName.P)) {
-                throw new PdfException(PdfException.StructureElementShallContainParentObject, parent);
+                throw new PdfException(KernelExceptionMessageConstant.STRUCTURE_ELEMENT_SHALL_CONTAIN_PARENT_OBJECT, parent
+                    );
             }
             PdfObject k = parent.Get(PdfName.K);
             if (k == null) {
@@ -587,7 +651,7 @@ namespace iText.Kernel.Pdf.Tagging {
             parent.SetModified();
             if (kid is PdfDictionary && IsStructElem((PdfDictionary)kid)) {
                 if (!parent.IsIndirect()) {
-                    throw new PdfException(PdfException.StructureElementDictionaryShallBeAnIndirectObjectInOrderToHaveChildren
+                    throw new PdfException(KernelExceptionMessageConstant.STRUCTURE_ELEMENT_DICTIONARY_SHALL_BE_AN_INDIRECT_OBJECT_IN_ORDER_TO_HAVE_CHILDREN
                         );
                 }
                 ((PdfDictionary)kid).Put(PdfName.P, parent);
@@ -613,7 +677,7 @@ namespace iText.Kernel.Pdf.Tagging {
         private PdfDocument GetDocEnsureIndirectForKids() {
             PdfDocument doc = GetDocument();
             if (doc == null) {
-                throw new PdfException(PdfException.StructureElementDictionaryShallBeAnIndirectObjectInOrderToHaveChildren
+                throw new PdfException(KernelExceptionMessageConstant.STRUCTURE_ELEMENT_DICTIONARY_SHALL_BE_AN_INDIRECT_OBJECT_IN_ORDER_TO_HAVE_CHILDREN
                     );
             }
             return doc;

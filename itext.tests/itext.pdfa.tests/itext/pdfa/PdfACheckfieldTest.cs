@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -51,6 +51,7 @@ using iText.Kernel.Utils;
 using iText.Test;
 
 namespace iText.Pdfa {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class PdfACheckfieldTest : ExtendedITextTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/pdfa/";
@@ -66,8 +67,6 @@ namespace iText.Pdfa {
             CreateDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void PdfA1aCheckFieldOffAppearanceTest() {
             String name = "pdfA1a_checkFieldOffAppearance";
@@ -82,18 +81,17 @@ namespace iText.Pdfa {
             doc.GetCatalog().SetLang(new PdfString("en-US"));
             doc.AddNewPage();
             PdfAcroForm form = PdfAcroForm.GetAcroForm(doc, true);
-            PdfFormField chk = PdfFormField.CreateCheckBox(doc, new Rectangle(100, 500, 50, 50), "name", "Off", PdfFormField
-                .TYPE_CHECK, PdfAConformanceLevel.PDF_A_1A);
-            chk.SetBorderColor(ColorConstants.BLACK);
-            chk.SetBorderWidth(1);
+            PdfFormField chk = new CheckBoxFormFieldBuilder(doc, "name").SetWidgetRectangle(new Rectangle(100, 500, 50
+                , 50)).SetCheckType(PdfFormField.TYPE_CHECK).SetConformanceLevel(PdfAConformanceLevel.PDF_A_1A).CreateCheckBox
+                ().SetValue("Off");
+            chk.GetFirstFormAnnotation().SetBorderColor(ColorConstants.BLACK);
+            chk.GetFirstFormAnnotation().SetBorderWidth(1);
             form.AddField(chk);
             doc.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outPath, cmpPath, destinationFolder, diff
                 ));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void PdfA1aCheckFieldOnAppearanceTest() {
             String name = "pdfA1a_checkFieldOnAppearance";
@@ -108,18 +106,17 @@ namespace iText.Pdfa {
             doc.GetCatalog().SetLang(new PdfString("en-US"));
             doc.AddNewPage();
             PdfAcroForm form = PdfAcroForm.GetAcroForm(doc, true);
-            PdfFormField chk = PdfFormField.CreateCheckBox(doc, new Rectangle(100, 500, 50, 50), "name", "On", PdfFormField
-                .TYPE_CHECK, PdfAConformanceLevel.PDF_A_1A);
-            chk.SetBorderColor(ColorConstants.BLACK);
-            chk.SetBorderWidth(1);
+            PdfFormField chk = new CheckBoxFormFieldBuilder(doc, "name").SetWidgetRectangle(new Rectangle(100, 500, 50
+                , 50)).SetCheckType(PdfFormField.TYPE_CHECK).SetConformanceLevel(PdfAConformanceLevel.PDF_A_1A).CreateCheckBox
+                ().SetValue("On");
+            chk.GetFirstFormAnnotation().SetBorderColor(ColorConstants.BLACK);
+            chk.GetFirstFormAnnotation().SetBorderWidth(1);
             form.AddField(chk);
             doc.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outPath, cmpPath, destinationFolder, diff
                 ));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void PdfA1bCheckFieldOffAppearanceTest() {
             String name = "pdfA1b_checkFieldOffAppearance";
@@ -132,18 +129,17 @@ namespace iText.Pdfa {
                 , "http://www.color.org", "sRGB IEC61966-2.1", @is));
             doc.AddNewPage();
             PdfAcroForm form = PdfAcroForm.GetAcroForm(doc, true);
-            PdfFormField chk = PdfFormField.CreateCheckBox(doc, new Rectangle(100, 500, 50, 50), "name", "Off", PdfFormField
-                .TYPE_CHECK, PdfAConformanceLevel.PDF_A_1B);
-            chk.SetBorderColor(ColorConstants.BLACK);
-            chk.SetBorderWidth(1);
+            PdfFormField chk = new CheckBoxFormFieldBuilder(doc, "name").SetWidgetRectangle(new Rectangle(100, 500, 50
+                , 50)).SetCheckType(PdfFormField.TYPE_CHECK).SetConformanceLevel(PdfAConformanceLevel.PDF_A_1B).CreateCheckBox
+                ().SetValue("Off");
+            chk.GetFirstFormAnnotation().SetBorderColor(ColorConstants.BLACK);
+            chk.GetFirstFormAnnotation().SetBorderWidth(1);
             form.AddField(chk);
             doc.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outPath, cmpPath, destinationFolder, diff
                 ));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void PdfA1bCheckFieldOnAppearanceTest() {
             String name = "pdfA1b_checkFieldOnAppearance";
@@ -156,18 +152,17 @@ namespace iText.Pdfa {
                 , "http://www.color.org", "sRGB IEC61966-2.1", @is));
             doc.AddNewPage();
             PdfAcroForm form = PdfAcroForm.GetAcroForm(doc, true);
-            PdfFormField chk = PdfFormField.CreateCheckBox(doc, new Rectangle(100, 500, 50, 50), "name", "On", PdfFormField
-                .TYPE_CHECK, PdfAConformanceLevel.PDF_A_1B);
-            chk.SetBorderColor(ColorConstants.BLACK);
-            chk.SetBorderWidth(1);
+            PdfFormField chk = new CheckBoxFormFieldBuilder(doc, "name").SetWidgetRectangle(new Rectangle(100, 500, 50
+                , 50)).SetCheckType(PdfFormField.TYPE_CHECK).SetConformanceLevel(PdfAConformanceLevel.PDF_A_1B).CreateCheckBox
+                ().SetValue("On");
+            chk.GetFirstFormAnnotation().SetBorderColor(ColorConstants.BLACK);
+            chk.GetFirstFormAnnotation().SetBorderWidth(1);
             form.AddField(chk);
             doc.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outPath, cmpPath, destinationFolder, diff
                 ));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void PdfA2aCheckFieldOffAppearanceTest() {
             String name = "pdfA2a_checkFieldOffAppearance";
@@ -182,18 +177,17 @@ namespace iText.Pdfa {
             doc.GetCatalog().SetLang(new PdfString("en-US"));
             doc.AddNewPage();
             PdfAcroForm form = PdfAcroForm.GetAcroForm(doc, true);
-            PdfFormField chk = PdfFormField.CreateCheckBox(doc, new Rectangle(100, 500, 50, 50), "name", "Off", PdfFormField
-                .TYPE_CHECK, PdfAConformanceLevel.PDF_A_2A);
-            chk.SetBorderColor(ColorConstants.BLACK);
-            chk.SetBorderWidth(1);
+            PdfFormField chk = new CheckBoxFormFieldBuilder(doc, "name").SetWidgetRectangle(new Rectangle(100, 500, 50
+                , 50)).SetCheckType(PdfFormField.TYPE_CHECK).SetConformanceLevel(PdfAConformanceLevel.PDF_A_2A).CreateCheckBox
+                ().SetValue("Off");
+            chk.GetFirstFormAnnotation().SetBorderColor(ColorConstants.BLACK);
+            chk.GetFirstFormAnnotation().SetBorderWidth(1);
             form.AddField(chk);
             doc.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outPath, cmpPath, destinationFolder, diff
                 ));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void PdfA2aCheckFieldOnAppearanceTest() {
             String name = "pdfA2a_checkFieldOnAppearance";
@@ -208,18 +202,17 @@ namespace iText.Pdfa {
             doc.GetCatalog().SetLang(new PdfString("en-US"));
             doc.AddNewPage();
             PdfAcroForm form = PdfAcroForm.GetAcroForm(doc, true);
-            PdfFormField chk = PdfFormField.CreateCheckBox(doc, new Rectangle(100, 500, 50, 50), "name", "On", PdfFormField
-                .TYPE_CHECK, PdfAConformanceLevel.PDF_A_2A);
-            chk.SetBorderColor(ColorConstants.BLACK);
-            chk.SetBorderWidth(1);
+            PdfFormField chk = new CheckBoxFormFieldBuilder(doc, "name").SetWidgetRectangle(new Rectangle(100, 500, 50
+                , 50)).SetCheckType(PdfFormField.TYPE_CHECK).SetConformanceLevel(PdfAConformanceLevel.PDF_A_2A).CreateCheckBox
+                ().SetValue("On");
+            chk.GetFirstFormAnnotation().SetBorderColor(ColorConstants.BLACK);
+            chk.GetFirstFormAnnotation().SetBorderWidth(1);
             form.AddField(chk);
             doc.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outPath, cmpPath, destinationFolder, diff
                 ));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void PdfA2bCheckFieldOffAppearanceTest() {
             String name = "pdfA2b_checkFieldOffAppearance";
@@ -232,18 +225,17 @@ namespace iText.Pdfa {
                 , "http://www.color.org", "sRGB IEC61966-2.1", @is));
             doc.AddNewPage();
             PdfAcroForm form = PdfAcroForm.GetAcroForm(doc, true);
-            PdfFormField chk = PdfFormField.CreateCheckBox(doc, new Rectangle(100, 500, 50, 50), "name", "Off", PdfFormField
-                .TYPE_CHECK, PdfAConformanceLevel.PDF_A_2B);
-            chk.SetBorderColor(ColorConstants.BLACK);
-            chk.SetBorderWidth(1);
+            PdfFormField chk = new CheckBoxFormFieldBuilder(doc, "name").SetWidgetRectangle(new Rectangle(100, 500, 50
+                , 50)).SetCheckType(PdfFormField.TYPE_CHECK).SetConformanceLevel(PdfAConformanceLevel.PDF_A_2B).CreateCheckBox
+                ().SetValue("Off");
+            chk.GetFirstFormAnnotation().SetBorderColor(ColorConstants.BLACK);
+            chk.GetFirstFormAnnotation().SetBorderWidth(1);
             form.AddField(chk);
             doc.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outPath, cmpPath, destinationFolder, diff
                 ));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void PdfA2bCheckFieldOnAppearanceTest() {
             String name = "pdfA2b_checkFieldOnAppearance";
@@ -256,18 +248,17 @@ namespace iText.Pdfa {
                 , "http://www.color.org", "sRGB IEC61966-2.1", @is));
             doc.AddNewPage();
             PdfAcroForm form = PdfAcroForm.GetAcroForm(doc, true);
-            PdfFormField chk = PdfFormField.CreateCheckBox(doc, new Rectangle(100, 500, 50, 50), "name", "On", PdfFormField
-                .TYPE_CHECK, PdfAConformanceLevel.PDF_A_2B);
-            chk.SetBorderColor(ColorConstants.BLACK);
-            chk.SetBorderWidth(1);
+            PdfFormField chk = new CheckBoxFormFieldBuilder(doc, "name").SetWidgetRectangle(new Rectangle(100, 500, 50
+                , 50)).SetCheckType(PdfFormField.TYPE_CHECK).SetConformanceLevel(PdfAConformanceLevel.PDF_A_2B).CreateCheckBox
+                ().SetValue("On");
+            chk.GetFirstFormAnnotation().SetBorderColor(ColorConstants.BLACK);
+            chk.GetFirstFormAnnotation().SetBorderWidth(1);
             form.AddField(chk);
             doc.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outPath, cmpPath, destinationFolder, diff
                 ));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void PdfA2uCheckFieldOffAppearanceTest() {
             String name = "pdfA2u_checkFieldOffAppearance";
@@ -280,18 +271,17 @@ namespace iText.Pdfa {
                 , "http://www.color.org", "sRGB IEC61966-2.1", @is));
             doc.AddNewPage();
             PdfAcroForm form = PdfAcroForm.GetAcroForm(doc, true);
-            PdfFormField chk = PdfFormField.CreateCheckBox(doc, new Rectangle(100, 500, 50, 50), "name", "Off", PdfFormField
-                .TYPE_CHECK, PdfAConformanceLevel.PDF_A_2U);
-            chk.SetBorderColor(ColorConstants.BLACK);
-            chk.SetBorderWidth(1);
+            PdfFormField chk = new CheckBoxFormFieldBuilder(doc, "name").SetWidgetRectangle(new Rectangle(100, 500, 50
+                , 50)).SetCheckType(PdfFormField.TYPE_CHECK).SetConformanceLevel(PdfAConformanceLevel.PDF_A_2U).CreateCheckBox
+                ().SetValue("Off");
+            chk.GetFirstFormAnnotation().SetBorderColor(ColorConstants.BLACK);
+            chk.GetFirstFormAnnotation().SetBorderWidth(1);
             form.AddField(chk);
             doc.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outPath, cmpPath, destinationFolder, diff
                 ));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void PdfA2uCheckFieldOnAppearanceTest() {
             String name = "pdfA2u_checkFieldOnAppearance";
@@ -304,18 +294,17 @@ namespace iText.Pdfa {
                 , "http://www.color.org", "sRGB IEC61966-2.1", @is));
             doc.AddNewPage();
             PdfAcroForm form = PdfAcroForm.GetAcroForm(doc, true);
-            PdfFormField chk = PdfFormField.CreateCheckBox(doc, new Rectangle(100, 500, 50, 50), "name", "On", PdfFormField
-                .TYPE_CHECK, PdfAConformanceLevel.PDF_A_2U);
-            chk.SetBorderColor(ColorConstants.BLACK);
-            chk.SetBorderWidth(1);
+            PdfFormField chk = new CheckBoxFormFieldBuilder(doc, "name").SetWidgetRectangle(new Rectangle(100, 500, 50
+                , 50)).SetCheckType(PdfFormField.TYPE_CHECK).SetConformanceLevel(PdfAConformanceLevel.PDF_A_2U).CreateCheckBox
+                ().SetValue("On");
+            chk.GetFirstFormAnnotation().SetBorderColor(ColorConstants.BLACK);
+            chk.GetFirstFormAnnotation().SetBorderWidth(1);
             form.AddField(chk);
             doc.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outPath, cmpPath, destinationFolder, diff
                 ));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void PdfA3aCheckFieldOffAppearanceTest() {
             String name = "pdfA3a_checkFieldOffAppearance";
@@ -330,18 +319,17 @@ namespace iText.Pdfa {
             doc.GetCatalog().SetLang(new PdfString("en-US"));
             doc.AddNewPage();
             PdfAcroForm form = PdfAcroForm.GetAcroForm(doc, true);
-            PdfFormField chk = PdfFormField.CreateCheckBox(doc, new Rectangle(100, 500, 50, 50), "name", "Off", PdfFormField
-                .TYPE_CHECK, PdfAConformanceLevel.PDF_A_3A);
-            chk.SetBorderColor(ColorConstants.BLACK);
-            chk.SetBorderWidth(1);
+            PdfFormField chk = new CheckBoxFormFieldBuilder(doc, "name").SetWidgetRectangle(new Rectangle(100, 500, 50
+                , 50)).SetCheckType(PdfFormField.TYPE_CHECK).SetConformanceLevel(PdfAConformanceLevel.PDF_A_3A).CreateCheckBox
+                ().SetValue("Off");
+            chk.GetFirstFormAnnotation().SetBorderColor(ColorConstants.BLACK);
+            chk.GetFirstFormAnnotation().SetBorderWidth(1);
             form.AddField(chk);
             doc.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outPath, cmpPath, destinationFolder, diff
                 ));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void PdfA3aCheckFieldOnAppearanceTest() {
             String name = "pdfA3a_checkFieldOnAppearance";
@@ -356,18 +344,17 @@ namespace iText.Pdfa {
             doc.GetCatalog().SetLang(new PdfString("en-US"));
             doc.AddNewPage();
             PdfAcroForm form = PdfAcroForm.GetAcroForm(doc, true);
-            PdfFormField chk = PdfFormField.CreateCheckBox(doc, new Rectangle(100, 500, 50, 50), "name", "On", PdfFormField
-                .TYPE_CHECK, PdfAConformanceLevel.PDF_A_3A);
-            chk.SetBorderColor(ColorConstants.BLACK);
-            chk.SetBorderWidth(1);
+            PdfFormField chk = new CheckBoxFormFieldBuilder(doc, "name").SetWidgetRectangle(new Rectangle(100, 500, 50
+                , 50)).SetCheckType(PdfFormField.TYPE_CHECK).SetConformanceLevel(PdfAConformanceLevel.PDF_A_3A).CreateCheckBox
+                ().SetValue("On");
+            chk.GetFirstFormAnnotation().SetBorderColor(ColorConstants.BLACK);
+            chk.GetFirstFormAnnotation().SetBorderWidth(1);
             form.AddField(chk);
             doc.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outPath, cmpPath, destinationFolder, diff
                 ));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void PdfA3bCheckFieldOffAppearanceTest() {
             String name = "pdfA3b_checkFieldOffAppearance";
@@ -380,18 +367,17 @@ namespace iText.Pdfa {
                 , "http://www.color.org", "sRGB IEC61966-2.1", @is));
             doc.AddNewPage();
             PdfAcroForm form = PdfAcroForm.GetAcroForm(doc, true);
-            PdfFormField chk = PdfFormField.CreateCheckBox(doc, new Rectangle(100, 500, 50, 50), "name", "Off", PdfFormField
-                .TYPE_CHECK, PdfAConformanceLevel.PDF_A_3B);
-            chk.SetBorderColor(ColorConstants.BLACK);
-            chk.SetBorderWidth(1);
+            PdfFormField chk = new CheckBoxFormFieldBuilder(doc, "name").SetWidgetRectangle(new Rectangle(100, 500, 50
+                , 50)).SetCheckType(PdfFormField.TYPE_CHECK).SetConformanceLevel(PdfAConformanceLevel.PDF_A_3B).CreateCheckBox
+                ().SetValue("Off");
+            chk.GetFirstFormAnnotation().SetBorderColor(ColorConstants.BLACK);
+            chk.GetFirstFormAnnotation().SetBorderWidth(1);
             form.AddField(chk);
             doc.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outPath, cmpPath, destinationFolder, diff
                 ));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void PdfA3bCheckFieldOnAppearanceTest() {
             String name = "pdfA3b_checkFieldOnAppearance";
@@ -404,18 +390,17 @@ namespace iText.Pdfa {
                 , "http://www.color.org", "sRGB IEC61966-2.1", @is));
             doc.AddNewPage();
             PdfAcroForm form = PdfAcroForm.GetAcroForm(doc, true);
-            PdfFormField chk = PdfFormField.CreateCheckBox(doc, new Rectangle(100, 500, 50, 50), "name", "On", PdfFormField
-                .TYPE_CHECK, PdfAConformanceLevel.PDF_A_3B);
-            chk.SetBorderColor(ColorConstants.BLACK);
-            chk.SetBorderWidth(1);
+            PdfFormField chk = new CheckBoxFormFieldBuilder(doc, "name").SetWidgetRectangle(new Rectangle(100, 500, 50
+                , 50)).SetCheckType(PdfFormField.TYPE_CHECK).SetConformanceLevel(PdfAConformanceLevel.PDF_A_3B).CreateCheckBox
+                ().SetValue("On");
+            chk.GetFirstFormAnnotation().SetBorderColor(ColorConstants.BLACK);
+            chk.GetFirstFormAnnotation().SetBorderWidth(1);
             form.AddField(chk);
             doc.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outPath, cmpPath, destinationFolder, diff
                 ));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void PdfA3uCheckFieldOffAppearanceTest() {
             String name = "pdfA3u_checkFieldOffAppearance";
@@ -428,18 +413,17 @@ namespace iText.Pdfa {
                 , "http://www.color.org", "sRGB IEC61966-2.1", @is));
             doc.AddNewPage();
             PdfAcroForm form = PdfAcroForm.GetAcroForm(doc, true);
-            PdfFormField chk = PdfFormField.CreateCheckBox(doc, new Rectangle(100, 500, 50, 50), "name", "Off", PdfFormField
-                .TYPE_CHECK, PdfAConformanceLevel.PDF_A_3U);
-            chk.SetBorderColor(ColorConstants.BLACK);
-            chk.SetBorderWidth(1);
+            PdfFormField chk = new CheckBoxFormFieldBuilder(doc, "name").SetWidgetRectangle(new Rectangle(100, 500, 50
+                , 50)).SetCheckType(PdfFormField.TYPE_CHECK).SetConformanceLevel(PdfAConformanceLevel.PDF_A_3U).CreateCheckBox
+                ().SetValue("Off");
+            chk.GetFirstFormAnnotation().SetBorderColor(ColorConstants.BLACK);
+            chk.GetFirstFormAnnotation().SetBorderWidth(1);
             form.AddField(chk);
             doc.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outPath, cmpPath, destinationFolder, diff
                 ));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void PdfA3uCheckFieldOnAppearanceTest() {
             String name = "pdfA3u_checkFieldOnAppearance";
@@ -452,10 +436,11 @@ namespace iText.Pdfa {
                 , "http://www.color.org", "sRGB IEC61966-2.1", @is));
             doc.AddNewPage();
             PdfAcroForm form = PdfAcroForm.GetAcroForm(doc, true);
-            PdfFormField chk = PdfFormField.CreateCheckBox(doc, new Rectangle(100, 500, 50, 50), "name", "On", PdfFormField
-                .TYPE_CHECK, PdfAConformanceLevel.PDF_A_3U);
-            chk.SetBorderColor(ColorConstants.BLACK);
-            chk.SetBorderWidth(1);
+            PdfFormField chk = new CheckBoxFormFieldBuilder(doc, "name").SetWidgetRectangle(new Rectangle(100, 500, 50
+                , 50)).SetCheckType(PdfFormField.TYPE_CHECK).SetConformanceLevel(PdfAConformanceLevel.PDF_A_3U).CreateCheckBox
+                ().SetValue("On");
+            chk.GetFirstFormAnnotation().SetBorderColor(ColorConstants.BLACK);
+            chk.GetFirstFormAnnotation().SetBorderWidth(1);
             form.AddField(chk);
             doc.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outPath, cmpPath, destinationFolder, diff

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,32 +44,32 @@ namespace iText.IO.Font.Constants {
     /// <summary>Represents Open Type head.macStyle bits.</summary>
     /// <remarks>
     /// Represents Open Type head.macStyle bits.
-    /// <p>
+    /// <para />
     /// https://www.microsoft.com/typography/otspec/head.htm
     /// </remarks>
     public sealed class FontMacStyleFlags {
         private FontMacStyleFlags() {
         }
 
+        // Bit 0: Bold (if set to 1);
         public const int BOLD = 1;
 
+        // Bit 1: Italic (if set to 1)
         public const int ITALIC = 2;
 
+        // Bit 2: Underline (if set to 1)
         public const int UNDERLINE = 4;
 
+        // Bit 3: Outline (if set to 1)
         public const int OUTLINE = 8;
 
+        // Bit 4: Shadow (if set to 1)
         public const int SHADOW = 16;
 
+        // Bit 5: Condensed (if set to 1)
         public const int CONDENSED = 32;
 
-        public const int EXTENDED = 64;
-        // Bit 0: Bold (if set to 1);
-        // Bit 1: Italic (if set to 1)
-        // Bit 2: Underline (if set to 1)
-        // Bit 3: Outline (if set to 1)
-        // Bit 4: Shadow (if set to 1)
-        // Bit 5: Condensed (if set to 1)
         // Bit 6: Extended (if set to 1)
+        public const int EXTENDED = 64;
     }
 }

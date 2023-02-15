@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,10 +44,11 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.Text;
+using iText.Barcodes.Exceptions;
+using iText.Commons.Utils;
 using iText.IO.Font;
-using iText.IO.Util;
-using iText.Kernel;
 using iText.Kernel.Colors;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas;
@@ -55,21 +56,21 @@ using iText.Kernel.Pdf.Xobject;
 
 namespace iText.Barcodes {
     public class BarcodePDF417 : Barcode2D {
-        /// <summary>Auto-size is made based on <CODE>aspectRatio</CODE> and <CODE>yHeight</CODE>.</summary>
+        /// <summary>Auto-size is made based on <c>aspectRatio</c> and <c>yHeight</c>.</summary>
         public const int PDF417_USE_ASPECT_RATIO = 0;
 
-        /// <summary>The size of the barcode will be at least <CODE>codeColumns*codeRows</CODE>.</summary>
+        /// <summary>The size of the barcode will be at least <c>codeColumns*codeRows</c>.</summary>
         public const int PDF417_FIXED_RECTANGLE = 1;
 
         /// <summary>
-        /// The size will be at least <CODE>codeColumns</CODE>
-        /// with a variable number of <CODE>codeRows</CODE>.
+        /// The size will be at least <c>codeColumns</c>
+        /// with a variable number of <c>codeRows</c>.
         /// </summary>
         public const int PDF417_FIXED_COLUMNS = 2;
 
         /// <summary>
-        /// The size will be at least <CODE>codeRows</CODE>
-        /// with a variable number of <CODE>codeColumns</CODE>.
+        /// The size will be at least <c>codeRows</c>
+        /// with a variable number of <c>codeColumns</c>.
         /// </summary>
         public const int PDF417_FIXED_ROWS = 4;
 
@@ -87,7 +88,7 @@ namespace iText.Barcodes {
         public const int PDF417_FORCE_BINARY = 32;
 
         /// <summary>
-        /// No <CODE>text</CODE> interpretation is done and the content of <CODE>codewords</CODE>
+        /// No <c>text</c> interpretation is done and the content of <c>codewords</c>
         /// is used directly.
         /// </summary>
         public const int PDF417_USE_RAW_CODEWORDS = 64;
@@ -504,7 +505,7 @@ namespace iText.Barcodes {
         /// <summary>Holds value of property yHeight.</summary>
         private float yHeight;
 
-        /// <summary>Creates a new <CODE>BarcodePDF417</CODE> with the default settings.</summary>
+        /// <summary>Creates a new <c>BarcodePDF417</c> with the default settings.</summary>
         public BarcodePDF417() {
             SetDefaultParameters();
         }
@@ -530,8 +531,8 @@ namespace iText.Barcodes {
         }
 
         /// <summary>
-        /// Set the default settings that correspond to <CODE>PDF417_USE_ASPECT_RATIO</CODE>
-        /// and <CODE>PDF417_AUTO_ERROR_LEVEL</CODE>.
+        /// Set the default settings that correspond to <c>PDF417_USE_ASPECT_RATIO</c>
+        /// and <c>PDF417_AUTO_ERROR_LEVEL</c>.
         /// </summary>
         public virtual void SetDefaultParameters() {
             options = 0;
@@ -580,15 +581,15 @@ namespace iText.Barcodes {
             int pad;
             if ((options & PDF417_USE_RAW_CODEWORDS) != 0) {
                 if (lenCodewords > MAX_DATA_CODEWORDS || lenCodewords < 1 || lenCodewords != codewords[0]) {
-                    throw new PdfException(PdfException.InvalidCodewordSize);
+                    throw new PdfException(BarcodeExceptionMessageConstant.INVALID_CODEWORD_SIZE);
                 }
             }
             else {
                 if (code == null) {
-                    throw new PdfException(PdfException.TextCannotBeNull);
+                    throw new PdfException(BarcodeExceptionMessageConstant.TEXT_CANNOT_BE_NULL);
                 }
                 if (code.Length > ABSOLUTE_MAX_TEXT_SIZE) {
-                    throw new PdfException(PdfException.TextIsTooBig);
+                    throw new PdfException(BarcodeExceptionMessageConstant.TEXT_IS_TOO_BIG);
                 }
                 segmentList = new BarcodePDF417.SegmentList();
                 BreakString();
@@ -732,14 +733,14 @@ namespace iText.Barcodes {
         }
 
         /// <summary>Creates a PdfFormXObject with the barcode.</summary>
-        /// <param name="foreground">the color of the pixels. It can be <CODE>null</CODE></param>
+        /// <param name="foreground">the color of the pixels. It can be <c>null</c></param>
         /// <returns>the XObject.</returns>
         public override PdfFormXObject CreateFormXObject(Color foreground, PdfDocument document) {
             return CreateFormXObject(foreground, DEFAULT_MODULE_SIZE, DEFAULT_MODULE_SIZE, document);
         }
 
         /// <summary>Creates a PdfFormXObject with the barcode with given module width and module height.</summary>
-        /// <param name="foreground">The color of the pixels. It can be <CODE>null</CODE></param>
+        /// <param name="foreground">The color of the pixels. It can be <c>null</c></param>
         /// <param name="moduleWidth">The width of the pixels.</param>
         /// <param name="moduleHeight">The height of the pixels.</param>
         /// <param name="document">The document</param>
@@ -755,25 +756,25 @@ namespace iText.Barcodes {
         /// <summary>Gets the raw image bits of the barcode.</summary>
         /// <remarks>
         /// Gets the raw image bits of the barcode. The image will have to
-        /// be scaled in the Y direction by <CODE>yHeight</CODE>.
+        /// be scaled in the Y direction by <c>yHeight</c>.
         /// </remarks>
         /// <returns>The raw barcode image</returns>
         public virtual byte[] GetOutBits() {
             return this.outBits;
         }
 
-        /// <summary>Gets the number of X pixels of <CODE>outBits</CODE>.</summary>
-        /// <returns>the number of X pixels of <CODE>outBits</CODE></returns>
+        /// <summary>Gets the number of X pixels of <c>outBits</c>.</summary>
+        /// <returns>the number of X pixels of <c>outBits</c></returns>
         public virtual int GetBitColumns() {
             return this.bitColumns;
         }
 
-        /// <summary>Gets the number of Y pixels of <CODE>outBits</CODE>.</summary>
+        /// <summary>Gets the number of Y pixels of <c>outBits</c>.</summary>
         /// <remarks>
-        /// Gets the number of Y pixels of <CODE>outBits</CODE>.
+        /// Gets the number of Y pixels of <c>outBits</c>.
         /// It is also the number of rows in the barcode.
         /// </remarks>
-        /// <returns>the number of Y pixels of <CODE>outBits</CODE></returns>
+        /// <returns>the number of Y pixels of <c>outBits</c></returns>
         public virtual int GetCodeRows() {
             return this.codeRows;
         }
@@ -807,7 +808,7 @@ namespace iText.Barcodes {
         /// <summary>Gets the codeword array.</summary>
         /// <remarks>
         /// Gets the codeword array. This array is always 928 elements long.
-        /// It can be written to if the option <CODE>PDF417_USE_RAW_CODEWORDS</CODE>
+        /// It can be written to if the option <c>PDF417_USE_RAW_CODEWORDS</c>
         /// is set.
         /// </remarks>
         /// <returns>the codeword array</returns>
@@ -882,7 +883,7 @@ namespace iText.Barcodes {
         /// <summary>Sets the options to generate the barcode.</summary>
         /// <remarks>
         /// Sets the options to generate the barcode. This can be all
-        /// the <CODE>PDF417_*</CODE> constants.
+        /// the <c>PDF417_*</c> constants.
         /// </remarks>
         /// <param name="options">the options to generate the barcode</param>
         public virtual void SetOptions(int options) {
@@ -1175,7 +1176,7 @@ namespace iText.Barcodes {
             int j;
             int size = length / 6 * 5 + length % 6;
             if (size + cwPtr > MAX_DATA_CODEWORDS) {
-                throw new PdfException(PdfException.TextIsTooBig);
+                throw new PdfException(BarcodeExceptionMessageConstant.TEXT_IS_TOO_BIG);
             }
             length += start;
             for (k = start; k < length; k += 6) {
@@ -1373,7 +1374,7 @@ namespace iText.Barcodes {
                 size = full + size / 3 + 1;
             }
             if (size + cwPtr > MAX_DATA_CODEWORDS) {
-                throw new PdfException(PdfException.TextIsTooBig);
+                throw new PdfException(BarcodeExceptionMessageConstant.TEXT_IS_TOO_BIG);
             }
             length += start;
             for (k = start; k < length; k += 44) {
@@ -1384,13 +1385,13 @@ namespace iText.Barcodes {
 
         private void MacroCodes() {
             if (macroSegmentId < 0) {
-                throw new PdfException(PdfException.MacroSegmentIdMustBeGtOrEqZero);
+                throw new PdfException(BarcodeExceptionMessageConstant.MACRO_SEGMENT_ID_MUST_BE_GT_OR_EQ_ZERO);
             }
             if (macroSegmentId >= macroSegmentCount) {
-                throw new PdfException(PdfException.MacroSegmentIdMustBeLtMacroSegmentCount);
+                throw new PdfException(BarcodeExceptionMessageConstant.MACRO_SEGMENT_ID_MUST_BE_LT_MACRO_SEGMENT_COUNT);
             }
             if (macroSegmentCount < 1) {
-                throw new PdfException(PdfException.MacroSegmentIdMustBeGtZero);
+                throw new PdfException(BarcodeExceptionMessageConstant.MACRO_SEGMENT_ID_MUST_BE_GT_ZERO);
             }
             macroIndex = cwPtr;
             codewords[cwPtr++] = MACRO_SEGMENT_ID;
@@ -1578,7 +1579,7 @@ namespace iText.Barcodes {
             }
             size = (ptr + fullBytes) / 2;
             if (size + cwPtr > MAX_DATA_CODEWORDS) {
-                throw new PdfException(PdfException.TextIsTooBig);
+                throw new PdfException(BarcodeExceptionMessageConstant.TEXT_IS_TOO_BIG);
             }
             length = ptr;
             ptr = 0;

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,25 +44,23 @@ using System;
 using System.Collections.Generic;
 using iText.Svg;
 using iText.Svg.Exceptions;
+using iText.Test;
 
 namespace iText.Svg.Renderers.Impl {
-    public class PathParsingTest {
-        [NUnit.Framework.Test]
-        public virtual void PathParsingNoDOperatorTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                // Path objects must have a d attribute
-                PathSvgNodeRenderer path = new PathSvgNodeRenderer();
-                path.SetAttribute(SvgConstants.Attributes.STROKE, "black");
-                path.ParsePathOperations();
-            }
-            , NUnit.Framework.Throws.InstanceOf<SvgProcessingException>())
-;
-        }
-
+    [NUnit.Framework.Category("UnitTest")]
+    public class PathParsingTest : ExtendedITextTest {
         [NUnit.Framework.Test]
         public virtual void PathParsingOperatorEmptyTest() {
             PathSvgNodeRenderer path = new PathSvgNodeRenderer();
             path.SetAttribute(SvgConstants.Attributes.D, "");
+            ICollection<String> ops = path.ParsePathOperations();
+            NUnit.Framework.Assert.IsTrue(ops.IsEmpty());
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void PathParsingOperatorDefaultValueTest() {
+            PathSvgNodeRenderer path = new PathSvgNodeRenderer();
+            path.SetAttributesAndStyles(new Dictionary<String, String>());
             ICollection<String> ops = path.ParsePathOperations();
             NUnit.Framework.Assert.IsTrue(ops.IsEmpty());
         }
@@ -77,24 +75,16 @@ namespace iText.Svg.Renderers.Impl {
 
         [NUnit.Framework.Test]
         public virtual void PathParsingOperatorBadOperatorTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                PathSvgNodeRenderer path = new PathSvgNodeRenderer();
-                path.SetAttribute(SvgConstants.Attributes.D, "b 1 1");
-                path.ParsePathOperations();
-            }
-            , NUnit.Framework.Throws.InstanceOf<SvgProcessingException>())
-;
+            PathSvgNodeRenderer path = new PathSvgNodeRenderer();
+            path.SetAttribute(SvgConstants.Attributes.D, "b 1 1");
+            NUnit.Framework.Assert.Catch(typeof(SvgProcessingException), () => path.ParsePathOperations());
         }
 
         [NUnit.Framework.Test]
         public virtual void PathParsingOperatorLaterBadOperatorTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                PathSvgNodeRenderer path = new PathSvgNodeRenderer();
-                path.SetAttribute(SvgConstants.Attributes.D, "m 200 100 l 50 50 x");
-                path.ParsePathOperations();
-            }
-            , NUnit.Framework.Throws.InstanceOf<SvgProcessingException>())
-;
+            PathSvgNodeRenderer path = new PathSvgNodeRenderer();
+            path.SetAttribute(SvgConstants.Attributes.D, "m 200 100 l 50 50 x");
+            NUnit.Framework.Assert.Catch(typeof(SvgProcessingException), () => path.ParsePathOperations());
         }
 
         [NUnit.Framework.Test]

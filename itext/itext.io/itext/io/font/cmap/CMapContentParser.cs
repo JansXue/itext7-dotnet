@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,9 +44,9 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.Text;
+using iText.Commons.Utils;
 using iText.IO.Font;
 using iText.IO.Source;
-using iText.IO.Util;
 
 namespace iText.IO.Font.Cmap {
     public class CMapContentParser {
@@ -73,7 +73,6 @@ namespace iText.IO.Font.Cmap {
         /// <c>ArrayList</c>
         /// to use. It will be cleared before using.
         /// </param>
-        /// <exception cref="System.IO.IOException">on error</exception>
         public virtual void Parse(IList<CMapObject> ls) {
             ls.Clear();
             CMapObject ob;
@@ -93,12 +92,11 @@ namespace iText.IO.Font.Cmap {
         /// token.
         /// </remarks>
         /// <returns>the dictionary</returns>
-        /// <exception cref="System.IO.IOException">on error</exception>
         public virtual CMapObject ReadDictionary() {
             IDictionary<String, CMapObject> dic = new Dictionary<String, CMapObject>();
             while (true) {
                 if (!NextValidToken()) {
-                    throw new iText.IO.IOException("Unexpected end of file.");
+                    throw new iText.IO.Exceptions.IOException("Unexpected end of file.");
                 }
                 if (tokeniser.GetTokenType() == PdfTokenizer.TokenType.EndDic) {
                     break;
@@ -107,17 +105,17 @@ namespace iText.IO.Font.Cmap {
                     continue;
                 }
                 if (tokeniser.GetTokenType() != PdfTokenizer.TokenType.Name) {
-                    throw new iText.IO.IOException("Dictionary key {0} is not a name.").SetMessageParams(tokeniser.GetStringValue
-                        ());
+                    throw new iText.IO.Exceptions.IOException("Dictionary key {0} is not a name.").SetMessageParams(tokeniser.
+                        GetStringValue());
                 }
                 String name = tokeniser.GetStringValue();
                 CMapObject obj = ReadObject();
                 if (obj.IsToken()) {
                     if (obj.ToString().Equals(">>")) {
-                        tokeniser.ThrowError(iText.IO.IOException.UnexpectedGtGt);
+                        tokeniser.ThrowError(iText.IO.Exceptions.IOException.UnexpectedGtGt);
                     }
                     if (obj.ToString().Equals("]")) {
-                        tokeniser.ThrowError(iText.IO.IOException.UnexpectedCloseBracket);
+                        tokeniser.ThrowError(iText.IO.Exceptions.IOException.UnexpectedCloseBracket);
                     }
                 }
                 dic.Put(name, obj);
@@ -128,7 +126,6 @@ namespace iText.IO.Font.Cmap {
         /// <summary>Reads an array.</summary>
         /// <remarks>Reads an array. The tokeniser must be positioned past the "[" token.</remarks>
         /// <returns>an array</returns>
-        /// <exception cref="System.IO.IOException">on error</exception>
         public virtual CMapObject ReadArray() {
             IList<CMapObject> array = new List<CMapObject>();
             while (true) {
@@ -138,7 +135,7 @@ namespace iText.IO.Font.Cmap {
                         break;
                     }
                     if (obj.ToString().Equals(">>")) {
-                        tokeniser.ThrowError(iText.IO.IOException.UnexpectedGtGt);
+                        tokeniser.ThrowError(iText.IO.Exceptions.IOException.UnexpectedGtGt);
                     }
                 }
                 array.Add(obj);
@@ -148,7 +145,6 @@ namespace iText.IO.Font.Cmap {
 
         /// <summary>Reads a pdf object.</summary>
         /// <returns>the pdf object</returns>
-        /// <exception cref="System.IO.IOException">on error</exception>
         public virtual CMapObject ReadObject() {
             if (!NextValidToken()) {
                 return null;
@@ -218,7 +214,6 @@ namespace iText.IO.Font.Cmap {
         /// <see langword="false"/>
         /// if the end of content was reached.
         /// </returns>
-        /// <exception cref="System.IO.IOException">on error.</exception>
         public virtual bool NextValidToken() {
             while (tokeniser.NextToken()) {
                 if (tokeniser.GetTokenType() == PdfTokenizer.TokenType.Comment) {

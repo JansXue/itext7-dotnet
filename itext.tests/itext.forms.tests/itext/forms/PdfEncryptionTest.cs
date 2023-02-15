@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,11 +43,14 @@ address: sales@itextpdf.com
 using System;
 using iText.Forms.Fields;
 using iText.Kernel.Geom;
+using iText.Kernel.Logs;
 using iText.Kernel.Pdf;
 using iText.Kernel.Utils;
 using iText.Test;
+using iText.Test.Attributes;
 
 namespace iText.Forms {
+    [NUnit.Framework.Category("BouncyCastleIntegrationTest")]
     public class PdfEncryptionTest : ExtendedITextTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/forms/PdfEncryptionTest/";
@@ -56,36 +59,34 @@ namespace iText.Forms {
              + "/test/itext/forms/PdfEncryptionTest/";
 
         /// <summary>User password.</summary>
-        public static byte[] USER = "Hello".GetBytes(iText.IO.Util.EncodingUtil.ISO_8859_1);
+        public static byte[] USER = "Hello".GetBytes(iText.Commons.Utils.EncodingUtil.ISO_8859_1);
 
         /// <summary>Owner password.</summary>
-        public static byte[] OWNER = "World".GetBytes(iText.IO.Util.EncodingUtil.ISO_8859_1);
+        public static byte[] OWNER = "World".GetBytes(iText.Commons.Utils.EncodingUtil.ISO_8859_1);
 
         [NUnit.Framework.OneTimeSetUp]
         public static void BeforeClass() {
-            ITextTest.CreateOrClearDestinationFolder(destinationFolder);
+            CreateOrClearDestinationFolder(destinationFolder);
         }
 
+        // Custom entry in Info dictionary is used because standard entried are gone into metadata in PDF 2.0
         internal const String customInfoEntryKey = "Custom";
 
         internal const String customInfoEntryValue = "String";
 
-        // Custom entry in Info dictionary is used because standard entried are gone into metadata in PDF 2.0
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void EncryptedDocumentWithFormFields() {
             PdfReader reader = new PdfReader(sourceFolder + "encryptedDocumentWithFormFields.pdf", new ReaderProperties
-                ().SetPassword("12345".GetBytes(iText.IO.Util.EncodingUtil.ISO_8859_1)));
+                ().SetPassword("12345".GetBytes(iText.Commons.Utils.EncodingUtil.ISO_8859_1)));
             PdfDocument pdfDocument = new PdfDocument(reader);
             PdfAcroForm acroForm = PdfAcroForm.GetAcroForm(pdfDocument, false);
             acroForm.GetField("personal.name").GetPdfObject();
             pdfDocument.Close();
         }
 
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void EncryptAes256Pdf2PermissionsTest01() {
             String filename = "encryptAes256Pdf2PermissionsTest01.pdf";
             int permissions = EncryptionConstants.ALLOW_FILL_IN | EncryptionConstants.ALLOW_SCREENREADERS | EncryptionConstants
@@ -95,15 +96,20 @@ namespace iText.Forms {
                 )));
             pdfDoc.GetDocumentInfo().SetMoreInfo(customInfoEntryKey, customInfoEntryValue);
             PdfAcroForm form = PdfAcroForm.GetAcroForm(pdfDoc, true);
-            PdfTextFormField textField1 = PdfFormField.CreateText(pdfDoc, new Rectangle(100, 600, 200, 30), "Name", "Enter your name"
-                );
+            PdfTextFormField textField1 = new TextFormFieldBuilder(pdfDoc, "Name").SetWidgetRectangle(new Rectangle(100
+                , 600, 200, 30)).CreateText();
+            textField1.SetValue("Enter your name");
             form.AddField(textField1);
-            PdfTextFormField textField2 = PdfFormField.CreateText(pdfDoc, new Rectangle(100, 550, 200, 30), "Surname", 
-                "Enter your surname");
+            PdfTextFormField textField2 = new TextFormFieldBuilder(pdfDoc, "Surname").SetWidgetRectangle(new Rectangle
+                (100, 550, 200, 30)).CreateText();
+            textField2.SetValue("Enter your surname");
             form.AddField(textField2);
-            PdfButtonFormField group = PdfFormField.CreateRadioGroup(pdfDoc, "Sex", "Male");
-            PdfFormField.CreateRadioButton(pdfDoc, new Rectangle(100, 530, 10, 10), group, "Male");
-            PdfFormField.CreateRadioButton(pdfDoc, new Rectangle(120, 530, 10, 10), group, "Female");
+            PdfButtonFormField group = new RadioFormFieldBuilder(pdfDoc, "Sex").CreateRadioGroup();
+            group.SetValue("Male");
+            new RadioFormFieldBuilder(pdfDoc).SetWidgetRectangle(new Rectangle(100, 530, 10, 10)).CreateRadioButton(group
+                , "Male");
+            new RadioFormFieldBuilder(pdfDoc).SetWidgetRectangle(new Rectangle(120, 530, 10, 10)).CreateRadioButton(group
+                , "Female");
             form.AddField(group);
             pdfDoc.Close();
             CompareTool compareTool = new CompareTool();
@@ -114,10 +120,8 @@ namespace iText.Forms {
             }
         }
 
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.XMP.XMPException"/>
         [NUnit.Framework.Test]
+        [LogMessage(KernelLogMessageConstant.MD5_IS_NOT_FIPS_COMPLIANT, Ignore = true)]
         public virtual void EncryptAes256Pdf2PermissionsTest02() {
             String filename = "encryptAes256Pdf2PermissionsTest02.pdf";
             // This test differs from the previous one (encryptAes256Pdf2PermissionsTest01) only in permissions.
@@ -128,15 +132,20 @@ namespace iText.Forms {
                 )));
             pdfDoc.GetDocumentInfo().SetMoreInfo(customInfoEntryKey, customInfoEntryValue);
             PdfAcroForm form = PdfAcroForm.GetAcroForm(pdfDoc, true);
-            PdfTextFormField textField1 = PdfFormField.CreateText(pdfDoc, new Rectangle(100, 600, 200, 30), "Name", "Enter your name"
-                );
+            PdfTextFormField textField1 = new TextFormFieldBuilder(pdfDoc, "Name").SetWidgetRectangle(new Rectangle(100
+                , 600, 200, 30)).CreateText();
+            textField1.SetValue("Enter your name");
             form.AddField(textField1);
-            PdfTextFormField textField2 = PdfFormField.CreateText(pdfDoc, new Rectangle(100, 550, 200, 30), "Surname", 
-                "Enter your surname");
+            PdfTextFormField textField2 = new TextFormFieldBuilder(pdfDoc, "Surname").SetWidgetRectangle(new Rectangle
+                (100, 550, 200, 30)).CreateText();
+            textField2.SetValue("Enter your surname");
             form.AddField(textField2);
-            PdfButtonFormField group = PdfFormField.CreateRadioGroup(pdfDoc, "Sex", "Male");
-            PdfFormField.CreateRadioButton(pdfDoc, new Rectangle(100, 530, 10, 10), group, "Male");
-            PdfFormField.CreateRadioButton(pdfDoc, new Rectangle(120, 530, 10, 10), group, "Female");
+            PdfButtonFormField group = new RadioFormFieldBuilder(pdfDoc, "Sex").CreateRadioGroup();
+            group.SetValue("Male");
+            new RadioFormFieldBuilder(pdfDoc).SetWidgetRectangle(new Rectangle(100, 530, 10, 10)).CreateRadioButton(group
+                , "Male");
+            new RadioFormFieldBuilder(pdfDoc).SetWidgetRectangle(new Rectangle(120, 530, 10, 10)).CreateRadioButton(group
+                , "Female");
             form.AddField(group);
             pdfDoc.Close();
             CompareTool compareTool = new CompareTool();

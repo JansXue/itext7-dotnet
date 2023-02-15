@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-    Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,12 +43,8 @@ address: sales@itextpdf.com
 */
 
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Net;
-#if NETSTANDARD1_6
-using System.Net.Http;
-#endif
 
 namespace iText.IO.Util {
     /// <summary>
@@ -67,7 +63,6 @@ namespace iText.IO.Util {
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         public static Stream OpenStream(Uri url) {
             Stream isp;
             if (url.IsFile) {
@@ -77,15 +72,14 @@ namespace iText.IO.Util {
                 // UNC path.
                 isp = new FileStream(url.LocalPath, FileMode.Open, FileAccess.Read);     
             } else {
-#if !NETSTANDARD1_6
                 WebRequest req = WebRequest.Create(url);
                 req.Credentials = CredentialCache.DefaultCredentials;
                 using (WebResponse res = req.GetResponse())
                 using (Stream rs = res.GetResponseStream()) {
-#else
-                HttpClient client = new HttpClient();
-                using (Stream rs = client.GetStreamAsync(url).Result) {
-#endif
+                    // We don't want to leave the response stream in an open state as it
+                    // may lead to running out of server connections what will block processing
+                    // of new requests. Therefore copying the state of the stream to a MemoryStream 
+                    // which doesn't deal with connections.
                     isp = new MemoryStream();
                     byte[] buffer = new byte[4096];
                     int read;
@@ -120,8 +114,10 @@ namespace iText.IO.Util {
         /// <summary>
         /// This method gets the last redirected url.
         /// </summary>
-        /// <param name="uri">an initial url</param>
-        /// <returns>the last redirected url</returns>
+        /// <param name="uri">an initial url.</param>
+        /// 
+        /// <returns>the last redirected url.</returns>
+        [Obsolete]
         public static Uri GetFinalURL(Uri uri) {
             return uri;
         }
@@ -134,6 +130,27 @@ namespace iText.IO.Util {
         public static String GetFileUriString(String filename)
         {
             return new FileInfo(filename).FullName;
+        }
+        
+        /// <summary>
+        /// This method gets normalized uri string from a file.
+        /// </summary>
+        /// <param name="filename">a given filename</param>
+        /// <returns>a normalized uri string</returns>
+        public static String GetNormalizedFileUriString(String filename)
+        {
+            return "file://" + UrlUtil.ToNormalizedURI(filename).AbsolutePath;
+        }
+
+        /// <summary>
+        /// Gets the input stream of connection related to last redirected url. You should manually close input stream after
+        /// calling this method to not hold any open resources.
+        /// </summary>
+        /// <param name="url">an initial URL.</param>
+        /// 
+        /// <returns>an input stream of connection related to the last redirected url.</returns>
+        public static Stream GetInputStreamOfFinalConnection(Uri url) {
+            return UrlUtil.OpenStream(url);
         }
     }
 }

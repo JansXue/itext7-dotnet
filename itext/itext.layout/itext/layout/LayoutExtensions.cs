@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-    Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -48,7 +48,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using iText.IO.Util.Collections;
+using iText.Commons.Utils.Collections;
 
 namespace iText.Layout {
     internal static class LayoutExtensions {
@@ -70,6 +70,10 @@ namespace iText.Layout {
 
         public static void SetCharAt(this StringBuilder sb, int ind, char ch) {
             sb[ind] = ch;
+        }
+
+        public static byte[] GetBytes(this String str, Encoding encoding) {
+            return encoding.GetBytes(str);
         }
 
         public static TValue JRemove<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key) {
@@ -197,14 +201,6 @@ namespace iText.Layout {
             return str.Split(regex.ToCharArray());
         }
 
-        public static T JRemoveFirst<T>(this LinkedList<T> list)
-        {
-            T value = list.First.Value;
-            list.RemoveFirst();
-
-            return value;
-        }
-
         public static T[] ToArray<T>(this ICollection<T> col, T[] toArray) {
             T[] r;
             int colSize = col.Count;
@@ -229,16 +225,16 @@ namespace iText.Layout {
         }
 
         public static Assembly GetAssembly(this Type type) {
-#if !NETSTANDARD1_6
+#if !NETSTANDARD2_0
             return type.Assembly;
 #else
             return type.GetTypeInfo().Assembly;
 #endif
         }
 
-#if !NETSTANDARD1_6
+#if !NETSTANDARD2_0
         public static Attribute GetCustomAttribute(this Assembly assembly, Type attributeType) {
-            object[] customAttributes = Assembly.GetExecutingAssembly().GetCustomAttributes(attributeType, false);
+            object[] customAttributes = assembly.GetCustomAttributes(attributeType, false);
             if (customAttributes.Length > 0 && customAttributes[0] is Attribute) {
                 return customAttributes[0] as Attribute;
             } else {
@@ -247,7 +243,7 @@ namespace iText.Layout {
         }
 #endif
 
-#if NETSTANDARD1_6
+#if NETSTANDARD2_0
         public static MethodInfo GetMethod(this Type type, String methodName, Type[] parameterTypes) {
             return type    .GetTypeInfo().GetMethod(methodName, parameterTypes);
         }

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,9 +43,10 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Common.Logging;
-using Org.BouncyCastle.Security;
-using Org.BouncyCastle.X509;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Bouncycastle.Cert;
+using iText.Commons.Bouncycastle.Security;
 using iText.IO.Util;
 
 namespace iText.Signatures {
@@ -55,16 +56,16 @@ namespace iText.Signatures {
     /// </summary>
     public class CRLVerifier : RootStoreVerifier {
         /// <summary>The Logger instance</summary>
-        protected internal static readonly ILog LOGGER = LogManager.GetLogger(typeof(iText.Signatures.CRLVerifier)
-            );
+        protected internal static readonly ILogger LOGGER = ITextLogManager.GetLogger(typeof(iText.Signatures.CRLVerifier
+            ));
 
         /// <summary>The list of CRLs to check for revocation date.</summary>
-        internal IList<X509Crl> crls;
+        internal IList<IX509Crl> crls;
 
         /// <summary>Creates a CRLVerifier instance.</summary>
         /// <param name="verifier">the next verifier in the chain</param>
         /// <param name="crls">a list of CRLs</param>
-        public CRLVerifier(CertificateVerifier verifier, IList<X509Crl> crls)
+        public CRLVerifier(CertificateVerifier verifier, IList<IX509Crl> crls)
             : base(verifier) {
             this.crls = crls;
         }
@@ -78,20 +79,18 @@ namespace iText.Signatures {
         /// <param name="signCert">the certificate that needs to be checked</param>
         /// <param name="issuerCert">its issuer</param>
         /// <returns>
-        /// a list of <code>VerificationOK</code> objects.
+        /// a list of <c>VerificationOK</c> objects.
         /// The list will be empty if the certificate couldn't be verified.
         /// </returns>
-        /// <seealso cref="RootStoreVerifier.Verify(Org.BouncyCastle.X509.X509Certificate, Org.BouncyCastle.X509.X509Certificate, System.DateTime)
+        /// <seealso cref="RootStoreVerifier.Verify(iText.Commons.Bouncycastle.Cert.IX509Certificate, iText.Commons.Bouncycastle.Cert.IX509Certificate, System.DateTime)
         ///     "/>
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
-        /// <exception cref="System.IO.IOException"/>
-        public override IList<VerificationOK> Verify(X509Certificate signCert, X509Certificate issuerCert, DateTime
+        public override IList<VerificationOK> Verify(IX509Certificate signCert, IX509Certificate issuerCert, DateTime
              signDate) {
             IList<VerificationOK> result = new List<VerificationOK>();
             int validCrlsFound = 0;
             // first check the list of CRLs that is provided
             if (crls != null) {
-                foreach (X509Crl crl in crls) {
+                foreach (IX509Crl crl in crls) {
                     if (Verify(crl, signCert, issuerCert, signDate)) {
                         validCrlsFound++;
                     }
@@ -106,7 +105,7 @@ namespace iText.Signatures {
                 }
             }
             // show how many valid CRLs were found
-            LOGGER.Info("Valid CRLs found: " + validCrlsFound);
+            LOGGER.LogInformation("Valid CRLs found: " + validCrlsFound);
             if (validCrlsFound > 0) {
                 result.Add(new VerificationOK(signCert, this.GetType(), "Valid CRLs found: " + validCrlsFound + (online ? 
                     " (online)" : "")));
@@ -124,14 +123,13 @@ namespace iText.Signatures {
         /// <param name="issuerCert">its issuer</param>
         /// <param name="signDate">the sign date</param>
         /// <returns>true if the verification succeeded</returns>
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
-        public virtual bool Verify(X509Crl crl, X509Certificate signCert, X509Certificate issuerCert, DateTime signDate
-            ) {
-            if (crl == null || signDate == SignUtils.UNDEFINED_TIMESTAMP_DATE) {
+        public virtual bool Verify(IX509Crl crl, IX509Certificate signCert, IX509Certificate issuerCert, DateTime 
+            signDate) {
+            if (crl == null || signDate == TimestampConstants.UNDEFINED_TIMESTAMP_DATE) {
                 return false;
             }
             // We only check CRLs valid on the signing date for which the issuer matches
-            if (crl.IssuerDN.Equals(signCert.IssuerDN) && signDate.Before(crl.NextUpdate)) {
+            if (crl.GetIssuerDN().Equals(signCert.GetIssuerDN()) && signDate.Before(crl.GetNextUpdate())) {
                 // the signing certificate may not be revoked
                 if (IsSignatureValid(crl, issuerCert) && crl.IsRevoked(signCert)) {
                     throw new VerificationException(signCert, "The certificate has been revoked.");
@@ -145,7 +143,7 @@ namespace iText.Signatures {
         /// <param name="signCert">the certificate</param>
         /// <param name="issuerCert">its issuer</param>
         /// <returns>an X509CRL object</returns>
-        public virtual X509Crl GetCRL(X509Certificate signCert, X509Certificate issuerCert) {
+        public virtual IX509Crl GetCRL(IX509Certificate signCert, IX509Certificate issuerCert) {
             if (issuerCert == null) {
                 issuerCert = signCert;
             }
@@ -155,13 +153,13 @@ namespace iText.Signatures {
                 if (crlurl == null) {
                     return null;
                 }
-                LOGGER.Info("Getting CRL from " + crlurl);
-                return (X509Crl)SignUtils.ParseCrlFromStream(UrlUtil.OpenStream(new Uri(crlurl)));
+                LOGGER.LogInformation("Getting CRL from " + crlurl);
+                return (IX509Crl)SignUtils.ParseCrlFromStream(UrlUtil.OpenStream(new Uri(crlurl)));
             }
             catch (System.IO.IOException) {
                 return null;
             }
-            catch (GeneralSecurityException) {
+            catch (AbstractGeneralSecurityException) {
                 return null;
             }
         }
@@ -170,15 +168,15 @@ namespace iText.Signatures {
         /// <param name="crl">the CRL</param>
         /// <param name="crlIssuer">the trusted anchor</param>
         /// <returns>true if the CRL can be trusted</returns>
-        public virtual bool IsSignatureValid(X509Crl crl, X509Certificate crlIssuer) {
+        public virtual bool IsSignatureValid(IX509Crl crl, IX509Certificate crlIssuer) {
             // check if the CRL was issued by the issuer
             if (crlIssuer != null) {
                 try {
                     crl.Verify(crlIssuer.GetPublicKey());
                     return true;
                 }
-                catch (GeneralSecurityException) {
-                    LOGGER.Warn("CRL not issued by the same authority as the certificate that is being checked");
+                catch (AbstractGeneralSecurityException) {
+                    LOGGER.LogWarning("CRL not issued by the same authority as the certificate that is being checked");
                 }
             }
             // check the CRL against trusted anchors
@@ -187,20 +185,20 @@ namespace iText.Signatures {
             }
             try {
                 // loop over the certificate in the key store
-                foreach (X509Certificate anchor in SignUtils.GetCertificates(rootStore)) {
+                foreach (IX509Certificate anchor in SignUtils.GetCertificates(rootStore)) {
                     try {
                         // check if the crl was signed by a trusted party (indirect CRLs)
                         crl.Verify(anchor.GetPublicKey());
                         return true;
                     }
-                    catch (GeneralSecurityException) {
-                        continue;
+                    catch (AbstractGeneralSecurityException) {
                     }
                 }
             }
-            catch (GeneralSecurityException) {
-                return false;
+            catch (AbstractGeneralSecurityException) {
             }
+            // do nothing and continue
+            // do nothing and return false at the end
             return false;
         }
     }

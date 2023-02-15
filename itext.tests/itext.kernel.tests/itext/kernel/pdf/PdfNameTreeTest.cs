@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -54,6 +54,7 @@ using iText.Kernel.Pdf.Xobject;
 using iText.Test;
 
 namespace iText.Kernel.Pdf {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class PdfNameTreeTest : ExtendedITextTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/kernel/pdf/PdfNameTreeTest/";
@@ -66,20 +67,18 @@ namespace iText.Kernel.Pdf {
             CreateOrClearDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void EmbeddedFileAndJavascriptTest() {
             PdfDocument pdfDocument = new PdfDocument(new PdfReader(sourceFolder + "FileWithSingleAttachment.pdf"));
             PdfNameTree embeddedFilesNameTree = pdfDocument.GetCatalog().GetNameTree(PdfName.EmbeddedFiles);
-            IDictionary<String, PdfObject> objs = embeddedFilesNameTree.GetNames();
+            IDictionary<PdfString, PdfObject> objs = embeddedFilesNameTree.GetNames();
             PdfNameTree javascript = pdfDocument.GetCatalog().GetNameTree(PdfName.JavaScript);
-            IDictionary<String, PdfObject> objs2 = javascript.GetNames();
+            IDictionary<PdfString, PdfObject> objs2 = javascript.GetNames();
             pdfDocument.Close();
             NUnit.Framework.Assert.AreEqual(1, objs.Count);
             NUnit.Framework.Assert.AreEqual(1, objs2.Count);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void EmbeddedFileAddedInAppendModeTest() {
             //Create input document
@@ -110,12 +109,11 @@ namespace iText.Kernel.Pdf {
             PdfReader finalReader = new PdfReader(new MemoryStream(boasAppend.ToArray()));
             PdfDocument finalDoc = new PdfDocument(finalReader);
             PdfNameTree embeddedFilesNameTree = finalDoc.GetCatalog().GetNameTree(PdfName.EmbeddedFiles);
-            IDictionary<String, PdfObject> embeddedFilesMap = embeddedFilesNameTree.GetNames();
+            IDictionary<PdfString, PdfObject> embeddedFilesMap = embeddedFilesNameTree.GetNames();
             NUnit.Framework.Assert.IsTrue(embeddedFilesMap.Count > 0);
-            NUnit.Framework.Assert.IsTrue(embeddedFilesMap.ContainsKey("Test File"));
+            NUnit.Framework.Assert.IsTrue(embeddedFilesMap.ContainsKey(new PdfString("Test File")));
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void AnnotationAppearanceTest() {
             PdfDocument pdfDocument = new PdfDocument(new PdfWriter(destinationFolder + "AnnotationAppearanceTest.pdf"
@@ -135,9 +133,76 @@ namespace iText.Kernel.Pdf {
             dictionary.Put(PdfName.AP, dict);
             pdfDocument.GetCatalog().GetPdfObject().Put(PdfName.Names, dictionary);
             PdfNameTree appearance = pdfDocument.GetCatalog().GetNameTree(PdfName.AP);
-            IDictionary<String, PdfObject> objs = appearance.GetNames();
+            IDictionary<PdfString, PdfObject> objs = appearance.GetNames();
             pdfDocument.Close();
             NUnit.Framework.Assert.AreEqual(1, objs.Count);
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void SetModifiedFlagTest() {
+            TestSetModified(false);
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void SetModifiedFlagAppendModeTest() {
+            TestSetModified(true);
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void CheckNamesOrder() {
+            PdfDocument doc = new PdfDocument(new PdfReader(sourceFolder + "namedDestinations.pdf"));
+            IList<String> expectedNames = new List<String>();
+            expectedNames.Add("Destination_1");
+            expectedNames.Add("Destination_2");
+            expectedNames.Add("Destination_3");
+            expectedNames.Add("Destination_4");
+            expectedNames.Add("Destination_5");
+            System.Console.Out.WriteLine("Expected names: " + expectedNames);
+            for (int i = 0; i < 10; i++) {
+                IPdfNameTreeAccess names = doc.GetCatalog().GetNameTree(PdfName.Dests);
+                IList<String> actualNames = new List<String>();
+                foreach (PdfString name in names.GetKeys()) {
+                    actualNames.Add(name.ToUnicodeString());
+                }
+                System.Console.Out.WriteLine("Actual names:   " + actualNames);
+                NUnit.Framework.Assert.AreEqual(expectedNames, actualNames);
+            }
+            doc.Close();
+        }
+
+        private static void TestSetModified(bool isAppendMode) {
+            PdfString[] expectedKeys = new PdfString[] { new PdfString("new_key1"), new PdfString("new_key2"), new PdfString
+                ("new_key3") };
+            MemoryStream sourceFile = CreateDocumentInMemory();
+            MemoryStream modifiedFile = new MemoryStream();
+            PdfReader reader = new PdfReader(new MemoryStream(sourceFile.ToArray()));
+            PdfDocument pdfDoc = isAppendMode ? new PdfDocument(reader, new PdfWriter(modifiedFile), new StampingProperties
+                ().UseAppendMode()) : new PdfDocument(reader, new PdfWriter(modifiedFile));
+            PdfNameTree nameTree = pdfDoc.GetCatalog().GetNameTree(PdfName.Dests);
+            IDictionary<PdfString, PdfObject> names = nameTree.GetNames();
+            IList<PdfString> keys = new List<PdfString>(names.Keys);
+            for (int i = 0; i < keys.Count; i++) {
+                names.Put(expectedKeys[i], names.Get(keys[i]));
+                names.JRemove(keys[i]);
+            }
+            nameTree.SetModified();
+            pdfDoc.Close();
+            reader = new PdfReader(new MemoryStream(modifiedFile.ToArray()));
+            pdfDoc = new PdfDocument(reader);
+            nameTree = pdfDoc.GetCatalog().GetNameTree(PdfName.Dests);
+            ICollection<PdfString> actualKeys = nameTree.GetNames().Keys;
+            NUnit.Framework.Assert.AreEqual(expectedKeys, actualKeys.ToArray());
+        }
+
+        private static MemoryStream CreateDocumentInMemory() {
+            MemoryStream boas = new MemoryStream();
+            PdfDocument pdfDoc = new PdfDocument(new PdfWriter(boas));
+            pdfDoc.AddNewPage();
+            pdfDoc.GetCatalog().GetNameTree(PdfName.Dests).AddEntry("key1", new PdfArray(new float[] { 0, 0, 0, 0 }));
+            pdfDoc.GetCatalog().GetNameTree(PdfName.Dests).AddEntry("key2", new PdfArray(new float[] { 1, 1, 1, 1 }));
+            pdfDoc.GetCatalog().GetNameTree(PdfName.Dests).AddEntry("key3", new PdfArray(new float[] { 2, 2, 2, 2 }));
+            pdfDoc.Close();
+            return boas;
         }
     }
 }

@@ -1,7 +1,7 @@
 /*
 *
 * This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 * Authors: Bruno Lowagie, Paulo Soares, et al.
 *
 * This program is free software; you can redistribute it and/or modify
@@ -62,11 +62,9 @@ namespace iText.IO.Colors {
         /// <param name="data">byte[] containing the raw icc profile data</param>
         /// <param name="numComponents">number of components the profile contains</param>
         /// <returns>IccProfile constructed from the data</returns>
-        /// <exception cref="iText.IO.IOException">when the specified number of components and the number of components in the created profile do not match.
-        ///     </exception>
         public static iText.IO.Colors.IccProfile GetInstance(byte[] data, int numComponents) {
             if (data.Length < 128 || data[36] != 0x61 || data[37] != 0x63 || data[38] != 0x73 || data[39] != 0x70) {
-                throw new iText.IO.IOException(iText.IO.IOException.InvalidIccProfile);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.InvalidIccProfile);
             }
             iText.IO.Colors.IccProfile icc = new iText.IO.Colors.IccProfile();
             icc.data = data;
@@ -76,7 +74,7 @@ namespace iText.IO.Colors {
             icc.numComponents = nc;
             // invalid ICC
             if (nc != numComponents) {
-                throw new iText.IO.IOException(iText.IO.IOException.IccProfileContains0ComponentsWhileImageDataContains1Components
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.IccProfileContains0ComponentsWhileImageDataContains1Components
                     ).SetMessageParams(nc, numComponents);
             }
             return icc;
@@ -95,7 +93,6 @@ namespace iText.IO.Colors {
         /// <summary>Construct an icc profile from the passed random-access file or array.</summary>
         /// <param name="file">random-access file or array containing the profile</param>
         /// <returns>IccProfile constructed from the data</returns>
-        /// <exception cref="iText.IO.IOException">if the source does not contain a valid icc profile</exception>
         public static iText.IO.Colors.IccProfile GetInstance(RandomAccessFileOrArray file) {
             try {
                 byte[] head = new byte[128];
@@ -104,13 +101,13 @@ namespace iText.IO.Colors {
                 while (remain > 0) {
                     int n = file.Read(head, ptr, remain);
                     if (n < 0) {
-                        throw new iText.IO.IOException(iText.IO.IOException.InvalidIccProfile);
+                        throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.InvalidIccProfile);
                     }
                     remain -= n;
                     ptr += n;
                 }
                 if (head[36] != 0x61 || head[37] != 0x63 || head[38] != 0x73 || head[39] != 0x70) {
-                    throw new iText.IO.IOException(iText.IO.IOException.InvalidIccProfile);
+                    throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.InvalidIccProfile);
                 }
                 remain = (head[0] & 0xff) << 24 | (head[1] & 0xff) << 16 | (head[2] & 0xff) << 8 | head[3] & 0xff;
                 byte[] icc = new byte[remain];
@@ -120,7 +117,7 @@ namespace iText.IO.Colors {
                 while (remain > 0) {
                     int n = file.Read(icc, ptr, remain);
                     if (n < 0) {
-                        throw new iText.IO.IOException(iText.IO.IOException.InvalidIccProfile);
+                        throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.InvalidIccProfile);
                     }
                     remain -= n;
                     ptr += n;
@@ -128,21 +125,20 @@ namespace iText.IO.Colors {
                 return GetInstance(icc);
             }
             catch (Exception ex) {
-                throw new iText.IO.IOException(iText.IO.IOException.InvalidIccProfile, ex);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.InvalidIccProfile, ex);
             }
         }
 
         /// <summary>Construct an icc profile from the passed InputStream.</summary>
         /// <param name="stream">inputstream containing the profile</param>
         /// <returns>IccProfile constructed from the data</returns>
-        /// <exception cref="iText.IO.IOException">if the source does not contain a valid icc profile</exception>
         public static iText.IO.Colors.IccProfile GetInstance(Stream stream) {
             RandomAccessFileOrArray raf;
             try {
                 raf = new RandomAccessFileOrArray(new RandomAccessSourceFactory().CreateSource(stream));
             }
             catch (System.IO.IOException e) {
-                throw new iText.IO.IOException(iText.IO.IOException.InvalidIccProfile, e);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.InvalidIccProfile, e);
             }
             return GetInstance(raf);
         }
@@ -150,14 +146,13 @@ namespace iText.IO.Colors {
         /// <summary>Construct an icc profile from the file found at the passed path</summary>
         /// <param name="filename">path to the file contaning the profile</param>
         /// <returns>IccProfile constructed from the data</returns>
-        /// <exception cref="iText.IO.IOException">if the source does not contain a valid icc profile</exception>
         public static iText.IO.Colors.IccProfile GetInstance(String filename) {
             RandomAccessFileOrArray raf;
             try {
                 raf = new RandomAccessFileOrArray(new RandomAccessSourceFactory().CreateBestSource(filename));
             }
             catch (System.IO.IOException e) {
-                throw new iText.IO.IOException(iText.IO.IOException.InvalidIccProfile, e);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.InvalidIccProfile, e);
             }
             return GetInstance(raf);
         }
@@ -165,14 +160,13 @@ namespace iText.IO.Colors {
         /// <summary>Get the Color space name of the icc profile found in the data.</summary>
         /// <param name="data">byte[] containing the icc profile</param>
         /// <returns>String containing the color space of the profile</returns>
-        /// <exception cref="iText.IO.IOException">if the source does not contain a valid icc profile</exception>
         public static String GetIccColorSpaceName(byte[] data) {
             String colorSpace;
             try {
-                colorSpace = iText.IO.Util.JavaUtil.GetStringForBytes(data, 16, 4, "US-ASCII");
+                colorSpace = iText.Commons.Utils.JavaUtil.GetStringForBytes(data, 16, 4, "US-ASCII");
             }
             catch (ArgumentException e) {
-                throw new iText.IO.IOException(iText.IO.IOException.InvalidIccProfile, e);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.InvalidIccProfile, e);
             }
             return colorSpace;
         }
@@ -180,14 +174,13 @@ namespace iText.IO.Colors {
         /// <summary>Get the device class of the icc profile found in the data.</summary>
         /// <param name="data">byte[] containing the icc profile</param>
         /// <returns>String containing the device class of the profile</returns>
-        /// <exception cref="iText.IO.IOException">if the source does not contain a valid icc profile</exception>
         public static String GetIccDeviceClass(byte[] data) {
             String deviceClass;
             try {
-                deviceClass = iText.IO.Util.JavaUtil.GetStringForBytes(data, 12, 4, "US-ASCII");
+                deviceClass = iText.Commons.Utils.JavaUtil.GetStringForBytes(data, 12, 4, "US-ASCII");
             }
             catch (ArgumentException e) {
-                throw new iText.IO.IOException(iText.IO.IOException.InvalidIccProfile, e);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.InvalidIccProfile, e);
             }
             return deviceClass;
         }

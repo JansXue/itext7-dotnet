@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,8 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf.Canvas;
 using iText.Layout.Borders;
@@ -50,30 +51,70 @@ using iText.Layout.Properties;
 
 namespace iText.Layout.Renderer {
     internal abstract class TableBorders {
+        /// <summary>Horizontal borders of the table.</summary>
+        /// <remarks>
+        /// Horizontal borders of the table.
+        /// It consists of a list, each item of which represents
+        /// a horizontal border of a row, each of them is a list of borders of the cells.
+        /// The amount of the lists is the number of rows + 1, the size of each of these lists
+        /// corresponds to the number of columns.
+        /// </remarks>
         protected internal IList<IList<Border>> horizontalBorders = new List<IList<Border>>();
 
+        /// <summary>Vertical borders of the table.</summary>
+        /// <remarks>
+        /// Vertical borders of the table.
+        /// It consists of a list, each item of which represents
+        /// a vertical border of a row, each of them is a list of borders of the cells.
+        /// The amount of the lists is the number of columns + 1, the size of each of these lists
+        /// corresponds to the number of rows.
+        /// </remarks>
         protected internal IList<IList<Border>> verticalBorders = new List<IList<Border>>();
 
+        /// <summary>The number of the table's columns.</summary>
         protected internal readonly int numberOfColumns;
 
+        /// <summary>The outer borders of the table (as body).</summary>
         protected internal Border[] tableBoundingBorders = new Border[4];
 
+        /// <summary>All the cells of the table.</summary>
+        /// <remarks>
+        /// All the cells of the table.
+        /// Each item of the list represents a row and consists of its cells.
+        /// </remarks>
         protected internal IList<CellRenderer[]> rows;
 
+        /// <summary>The first row, which should be processed on this area.</summary>
+        /// <remarks>
+        /// The first row, which should be processed on this area.
+        /// The value of this field varies from area to area.
+        /// It's zero-based and inclusive.
+        /// </remarks>
         protected internal int startRow;
 
+        /// <summary>The last row, which should be processed on this area.</summary>
+        /// <remarks>
+        /// The last row, which should be processed on this area.
+        /// The value of this field varies from area to area.
+        /// It's zero-based and inclusive. The last border will have index (finishRow+1) because
+        /// the number of borders is greater by one than the number of rows
+        /// </remarks>
         protected internal int finishRow;
 
+        /// <summary>The width of the widest left border.</summary>
         protected internal float leftBorderMaxWidth;
 
+        /// <summary>The width of the widest right border.</summary>
         protected internal float rightBorderMaxWidth;
 
+        /// <summary>The number of rows flushed to the table.</summary>
+        /// <remarks>
+        /// The number of rows flushed to the table.
+        /// Its value is zero for regular tables. The field makes sense only for large tables.
+        /// </remarks>
         protected internal int largeTableIndexOffset = 0;
 
         public TableBorders(IList<CellRenderer[]> rows, int numberOfColumns, Border[] tableBoundingBorders) {
-            // Zero-based, inclusive
-            // Zero-based, inclusive. The last border will have index (finishRow+1) because the number of borders is greater
-            // by one than the number of rows
             this.rows = rows;
             this.numberOfColumns = numberOfColumns;
             SetTableBoundingBorders(tableBoundingBorders);
@@ -87,11 +128,11 @@ namespace iText.Layout.Renderer {
 
         // region abstract
         // region draw
-        protected internal abstract iText.Layout.Renderer.TableBorders DrawHorizontalBorder(int i, float startX, float
-             y1, PdfCanvas canvas, float[] countedColumnWidth);
+        protected internal abstract iText.Layout.Renderer.TableBorders DrawHorizontalBorder(PdfCanvas canvas, TableBorderDescriptor
+             borderDescriptor);
 
-        protected internal abstract iText.Layout.Renderer.TableBorders DrawVerticalBorder(int i, float startY, float
-             x1, PdfCanvas canvas, IList<float> heights);
+        protected internal abstract iText.Layout.Renderer.TableBorders DrawVerticalBorder(PdfCanvas canvas, TableBorderDescriptor
+             borderDescriptor);
 
         // endregion
         // region area occupation
@@ -157,8 +198,8 @@ namespace iText.Layout.Renderer {
                             if (rowspansToDeduct[col] > 0) {
                                 int rowspan = (int)currentRow[col].GetPropertyAsInteger(Property.ROWSPAN) - rowspansToDeduct[col];
                                 if (rowspan < 1) {
-                                    ILog logger = LogManager.GetLogger(typeof(TableRenderer));
-                                    logger.Warn(iText.IO.LogMessageConstant.UNEXPECTED_BEHAVIOUR_DURING_TABLE_ROW_COLLAPSING);
+                                    ILogger logger = ITextLogManager.GetLogger(typeof(TableRenderer));
+                                    logger.LogWarning(iText.IO.Logs.IoLogMessageConstant.UNEXPECTED_BEHAVIOUR_DURING_TABLE_ROW_COLLAPSING);
                                     rowspan = 1;
                                 }
                                 currentRow[col].SetProperty(Property.ROWSPAN, rowspan);
@@ -187,8 +228,8 @@ namespace iText.Layout.Renderer {
                             // delete current row
                             rows.JRemoveAt(row - rowspansToDeduct[0]);
                             SetFinishRow(finishRow - 1);
-                            ILog logger = LogManager.GetLogger(typeof(TableRenderer));
-                            logger.Warn(iText.IO.LogMessageConstant.LAST_ROW_IS_NOT_COMPLETE);
+                            ILogger logger = ITextLogManager.GetLogger(typeof(TableRenderer));
+                            logger.LogWarning(iText.IO.Logs.IoLogMessageConstant.LAST_ROW_IS_NOT_COMPLETE);
                         }
                         else {
                             for (int i = 0; i < numberOfColumns; i++) {

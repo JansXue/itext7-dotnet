@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -50,30 +50,38 @@ using iText.IO.Util;
 
 namespace iText.IO.Image {
     public sealed class GifImageHelper {
+        // max decoder pixel stack size
         internal const int MAX_STACK_SIZE = 4096;
 
         private class GifParameters {
             public GifParameters(GifImageData image) {
-                // max decoder pixel stack size
                 this.image = image;
             }
 
             internal Stream input;
 
+            // global color table used
             internal bool gctFlag;
 
+            // background color index
             internal int bgIndex;
 
+            // background color
             internal int bgColor;
 
+            // pixel aspect ratio
             internal int pixelAspect;
 
+            // local color table flag
             internal bool lctFlag;
 
+            // interlace flag
             internal bool interlace;
 
+            // local color table size
             internal int lctSize;
 
+            // current image rectangle
             internal int ix;
 
             internal int iy;
@@ -82,18 +90,26 @@ namespace iText.IO.Image {
 
             internal int ih;
 
+            // current data block
             internal byte[] block = new byte[256];
 
+            // block size
             internal int blockSize = 0;
 
+            // last graphic control extension info
+            // 0=no action; 1=leave in place; 2=restore to bg; 3=restore to prev
             internal int dispose = 0;
 
+            // use transparent color
             internal bool transparency = false;
 
+            // delay in milliseconds
             internal int delay = 0;
 
+            // transparent color index
             internal int transIndex;
 
+            // LZW decoder working arrays
             internal short[] prefix;
 
             internal byte[] suffix;
@@ -123,22 +139,6 @@ namespace iText.IO.Image {
             internal int currentFrame;
 
             internal GifImageData image;
-            // global color table used
-            // background color index
-            // background color
-            // pixel aspect ratio
-            // local color table flag
-            // interlace flag
-            // local color table size
-            // current image rectangle
-            // current data block
-            // block size
-            // last graphic control extension info
-            // 0=no action; 1=leave in place; 2=restore to bg; 3=restore to prev
-            // use transparent color
-            // delay in milliseconds
-            // transparent color index
-            // LZW decoder working arrays
         }
 
         /// <summary>Reads image source and fills GifImage object with parameters (frames, width, height)</summary>
@@ -161,29 +161,28 @@ namespace iText.IO.Image {
                 Process(gifStream, gif, lastFrameNumber);
             }
             catch (System.IO.IOException e) {
-                throw new iText.IO.IOException(iText.IO.IOException.GifImageException, e);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.GifImageException, e);
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private static void Process(Stream stream, GifImageHelper.GifParameters gif, int lastFrameNumber) {
             gif.input = stream;
             ReadHeader(gif);
             ReadContents(gif, lastFrameNumber);
             if (gif.currentFrame <= lastFrameNumber) {
-                throw new iText.IO.IOException(iText.IO.IOException.CannotFind1Frame).SetMessageParams(lastFrameNumber);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.CannotFind1Frame).SetMessageParams
+                    (lastFrameNumber);
             }
         }
 
         /// <summary>Reads GIF file header information.</summary>
-        /// <exception cref="System.IO.IOException"/>
         private static void ReadHeader(GifImageHelper.GifParameters gif) {
             StringBuilder id = new StringBuilder("");
             for (int i = 0; i < 6; i++) {
                 id.Append((char)gif.input.Read());
             }
             if (!id.ToString().StartsWith("GIF8")) {
-                throw new iText.IO.IOException(iText.IO.IOException.GifSignatureNotFound);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.GifSignatureNotFound);
             }
             ReadLSD(gif);
             if (gif.gctFlag) {
@@ -192,24 +191,22 @@ namespace iText.IO.Image {
         }
 
         /// <summary>Reads Logical Screen Descriptor</summary>
-        /// <exception cref="System.IO.IOException"/>
         private static void ReadLSD(GifImageHelper.GifParameters gif) {
             // logical screen size
             gif.image.SetLogicalWidth(ReadShort(gif));
             gif.image.SetLogicalHeight(ReadShort(gif));
             // packed fields
             int packed = gif.input.Read();
-            gif.gctFlag = (packed & 0x80) != 0;
             // 1   : global color table flag
+            gif.gctFlag = (packed & 0x80) != 0;
             gif.m_gbpc = (packed & 7) + 1;
-            gif.bgIndex = gif.input.Read();
             // background color index
+            gif.bgIndex = gif.input.Read();
+            // pixel aspect ratio
             gif.pixelAspect = gif.input.Read();
         }
 
-        // pixel aspect ratio
         /// <summary>Reads next 16-bit value, LSB first</summary>
-        /// <exception cref="System.IO.IOException"/>
         private static int ReadShort(GifImageHelper.GifParameters gif) {
             // read 16-bit value, LSB first
             return gif.input.Read() | gif.input.Read() << 8;
@@ -217,7 +214,6 @@ namespace iText.IO.Image {
 
         /// <summary>Reads next variable length block from input.</summary>
         /// <returns>number of bytes stored in "buffer"</returns>
-        /// <exception cref="System.IO.IOException"/>
         private static int ReadBlock(GifImageHelper.GifParameters gif) {
             gif.blockSize = gif.input.Read();
             if (gif.blockSize <= 0) {
@@ -227,7 +223,6 @@ namespace iText.IO.Image {
             return gif.blockSize;
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private static byte[] ReadColorTable(int bpc, GifImageHelper.GifParameters gif) {
             int ncolors = 1 << bpc;
             int nbytes = 3 * ncolors;
@@ -256,7 +251,6 @@ namespace iText.IO.Image {
             return bpc;
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private static void ReadContents(GifImageHelper.GifParameters gif, int lastFrameNumber) {
             // read GIF file content blocks
             bool done = false;
@@ -287,8 +281,8 @@ namespace iText.IO.Image {
                             case 0xff: {
                                 // application extension
                                 ReadBlock(gif);
-                                Skip(gif);
                                 // don't care
+                                Skip(gif);
                                 break;
                             }
 
@@ -310,26 +304,25 @@ namespace iText.IO.Image {
         }
 
         /// <summary>Reads next frame image</summary>
-        /// <exception cref="System.IO.IOException"/>
         private static void ReadFrame(GifImageHelper.GifParameters gif) {
-            gif.ix = ReadShort(gif);
             // (sub)image position & size
+            gif.ix = ReadShort(gif);
             gif.iy = ReadShort(gif);
             gif.iw = ReadShort(gif);
             gif.ih = ReadShort(gif);
             int packed = gif.input.Read();
-            gif.lctFlag = (packed & 0x80) != 0;
             // 1 - local color table flag
-            gif.interlace = (packed & 0x40) != 0;
+            gif.lctFlag = (packed & 0x80) != 0;
             // 2 - interlace flag
+            gif.interlace = (packed & 0x40) != 0;
             // 3 - sort flag
             // 4-5 - reserved
-            gif.lctSize = 2 << (packed & 7);
             // 6-8 - local color table size
+            gif.lctSize = 2 << (packed & 7);
             gif.m_bpc = NewBpc(gif.m_gbpc);
             if (gif.lctFlag) {
-                gif.m_curr_table = ReadColorTable((packed & 7) + 1, gif);
                 // read table
+                gif.m_curr_table = ReadColorTable((packed & 7) + 1, gif);
                 gif.m_bpc = NewBpc((packed & 7) + 1);
             }
             else {
@@ -338,15 +331,15 @@ namespace iText.IO.Image {
             if (gif.transparency && gif.transIndex >= gif.m_curr_table.Length / 3) {
                 gif.transparency = false;
             }
+            // Acrobat 5.05 doesn't like this combination
             if (gif.transparency && gif.m_bpc == 1) {
-                // Acrobat 5.05 doesn't like this combination
                 byte[] tp = new byte[12];
                 Array.Copy(gif.m_curr_table, 0, tp, 0, 6);
                 gif.m_curr_table = tp;
                 gif.m_bpc = 2;
             }
-            bool skipZero = DecodeImageData(gif);
             // decode pixel data
+            bool skipZero = DecodeImageData(gif);
             if (!skipZero) {
                 Skip(gif);
             }
@@ -368,11 +361,10 @@ namespace iText.IO.Image {
                 }
             }
             catch (Exception e) {
-                throw new iText.IO.IOException(iText.IO.IOException.GifImageException, e);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.GifImageException, e);
             }
         }
 
-        /// <exception cref="System.IO.IOException"/>
         private static bool DecodeImageData(GifImageHelper.GifParameters gif) {
             int NullCode = -1;
             int npix = gif.iw * gif.ih;
@@ -528,8 +520,8 @@ namespace iText.IO.Image {
                             while (line >= gif.ih);
                         }
                         else {
-                            line = gif.ih - 1;
                             // this shouldn't happen
+                            line = gif.ih - 1;
                             inc = 0;
                         }
                     }
@@ -551,32 +543,30 @@ namespace iText.IO.Image {
         }
 
         /// <summary>Reads Graphics Control Extension values</summary>
-        /// <exception cref="System.IO.IOException"/>
         private static void ReadGraphicControlExt(GifImageHelper.GifParameters gif) {
-            gif.input.Read();
             // block size
-            int packed = gif.input.Read();
+            gif.input.Read();
             // packed fields
-            gif.dispose = (packed & 0x1c) >> 2;
+            int packed = gif.input.Read();
             // disposal method
+            gif.dispose = (packed & 0x1c) >> 2;
             if (gif.dispose == 0) {
+                // elect to keep old image if discretionary
                 gif.dispose = 1;
             }
-            // elect to keep old image if discretionary
             gif.transparency = (packed & 1) != 0;
-            gif.delay = ReadShort(gif) * 10;
             // delay in milliseconds
-            gif.transIndex = gif.input.Read();
+            gif.delay = ReadShort(gif) * 10;
             // transparent color index
+            gif.transIndex = gif.input.Read();
+            // block terminator
             gif.input.Read();
         }
 
-        // block terminator
         /// <summary>
         /// Skips variable length blocks up to and including
         /// next zero length block.
         /// </summary>
-        /// <exception cref="System.IO.IOException"/>
         private static void Skip(GifImageHelper.GifParameters gif) {
             do {
                 ReadBlock(gif);

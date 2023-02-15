@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,40 +41,31 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-using iText.Svg.Exceptions;
 using iText.Svg.Renderers;
 using iText.Test;
-using iText.Test.Attributes;
 
 namespace iText.Svg.Googlecharts {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class TreemapsChartsTest : SvgIntegrationTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
-            .CurrentContext.TestDirectory) + "/resources/itext/svg/googlecharts/treemaps_charts/";
+            .CurrentContext.TestDirectory) + "/resources/itext/svg/googlecharts/TreemapsChartsTest/";
 
         public static readonly String destinationFolder = NUnit.Framework.TestContext.CurrentContext.TestDirectory
-             + "/test/itext/svg/googlecharts/treemaps_charts/";
+             + "/test/itext/svg/googlecharts/TreemapsChartsTest/";
 
         [NUnit.Framework.OneTimeSetUp]
         public static void BeforeClass() {
             ITextTest.CreateDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        [LogMessage(SvgLogMessageConstant.UNMAPPEDTAG, Count = 2)]
-        public virtual void Treemaps_chart() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "treemaps_chart");
+        public virtual void TreemapsChart() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "treemapsChart");
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        [LogMessage(SvgLogMessageConstant.UNMAPPEDTAG, Count = 2)]
-        public virtual void Treemaps2_chart() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "treemaps2_chart");
+        public virtual void Treemaps2Chart() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "treemaps2Chart");
         }
     }
 }

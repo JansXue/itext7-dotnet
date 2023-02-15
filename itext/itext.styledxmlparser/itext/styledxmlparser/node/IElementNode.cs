@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -64,15 +64,11 @@ namespace iText.StyledXmlParser.Node {
 
         /// <summary>
         /// Gets additional styles, more specifically styles that affect an element
-        /// based on its position in the HTML DOM, e.g.
-        /// </summary>
-        /// <remarks>
-        /// Gets additional styles, more specifically styles that affect an element
         /// based on its position in the HTML DOM, e.g. cell borders that are set
         /// due to the parent table "border" attribute, or styles from "col" tags
         /// that affect table elements, or blocks horizontal alignment that is
         /// the result of parent's "align" attribute.
-        /// </remarks>
+        /// </summary>
         /// <returns>the additional html styles</returns>
         IList<IDictionary<String, String>> GetAdditionalHtmlStyles();
 

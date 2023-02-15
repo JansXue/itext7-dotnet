@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,130 +43,94 @@ address: sales@itextpdf.com
 using System;
 using iText.Kernel.Geom;
 using iText.Kernel.Utils;
-using iText.Svg.Exceptions;
 using iText.Svg.Renderers;
 using iText.Svg.Utils;
 using iText.Test;
-using iText.Test.Attributes;
 
 namespace iText.Svg.Googlecharts {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class GoogleChartsTest : SvgIntegrationTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
-            .CurrentContext.TestDirectory) + "/resources/itext/svg/googlecharts/GoogleChartsTests/";
+            .CurrentContext.TestDirectory) + "/resources/itext/svg/googlecharts/GoogleChartsTest/";
 
         public static readonly String destinationFolder = NUnit.Framework.TestContext.CurrentContext.TestDirectory
-             + "/test/itext/svg/googlecharts/GoogleChartsTests/";
+             + "/test/itext/svg/googlecharts/GoogleChartsTest/";
 
         [NUnit.Framework.OneTimeSetUp]
         public static void BeforeClass() {
             ITextTest.CreateDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void BarChart() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "bar_chart");
+            ConvertAndCompare(sourceFolder, destinationFolder, "barChart");
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        [LogMessage(SvgLogMessageConstant.UNMAPPEDTAG)]
-        public virtual void Annotation_chart() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "annotation_chart");
+        public virtual void AnnotationChart() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "annotationChart");
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        public virtual void Area_chart() {
+        public virtual void AreaChart() {
             PageSize pageSize = PageSize.A4;
-            TestUtils.ConvertSVGtoPDF(destinationFolder + "area_chart.pdf", sourceFolder + "area_chart.svg", 1, pageSize
+            TestUtils.ConvertSVGtoPDF(destinationFolder + "areaChart.pdf", sourceFolder + "areaChart.svg", 1, pageSize
                 );
-            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destinationFolder + "area_chart.pdf", sourceFolder
-                 + "cmp_area_chart.pdf", destinationFolder, "diff_"));
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destinationFolder + "areaChart.pdf", sourceFolder
+                 + "cmp_areaChart.pdf", destinationFolder, "diff_"));
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        public virtual void Bubble_chart() {
+        public virtual void BubbleChart() {
             PageSize pageSize = PageSize.A4;
-            TestUtils.ConvertSVGtoPDF(destinationFolder + "bubble_chart.pdf", sourceFolder + "bubble_chart.svg", 1, pageSize
+            TestUtils.ConvertSVGtoPDF(destinationFolder + "bubbleChart.pdf", sourceFolder + "bubbleChart.svg", 1, pageSize
                 );
-            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destinationFolder + "bubble_chart.pdf", sourceFolder
-                 + "cmp_bubble_chart.pdf", destinationFolder, "diff_"));
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destinationFolder + "bubbleChart.pdf", sourceFolder
+                 + "cmp_bubbleChart.pdf", destinationFolder, "diff_"));
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(SvgLogMessageConstant.UNMAPPEDTAG)]
-        public virtual void Calendar_chart() {
+        public virtual void CalendarChart() {
+            //TODO DEVSIX-4857 support stroke-linecap attribute
             PageSize pageSize = PageSize.A4;
-            TestUtils.ConvertSVGtoPDF(destinationFolder + "calendar_chart.pdf", sourceFolder + "calendar_chart.svg", 1
-                , pageSize);
-            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destinationFolder + "calendar_chart.pdf", 
-                sourceFolder + "cmp_calendar_chart.pdf", destinationFolder, "diff_"));
+            TestUtils.ConvertSVGtoPDF(destinationFolder + "calendarChart.pdf", sourceFolder + "calendarChart.svg", 1, 
+                pageSize);
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destinationFolder + "calendarChart.pdf", 
+                sourceFolder + "cmp_calendarChart.pdf", destinationFolder, "diff_"));
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        public virtual void Candlestick_chart() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "candlestick_chart");
+        public virtual void CandlestickChart() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "candlestickChart");
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        public virtual void Combo_chart() {
+        public virtual void ComboChart() {
             PageSize pageSize = PageSize.A4;
-            TestUtils.ConvertSVGtoPDF(destinationFolder + "combo_chart.pdf", sourceFolder + "combo_chart.svg", 1, pageSize
+            TestUtils.ConvertSVGtoPDF(destinationFolder + "comboChart.pdf", sourceFolder + "comboChart.svg", 1, pageSize
                 );
-            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destinationFolder + "combo_chart.pdf", sourceFolder
-                 + "cmp_combo_chart.pdf", destinationFolder, "diff_"));
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destinationFolder + "comboChart.pdf", sourceFolder
+                 + "cmp_comboChart.pdf", destinationFolder, "diff_"));
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        [LogMessage(SvgLogMessageConstant.UNMAPPEDTAG, Count = 5)]
-        public virtual void Diff_chart() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "diff_chart");
+        public virtual void DiffChart() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "diffChart");
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        public virtual void Donut_chart() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "donut_chart");
+        public virtual void DonutChart() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "donutChart");
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        public virtual void Waterfall_chart() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "waterfall_chart");
+        public virtual void WaterfallChart() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "waterfallChart");
         }
 
-        /// <exception cref="iText.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        public virtual void Histogram_chart() {
-            ConvertAndCompareVisually(sourceFolder, destinationFolder, "histogram_chart");
+        public virtual void HistogramChart() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "histogramChart");
         }
     }
 }

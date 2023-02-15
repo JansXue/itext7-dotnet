@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,91 +42,81 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-using iText.IO.Util;
+using iText.Commons.Utils;
 
 namespace iText.Kernel.Geom {
     public class AffineTransform {
         /// <summary>The type of affine transformation.</summary>
         /// <remarks>
         /// The type of affine transformation. See
-        /// <see cref="GetTransformType()"/>
-        /// .
+        /// <see cref="GetTransformType()"/>.
         /// </remarks>
         public const int TYPE_IDENTITY = 0;
 
         /// <summary>The type of affine transformation.</summary>
         /// <remarks>
         /// The type of affine transformation. See
-        /// <see cref="GetTransformType()"/>
-        /// .
+        /// <see cref="GetTransformType()"/>.
         /// </remarks>
         public const int TYPE_TRANSLATION = 1;
 
         /// <summary>The type of affine transformation.</summary>
         /// <remarks>
         /// The type of affine transformation. See
-        /// <see cref="GetTransformType()"/>
-        /// .
+        /// <see cref="GetTransformType()"/>.
         /// </remarks>
         public const int TYPE_UNIFORM_SCALE = 2;
 
         /// <summary>The type of affine transformation.</summary>
         /// <remarks>
         /// The type of affine transformation. See
-        /// <see cref="GetTransformType()"/>
-        /// .
+        /// <see cref="GetTransformType()"/>.
         /// </remarks>
         public const int TYPE_GENERAL_SCALE = 4;
 
         /// <summary>The type of affine transformation.</summary>
         /// <remarks>
         /// The type of affine transformation. See
-        /// <see cref="GetTransformType()"/>
-        /// .
+        /// <see cref="GetTransformType()"/>.
         /// </remarks>
         public const int TYPE_QUADRANT_ROTATION = 8;
 
         /// <summary>The type of affine transformation.</summary>
         /// <remarks>
         /// The type of affine transformation. See
-        /// <see cref="GetTransformType()"/>
-        /// .
+        /// <see cref="GetTransformType()"/>.
         /// </remarks>
         public const int TYPE_GENERAL_ROTATION = 16;
 
         /// <summary>The type of affine transformation.</summary>
         /// <remarks>
         /// The type of affine transformation. See
-        /// <see cref="GetTransformType()"/>
-        /// .
+        /// <see cref="GetTransformType()"/>.
         /// </remarks>
         public const int TYPE_GENERAL_TRANSFORM = 32;
 
         /// <summary>The type of affine transformation.</summary>
         /// <remarks>
         /// The type of affine transformation. See
-        /// <see cref="GetTransformType()"/>
-        /// .
+        /// <see cref="GetTransformType()"/>.
         /// </remarks>
         public const int TYPE_FLIP = 64;
 
         /// <summary>The type of affine transformation.</summary>
         /// <remarks>
         /// The type of affine transformation. See
-        /// <see cref="GetTransformType()"/>
-        /// .
+        /// <see cref="GetTransformType()"/>.
         /// </remarks>
         public const int TYPE_MASK_SCALE = TYPE_UNIFORM_SCALE | TYPE_GENERAL_SCALE;
 
         /// <summary>The type of affine transformation.</summary>
         /// <remarks>
         /// The type of affine transformation. See
-        /// <see cref="GetTransformType()"/>
-        /// .
+        /// <see cref="GetTransformType()"/>.
         /// </remarks>
         public const int TYPE_MASK_ROTATION = TYPE_QUADRANT_ROTATION | TYPE_GENERAL_ROTATION;
 
-        /// <summary>The <code>TYPE_UNKNOWN</code> is an initial type value.</summary>
+        /// <summary>The <c>TYPE_UNKNOWN</c> is an initial type value.</summary>
         internal const int TYPE_UNKNOWN = -1;
 
         /// <summary>The min value equivalent to zero.</summary>
@@ -146,7 +136,7 @@ namespace iText.Kernel.Geom {
 
         internal double m12;
 
-        /// <summary>The transformation <code>type</code></summary>
+        /// <summary>The transformation <c>type</c></summary>
         internal int type;
 
         public AffineTransform() {
@@ -202,40 +192,48 @@ namespace iText.Kernel.Geom {
         /// <summary>Method returns type of affine transformation.</summary>
         /// <remarks>
         /// Method returns type of affine transformation.
-        /// <p>
+        /// <para />
         /// Transform matrix is
         /// m00 m01 m02
         /// m10 m11 m12
-        /// <p>
+        /// <para />
         /// According analytic geometry new basis vectors are (m00, m01) and (m10, m11),
         /// translation vector is (m02, m12). Original basis vectors are (1, 0) and (0, 1).
         /// Type transformations classification:
-        /// <ul>
-        /// <li>
+        /// <list type="bullet">
+        /// <item><description>
         /// <see cref="TYPE_IDENTITY"/>
-        /// - new basis equals original one and zero translation</li>
-        /// <li>
+        /// - new basis equals original one and zero translation
+        /// </description></item>
+        /// <item><description>
         /// <see cref="TYPE_TRANSLATION"/>
-        /// - translation vector isn't zero</li>
-        /// <li>
+        /// - translation vector isn't zero
+        /// </description></item>
+        /// <item><description>
         /// <see cref="TYPE_UNIFORM_SCALE"/>
-        /// - vectors length of new basis equals</li>
-        /// <li>
+        /// - vectors length of new basis equals
+        /// </description></item>
+        /// <item><description>
         /// <see cref="TYPE_GENERAL_SCALE"/>
-        /// - vectors length of new basis doesn't equal</li>
-        /// <li>
+        /// - vectors length of new basis doesn't equal
+        /// </description></item>
+        /// <item><description>
         /// <see cref="TYPE_FLIP"/>
-        /// - new basis vector orientation differ from original one</li>
-        /// <li>
+        /// - new basis vector orientation differ from original one
+        /// </description></item>
+        /// <item><description>
         /// <see cref="TYPE_QUADRANT_ROTATION"/>
-        /// - new basis is rotated by 90, 180, 270, or 360 degrees</li>
-        /// <li>
+        /// - new basis is rotated by 90, 180, 270, or 360 degrees
+        /// </description></item>
+        /// <item><description>
         /// <see cref="TYPE_GENERAL_ROTATION"/>
-        /// - new basis is rotated by arbitrary angle</li>
-        /// <li>
+        /// - new basis is rotated by arbitrary angle
+        /// </description></item>
+        /// <item><description>
         /// <see cref="TYPE_GENERAL_TRANSFORM"/>
-        /// - transformation can't be inversed</li>
-        /// </ul>
+        /// - transformation can't be inversed
+        /// </description></item>
+        /// </list>
         /// </remarks>
         /// <returns>the type of this AffineTransform</returns>
         public virtual int GetTransformType() {
@@ -528,12 +526,6 @@ namespace iText.Kernel.Geom {
                  * t2.m01 + t2.m02, t1.m02 * t2.m10 + t1.m12 * t2.m11 + t2.m12);
         }
 
-        // m00
-        // m01
-        // m10
-        // m11
-        // m02
-        // m12
         public virtual void Concatenate(iText.Kernel.Geom.AffineTransform t) {
             SetTransform(Multiply(t, this));
         }
@@ -542,24 +534,18 @@ namespace iText.Kernel.Geom {
             SetTransform(Multiply(this, t));
         }
 
-        /// <exception cref="iText.Kernel.Geom.NoninvertibleTransformException"/>
         public virtual iText.Kernel.Geom.AffineTransform CreateInverse() {
             double det = GetDeterminant();
             if (Math.Abs(det) < ZERO) {
                 // awt.204=Determinant is zero
-                throw new NoninvertibleTransformException("Determinant is zero. Cannot invert transformation");
+                //$NON-NLS-1$
+                throw new NoninvertibleTransformException(NoninvertibleTransformException.DETERMINANT_IS_ZERO_CANNOT_INVERT_TRANSFORMATION
+                    );
             }
-            //$NON-NLS-1$
             return new iText.Kernel.Geom.AffineTransform(m11 / det, -m10 / det, -m01 / det, m00 / det, (m01 * m12 - m11
                  * m02) / det, (m10 * m02 - m00 * m12) / det);
         }
 
-        // m00
-        // m10
-        // m01
-        // m11
-        // m02
-        // m12
         public virtual Point Transform(Point src, Point dst) {
             if (dst == null) {
                 dst = new Point();
@@ -655,14 +641,14 @@ namespace iText.Kernel.Geom {
             }
         }
 
-        /// <exception cref="iText.Kernel.Geom.NoninvertibleTransformException"/>
         public virtual Point InverseTransform(Point src, Point dst) {
             double det = GetDeterminant();
             if (Math.Abs(det) < ZERO) {
                 // awt.204=Determinant is zero
-                throw new NoninvertibleTransformException("Determinant is zero. Cannot invert transformation");
+                //$NON-NLS-1$
+                throw new NoninvertibleTransformException(NoninvertibleTransformException.DETERMINANT_IS_ZERO_CANNOT_INVERT_TRANSFORMATION
+                    );
             }
-            //$NON-NLS-1$
             if (dst == null) {
                 dst = new Point();
             }
@@ -672,14 +658,14 @@ namespace iText.Kernel.Geom {
             return dst;
         }
 
-        /// <exception cref="iText.Kernel.Geom.NoninvertibleTransformException"/>
         public virtual void InverseTransform(double[] src, int srcOff, double[] dst, int dstOff, int length) {
             double det = GetDeterminant();
             if (Math.Abs(det) < ZERO) {
                 // awt.204=Determinant is zero
-                throw new NoninvertibleTransformException("Determinant is zero. Cannot invert transformation");
+                //$NON-NLS-1$
+                throw new NoninvertibleTransformException(NoninvertibleTransformException.DETERMINANT_IS_ZERO_CANNOT_INVERT_TRANSFORMATION
+                    );
             }
-            //$NON-NLS-1$
             while (--length >= 0) {
                 double x = src[srcOff++] - m02;
                 double y = src[srcOff++] - m12;
@@ -688,14 +674,14 @@ namespace iText.Kernel.Geom {
             }
         }
 
-        /// <exception cref="iText.Kernel.Geom.NoninvertibleTransformException"/>
         public virtual void InverseTransform(float[] src, int srcOff, float[] dst, int dstOff, int length) {
             float det = (float)GetDeterminant();
             if (Math.Abs(det) < ZERO) {
                 // awt.204=Determinant is zero
-                throw new NoninvertibleTransformException("Determinant is zero. Cannot invert transformation");
+                //$NON-NLS-1$
+                throw new NoninvertibleTransformException(NoninvertibleTransformException.DETERMINANT_IS_ZERO_CANNOT_INVERT_TRANSFORMATION
+                    );
             }
-            //$NON-NLS-1$
             while (--length >= 0) {
                 float x = (float)(src[srcOff++] - m02);
                 float y = (float)(src[srcOff++] - m12);
@@ -704,9 +690,13 @@ namespace iText.Kernel.Geom {
             }
         }
 
-        /// <exception cref="Java.Lang.CloneNotSupportedException"/>
+        /// <summary>
+        /// Creates a "deep copy" of this AffineTransform, meaning the object returned by this method will be independent
+        /// of the object being cloned.
+        /// </summary>
+        /// <returns>the copied AffineTransform.</returns>
         public virtual iText.Kernel.Geom.AffineTransform Clone() {
-            return new iText.Kernel.Geom.AffineTransform(this);
+            return (iText.Kernel.Geom.AffineTransform) MemberwiseClone();
         }
 
         public override bool Equals(Object o) {

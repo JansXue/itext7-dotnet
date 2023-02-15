@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,13 +44,14 @@ address: sales@itextpdf.com
 using System;
 
 namespace iText.Barcodes.Qrcode {
-    /// <summary><p>See ISO 18004:2006, 6.4.1, Tables 2 and 3.</summary>
+    /// <summary>See ISO 18004:2006, 6.4.1, Tables 2 and 3.</summary>
     /// <remarks>
-    /// <p>See ISO 18004:2006, 6.4.1, Tables 2 and 3. This enum encapsulates the various modes in which
-    /// data can be encoded to bits in the QR code standard.</p>
+    /// See ISO 18004:2006, 6.4.1, Tables 2 and 3. This enum encapsulates the various modes in which
+    /// data can be encoded to bits in the QR code standard.
     /// </remarks>
     /// <author>Sean Owen</author>
     internal sealed class Mode {
+        // Not really a mode...
         public static readonly iText.Barcodes.Qrcode.Mode TERMINATOR = new iText.Barcodes.Qrcode.Mode(new int[] { 
             0, 0, 0 }, 0x00, "TERMINATOR");
 
@@ -60,12 +61,14 @@ namespace iText.Barcodes.Qrcode {
         public static readonly iText.Barcodes.Qrcode.Mode ALPHANUMERIC = new iText.Barcodes.Qrcode.Mode(new int[] 
             { 9, 11, 13 }, 0x02, "ALPHANUMERIC");
 
+        // Not supported
         public static readonly iText.Barcodes.Qrcode.Mode STRUCTURED_APPEND = new iText.Barcodes.Qrcode.Mode(new int
             [] { 0, 0, 0 }, 0x03, "STRUCTURED_APPEND");
 
         public static readonly iText.Barcodes.Qrcode.Mode BYTE = new iText.Barcodes.Qrcode.Mode(new int[] { 8, 16, 
             16 }, 0x04, "BYTE");
 
+        // character counts don't apply
         public static readonly iText.Barcodes.Qrcode.Mode ECI = new iText.Barcodes.Qrcode.Mode(null, 0x07, "ECI");
 
         public static readonly iText.Barcodes.Qrcode.Mode KANJI = new iText.Barcodes.Qrcode.Mode(new int[] { 8, 10
@@ -84,9 +87,6 @@ namespace iText.Barcodes.Qrcode {
         private readonly String name;
 
         private Mode(int[] characterCountBitsForVersions, int bits, String name) {
-            // Not really a mode...
-            // Not supported
-            // character counts don't apply
             this.characterCountBitsForVersions = characterCountBitsForVersions;
             this.bits = bits;
             this.name = name;
@@ -98,7 +98,6 @@ namespace iText.Barcodes.Qrcode {
         /// <see cref="Mode"/>
         /// encoded by these bits
         /// </returns>
-        /// <exception cref="System.ArgumentException">if bits do not correspond to a known mode</exception>
         public static iText.Barcodes.Qrcode.Mode ForBits(int bits) {
             switch (bits) {
                 case 0x0: {

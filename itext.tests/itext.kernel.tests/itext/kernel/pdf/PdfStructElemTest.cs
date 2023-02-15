@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,6 +44,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using iText.IO.Font.Constants;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Font;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf.Annot;
@@ -54,6 +55,7 @@ using iText.Test;
 using iText.Test.Attributes;
 
 namespace iText.Kernel.Pdf {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class PdfStructElemTest : ExtendedITextTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/kernel/pdf/PdfStructElemTest/";
@@ -66,7 +68,6 @@ namespace iText.Kernel.Pdf {
             CreateOrClearDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void StructElemTest01() {
             PdfWriter writer = new PdfWriter(destinationFolder + "structElemTest01.pdf");
@@ -108,10 +109,9 @@ namespace iText.Kernel.Pdf {
             page1.Flush();
             page2.Flush();
             document.Close();
-            CompareResult("structElemTest01.pdf", "cmp_structElemTest01.pdf", "diff_structElem_01_");
+            CompareResult("structElemTest01.pdf", "cmp_structElemTest01.pdf");
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void StructElemTest02() {
             PdfWriter writer = new PdfWriter(destinationFolder + "structElemTest02.pdf");
@@ -138,10 +138,9 @@ namespace iText.Kernel.Pdf {
             canvas.Release();
             page.Flush();
             document.Close();
-            CompareResult("structElemTest02.pdf", "cmp_structElemTest02.pdf", "diff_structElem_02_");
+            CompareResult("structElemTest02.pdf", "cmp_structElemTest02.pdf");
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void StructElemTest03() {
             PdfWriter writer = new PdfWriter(destinationFolder + "structElemTest03.pdf");
@@ -193,7 +192,6 @@ namespace iText.Kernel.Pdf {
             document.Close();
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void StructElemTest04() {
             MemoryStream baos = new MemoryStream();
@@ -246,10 +244,9 @@ namespace iText.Kernel.Pdf {
             canvas.Release();
             page.Flush();
             document.Close();
-            CompareResult("structElemTest04.pdf", "cmp_structElemTest04.pdf", "diff_structElem_04_");
+            CompareResult("structElemTest04.pdf", "cmp_structElemTest04.pdf");
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void StructElemTest05() {
             PdfWriter writer = new PdfWriter(destinationFolder + "structElemTest05.pdf");
@@ -283,10 +280,9 @@ namespace iText.Kernel.Pdf {
             canvas.EndText();
             canvas.Release();
             document.Close();
-            CompareResult("structElemTest05.pdf", "cmp_structElemTest05.pdf", "diff_structElem_05_");
+            CompareResult("structElemTest05.pdf", "cmp_structElemTest05.pdf");
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void StructElemTest06() {
             PdfWriter writer = new PdfWriter(destinationFolder + "structElemTest06.pdf");
@@ -309,12 +305,11 @@ namespace iText.Kernel.Pdf {
             canvas.EndText();
             canvas.Release();
             document.Close();
-            CompareResult("structElemTest06.pdf", "cmp_structElemTest06.pdf", "diff_structElem_06_");
+            CompareResult("structElemTest06.pdf", "cmp_structElemTest06.pdf");
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.VERSION_INCOMPATIBILITY_FOR_DICTIONARY_ENTRY, Count = 5)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.VERSION_INCOMPATIBILITY_FOR_DICTIONARY_ENTRY, Count = 5)]
         public virtual void StructElemTest07() {
             PdfWriter writer = new PdfWriter(destinationFolder + "structElemTest07.pdf");
             writer.SetCompressionLevel(CompressionConstants.NO_COMPRESSION);
@@ -346,10 +341,9 @@ namespace iText.Kernel.Pdf {
             document.GetStructTreeRoot().AddNamespace(@namespace);
             page.Flush();
             document.Close();
-            CompareResult("structElemTest07.pdf", "cmp_structElemTest07.pdf", "diff_structElem_07_");
+            CompareResult("structElemTest07.pdf", "cmp_structElemTest07.pdf");
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void StructElemTest08() {
             PdfWriter writer = new PdfWriter(destinationFolder + "structElemTest08.pdf");
@@ -373,14 +367,13 @@ namespace iText.Kernel.Pdf {
             canvas.EndText();
             canvas.Release();
             PdfPage secondPage = document.AddNewPage();
-            firstPage.Flush();
             // on flushing, the Document tag is not added
+            firstPage.Flush();
             secondPage.Flush();
             document.Close();
-            CompareResult("structElemTest08.pdf", "cmp_structElemTest08.pdf", "diff_structElem_08_");
+            CompareResult("structElemTest08.pdf", "cmp_structElemTest08.pdf");
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void StructElemTest09() {
             PdfWriter writer = new PdfWriter(destinationFolder + "structElemTest09.pdf");
@@ -389,12 +382,11 @@ namespace iText.Kernel.Pdf {
                 writer);
             document.RemovePage(1);
             document.Close();
-            CompareResult("structElemTest09.pdf", "cmp_structElemTest09.pdf", "diff_structElem_09_");
+            CompareResult("structElemTest09.pdf", "cmp_structElemTest09.pdf");
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.SOURCE_DOCUMENT_HAS_ACROFORM_DICTIONARY)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.SOURCE_DOCUMENT_HAS_ACROFORM_DICTIONARY)]
         public virtual void StructTreeCopyingTest01() {
             PdfDocument source = new PdfDocument(new PdfReader(sourceFolder + "iphone_user_guide.pdf"));
             PdfDocument destination = new PdfDocument(new PdfWriter(destinationFolder + "structTreeCopyingTest01.pdf")
@@ -410,12 +402,11 @@ namespace iText.Kernel.Pdf {
             source.CopyPagesTo(50, 52, destination);
             destination.Close();
             source.Close();
-            CompareResult("structTreeCopyingTest01.pdf", "cmp_structTreeCopyingTest01.pdf", "diff_copying_01_");
+            CompareResult("structTreeCopyingTest01.pdf", "cmp_structTreeCopyingTest01.pdf");
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.SOURCE_DOCUMENT_HAS_ACROFORM_DICTIONARY)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.SOURCE_DOCUMENT_HAS_ACROFORM_DICTIONARY)]
         public virtual void StructTreeCopyingTest02() {
             PdfDocument source = new PdfDocument(new PdfReader(sourceFolder + "iphone_user_guide.pdf"));
             PdfDocument destination = new PdfDocument(new PdfWriter(destinationFolder + "structTreeCopyingTest02.pdf")
@@ -426,12 +417,11 @@ namespace iText.Kernel.Pdf {
             source.CopyPagesTo(1, 5, destination);
             destination.Close();
             source.Close();
-            CompareResult("structTreeCopyingTest02.pdf", "cmp_structTreeCopyingTest02.pdf", "diff_copying_02_");
+            CompareResult("structTreeCopyingTest02.pdf", "cmp_structTreeCopyingTest02.pdf");
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.SOURCE_DOCUMENT_HAS_ACROFORM_DICTIONARY)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.SOURCE_DOCUMENT_HAS_ACROFORM_DICTIONARY)]
         public virtual void StructTreeCopyingTest03() {
             PdfDocument source = new PdfDocument(new PdfReader(sourceFolder + "iphone_user_guide.pdf"));
             PdfDocument destination = new PdfDocument(new PdfWriter(destinationFolder + "structTreeCopyingTest03.pdf")
@@ -446,9 +436,8 @@ namespace iText.Kernel.Pdf {
                 , sourceFolder + "cmp_structTreeCopyingTest03.pdf", destinationFolder, "diff_copying_03_"));
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.SOURCE_DOCUMENT_HAS_ACROFORM_DICTIONARY)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.SOURCE_DOCUMENT_HAS_ACROFORM_DICTIONARY)]
         public virtual void StructTreeCopyingTest04() {
             PdfDocument source = new PdfDocument(new PdfReader(sourceFolder + "iphone_user_guide.pdf"));
             PdfDocument destination = new PdfDocument(new PdfWriter(destinationFolder + "structTreeCopyingTest04.pdf")
@@ -460,10 +449,9 @@ namespace iText.Kernel.Pdf {
             }
             destination.Close();
             source.Close();
-            CompareResult("structTreeCopyingTest04.pdf", "cmp_structTreeCopyingTest04.pdf", "diff_copying_04_");
+            CompareResult("structTreeCopyingTest04.pdf", "cmp_structTreeCopyingTest04.pdf");
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void StructTreeCopyingTest05() {
             PdfDocument document = new PdfDocument(new PdfReader(sourceFolder + "iphone_user_guide.pdf"), new PdfWriter
@@ -475,12 +463,11 @@ namespace iText.Kernel.Pdf {
             document.Close();
             document1.Close();
             document2.Close();
-            CompareResult("structTreeCopyingTest05.pdf", "cmp_structTreeCopyingTest05.pdf", "diff_copying_05_");
+            CompareResult("structTreeCopyingTest05.pdf", "cmp_structTreeCopyingTest05.pdf");
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.SOURCE_DOCUMENT_HAS_ACROFORM_DICTIONARY)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.SOURCE_DOCUMENT_HAS_ACROFORM_DICTIONARY)]
         public virtual void StructTreeCopyingTest06() {
             PdfDocument source = new PdfDocument(new PdfReader(sourceFolder + "iphone_user_guide.pdf"));
             PdfDocument destination = new PdfDocument(new PdfWriter(destinationFolder + "structTreeCopyingTest06.pdf")
@@ -490,10 +477,9 @@ namespace iText.Kernel.Pdf {
             source.CopyPagesTo(1, source.GetNumberOfPages(), destination);
             destination.Close();
             source.Close();
-            CompareResult("structTreeCopyingTest06.pdf", "cmp_structTreeCopyingTest06.pdf", "diff_copying_06_");
+            CompareResult("structTreeCopyingTest06.pdf", "cmp_structTreeCopyingTest06.pdf");
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void StructTreeCopyingTest07() {
             PdfReader reader = new PdfReader(sourceFolder + "quick-brown-fox.pdf");
@@ -521,10 +507,9 @@ namespace iText.Kernel.Pdf {
             document1.CopyPagesTo(1, 1, document);
             document.Close();
             document1.Close();
-            CompareResult("structTreeCopyingTest07.pdf", "cmp_structTreeCopyingTest07.pdf", "diff_copying_07_");
+            CompareResult("structTreeCopyingTest07.pdf", "cmp_structTreeCopyingTest07.pdf");
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void StructTreeCopyingTest08() {
             PdfDocument document = new PdfDocument(new PdfReader(sourceFolder + "quick-brown-fox-table.pdf"), new PdfWriter
@@ -534,10 +519,9 @@ namespace iText.Kernel.Pdf {
             document1.CopyPagesTo(1, 1, document, 2);
             document.Close();
             document1.Close();
-            CompareResult("structTreeCopyingTest08.pdf", "cmp_structTreeCopyingTest08.pdf", "diff_copying_08_");
+            CompareResult("structTreeCopyingTest08.pdf", "cmp_structTreeCopyingTest08.pdf");
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void StructTreeCopyingTest09() {
             PdfDocument document = new PdfDocument(new PdfReader(sourceFolder + "quick-brown-fox-table.pdf"), new PdfWriter
@@ -548,10 +532,9 @@ namespace iText.Kernel.Pdf {
             document1.CopyPagesTo(1, 1, document, 4);
             document.Close();
             document1.Close();
-            CompareResult("structTreeCopyingTest09.pdf", "cmp_structTreeCopyingTest09.pdf", "diff_copying_09_");
+            CompareResult("structTreeCopyingTest09.pdf", "cmp_structTreeCopyingTest09.pdf");
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void StructTreeCopyingTest10() {
             PdfDocument document = new PdfDocument(new PdfReader(sourceFolder + "88th_Academy_Awards.pdf"), new PdfWriter
@@ -565,12 +548,11 @@ namespace iText.Kernel.Pdf {
             document.Close();
             document1.Close();
             document2.Close();
-            CompareResult("structTreeCopyingTest10.pdf", "cmp_structTreeCopyingTest10.pdf", "diff_copying_10_");
+            CompareResult("structTreeCopyingTest10.pdf", "cmp_structTreeCopyingTest10.pdf");
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.ROLE_MAPPING_FROM_SOURCE_IS_NOT_COPIED_ALREADY_EXIST)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.ROLE_MAPPING_FROM_SOURCE_IS_NOT_COPIED_ALREADY_EXIST)]
         public virtual void StructTreeCopyingTest11() {
             PdfDocument document = new PdfDocument(new PdfReader(sourceFolder + "88th_Academy_Awards.pdf"), new PdfWriter
                 (destinationFolder + "structTreeCopyingTest11.pdf"));
@@ -583,19 +565,38 @@ namespace iText.Kernel.Pdf {
             document.Close();
             document1.Close();
             document2.Close();
-            CompareResult("structTreeCopyingTest11.pdf", "cmp_structTreeCopyingTest11.pdf", "diff_copying_11_");
+            CompareResult("structTreeCopyingTest11.pdf", "cmp_structTreeCopyingTest11.pdf");
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.ENCOUNTERED_INVALID_MCR, Count = 72)]
+        public virtual void StructTreeCopyingToPartiallyFlushedDocumentTest() {
+            String outFile = "structTreeCopyingToPartiallyFlushedDocumentTest.pdf";
+            PdfDocument resultDoc = new PdfDocument(new PdfWriter(destinationFolder + outFile));
+            resultDoc.SetTagged();
+            PdfDocument document1 = new PdfDocument(new PdfReader(sourceFolder + "quick-brown-fox.pdf"));
+            document1.CopyPagesTo(1, 1, resultDoc);
+            resultDoc.FlushCopiedObjects(document1);
+            document1.Close();
+            PdfDocument document2 = new PdfDocument(new PdfReader(sourceFolder + "quick-brown-fox.pdf"));
+            Exception e = NUnit.Framework.Assert.Catch(typeof(PdfException), () => {
+                document2.CopyPagesTo(1, 1, resultDoc);
+            }
+            );
+            // TODO DEVSIX-7005 after exception is gone add assertion for the resulting document
+            NUnit.Framework.Assert.AreEqual(KernelExceptionMessageConstant.TAG_STRUCTURE_COPYING_FAILED_IT_MIGHT_BE_CORRUPTED_IN_ONE_OF_THE_DOCUMENTS
+                , e.Message);
+            document2.Close();
+            resultDoc.Close();
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.ENCOUNTERED_INVALID_MCR)]
         public virtual void CorruptedTagStructureTest01() {
-            PdfDocument document = new PdfDocument(new PdfReader(sourceFolder + "cocacola_corruptedTagStruct.pdf"));
+            PdfDocument document = new PdfDocument(new PdfReader(sourceFolder + "invalidMcr.pdf"));
             NUnit.Framework.Assert.IsTrue(document.IsTagged());
             document.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void CorruptedTagStructureTest02() {
             PdfDocument document = new PdfDocument(new PdfReader(sourceFolder + "directStructElem01.pdf"));
@@ -603,7 +604,6 @@ namespace iText.Kernel.Pdf {
             document.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void CorruptedTagStructureTest03() {
             PdfReader reader = new PdfReader(sourceFolder + "directStructElem02.pdf");
@@ -617,7 +617,6 @@ namespace iText.Kernel.Pdf {
             document.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void CorruptedTagStructureTest04() {
             PdfDocument document = new PdfDocument(new PdfReader(sourceFolder + "directStructElem03.pdf"));
@@ -633,16 +632,11 @@ namespace iText.Kernel.Pdf {
             document.Close();
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
-        private void CompareResult(String outFileName, String cmpFileName, String diffNamePrefix) {
+        private void CompareResult(String outFileName, String cmpFileName) {
             CompareTool compareTool = new CompareTool();
             String outPdf = destinationFolder + outFileName;
             String cmpPdf = sourceFolder + cmpFileName;
-            String contentDifferences = compareTool.CompareByContent(outPdf, cmpPdf, destinationFolder, diffNamePrefix
-                );
+            String contentDifferences = compareTool.CompareByContent(outPdf, cmpPdf, destinationFolder);
             String taggedStructureDifferences = compareTool.CompareTagStructures(outPdf, cmpPdf);
             String errorMessage = "";
             errorMessage += taggedStructureDifferences == null ? "" : taggedStructureDifferences + "\n";

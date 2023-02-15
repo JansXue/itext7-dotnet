@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,8 +41,9 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-using Common.Logging;
-using iText.IO.Util;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Filespec;
 
@@ -51,15 +52,21 @@ namespace iText.Kernel.Pdf.Tagging {
     /// <remarks>
     /// A wrapper for namespace dictionaries (ISO 32000-2 section 14.7.4).
     /// A namespace dictionary defines a namespace within the structure tree.
-    /// <p>This pdf entity is meaningful only for the PDF documents of version <b>2.0 and higher</b>.</p>
+    /// <para />
+    /// This pdf entity is meaningful only for the PDF documents of version <b>2.0 and higher</b>.
     /// </remarks>
     public class PdfNamespace : PdfObjectWrapper<PdfDictionary> {
         /// <summary>
         /// Constructs namespace from the given
         /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
         /// that represents namespace dictionary.
-        /// This method is useful for property reading in reading mode or modifying in stamping mode.
         /// </summary>
+        /// <remarks>
+        /// Constructs namespace from the given
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// that represents namespace dictionary.
+        /// This method is useful for property reading in reading mode or modifying in stamping mode.
+        /// </remarks>
         /// <param name="dictionary">
         /// a
         /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
@@ -300,13 +307,13 @@ namespace iText.Kernel.Pdf.Tagging {
 
         private void LogOverwritingOfMappingIfNeeded(String thisNsRole, PdfObject prevVal) {
             if (prevVal != null) {
-                ILog logger = LogManager.GetLogger(typeof(iText.Kernel.Pdf.Tagging.PdfNamespace));
+                ILogger logger = ITextLogManager.GetLogger(typeof(iText.Kernel.Pdf.Tagging.PdfNamespace));
                 String nsNameStr = GetNamespaceName();
                 if (nsNameStr == null) {
                     nsNameStr = "this";
                 }
-                logger.Warn(MessageFormatUtil.Format(iText.IO.LogMessageConstant.MAPPING_IN_NAMESPACE_OVERWRITTEN, thisNsRole
-                    , nsNameStr));
+                logger.LogWarning(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.MAPPING_IN_NAMESPACE_OVERWRITTEN
+                    , thisNsRole, nsNameStr));
             }
         }
     }

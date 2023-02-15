@@ -1,9 +1,8 @@
 %PDF-1.7
 %‚„œ”
 5 0 obj
-<</Length 27>>stream
+<</Length 12>>stream
 q
-1 0 0 1 0 0 cm
 /Fm1 Do
 Q
 
@@ -16,16 +15,17 @@ endobj
 <</Pages 2 0 R/Type/Catalog>>
 endobj
 3 0 obj
-<</CreationDate(D:20190107165440+01'00')/ModDate(D:20190107165440+01'00')/Producer(iTextÆ 7.1.5-SNAPSHOT ©2000-2019 iText Group NV \(AGPL-version\))>>
+<</CreationDate(D:20211018115834+03'00')/ModDate(D:20211018115834+03'00')/Producer(iTextÆ Core 7.2.1-SNAPSHOT \(AGPL version\) ©2000-2021 iText Group NV)>>
 endobj
 2 0 obj
 <</Count 1/Kids[4 0 R]/Type/Pages>>
 endobj
 6 0 obj
-<</BBox[0 0 375 375]/Length 77/Resources<</XObject<</Fm1 7 0 R>>>>/Subtype/Form/Type/XObject>>stream
+<</BBox[0 0 375 375]/Length 94/Resources<</XObject<</Fm1 7 0 R>>>>/Subtype/Form/Type/XObject>>stream
 1 0 0 -1 0 375 cm
 % svg root
 1.25 0 0 1.25 0 0 cm
+1 0 0 1 75 75 cm
 q
 1 0 0 1 0 0 cm
 /Fm1 Do
@@ -34,16 +34,20 @@ Q
 endstream
 endobj
 7 0 obj
-<</BBox[0 0 300 300]/Length 354/Resources<<>>/Subtype/Form/Type/XObject>>stream
+<</BBox[-75 -75 225 225]/Length 368/Resources<<>>/Subtype/Form/Type/XObject>>stream
+-75 -75 300 300 re
+W
+n
 q
 0 0 0 rg
 0 0.50196 0 RG
+0.75 w
 % path
 78.82 0.08175 m
-78.82 161.33 l
-82.43 161.33 l
-12.83 0.15 l
-78.82 0.08175 l
+78.82 161.32 l
+82.43 161.32 l
+12.82 0.15 l
+h
 3.75 18.75 m
 -129.41 18.75 l
 114.34 18.75 l
@@ -61,7 +65,6 @@ q
 -0.7425 -0.675 l
 -0.7425 -6.75 l
 B
-h
 Q
 
 endstream
@@ -69,16 +72,16 @@ endobj
 xref
 0 8
 0000000000 65535 f 
-0000000226 00000 n 
-0000000437 00000 n 
-0000000271 00000 n 
-0000000089 00000 n 
+0000000211 00000 n 
+0000000427 00000 n 
+0000000256 00000 n 
+0000000074 00000 n 
 0000000015 00000 n 
-0000000488 00000 n 
-0000000692 00000 n 
+0000000478 00000 n 
+0000000699 00000 n 
 trailer
-<</ID [<d0b890b10508c169f222042e7ff84781><d0b890b10508c169f222042e7ff84781>]/Info 3 0 R/Root 1 0 R/Size 8>>
-%iText-7.1.5-SNAPSHOT
+<</ID [<25b92422b9df8148963f78b09636cb22><25b92422b9df8148963f78b09636cb22>]/Info 3 0 R/Root 1 0 R/Size 8>>
+%iText-Core-7.2.1-SNAPSHOT
 startxref
-1152
+1177
 %%EOF

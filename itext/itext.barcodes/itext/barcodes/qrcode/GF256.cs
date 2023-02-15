@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,20 +45,23 @@ using System;
 
 namespace iText.Barcodes.Qrcode {
     /// <summary>
-    /// <p>This class contains utility methods for performing mathematical operations over
+    /// This class contains utility methods for performing mathematical operations over
     /// the Galois Field GF(256).
     /// </summary>
     /// <remarks>
-    /// <p>This class contains utility methods for performing mathematical operations over
-    /// the Galois Field GF(256). Operations use a given primitive polynomial in calculations.</p>
-    /// <p>Throughout this package, elements of GF(256) are represented as an <code>int</code>
+    /// This class contains utility methods for performing mathematical operations over
+    /// the Galois Field GF(256). Operations use a given primitive polynomial in calculations.
+    /// <para />
+    /// Throughout this package, elements of GF(256) are represented as an <c>int</c>
     /// for convenience and speed (but at the cost of memory).
-    /// Only the bottom 8 bits are really used.</p>
+    /// Only the bottom 8 bits are really used.
     /// </remarks>
     /// <author>Sean Owen</author>
     internal sealed class GF256 {
+        // x^8 + x^4 + x^3 + x^2 + 1
         public static readonly iText.Barcodes.Qrcode.GF256 QR_CODE_FIELD = new iText.Barcodes.Qrcode.GF256(0x011D);
 
+        // x^8 + x^5 + x^3 + x^2 + 1
         public static readonly iText.Barcodes.Qrcode.GF256 DATA_MATRIX_FIELD = new iText.Barcodes.Qrcode.GF256(0x012D
             );
 
@@ -77,15 +80,13 @@ namespace iText.Barcodes.Qrcode {
         /// coefficient
         /// </param>
         private GF256(int primitive) {
-            // x^8 + x^4 + x^3 + x^2 + 1
-            // x^8 + x^5 + x^3 + x^2 + 1
             expTable = new int[256];
             logTable = new int[256];
             int x = 1;
             for (int i = 0; i < 256; i++) {
                 expTable[i] = x;
-                x <<= 1;
                 // x = x * 2; we're assuming the generator alpha is 2
+                x <<= 1;
                 if (x >= 0x100) {
                     x ^= primitive;
                 }

@@ -1,7 +1,7 @@
-﻿/*
+/*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -48,7 +48,7 @@ using System.Text;
 
 namespace iText.IO.Util
 {
-#if NETSTANDARD1_6
+#if NETSTANDARD2_0
     /// <summary>This file is a helper class for internal usage only.</summary>
     /// <remarks>
     /// This file is a helper class for internal usage only.

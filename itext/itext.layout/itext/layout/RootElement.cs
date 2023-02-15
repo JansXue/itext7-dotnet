@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,7 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.Kernel.Font;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas;
@@ -57,7 +57,7 @@ using iText.Layout.Tagging;
 
 namespace iText.Layout {
     /// <summary>A generic abstract root element for a PDF layout object hierarchy.</summary>
-    /// 
+    /// <typeparam name="T">this type</typeparam>
     public abstract class RootElement<T> : ElementPropertyContainer<T>, IDisposable
         where T : IPropertyContainer {
         protected internal bool immediateFlush = true;
@@ -82,12 +82,7 @@ namespace iText.Layout {
         /// <returns>this element</returns>
         /// <seealso cref="iText.Layout.Element.BlockElement{T}"/>
         public virtual T Add(IBlockElement element) {
-            childElements.Add(element);
-            CreateAndAddRendererSubTree(element);
-            if (immediateFlush) {
-                childElements.JRemoveAt(childElements.Count - 1);
-            }
-            return (T)(Object)this;
+            return AddElement(element);
         }
 
         /// <summary>Adds an image to the root.</summary>
@@ -96,12 +91,7 @@ namespace iText.Layout {
         /// <returns>this element</returns>
         /// <seealso cref="iText.Layout.Element.Image"/>
         public virtual T Add(Image image) {
-            childElements.Add(image);
-            CreateAndAddRendererSubTree(image);
-            if (immediateFlush) {
-                childElements.JRemoveAt(childElements.Count - 1);
-            }
-            return (T)(Object)this;
+            return AddElement(image);
         }
 
         /// <summary>
@@ -124,14 +114,16 @@ namespace iText.Layout {
 
         /// <summary>
         /// Sets
-        /// <see cref="iText.Layout.Font.FontProvider"/>
-        /// .
-        /// Note, font provider is inherited property.
+        /// <see cref="iText.Layout.Font.FontProvider"/>.
         /// </summary>
+        /// <remarks>
+        /// Sets
+        /// <see cref="iText.Layout.Font.FontProvider"/>.
+        /// Note, font provider is inherited property.
+        /// </remarks>
         /// <param name="fontProvider">
         /// instance of
-        /// <see cref="iText.Layout.Font.FontProvider"/>
-        /// .
+        /// <see cref="iText.Layout.Font.FontProvider"/>.
         /// </param>
         public virtual void SetFontProvider(FontProvider fontProvider) {
             SetProperty(Property.FONT_PROVIDER, fontProvider);
@@ -380,6 +372,15 @@ namespace iText.Layout {
         private LayoutTaggingHelper InitTaggingHelperIfNeeded() {
             return defaultLayoutTaggingHelper == null && pdfDocument.IsTagged() ? defaultLayoutTaggingHelper = new LayoutTaggingHelper
                 (pdfDocument, immediateFlush) : defaultLayoutTaggingHelper;
+        }
+
+        private T AddElement(IElement element) {
+            childElements.Add(element);
+            CreateAndAddRendererSubTree(element);
+            if (immediateFlush) {
+                childElements.JRemoveAt(childElements.Count - 1);
+            }
+            return (T)(Object)this;
         }
 
         public abstract void Close();

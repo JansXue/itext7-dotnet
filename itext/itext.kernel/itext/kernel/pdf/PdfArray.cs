@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,16 +44,16 @@ address: sales@itextpdf.com
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using iText.Kernel;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Geom;
+using iText.Kernel.Utils;
 
 namespace iText.Kernel.Pdf {
     /// <summary>A representation of an array as described in the PDF specification.</summary>
     /// <remarks>
     /// A representation of an array as described in the PDF specification. A PdfArray can contain any
     /// subclass of
-    /// <see cref="PdfObject"/>
-    /// .
+    /// <see cref="PdfObject"/>.
     /// </remarks>
     public class PdfArray : PdfObject, IEnumerable<PdfObject> {
         protected internal IList<PdfObject> list;
@@ -108,8 +108,7 @@ namespace iText.Kernel.Pdf {
 
         /// <summary>
         /// Create a new PdfArray filled with the values in the float[] as
-        /// <see cref="PdfNumber"/>
-        /// .
+        /// <see cref="PdfNumber"/>.
         /// </summary>
         /// <param name="numbers">values to be added to this PdfArray</param>
         public PdfArray(float[] numbers) {
@@ -121,8 +120,7 @@ namespace iText.Kernel.Pdf {
 
         /// <summary>
         /// Create a new PdfArray filled with the values in the double[] as
-        /// <see cref="PdfNumber"/>
-        /// .
+        /// <see cref="PdfNumber"/>.
         /// </summary>
         /// <param name="numbers">values to be added to this PdfArray</param>
         public PdfArray(double[] numbers) {
@@ -134,8 +132,7 @@ namespace iText.Kernel.Pdf {
 
         /// <summary>
         /// Create a new PdfArray filled with the values in the int[] as
-        /// <see cref="PdfNumber"/>
-        /// .
+        /// <see cref="PdfNumber"/>.
         /// </summary>
         /// <param name="numbers">values to be added to this PdfArray</param>
         public PdfArray(int[] numbers) {
@@ -147,8 +144,7 @@ namespace iText.Kernel.Pdf {
 
         /// <summary>
         /// Create a new PdfArray filled with the values in the boolean[] as
-        /// <see cref="PdfBoolean"/>
-        /// .
+        /// <see cref="PdfBoolean"/>.
         /// </summary>
         /// <param name="values">values to be added to this PdfArray</param>
         public PdfArray(bool[] values) {
@@ -260,8 +256,7 @@ namespace iText.Kernel.Pdf {
 
         /// <summary>
         /// Adds content of the
-        /// <c>PdfArray</c>
-        /// .
+        /// <c>PdfArray</c>.
         /// </summary>
         /// <param name="a">
         /// the
@@ -354,6 +349,8 @@ namespace iText.Kernel.Pdf {
         }
 
         /// <param name="asDirect">true is to extract direct object always.</param>
+        /// <param name="index">index of the element to return</param>
+        /// <returns>the element at the specified position in this list</returns>
         public virtual PdfObject Get(int index, bool asDirect) {
             if (!asDirect) {
                 return list[index];
@@ -466,7 +463,6 @@ namespace iText.Kernel.Pdf {
         /// PdfNumbers, if not a PdfException will be thrown.
         /// </remarks>
         /// <returns>Rectangle of the first four values</returns>
-        /// <exception cref="iText.Kernel.PdfException">if one of the first values isn't a PdfNumber</exception>
         public virtual Rectangle ToRectangle() {
             try {
                 float x1 = GetAsNumber(0).FloatValue();
@@ -485,14 +481,13 @@ namespace iText.Kernel.Pdf {
                 return new Rectangle(llx, lly, urx - llx, ury - lly);
             }
             catch (Exception e) {
-                throw new PdfException(PdfException.CannotConvertPdfArrayToRectanle, e, this);
+                throw new PdfException(KernelExceptionMessageConstant.CANNOT_CONVERT_PDF_ARRAY_TO_RECTANGLE, e, this);
             }
         }
 
         /// <summary>Returns this array as an array of floats.</summary>
         /// <remarks>Returns this array as an array of floats. Will throw a PdfException when it encounters an issue.</remarks>
         /// <returns>this array as an array of floats</returns>
-        /// <exception cref="iText.Kernel.PdfException">if one of the values isn't a number</exception>
         public virtual float[] ToFloatArray() {
             try {
                 float[] rslt = new float[Size()];
@@ -502,7 +497,7 @@ namespace iText.Kernel.Pdf {
                 return rslt;
             }
             catch (Exception e) {
-                throw new PdfException(PdfException.CannotConvertPdfArrayToFloatArray, e, this);
+                throw new PdfException(KernelExceptionMessageConstant.CANNOT_CONVERT_PDF_ARRAY_TO_FLOAT_ARRAY, e, this);
             }
         }
 
@@ -510,7 +505,6 @@ namespace iText.Kernel.Pdf {
         /// <remarks>Returns this array as an array of doubles. Will throw a PdfException when it encounters an issue.
         ///     </remarks>
         /// <returns>this array as an array of doubles</returns>
-        /// <exception cref="iText.Kernel.PdfException">if one of the values isn't a number</exception>
         public virtual double[] ToDoubleArray() {
             try {
                 double[] rslt = new double[Size()];
@@ -520,14 +514,13 @@ namespace iText.Kernel.Pdf {
                 return rslt;
             }
             catch (Exception e) {
-                throw new PdfException(PdfException.CannotConvertPdfArrayToDoubleArray, e, this);
+                throw new PdfException(KernelExceptionMessageConstant.CANNOT_CONVERT_PDF_ARRAY_TO_DOUBLE_ARRAY, e, this);
             }
         }
 
         /// <summary>Returns this array as an array of longs.</summary>
         /// <remarks>Returns this array as an array of longs. Will throw a PdfException when it encounters an issue.</remarks>
         /// <returns>this array as an array of longs</returns>
-        /// <exception cref="iText.Kernel.PdfException">if one of the values isn't a number</exception>
         public virtual long[] ToLongArray() {
             try {
                 long[] rslt = new long[Size()];
@@ -537,14 +530,13 @@ namespace iText.Kernel.Pdf {
                 return rslt;
             }
             catch (Exception e) {
-                throw new PdfException(PdfException.CannotConvertPdfArrayToLongArray, e, this);
+                throw new PdfException(KernelExceptionMessageConstant.CANNOT_CONVERT_PDF_ARRAY_TO_LONG_ARRAY, e, this);
             }
         }
 
         /// <summary>Returns this array as an array of ints.</summary>
         /// <remarks>Returns this array as an array of ints. Will throw a PdfException when it encounters an issue.</remarks>
         /// <returns>this array as an array of ints</returns>
-        /// <exception cref="iText.Kernel.PdfException">if one of the values isn't a number</exception>
         public virtual int[] ToIntArray() {
             try {
                 int[] rslt = new int[Size()];
@@ -554,7 +546,7 @@ namespace iText.Kernel.Pdf {
                 return rslt;
             }
             catch (Exception e) {
-                throw new PdfException(PdfException.CannotConvertPdfArrayToIntArray, e, this);
+                throw new PdfException(KernelExceptionMessageConstant.CANNOT_CONVERT_PDF_ARRAY_TO_INT_ARRAY, e, this);
             }
         }
 
@@ -562,14 +554,14 @@ namespace iText.Kernel.Pdf {
         /// <remarks>Returns this array as an array of booleans. Will throw a PdfException when it encounters an issue.
         ///     </remarks>
         /// <returns>this array as an array of booleans</returns>
-        /// <exception cref="iText.Kernel.PdfException">if one of the values isn't a boolean</exception>
         public virtual bool[] ToBooleanArray() {
             bool[] rslt = new bool[Size()];
             PdfBoolean tmp;
             for (int k = 0; k < rslt.Length; ++k) {
                 tmp = GetAsBoolean(k);
                 if (tmp == null) {
-                    throw new PdfException(PdfException.CannotConvertPdfArrayToBooleanArray, this);
+                    throw new PdfException(KernelExceptionMessageConstant.CANNOT_CONVERT_PDF_ARRAY_TO_AN_ARRAY_OF_BOOLEANS, this
+                        );
                 }
                 rslt[k] = tmp.GetValue();
             }
@@ -580,11 +572,13 @@ namespace iText.Kernel.Pdf {
             return new iText.Kernel.Pdf.PdfArray();
         }
 
-        protected internal override void CopyContent(PdfObject from, PdfDocument document) {
-            base.CopyContent(from, document);
+        protected internal override void CopyContent(PdfObject from, PdfDocument document, ICopyFilter copyFilter) {
+            base.CopyContent(from, document, copyFilter);
             iText.Kernel.Pdf.PdfArray array = (iText.Kernel.Pdf.PdfArray)from;
             foreach (PdfObject entry in array.list) {
-                Add(entry.ProcessCopying(document, false));
+                if (copyFilter.ShouldProcess(this, null, entry)) {
+                    Add(entry.ProcessCopying(document, false, copyFilter));
+                }
             }
         }
 
@@ -593,6 +587,7 @@ namespace iText.Kernel.Pdf {
             list = null;
         }
 
+        /// <summary><inheritDoc/></summary>
         IEnumerator IEnumerable.GetEnumerator() {
             return GetEnumerator();
         }

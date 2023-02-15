@@ -1,22 +1,21 @@
 %PDF-1.7
 %‚„œ”
 5 0 obj
-<</Length 27>>stream
+<</Length 12>>stream
 q
-1 0 0 1 0 0 cm
 /Fm1 Do
 Q
 
 endstream
 endobj
 4 0 obj
-<</Contents 5 0 R/MediaBox[0 0 595 842]/Parent 2 0 R/Resources<</XObject<</Fm1 6 0 R>>>>/TrimBox[0 0 595 842]/Type/Page>>
+<</Contents 5 0 R/MediaBox[0 0 1190 842]/Parent 2 0 R/Resources<</XObject<</Fm1 6 0 R>>>>/TrimBox[0 0 1190 842]/Type/Page>>
 endobj
 1 0 obj
 <</Pages 2 0 R/Type/Catalog>>
 endobj
 3 0 obj
-<</CreationDate(D:20190705115957+03'00')/ModDate(D:20190705115957+03'00')/Producer(iTextÆ 7.1.7-SNAPSHOT ©2000-2019 iText Group NV \(AGPL-version\))>>
+<</CreationDate(D:20211018114925+03'00')/ModDate(D:20211018114925+03'00')/Producer(iTextÆ Core 7.2.1-SNAPSHOT \(AGPL version\) ©2000-2021 iText Group NV)>>
 endobj
 2 0 obj
 <</Count 1/Kids[4 0 R]/Type/Pages>>
@@ -34,7 +33,10 @@ Q
 endstream
 endobj
 7 0 obj
-<</BBox[0 0 150 150]/Length 124/Resources<</XObject<</Fm1 8 0 R/Fm2 9 0 R/Fm3 10 0 R/Fm4 11 0 R>>>>/Subtype/Form/Type/XObject>>stream
+<</BBox[0 0 150 150]/Length 143/Resources<</XObject<</Fm1 8 0 R/Fm2 9 0 R/Fm3 10 0 R/Fm4 11 0 R>>>>/Subtype/Form/Type/XObject>>stream
+0 0 150 150 re
+W
+n
 q
 q
 1 0 0 1 0 0 cm
@@ -63,11 +65,10 @@ Q
 endstream
 endobj
 8 0 obj
-<</BBox[0 0 150 150]/Length 693/Resources<<>>/Subtype/Form/Type/XObject>>stream
+<</BBox[0 0 150 150]/Length 678/Resources<<>>/Subtype/Form/Type/XObject>>stream
 0 0 150 150 re
 W
 n
-1 0 0 1 0 0 cm
 q
 0 0 0 rg
 q
@@ -128,11 +129,10 @@ Q
 endstream
 endobj
 9 0 obj
-<</BBox[0 0 150 150]/Length 709/Resources<<>>/Subtype/Form/Type/XObject>>stream
+<</BBox[0 0 150 150]/Length 694/Resources<<>>/Subtype/Form/Type/XObject>>stream
 0 0 150 150 re
 W
 n
-1 0 0 1 0 0 cm
 q
 0 0 0 rg
 1 0 0 1 0 75 cm
@@ -194,11 +194,10 @@ Q
 endstream
 endobj
 10 0 obj
-<</BBox[0 0 150 150]/Length 709/Resources<<>>/Subtype/Form/Type/XObject>>stream
+<</BBox[0 0 150 150]/Length 694/Resources<<>>/Subtype/Form/Type/XObject>>stream
 0 0 150 150 re
 W
 n
-1 0 0 1 0 0 cm
 q
 0 0 0 rg
 1 0 0 1 75 0 cm
@@ -260,11 +259,10 @@ Q
 endstream
 endobj
 11 0 obj
-<</BBox[0 0 150 150]/Length 710/Resources<<>>/Subtype/Form/Type/XObject>>stream
+<</BBox[0 0 150 150]/Length 695/Resources<<>>/Subtype/Form/Type/XObject>>stream
 0 0 150 150 re
 W
 n
-1 0 0 1 0 0 cm
 q
 0 0 0 rg
 1 0 0 1 75 75 cm
@@ -328,20 +326,20 @@ endobj
 xref
 0 12
 0000000000 65535 f 
-0000000226 00000 n 
-0000000437 00000 n 
-0000000271 00000 n 
-0000000089 00000 n 
+0000000213 00000 n 
+0000000429 00000 n 
+0000000258 00000 n 
+0000000074 00000 n 
 0000000015 00000 n 
-0000000488 00000 n 
-0000000686 00000 n 
-0000000970 00000 n 
-0000001769 00000 n 
-0000002584 00000 n 
-0000003400 00000 n 
+0000000480 00000 n 
+0000000678 00000 n 
+0000000981 00000 n 
+0000001765 00000 n 
+0000002565 00000 n 
+0000003366 00000 n 
 trailer
-<</ID [<2ae1d174f117aa74e8fd3acf07f46738><2ae1d174f117aa74e8fd3acf07f46738>]/Info 3 0 R/Root 1 0 R/Size 12>>
-%iText-7.1.7-SNAPSHOT
+<</ID [<ffab11989b9509ff6e8060412d632c7e><ffab11989b9509ff6e8060412d632c7e>]/Info 3 0 R/Root 1 0 R/Size 12>>
+%iText-Core-7.2.1-SNAPSHOT
 startxref
-4217
+4168
 %%EOF

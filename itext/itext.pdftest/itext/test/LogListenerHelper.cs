@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-    Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -76,13 +76,16 @@ namespace iText.Test {
         *  "Hello fox1 , World  fox2 !" with "Hello {0} , World {1} !"
         * */
 
-        public static bool EqualsMessageByTemplate(string message, string template) {
-            if (template.Contains("{") && template.Contains("}")) {
-                String templateWithoutParameters = Regex.Replace(template.Replace("''", "'"), "\\{[0-9]+?\\}", "(.)*?");
+        public static bool EqualsMessageByTemplate(string message, string template)
+        {
+            if (template.Contains("{") && template.Contains("}"))
+            {
+                String templateWithoutParameters = Regex.Replace(Regex.Escape(template).Replace("''", "'"), "\\\\\\{[0-9]+?\\}", "(.)*?");
+                templateWithoutParameters = "^" + templateWithoutParameters + "$";
                 return Regex.IsMatch(message, templateWithoutParameters, RegexOptions.Singleline);
-            } else {
-                return message.Contains(template);
             }
+
+            return message.Contains(template);
         }
     }
 }

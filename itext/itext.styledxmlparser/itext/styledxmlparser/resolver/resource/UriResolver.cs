@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,6 +43,7 @@ address: sales@itextpdf.com
 using System;
 using System.IO;
 using System.Text.RegularExpressions;
+using iText.Commons.Utils;
 using iText.IO.Util;
 
 namespace iText.StyledXmlParser.Resolver.Resource
@@ -126,10 +127,6 @@ namespace iText.StyledXmlParser.Resolver.Resource
         /// <param name="base">the base URI</param>
         private void ResolveBaseUrlOrPath(String @base)
         {
-            //TODO: RND-1019
-            // this method produces
-            // a behavior that is not consistant in java vs .Net
-            //when resolving some characters ex. scaped backwards lash
             @base = @base.Trim();
             @base = UriEncodeUtil.Encode(@base);
             baseUrl = BaseUriAsUrl(@base);
@@ -139,7 +136,6 @@ namespace iText.StyledXmlParser.Resolver.Resource
             }
             if (baseUrl == null)
             {
-                // TODO Html2PdfException?
                 throw new ArgumentException(MessageFormatUtil.Format("Invalid base URI: {0}", @base));
             }
         }

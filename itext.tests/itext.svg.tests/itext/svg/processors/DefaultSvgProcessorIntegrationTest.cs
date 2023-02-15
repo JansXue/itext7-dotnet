@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -47,45 +47,44 @@ using iText.StyledXmlParser.Node;
 using iText.StyledXmlParser.Node.Impl.Jsoup;
 using iText.Svg.Processors.Impl;
 using iText.Svg.Renderers;
-using iText.Svg.Renderers.Impl;
 
 namespace iText.Svg.Processors {
-    public class DefaultSvgProcessorIntegrationTest {
+    [NUnit.Framework.Category("IntegrationTest")]
+    public class DefaultSvgProcessorIntegrationTest : SvgIntegrationTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/svg/processors/impl/DefaultSvgProcessorIntegrationTest/";
 
         public static readonly String destinationFolder = NUnit.Framework.TestContext.CurrentContext.TestDirectory
              + "/test/itext/svg/processors/impl/DefaultSvgProcessorIntegrationTest/";
 
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void DefaultBehaviourTest() {
             String svgFile = sourceFolder + "RedCircle.svg";
             Stream svg = new FileStream(svgFile, FileMode.Open, FileAccess.Read);
             JsoupXmlParser xmlParser = new JsoupXmlParser();
             IDocumentNode root = xmlParser.Parse(svg, null);
-            IBranchSvgNodeRenderer actual = (IBranchSvgNodeRenderer)new DefaultSvgProcessor().Process(root).GetRootRenderer
+            IBranchSvgNodeRenderer actual = (IBranchSvgNodeRenderer)new DefaultSvgProcessor().Process(root, null).GetRootRenderer
                 ();
-            IBranchSvgNodeRenderer expected = new SvgTagSvgNodeRenderer();
-            ISvgNodeRenderer expectedEllipse = new EllipseSvgNodeRenderer();
-            IDictionary<String, String> expectedEllipseAttributes = new Dictionary<String, String>();
-            expectedEllipse.SetAttributesAndStyles(expectedEllipseAttributes);
-            expected.AddChild(expectedEllipse);
-            //1 child
-            NUnit.Framework.Assert.AreEqual(expected.GetChildren().Count, actual.GetChildren().Count);
+            //Attribute comparison from the known RedCircle.svg
+            IDictionary<String, String> attrs = actual.GetChildren()[0].GetAttributeMapCopy();
+            NUnit.Framework.Assert.AreEqual(12, attrs.Keys.Count, "Number of parsed attributes is wrong");
+            NUnit.Framework.Assert.AreEqual("1", attrs.Get("stroke-opacity"), "The stroke-opacity attribute doesn't correspond it's value"
+                );
+            NUnit.Framework.Assert.AreEqual("1.76388889", attrs.Get("stroke-width"), "The stroke-width attribute doesn't correspond it's value"
+                );
+            NUnit.Framework.Assert.AreEqual("path3699", attrs.Get("id"), "The id attribute doesn't correspond it's value"
+                );
+            NUnit.Framework.Assert.AreEqual("none", attrs.Get("stroke-dasharray"), "The stroke-dasharray attribute doesn't correspond it's value"
+                );
         }
 
-        //Attribute comparison
-        //TODO(RND-868) : Replace above check with the following
-        //Assert.assertEquals(expected,actual);
-        /// <exception cref="System.IO.IOException"/>
         [NUnit.Framework.Test]
         public virtual void NamedObjectRectangleTest() {
             String svgFile = sourceFolder + "namedObjectRectangleTest.svg";
             Stream svg = new FileStream(svgFile, FileMode.Open, FileAccess.Read);
             JsoupXmlParser xmlParser = new JsoupXmlParser();
             IDocumentNode root = xmlParser.Parse(svg, null);
-            ISvgProcessorResult processorResult = new DefaultSvgProcessor().Process(root);
+            ISvgProcessorResult processorResult = new DefaultSvgProcessor().Process(root, null);
             IDictionary<String, ISvgNodeRenderer> actual = processorResult.GetNamedObjects();
             NUnit.Framework.Assert.AreEqual(1, actual.Count);
             NUnit.Framework.Assert.IsTrue(actual.ContainsKey("MyRect"));

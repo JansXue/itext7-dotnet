@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,7 +45,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using iText.IO.Source;
-using iText.Kernel;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Filters;
 
@@ -80,7 +80,6 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Util {
         private static readonly IDictionary<PdfName, PdfName> inlineImageFilterAbbreviationMap;
 
         static InlineImageParsingUtils() {
-            // static initializer
             // Map between key abbreviations allowed in dictionary of inline images and their
             // equivalent image dictionary keys
             inlineImageEntryAbbreviationMap = new Dictionary<PdfName, PdfName>();
@@ -130,15 +129,49 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Util {
         /// <param name="ps">the content parser to use for reading the image.</param>
         /// <param name="colorSpaceDic">a color space dictionary</param>
         /// <returns>the parsed image</returns>
-        /// <exception cref="System.IO.IOException">if anything goes wring with the parsing</exception>
-        /// <exception cref="InlineImageParseException">if parsing of the inline image failed due to issues specific to inline image processing
-        ///     </exception>
         public static PdfStream Parse(PdfCanvasParser ps, PdfDictionary colorSpaceDic) {
             PdfDictionary inlineImageDict = ParseDictionary(ps);
             byte[] samples = ParseSamples(inlineImageDict, colorSpaceDic, ps);
             PdfStream inlineImageAsStreamObject = new PdfStream(samples);
             inlineImageAsStreamObject.PutAll(inlineImageDict);
             return inlineImageAsStreamObject;
+        }
+
+        /// <param name="colorSpaceName">the name of the color space. If null, a bi-tonal (black and white) color space is assumed.
+        ///     </param>
+        /// <returns>the components per pixel for the specified color space</returns>
+        internal static int GetComponentsPerPixel(PdfName colorSpaceName, PdfDictionary colorSpaceDic) {
+            if (colorSpaceName == null) {
+                return 1;
+            }
+            if (colorSpaceName.Equals(PdfName.DeviceGray)) {
+                return 1;
+            }
+            if (colorSpaceName.Equals(PdfName.DeviceRGB)) {
+                return 3;
+            }
+            if (colorSpaceName.Equals(PdfName.DeviceCMYK)) {
+                return 4;
+            }
+            if (colorSpaceDic != null) {
+                PdfArray colorSpace = colorSpaceDic.GetAsArray(colorSpaceName);
+                if (colorSpace == null) {
+                    PdfName tempName = colorSpaceDic.GetAsName(colorSpaceName);
+                    if (tempName != null) {
+                        return GetComponentsPerPixel(tempName, colorSpaceDic);
+                    }
+                }
+                else {
+                    if (PdfName.Indexed.Equals(colorSpace.GetAsName(0))) {
+                        return 1;
+                    }
+                    if (PdfName.ICCBased.Equals(colorSpace.GetAsName(0))) {
+                        return colorSpace.GetAsStream(1).GetAsNumber(PdfName.N).IntValue();
+                    }
+                }
+            }
+            throw new InlineImageParsingUtils.InlineImageParseException(KernelExceptionMessageConstant.UNEXPECTED_COLOR_SPACE
+                ).SetMessageParams(colorSpaceName);
         }
 
         /// <summary>Parses the next inline image dictionary from the parser.</summary>
@@ -149,7 +182,6 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Util {
         /// <param name="ps">the parser to extract the embedded image information from</param>
         /// <returns>the dictionary for the inline image, with any abbreviations converted to regular image dictionary keys and values
         ///     </returns>
-        /// <exception cref="System.IO.IOException">if the parse fails</exception>
         private static PdfDictionary ParseDictionary(PdfCanvasParser ps) {
             // by the time we get to here, we have already parsed the BI operator
             PdfDictionary dict = new PdfDictionary();
@@ -163,7 +195,7 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Util {
             }
             int ch = ps.GetTokeniser().Read();
             if (!PdfTokenizer.IsWhitespace(ch)) {
-                throw new InlineImageParsingUtils.InlineImageParseException(PdfException.UnexpectedCharacter1FoundAfterIDInInlineImage
+                throw new InlineImageParsingUtils.InlineImageParseException(KernelExceptionMessageConstant.UNEXPECTED_CHARACTER_FOUND_AFTER_ID_IN_INLINE_IMAGE
                     ).SetMessageParams(ch);
             }
             return dict;
@@ -205,40 +237,6 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Util {
             return value;
         }
 
-        /// <param name="colorSpaceName">the name of the color space. If null, a bi-tonal (black and white) color space is assumed.
-        ///     </param>
-        /// <returns>the components per pixel for the specified color space</returns>
-        private static int GetComponentsPerPixel(PdfName colorSpaceName, PdfDictionary colorSpaceDic) {
-            if (colorSpaceName == null) {
-                return 1;
-            }
-            if (colorSpaceName.Equals(PdfName.DeviceGray)) {
-                return 1;
-            }
-            if (colorSpaceName.Equals(PdfName.DeviceRGB)) {
-                return 3;
-            }
-            if (colorSpaceName.Equals(PdfName.DeviceCMYK)) {
-                return 4;
-            }
-            if (colorSpaceDic != null) {
-                PdfArray colorSpace = colorSpaceDic.GetAsArray(colorSpaceName);
-                if (colorSpace != null) {
-                    if (PdfName.Indexed.Equals(colorSpace.GetAsName(0))) {
-                        return 1;
-                    }
-                }
-                else {
-                    PdfName tempName = colorSpaceDic.GetAsName(colorSpaceName);
-                    if (tempName != null) {
-                        return GetComponentsPerPixel(tempName, colorSpaceDic);
-                    }
-                }
-            }
-            throw new InlineImageParsingUtils.InlineImageParseException(PdfException.UnexpectedColorSpace1).SetMessageParams
-                (colorSpaceName);
-        }
-
         /// <summary>Computes the number of unfiltered bytes that each row of the image will contain.</summary>
         /// <remarks>
         /// Computes the number of unfiltered bytes that each row of the image will contain.
@@ -266,7 +264,6 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Util {
         /// <param name="imageDictionary">the dictionary of the inline image</param>
         /// <param name="ps">the content parser</param>
         /// <returns>the samples of the image</returns>
-        /// <exception cref="System.IO.IOException">if anything bad happens during parsing</exception>
         private static byte[] ParseUnfilteredSamples(PdfDictionary imageDictionary, PdfDictionary colorSpaceDic, PdfCanvasParser
              ps) {
             // special case:  when no filter is specified, we just read the number of bits
@@ -278,8 +275,8 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Util {
             int bytesToRead = ComputeBytesPerRow(imageDictionary, colorSpaceDic) * h.IntValue();
             byte[] bytes = new byte[bytesToRead];
             PdfTokenizer tokeniser = ps.GetTokeniser();
-            int shouldBeWhiteSpace = tokeniser.Read();
             // skip next character (which better be a whitespace character - I suppose we could check for this)
+            int shouldBeWhiteSpace = tokeniser.Read();
             // from the PDF spec:  Unless the image uses ASCIIHexDecode or ASCII85Decode as one of its filters, the ID operator shall be followed by a single white-space character, and the next character shall be interpreted as the first byte of image data.
             // unfortunately, we've seen some PDFs where there is no space following the ID, so we have to capture this case and handle it
             int startIndex = 0;
@@ -291,18 +288,18 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Util {
             for (int i = startIndex; i < bytesToRead; i++) {
                 int ch = tokeniser.Read();
                 if (ch == -1) {
-                    throw new InlineImageParsingUtils.InlineImageParseException(PdfException.EndOfContentStreamReachedBeforeEndOfImageData
+                    throw new InlineImageParsingUtils.InlineImageParseException(KernelExceptionMessageConstant.END_OF_CONTENT_STREAM_REACHED_BEFORE_END_OF_IMAGE_DATA
                         );
                 }
                 bytes[i] = (byte)ch;
             }
             PdfObject ei = ps.ReadObject();
-            if (!ei.ToString().Equals("EI")) {
+            if (!"EI".Equals(ei.ToString())) {
                 // Some PDF producers seem to add another non-whitespace character after the image data.
                 // Let's try to handle that case here.
                 PdfObject ei2 = ps.ReadObject();
-                if (!ei2.ToString().Equals("EI")) {
-                    throw new InlineImageParsingUtils.InlineImageParseException(PdfException.OperatorEINotFoundAfterEndOfImageData
+                if (!"EI".Equals(ei2.ToString())) {
+                    throw new InlineImageParsingUtils.InlineImageParseException(KernelExceptionMessageConstant.OPERATOR_EI_NOT_FOUND_AFTER_END_OF_IMAGE_DATA
                         );
                 }
             }
@@ -322,7 +319,6 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Util {
         /// <param name="imageDictionary">the dictionary of the inline image</param>
         /// <param name="ps">the content parser</param>
         /// <returns>the samples of the image</returns>
-        /// <exception cref="System.IO.IOException">if anything bad happens during parsing</exception>
         private static byte[] ParseSamples(PdfDictionary imageDictionary, PdfDictionary colorSpaceDic, PdfCanvasParser
              ps) {
             // by the time we get to here, we have already parsed the ID operator
@@ -338,31 +334,32 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Util {
             PdfTokenizer tokeniser = ps.GetTokeniser();
             while ((ch = tokeniser.Read()) != -1) {
                 if (ch == 'E') {
-                    baos.Write(EI, 0, found);
                     // probably some bytes were preserved so write them
+                    baos.Write(EI, 0, found);
+                    // just preserve 'E' and do not write it immediately
                     found = 1;
                 }
                 else {
-                    // just preserve 'E' and do not write it immediately
                     if (found == 1 && ch == 'I') {
+                        // just preserve 'EI' and do not write it immediately
                         found = 2;
                     }
                     else {
-                        // just preserve 'EI' and do not write it immediately
                         if (found == 2 && PdfTokenizer.IsWhitespace(ch)) {
                             byte[] tmp = baos.ToArray();
                             if (InlineImageStreamBytesAreComplete(tmp, imageDictionary)) {
                                 return tmp;
                             }
                         }
-                        baos.Write(EI, 0, found);
                         // probably some bytes were preserved so write them
+                        baos.Write(EI, 0, found);
                         baos.Write(ch);
                         found = 0;
                     }
                 }
             }
-            throw new InlineImageParsingUtils.InlineImageParseException(PdfException.CannotFindImageDataOrEI);
+            throw new InlineImageParsingUtils.InlineImageParseException(KernelExceptionMessageConstant.CANNOT_FIND_IMAGE_DATA_OR_EI
+                );
         }
 
         private static bool ImageColorSpaceIsKnown(PdfDictionary imageDictionary, PdfDictionary colorSpaceDic) {
@@ -377,10 +374,10 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Util {
         /// <summary>This method acts like a check that bytes that were parsed are really all image bytes.</summary>
         /// <remarks>
         /// This method acts like a check that bytes that were parsed are really all image bytes. If it's true,
-        /// then decoding will succeed, but if not all image bytes were read and "<ws>EI<ws>" bytes were just a part of the image,
+        /// then decoding will succeed, but if not all image bytes were read and "&lt;ws&gt;EI&lt;ws&gt;" bytes were just a part of the image,
         /// then decoding should fail.
         /// Not the best solution, but probably there is no better and more reliable way to check this.
-        /// <p>
+        /// <para />
         /// Drawbacks: slow; images with DCTDecode, JBIG2Decode and JPXDecode filters couldn't be checked as iText doesn't
         /// support these filters; what if decoding will succeed eventhough it's not all bytes?; also I'm not sure that all
         /// filters throw an exception in case data is corrupted (For example, FlateDecodeFilter seems not to throw an exception).
@@ -389,10 +386,7 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Util {
             try {
                 IDictionary<PdfName, IFilterHandler> filters = new Dictionary<PdfName, IFilterHandler>(FilterHandlers.GetDefaultFilterHandlers
                     ());
-                DoNothingFilter stubfilter = new DoNothingFilter();
-                filters.Put(PdfName.DCTDecode, stubfilter);
-                filters.Put(PdfName.JBIG2Decode, stubfilter);
-                filters.Put(PdfName.JPXDecode, stubfilter);
+                filters.Put(PdfName.JBIG2Decode, new DoNothingFilter());
                 filters.Put(PdfName.FlateDecode, new FlateDecodeStrictFilter());
                 PdfReader.DecodeBytes(samples, imageDictionary, filters);
             }

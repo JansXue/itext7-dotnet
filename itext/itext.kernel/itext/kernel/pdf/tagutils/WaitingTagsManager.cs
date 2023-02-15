@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -46,20 +46,15 @@ using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Tagging;
 
 namespace iText.Kernel.Pdf.Tagutils {
-    /// <summary>
-    /// <p>
-    /// This class is used to manage waiting tags state.
-    /// </summary>
+    /// <summary>This class is used to manage waiting tags state.</summary>
     /// <remarks>
-    /// <p>
     /// This class is used to manage waiting tags state.
     /// Any tag in the structure tree could be marked as "waiting". This state indicates that
     /// tag is not yet finished and therefore should not be flushed or removed if page tags are
     /// flushed or removed or if parent tags are flushed.
-    /// </p>
-    /// <p>
+    /// <para />
     /// Waiting state of tags is defined by the association with arbitrary objects instances.
-    /// </p>
+    /// <para />
     /// Waiting state could also be perceived as a temporal association of the object to some particular tag.
     /// </remarks>
     public class WaitingTagsManager {
@@ -76,13 +71,19 @@ namespace iText.Kernel.Pdf.Tagutils {
         /// Assigns waiting state to the tag at which given
         /// <see cref="TagTreePointer"/>
         /// points, associating it with the given
+        /// <see cref="System.Object"/>.
+        /// </summary>
+        /// <remarks>
+        /// Assigns waiting state to the tag at which given
+        /// <see cref="TagTreePointer"/>
+        /// points, associating it with the given
         /// <see cref="System.Object"/>
         /// . If current tag of the given
         /// <see cref="TagTreePointer"/>
         /// is already waiting, then after this method call
         /// it's associated object will change to the one passed as the argument and the old one will not longer be
         /// an associated object.
-        /// </summary>
+        /// </remarks>
         /// <param name="pointerToTag">
         /// a
         /// <see cref="TagTreePointer"/>
@@ -103,8 +104,7 @@ namespace iText.Kernel.Pdf.Tagutils {
 
         /// <summary>
         /// Checks if there is waiting tag which state was assigned using given
-        /// <see cref="System.Object"/>
-        /// .
+        /// <see cref="System.Object"/>.
         /// </summary>
         /// <param name="obj">
         /// an
@@ -123,10 +123,15 @@ namespace iText.Kernel.Pdf.Tagutils {
         /// Moves given
         /// <see cref="TagTreePointer"/>
         /// to the waiting tag which is associated with the given object.
+        /// </summary>
+        /// <remarks>
+        /// Moves given
+        /// <see cref="TagTreePointer"/>
+        /// to the waiting tag which is associated with the given object.
         /// If the passed object is not associated with any waiting tag,
         /// <see cref="TagTreePointer"/>
         /// position won't change.
-        /// </summary>
+        /// </remarks>
         /// <param name="tagPointer">
         /// a
         /// <see cref="TagTreePointer"/>
@@ -169,9 +174,10 @@ namespace iText.Kernel.Pdf.Tagutils {
         /// <summary>Removes waiting state of the tag which is associated with the given object.</summary>
         /// <remarks>
         /// Removes waiting state of the tag which is associated with the given object.
-        /// <p>NOTE: if parent of the waiting tag is already flushed, the tag and it's children
+        /// <para />
+        /// NOTE: if parent of the waiting tag is already flushed, the tag and it's children
         /// (unless they are waiting tags on their own) will be also immediately flushed right after
-        /// the waiting state removal.</p>
+        /// the waiting state removal.
         /// </remarks>
         /// <param name="associatedObject">an object which association with the waiting tag is to be removed.</param>
         /// <returns>true if object was actually associated with some tag and it's association was removed.</returns>
@@ -187,8 +193,9 @@ namespace iText.Kernel.Pdf.Tagutils {
         /// <summary>Removes waiting state of all waiting tags by removing association with objects.</summary>
         /// <remarks>
         /// Removes waiting state of all waiting tags by removing association with objects.
-        /// <p>NOTE: if parent of the waiting tag is already flushed, the tag and it's children
-        /// will be also immediately flushed right after the waiting state removal.</p>
+        /// <para />
+        /// NOTE: if parent of the waiting tag is already flushed, the tag and it's children
+        /// will be also immediately flushed right after the waiting state removal.
         /// </remarks>
         public virtual void RemoveAllWaitingStates() {
             foreach (PdfStructElem structElem in associatedObjToWaitingTag.Values) {

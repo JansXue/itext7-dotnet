@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,13 +41,14 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
+using iText.Commons.Utils;
 using iText.Forms.Fields;
-using iText.IO.Util;
 using iText.Kernel.Pdf;
 using iText.Kernel.Utils;
 using iText.Test;
 
 namespace iText.Forms {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class FlatteningRotatedTest : ExtendedITextTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/forms/FlatteningRotatedTest/";
@@ -60,8 +61,6 @@ namespace iText.Forms {
             CreateOrClearDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void FormFlatteningTest_DefaultAppearanceGeneration_Rot() {
             String srcFilePatternPattern = "FormFlatteningDefaultAppearance_{0}_";
@@ -76,7 +75,7 @@ namespace iText.Forms {
                     String cmp = sourceFolder + "cmp_" + srcFilePattern + i + ".pdf";
                     PdfDocument doc = new PdfDocument(new PdfReader(src), new PdfWriter(dest));
                     PdfAcroForm form = PdfAcroForm.GetAcroForm(doc, true);
-                    foreach (PdfFormField field in form.GetFormFields().Values) {
+                    foreach (PdfFormField field in form.GetAllFormFields().Values) {
                         field.SetValue("Test");
                     }
                     form.FlattenFields();

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,14 +43,14 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
+using iText.Commons.Utils;
 using iText.IO.Font;
-using iText.IO.Util;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Tagging;
 
 namespace iText.Kernel.Pdf.Tagutils {
     internal class BackedAccessibilityProperties : AccessibilityProperties {
-        private TagTreePointer pointerToBackingElem;
+        private readonly TagTreePointer pointerToBackingElem;
 
         internal BackedAccessibilityProperties(TagTreePointer pointerToBackingElem) {
             this.pointerToBackingElem = new TagTreePointer(pointerToBackingElem);
@@ -182,6 +182,19 @@ namespace iText.Kernel.Pdf.Tagutils {
                 refsList.Add(new TagTreePointer(@ref, pointerToBackingElem.GetDocument()));
             }
             return JavaCollectionsUtil.UnmodifiableList(refsList);
+        }
+
+        /// <summary><inheritDoc/></summary>
+        public override byte[] GetStructureElementId() {
+            PdfString value = this.GetBackingElem().GetStructureElementId();
+            return value == null ? null : value.GetValueBytes();
+        }
+
+        /// <summary><inheritDoc/></summary>
+        public override AccessibilityProperties SetStructureElementId(byte[] id) {
+            PdfString value = id == null ? null : new PdfString(id).SetHexWriting(true);
+            this.GetBackingElem().SetStructureElementId(value);
+            return this;
         }
 
         public override AccessibilityProperties ClearRefs() {

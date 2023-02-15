@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,24 +45,25 @@ using iText.IO.Util;
 using iText.Kernel.Geom;
 using iText.StyledXmlParser.Css.Util;
 using iText.Svg.Exceptions;
+using iText.Test;
 
 namespace iText.Svg.Utils {
-    public class RotateTransformationTest {
+    [NUnit.Framework.Category("UnitTest")]
+    public class RotateTransformationTest : ExtendedITextTest {
         [NUnit.Framework.Test]
         public virtual void NormalRotateTest() {
-            AffineTransform expected = AffineTransform.GetRotateInstance(MathUtil.ToRadians(10), CssUtils.ParseAbsoluteLength
-                ("5"), CssUtils.ParseAbsoluteLength("10"));
+            AffineTransform expected = AffineTransform.GetRotateInstance(MathUtil.ToRadians(10), CssDimensionParsingUtils
+                .ParseAbsoluteLength("5"), CssDimensionParsingUtils.ParseAbsoluteLength("10"));
             AffineTransform actual = TransformUtils.ParseTransform("rotate(10, 5, 10)");
             NUnit.Framework.Assert.AreEqual(expected, actual);
         }
 
         [NUnit.Framework.Test]
         public virtual void NoRotateValuesTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                TransformUtils.ParseTransform("rotate()");
-            }
-            , NUnit.Framework.Throws.InstanceOf<SvgProcessingException>().With.Message.EqualTo(SvgLogMessageConstant.TRANSFORM_INCORRECT_NUMBER_OF_VALUES))
-;
+            Exception e = NUnit.Framework.Assert.Catch(typeof(SvgProcessingException), () => TransformUtils.ParseTransform
+                ("rotate()"));
+            NUnit.Framework.Assert.AreEqual(SvgExceptionMessageConstant.TRANSFORM_INCORRECT_NUMBER_OF_VALUES, e.Message
+                );
         }
 
         [NUnit.Framework.Test]
@@ -74,34 +75,32 @@ namespace iText.Svg.Utils {
 
         [NUnit.Framework.Test]
         public virtual void TwoRotateValuesTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                TransformUtils.ParseTransform("rotate(23,58)");
-            }
-            , NUnit.Framework.Throws.InstanceOf<SvgProcessingException>().With.Message.EqualTo(SvgLogMessageConstant.TRANSFORM_INCORRECT_NUMBER_OF_VALUES))
-;
+            Exception e = NUnit.Framework.Assert.Catch(typeof(SvgProcessingException), () => TransformUtils.ParseTransform
+                ("rotate(23,58)"));
+            NUnit.Framework.Assert.AreEqual(SvgExceptionMessageConstant.TRANSFORM_INCORRECT_NUMBER_OF_VALUES, e.Message
+                );
         }
 
         [NUnit.Framework.Test]
         public virtual void ThreeRotateValuesTest() {
-            AffineTransform expected = AffineTransform.GetRotateInstance(MathUtil.ToRadians(23), CssUtils.ParseAbsoluteLength
-                ("58"), CssUtils.ParseAbsoluteLength("57"));
+            AffineTransform expected = AffineTransform.GetRotateInstance(MathUtil.ToRadians(23), CssDimensionParsingUtils
+                .ParseAbsoluteLength("58"), CssDimensionParsingUtils.ParseAbsoluteLength("57"));
             AffineTransform actual = TransformUtils.ParseTransform("rotate(23, 58, 57)");
             NUnit.Framework.Assert.AreEqual(expected, actual);
         }
 
         [NUnit.Framework.Test]
         public virtual void TooManyRotateValuesTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                TransformUtils.ParseTransform("rotate(1 2 3 4)");
-            }
-            , NUnit.Framework.Throws.InstanceOf<SvgProcessingException>().With.Message.EqualTo(SvgLogMessageConstant.TRANSFORM_INCORRECT_NUMBER_OF_VALUES))
-;
+            Exception e = NUnit.Framework.Assert.Catch(typeof(SvgProcessingException), () => TransformUtils.ParseTransform
+                ("rotate(1 2 3 4)"));
+            NUnit.Framework.Assert.AreEqual(SvgExceptionMessageConstant.TRANSFORM_INCORRECT_NUMBER_OF_VALUES, e.Message
+                );
         }
 
         [NUnit.Framework.Test]
         public virtual void NegativeRotateValuesTest() {
-            AffineTransform expected = AffineTransform.GetRotateInstance(MathUtil.ToRadians(-23), CssUtils.ParseAbsoluteLength
-                ("-58"), CssUtils.ParseAbsoluteLength("-1"));
+            AffineTransform expected = AffineTransform.GetRotateInstance(MathUtil.ToRadians(-23), CssDimensionParsingUtils
+                .ParseAbsoluteLength("-58"), CssDimensionParsingUtils.ParseAbsoluteLength("-1"));
             AffineTransform actual = TransformUtils.ParseTransform("rotate(-23,-58,-1)");
             NUnit.Framework.Assert.AreEqual(expected, actual);
         }

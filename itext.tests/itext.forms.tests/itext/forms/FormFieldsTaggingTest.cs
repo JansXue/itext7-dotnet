@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -50,6 +50,7 @@ using iText.Kernel.Utils;
 using iText.Test;
 
 namespace iText.Forms {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class FormFieldsTaggingTest : ExtendedITextTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/forms/FormFieldsTaggingTest/";
@@ -63,10 +64,6 @@ namespace iText.Forms {
         }
 
         /// <summary>Form fields addition to the tagged document.</summary>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
         [NUnit.Framework.Test]
         public virtual void FormFieldTaggingTest01() {
             String outFileName = destinationFolder + "taggedPdfWithForms01.pdf";
@@ -81,10 +78,6 @@ namespace iText.Forms {
         }
 
         /// <summary>Form fields copying from the tagged document.</summary>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
         [NUnit.Framework.Test]
         public virtual void FormFieldTaggingTest02() {
             String outFileName = destinationFolder + "taggedPdfWithForms02.pdf";
@@ -93,7 +86,8 @@ namespace iText.Forms {
             pdfDoc.SetTagged();
             pdfDoc.InitializeOutlines();
             PdfAcroForm acroForm = PdfAcroForm.GetAcroForm(pdfDoc, true);
-            acroForm.AddField(PdfFormField.CreateCheckBox(pdfDoc, new Rectangle(36, 560, 20, 20), "TestCheck", "1"));
+            acroForm.AddField(new CheckBoxFormFieldBuilder(pdfDoc, "TestCheck").SetWidgetRectangle(new Rectangle(36, 560
+                , 20, 20)).CreateCheckBox().SetValue("1", true));
             PdfDocument docToCopyFrom = new PdfDocument(new PdfReader(sourceFolder + "cmp_taggedPdfWithForms07.pdf"));
             docToCopyFrom.CopyPagesTo(1, docToCopyFrom.GetNumberOfPages(), pdfDoc, new PdfPageFormCopier());
             pdfDoc.Close();
@@ -101,10 +95,6 @@ namespace iText.Forms {
         }
 
         /// <summary>Form fields flattening in the tagged document.</summary>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
         [NUnit.Framework.Test]
         public virtual void FormFieldTaggingTest03() {
             String outFileName = destinationFolder + "taggedPdfWithForms03.pdf";
@@ -118,10 +108,6 @@ namespace iText.Forms {
         }
 
         /// <summary>Removing fields from tagged document.</summary>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
         [NUnit.Framework.Test]
         public virtual void FormFieldTaggingTest04() {
             String outFileName = destinationFolder + "taggedPdfWithForms04.pdf";
@@ -136,10 +122,6 @@ namespace iText.Forms {
         }
 
         /// <summary>Form fields flattening in the tagged document (writer mode).</summary>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
         [NUnit.Framework.Test]
         public virtual void FormFieldTaggingTest05() {
             String outFileName = destinationFolder + "taggedPdfWithForms05.pdf";
@@ -154,10 +136,6 @@ namespace iText.Forms {
         }
 
         /// <summary>Removing fields from tagged document (writer mode).</summary>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
         [NUnit.Framework.Test]
         public virtual void FormFieldTaggingTest06() {
             String outFileName = destinationFolder + "taggedPdfWithForms06.pdf";
@@ -173,10 +151,6 @@ namespace iText.Forms {
         }
 
         /// <summary>Addition of the form field at the specific position in tag structure.</summary>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
         [NUnit.Framework.Test]
         public virtual void FormFieldTaggingTest07() {
             String outFileName = destinationFolder + "taggedPdfWithForms07.pdf";
@@ -187,8 +161,8 @@ namespace iText.Forms {
             // Original document is already tagged, so there is no need to mark it as tagged again
             //        pdfDoc.setTagged();
             PdfAcroForm acroForm = PdfAcroForm.GetAcroForm(pdfDoc, true);
-            PdfButtonFormField pushButton = PdfFormField.CreatePushButton(pdfDoc, new Rectangle(36, 650, 40, 20), "push"
-                , "Capcha");
+            PdfButtonFormField pushButton = new PushButtonFormFieldBuilder(pdfDoc, "push").SetWidgetRectangle(new Rectangle
+                (36, 650, 40, 20)).SetCaption("Capcha").CreatePushButton();
             TagTreePointer tagPointer = pdfDoc.GetTagStructureContext().GetAutoTaggingPointer();
             tagPointer.MoveToKid(StandardRoles.DIV);
             acroForm.AddField(pushButton);
@@ -199,22 +173,20 @@ namespace iText.Forms {
         private void AddFormFieldsToDocument(PdfDocument pdfDoc, PdfAcroForm acroForm) {
             Rectangle rect = new Rectangle(36, 700, 20, 20);
             Rectangle rect1 = new Rectangle(36, 680, 20, 20);
-            PdfButtonFormField group = PdfFormField.CreateRadioGroup(pdfDoc, "TestGroup", "1");
-            PdfFormField.CreateRadioButton(pdfDoc, rect, group, "1");
-            PdfFormField.CreateRadioButton(pdfDoc, rect1, group, "2");
+            PdfButtonFormField group = new RadioFormFieldBuilder(pdfDoc, "TestGroup").CreateRadioGroup();
+            group.SetValue("1", true);
+            new RadioFormFieldBuilder(pdfDoc).SetWidgetRectangle(rect).CreateRadioButton(group, "1");
+            new RadioFormFieldBuilder(pdfDoc).SetWidgetRectangle(rect1).CreateRadioButton(group, "2");
             acroForm.AddField(group);
-            PdfButtonFormField pushButton = PdfFormField.CreatePushButton(pdfDoc, new Rectangle(36, 650, 40, 20), "push"
-                , "Capcha");
-            PdfButtonFormField checkBox = PdfFormField.CreateCheckBox(pdfDoc, new Rectangle(36, 560, 20, 20), "TestCheck"
-                , "1");
+            PdfButtonFormField pushButton = new PushButtonFormFieldBuilder(pdfDoc, "push").SetWidgetRectangle(new Rectangle
+                (36, 650, 40, 20)).SetCaption("Capcha").CreatePushButton();
+            PdfButtonFormField checkBox = new CheckBoxFormFieldBuilder(pdfDoc, "TestCheck").SetWidgetRectangle(new Rectangle
+                (36, 560, 20, 20)).CreateCheckBox();
+            checkBox.SetValue("1", true);
             acroForm.AddField(pushButton);
             acroForm.AddField(checkBox);
         }
 
-        /// <exception cref="System.Exception"/>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="Javax.Xml.Parsers.ParserConfigurationException"/>
-        /// <exception cref="Org.Xml.Sax.SAXException"/>
         private void CompareOutput(String outFileName, String cmpFileName) {
             CompareTool compareTool = new CompareTool();
             String compareResult = compareTool.CompareTagStructures(outFileName, cmpFileName);

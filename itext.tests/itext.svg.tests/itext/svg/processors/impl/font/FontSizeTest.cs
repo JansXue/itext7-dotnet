@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -46,6 +46,7 @@ using iText.Test;
 using iText.Test.Attributes;
 
 namespace iText.Svg.Processors.Impl.Font {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class FontSizeTest : SvgIntegrationTest {
         public static readonly String SOURCE_FOLDER = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/svg/processors/impl/font/FontSizeTest/";
@@ -58,54 +59,43 @@ namespace iText.Svg.Processors.Impl.Font {
             ITextTest.CreateDestinationFolder(DESTINATION_FOLDER);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void FontSize01Test() {
             String name = "fontSizeTest01";
-            ConvertAndCompareVisually(SOURCE_FOLDER, DESTINATION_FOLDER, name);
+            ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, name);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.StyledXmlParser.LogMessageConstant.UNKNOWN_ABSOLUTE_METRIC_LENGTH_PARSED)]
+        [LogMessage(iText.StyledXmlParser.Logs.StyledXmlParserLogMessageConstant.UNKNOWN_ABSOLUTE_METRIC_LENGTH_PARSED
+            )]
         public virtual void FontSize02Test() {
             String name = "fontSizeTest02";
-            ConvertAndCompareVisually(SOURCE_FOLDER, DESTINATION_FOLDER, name);
+            ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, name);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void FontSize03Test() {
             String name = "fontSizeTest03";
-            ConvertAndCompareVisually(SOURCE_FOLDER, DESTINATION_FOLDER, name);
+            ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, name);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void FontAbsoluteKeywords() {
             String name = "fontAbsoluteKeywords";
-            ConvertAndCompareVisually(SOURCE_FOLDER, DESTINATION_FOLDER, name);
+            ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, name);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void FontRelativeKeywords() {
             String name = "fontRelativeKeywords";
-            ConvertAndCompareVisually(SOURCE_FOLDER, DESTINATION_FOLDER, name);
+            ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, name);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        public virtual void Diff_units_of_measure() {
-            //TODO: update cmp-file after DEVSIX-2785
+        public virtual void DiffUnitsOfMeasure() {
+            // TODO DEVSIX-2884 rem in font-size doesn't support correctly
             String name = "diff_units_of_measure";
-            ConvertAndCompareVisually(SOURCE_FOLDER, DESTINATION_FOLDER, name);
+            ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, name);
         }
     }
 }

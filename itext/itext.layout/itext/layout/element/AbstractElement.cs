@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,7 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.Kernel.Pdf.Action;
 using iText.Layout;
 using iText.Layout.Properties;
@@ -56,8 +56,8 @@ namespace iText.Layout.Element {
     /// implementations
     /// share.
     /// </summary>
-    /// 
-    public abstract class AbstractElement<T> : ElementPropertyContainer<T>, IElement
+    /// <typeparam name="T">the type of the implementation</typeparam>
+    public abstract class AbstractElement<T> : ElementPropertyContainer<T>, IAbstractElement
         where T : IElement {
         protected internal IRenderer nextRenderer;
 
@@ -115,11 +115,21 @@ namespace iText.Layout.Element {
         /// <summary>Add a new style to this element.</summary>
         /// <remarks>
         /// Add a new style to this element. A style can be used as an effective way
-        /// to define multiple equal properties to several elements.
+        /// to define multiple equal properties to several elements, however its properties have
+        /// lower priority than properties, directly set on
+        /// <see cref="iText.Layout.ElementPropertyContainer{T}"/>
+        /// Note that if several Style objects are added, iText checks them one by one
+        /// in the order in which they were added and returns the property's value from
+        /// the last Style object, which contains this property. So, if there are two Style
+        /// objects added: the first has set width of 100 points and the second of 200 points,
+        /// iText will get 200 points as width value.
         /// </remarks>
         /// <param name="style">the style to be added</param>
         /// <returns>this element</returns>
         public virtual T AddStyle(Style style) {
+            if (style == null) {
+                throw new ArgumentException("Style can not be null.");
+            }
             if (styles == null) {
                 styles = new LinkedHashSet<Style>();
             }
@@ -133,8 +143,8 @@ namespace iText.Layout.Element {
             return childElements;
         }
 
-        /// <summary>Returns <code>true</code> if this list contains no elements.</summary>
-        /// <returns><code>true</code> if this list contains no elements</returns>
+        /// <summary>Returns <c>true</c> if this list contains no elements.</summary>
+        /// <returns><c>true</c> if this list contains no elements</returns>
         public virtual bool IsEmpty() {
             return 0 == childElements.Count;
         }
@@ -161,7 +171,7 @@ namespace iText.Layout.Element {
         /// Explicitly sets the page number this element should be put on. The location
         /// on the page will be the same as if it were added at the end of the document,
         /// but it will be located on the specified page.
-        /// <p>
+        /// <para />
         /// This method should be used very carefully in client code.
         /// </remarks>
         /// <param name="pageNumber">the page number of the page this element should be placed on</param>
@@ -171,6 +181,11 @@ namespace iText.Layout.Element {
             return (T)(Object)this;
         }
 
+        /// <summary>Creates new renderer instance.</summary>
+        /// <returns>
+        /// new
+        /// <see cref="iText.Layout.Renderer.IRenderer"/>
+        /// </returns>
         protected internal abstract IRenderer MakeNewRenderer();
     }
 }

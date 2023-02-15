@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,13 +44,14 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.IO;
+using iText.Commons.Utils;
 using iText.Forms;
 using iText.Forms.Fields;
 using iText.IO.Font;
 using iText.IO.Source;
-using iText.IO.Util;
-using iText.Kernel;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf;
+using iText.Signatures.Exceptions;
 
 namespace iText.Signatures {
     /// <summary>Utility class that provides several convenience methods concerning digital signatures.</summary>
@@ -64,23 +65,6 @@ namespace iText.Signatures {
         private IList<String> orderedSignatureNames;
 
         private int totalRevisions;
-
-        // TODO: REFACTOR. At this moment this serves as storage for some signature-related methods from iText 5 AcroFields
-        /// <summary>
-        /// Converts a
-        /// <see cref="iText.Kernel.Pdf.PdfArray"/>
-        /// to an array of longs
-        /// </summary>
-        /// <param name="pdfArray">PdfArray to be converted</param>
-        /// <returns>long[] containing the PdfArray values</returns>
-        [System.ObsoleteAttribute(@"Will be removed in 7.2. Use iText.Kernel.Pdf.PdfArray.ToLongArray() instead")]
-        public static long[] AsLongArray(PdfArray pdfArray) {
-            long[] rslt = new long[pdfArray.Size()];
-            for (int k = 0; k < rslt.Length; ++k) {
-                rslt[k] = pdfArray.GetAsNumber(k).LongValue();
-            }
-            return rslt;
-        }
 
         /// <summary>Creates a SignatureUtil instance.</summary>
         /// <remarks>
@@ -98,45 +82,19 @@ namespace iText.Signatures {
         /// Prepares an
         /// <see cref="PdfPKCS7"/>
         /// instance for the given signature.
-        /// This method handles signature parsing and might throw an exception if
-        /// signature is malformed.
-        /// <p>
-        /// The returned
-        /// <see cref="PdfPKCS7"/>
-        /// can be used to fetch additional info about the signature
-        /// and also to perform integrity check of data signed by the given signature field.
-        /// </p>
-        /// In order to check that given signature covers the current PdfDocument revision please
-        /// use
-        /// <see cref="SignatureCoversWholeDocument(System.String)"/>
-        /// method.
         /// </summary>
-        /// <param name="name">the signature field name</param>
-        /// <param name="provider">the security provider or null for the default provider</param>
-        /// <returns>
-        /// a
-        /// <see cref="PdfPKCS7"/>
-        /// instance which can be used to fetch additional info about the signature
-        /// and also to perform integrity check of data signed by the given signature field.
-        /// </returns>
-        [System.ObsoleteAttribute(@"This method is deprecated and will be removed in future versions. Please use ReadSignatureData(System.String, System.String) instead."
-            )]
-        public virtual PdfPKCS7 VerifySignature(String name) {
-            return ReadSignatureData(name);
-        }
-
-        /// <summary>
+        /// <remarks>
         /// Prepares an
         /// <see cref="PdfPKCS7"/>
         /// instance for the given signature.
         /// This method handles signature parsing and might throw an exception if
         /// signature is malformed.
-        /// <p>
+        /// <para />
         /// The returned
         /// <see cref="PdfPKCS7"/>
         /// can be used to fetch additional info about the signature
         /// and also to perform integrity check of data signed by the given signature field.
-        /// </p>
+        /// <para />
         /// Prepared
         /// <see cref="PdfPKCS7"/>
         /// instance calculates digest based on signature's /ByteRange entry.
@@ -144,9 +102,8 @@ namespace iText.Signatures {
         /// revision please use
         /// <see cref="SignatureCoversWholeDocument(System.String)"/>
         /// method.
-        /// </summary>
+        /// </remarks>
         /// <param name="signatureFieldName">the signature field name</param>
-        /// <param name="securityProvider">the security provider or null for the default provider</param>
         /// <returns>
         /// a
         /// <see cref="PdfPKCS7"/>
@@ -202,7 +159,7 @@ namespace iText.Signatures {
         /// <summary>Gets the signature dictionary, the one keyed by /V.</summary>
         /// <param name="name">the field name</param>
         /// <returns>
-        /// the signature dictionary keyed by /V or <CODE>null</CODE> if the field is not
+        /// the signature dictionary keyed by /V or <c>null</c> if the field is not
         /// a signature
         /// </returns>
         public virtual PdfDictionary GetSignatureDictionary(String name) {
@@ -263,7 +220,7 @@ namespace iText.Signatures {
             GetSignatureNames();
             IList<String> sigs = new List<String>();
             if (acroForm != null) {
-                foreach (KeyValuePair<String, PdfFormField> entry in acroForm.GetFormFields()) {
+                foreach (KeyValuePair<String, PdfFormField> entry in acroForm.GetAllFormFields()) {
                     PdfFormField field = entry.Value;
                     PdfDictionary merged = field.GetPdfObject();
                     if (!PdfName.Sig.Equals(merged.GetAsName(PdfName.FT))) {
@@ -305,7 +262,6 @@ namespace iText.Signatures {
         /// <summary>Extracts a revision from the document.</summary>
         /// <param name="field">the signature field name</param>
         /// <returns>an InputStream covering the revision. Returns null if it's not a signature field</returns>
-        /// <exception cref="System.IO.IOException"/>
         public virtual Stream ExtractRevision(String field) {
             GetSignatureNames();
             if (!sigNames.ContainsKey(field)) {
@@ -320,7 +276,7 @@ namespace iText.Signatures {
         ///     </summary>
         /// <remarks>
         /// Checks if the signature covers the entire document (except for signature's Contents) or just a part of it.
-        /// <p>
+        /// <para />
         /// If this method does not return
         /// <see langword="true"/>
         /// it means that signature in question does not cover the entire
@@ -328,7 +284,7 @@ namespace iText.Signatures {
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
         /// . Such signatures cannot be considered as verifying the PDF document,
         /// because content that is not covered by signature might have been modified since the signature creation.
-        /// </p>
+        /// <para />
         /// </remarks>
         /// <param name="name">the signature field name</param>
         /// <returns>true if the signature covers the entire document, false if it doesn't</returns>
@@ -361,7 +317,7 @@ namespace iText.Signatures {
                 return;
             }
             IList<Object[]> sorter = new List<Object[]>();
-            foreach (KeyValuePair<String, PdfFormField> entry in acroForm.GetFormFields()) {
+            foreach (KeyValuePair<String, PdfFormField> entry in acroForm.GetAllFormFields()) {
                 PdfFormField field = entry.Value;
                 PdfDictionary merged = field.GetPdfObject();
                 if (!PdfName.Sig.Equals(merged.Get(PdfName.FT))) {
@@ -391,17 +347,12 @@ namespace iText.Signatures {
             }
             JavaCollectionsUtil.Sort(sorter, new SignatureUtil.SorterComparator());
             if (sorter.Count > 0) {
-                try {
-                    if (((int[])sorter[sorter.Count - 1][1])[0] == document.GetReader().GetFileLength()) {
-                        totalRevisions = sorter.Count;
-                    }
-                    else {
-                        totalRevisions = sorter.Count + 1;
-                    }
+                if (((int[])sorter[sorter.Count - 1][1])[0] == document.GetReader().GetFileLength()) {
+                    totalRevisions = sorter.Count;
                 }
-                catch (System.IO.IOException) {
+                else {
+                    totalRevisions = sorter.Count + 1;
                 }
-                // TODO: add exception handling (at least some logger)
                 for (int k = 0; k < sorter.Count; ++k) {
                     Object[] objs = sorter[k];
                     String name = (String)objs[0];
@@ -434,7 +385,6 @@ namespace iText.Signatures {
 
             private bool rangeIsCorrect = false;
 
-            /// <exception cref="System.IO.IOException"/>
             public ContentsChecker(IRandomAccessSource byteSource)
                 : base(byteSource, null) {
             }
@@ -443,14 +393,8 @@ namespace iText.Signatures {
                 rangeIsCorrect = false;
                 PdfDictionary signature = (PdfDictionary)signatureField.GetValue();
                 int[] byteRange = ((PdfArray)signature.Get(PdfName.ByteRange)).ToIntArray();
-                try {
-                    if (4 != byteRange.Length || 0 != byteRange[0] || tokens.GetSafeFile().Length() != byteRange[2] + byteRange
-                        [3]) {
-                        return false;
-                    }
-                }
-                catch (System.IO.IOException) {
-                    // That's not expected because if the signature is invalid, it should have already failed
+                if (4 != byteRange.Length || 0 != byteRange[0] || tokens.GetSafeFile().Length() != byteRange[2] + byteRange
+                    [3]) {
                     return false;
                 }
                 contentsStart = byteRange[1];
@@ -477,7 +421,6 @@ namespace iText.Signatures {
                 return rangeIsCorrect;
             }
 
-            /// <exception cref="System.IO.IOException"/>
             protected override PdfDictionary ReadDictionary(bool objStm) {
                 // The method copies the logic of PdfReader's method.
                 // Only Contents related checks have been introduced.
@@ -490,7 +433,7 @@ namespace iText.Signatures {
                         break;
                     }
                     if (tokens.GetTokenType() != PdfTokenizer.TokenType.Name) {
-                        tokens.ThrowError(PdfException.DictionaryKey1IsNotAName, tokens.GetStringValue());
+                        tokens.ThrowError(SignExceptionMessageConstant.DICTIONARY_THIS_KEY_IS_NOT_A_NAME, tokens.GetStringValue());
                     }
                     PdfName name = ReadPdfName(true);
                     PdfObject obj;
@@ -522,10 +465,10 @@ namespace iText.Signatures {
                     }
                     if (obj == null) {
                         if (tokens.GetTokenType() == PdfTokenizer.TokenType.EndDic) {
-                            tokens.ThrowError(PdfException.UnexpectedGtGt);
+                            tokens.ThrowError(SignExceptionMessageConstant.UNEXPECTED_GT_GT);
                         }
                         if (tokens.GetTokenType() == PdfTokenizer.TokenType.EndArray) {
-                            tokens.ThrowError(PdfException.UnexpectedCloseBracket);
+                            tokens.ThrowError(SignExceptionMessageConstant.UNEXPECTED_CLOSE_BRACKET);
                         }
                     }
                     dic.Put(name, obj);

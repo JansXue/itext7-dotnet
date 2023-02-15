@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -57,9 +57,18 @@ namespace iText.Kernel.Pdf.Annot {
         }
 
         /// <summary>
-        /// see
-        /// <see cref="PdfAnnotation.MakeAnnotation(iText.Kernel.Pdf.PdfObject)"/>
+        /// Instantiates a new
+        /// <see cref="PdfFileAttachmentAnnotation"/>
+        /// instance based on
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// instance, that represents existing annotation object in the document.
         /// </summary>
+        /// <param name="pdfObject">
+        /// the
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// representing annotation object
+        /// </param>
+        /// <seealso cref="PdfAnnotation.MakeAnnotation(iText.Kernel.Pdf.PdfObject)"/>
         protected internal PdfFileAttachmentAnnotation(PdfDictionary pdfObject)
             : base(pdfObject) {
         }
@@ -76,8 +85,7 @@ namespace iText.Kernel.Pdf.Annot {
         /// <remarks>
         /// The name of an icon that is used in displaying the annotation. Possible values are different for different
         /// annotation types. See
-        /// <see cref="SetIconName(iText.Kernel.Pdf.PdfName)"/>
-        /// .
+        /// <see cref="SetIconName(iText.Kernel.Pdf.PdfName)"/>.
         /// </remarks>
         /// <returns>
         /// a
@@ -94,10 +102,12 @@ namespace iText.Kernel.Pdf.Annot {
         /// <see cref="iText.Kernel.Pdf.PdfName"/>
         /// that specifies the icon for displaying annotation. Possible values are different
         /// for different annotation types:
-        /// <ul>
-        /// <li>GraphPushPin</li>
-        /// <li>PaperclipTag</li>
-        /// </ul>
+        /// <list type="bullet">
+        /// <item><description>GraphPushPin
+        /// </description></item>
+        /// <item><description>PaperclipTag
+        /// </description></item>
+        /// </list>
         /// Additional names may be supported as well.
         /// </param>
         /// <returns>

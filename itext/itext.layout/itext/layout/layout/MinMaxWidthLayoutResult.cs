@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -47,28 +47,51 @@ using iText.Layout.Renderer;
 namespace iText.Layout.Layout {
     /// <summary>
     /// Represents the result of content
-    /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)">layouting</see>
-    /// .
+    /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)">layouting</see>.
     /// </summary>
     public class MinMaxWidthLayoutResult : LayoutResult {
+        /// <summary>
+        /// The
+        /// <see cref="iText.Layout.Minmaxwidth.MinMaxWidth"/>
+        /// value of min and max width.
+        /// </summary>
         protected internal MinMaxWidth minMaxWidth;
 
+        /// <summary>Creates min and max width.</summary>
+        /// <param name="status">the status which indicates the content</param>
+        /// <param name="occupiedArea">the area occupied by the content</param>
+        /// <param name="splitRenderer">the renderer to draw the splitted part of the content</param>
+        /// <param name="overflowRenderer">the renderer to draw the overflowed part of the content</param>
         public MinMaxWidthLayoutResult(int status, LayoutArea occupiedArea, IRenderer splitRenderer, IRenderer overflowRenderer
             )
             : base(status, occupiedArea, splitRenderer, overflowRenderer) {
             minMaxWidth = new MinMaxWidth();
         }
 
+        /// <summary>Creates min and max width.</summary>
+        /// <param name="status">the status which indicates the content</param>
+        /// <param name="occupiedArea">the area occupied by the content</param>
+        /// <param name="splitRenderer">the renderer to draw the splitted part of the content</param>
+        /// <param name="overflowRenderer">the renderer to draw the overflowed part of the content</param>
+        /// <param name="cause">
+        /// the first renderer to produce
+        /// <see cref="LayoutResult.NOTHING"/>
+        /// </param>
         public MinMaxWidthLayoutResult(int status, LayoutArea occupiedArea, IRenderer splitRenderer, IRenderer overflowRenderer
             , IRenderer cause)
             : base(status, occupiedArea, splitRenderer, overflowRenderer, cause) {
             minMaxWidth = new MinMaxWidth();
         }
 
+        /// <summary>Gets min and max width.</summary>
+        /// <returns>min and max width</returns>
         public virtual MinMaxWidth GetMinMaxWidth() {
             return minMaxWidth;
         }
 
+        /// <summary>Sets min and max width.</summary>
+        /// <param name="minMaxWidth">min and max width</param>
+        /// <returns>min and max width</returns>
         public virtual iText.Layout.Layout.MinMaxWidthLayoutResult SetMinMaxWidth(MinMaxWidth minMaxWidth) {
             this.minMaxWidth = minMaxWidth;
             return this;

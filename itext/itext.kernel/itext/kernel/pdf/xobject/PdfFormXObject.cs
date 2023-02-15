@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,7 +41,7 @@ source product.
 For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
-using iText.Kernel;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas.Wmf;
@@ -67,10 +67,15 @@ namespace iText.Kernel.Pdf.Xobject {
         /// Create
         /// <see cref="PdfFormXObject"/>
         /// instance by
-        /// <see cref="iText.Kernel.Pdf.PdfStream"/>
-        /// .
-        /// Note, this constructor doesn't perform any additional checks
+        /// <see cref="iText.Kernel.Pdf.PdfStream"/>.
         /// </summary>
+        /// <remarks>
+        /// Create
+        /// <see cref="PdfFormXObject"/>
+        /// instance by
+        /// <see cref="iText.Kernel.Pdf.PdfStream"/>.
+        /// Note, this constructor doesn't perform any additional checks
+        /// </remarks>
         /// <param name="pdfStream">
         /// 
         /// <see cref="iText.Kernel.Pdf.PdfStream"/>
@@ -102,32 +107,74 @@ namespace iText.Kernel.Pdf.Xobject {
 
         /// <summary>
         /// Creates a form XObject from
-        /// <see cref="iText.Kernel.Pdf.Canvas.Wmf.WmfImageData"/>
-        /// .
+        /// <see cref="iText.Kernel.Pdf.Canvas.Wmf.WmfImageData"/>.
+        /// </summary>
+        /// <remarks>
+        /// Creates a form XObject from
+        /// <see cref="iText.Kernel.Pdf.Canvas.Wmf.WmfImageData"/>.
         /// Unlike other images,
         /// <see cref="iText.Kernel.Pdf.Canvas.Wmf.WmfImageData"/>
         /// images are represented as
         /// <see cref="PdfFormXObject"/>
         /// , not as
-        /// <see cref="PdfImageXObject"/>
-        /// .
-        /// </summary>
+        /// <see cref="PdfImageXObject"/>.
+        /// </remarks>
         /// <param name="image">image to create form object from</param>
         /// <param name="pdfDocument">document instance which is needed for writing form stream contents</param>
         public PdfFormXObject(WmfImageData image, PdfDocument pdfDocument)
             : this(new WmfImageHelper(image).CreateFormXObject(pdfDocument).GetPdfObject()) {
         }
 
+        /// <summary>Calculates the coordinates of the xObject BBox multiplied by the Matrix field.</summary>
+        /// <remarks>
+        /// Calculates the coordinates of the xObject BBox multiplied by the Matrix field.
+        /// <para />
+        /// For mor information see paragraph 8.10.1 in ISO-32000-1.
+        /// </remarks>
+        /// <param name="form">the object for which calculate the coordinates of the bBox</param>
+        /// <returns>
+        /// the bBox
+        /// <see cref="iText.Kernel.Geom.Rectangle"/>
+        /// </returns>
+        public static Rectangle CalculateBBoxMultipliedByMatrix(iText.Kernel.Pdf.Xobject.PdfFormXObject form) {
+            PdfArray pdfArrayBBox = form.GetPdfObject().GetAsArray(PdfName.BBox);
+            if (pdfArrayBBox == null) {
+                throw new PdfException(KernelExceptionMessageConstant.PDF_FORM_XOBJECT_HAS_INVALID_BBOX);
+            }
+            float[] bBoxArray = pdfArrayBBox.ToFloatArray();
+            PdfArray pdfArrayMatrix = form.GetPdfObject().GetAsArray(PdfName.Matrix);
+            float[] matrixArray;
+            if (pdfArrayMatrix == null) {
+                matrixArray = new float[] { 1, 0, 0, 1, 0, 0 };
+            }
+            else {
+                matrixArray = pdfArrayMatrix.ToFloatArray();
+            }
+            Matrix matrix = new Matrix(matrixArray[0], matrixArray[1], matrixArray[2], matrixArray[3], matrixArray[4], 
+                matrixArray[5]);
+            Vector bBoxMin = new Vector(bBoxArray[0], bBoxArray[1], 1);
+            Vector bBoxMax = new Vector(bBoxArray[2], bBoxArray[3], 1);
+            Vector bBoxMinByMatrix = bBoxMin.Cross(matrix);
+            Vector bBoxMaxByMatrix = bBoxMax.Cross(matrix);
+            float width = bBoxMaxByMatrix.Get(Vector.I1) - bBoxMinByMatrix.Get(Vector.I1);
+            float height = bBoxMaxByMatrix.Get(Vector.I2) - bBoxMinByMatrix.Get(Vector.I2);
+            return new Rectangle(bBoxMinByMatrix.Get(Vector.I1), bBoxMinByMatrix.Get(Vector.I2), width, height);
+        }
+
         /// <summary>
         /// Gets
         /// <see cref="iText.Kernel.Pdf.PdfResources"/>
         /// of the Form XObject.
-        /// Note, if there is no resources, a new instance will be created.
         /// </summary>
+        /// <remarks>
+        /// Gets
+        /// <see cref="iText.Kernel.Pdf.PdfResources"/>
+        /// of the Form XObject.
+        /// Note, if there is no resources, a new instance will be created.
+        /// </remarks>
         /// <returns>
         /// not null instance of
-        /// <see cref="iText.Kernel.Pdf.PdfResources"/>
-        /// .
+        /// <see cref="iText.Kernel.Pdf.PdfResources"/>.
         /// </returns>
         public virtual PdfResources GetResources() {
             if (this.resources == null) {
@@ -150,8 +197,7 @@ namespace iText.Kernel.Pdf.Xobject {
         /// a
         /// <see cref="iText.Kernel.Pdf.PdfArray"/>
         /// , that represents
-        /// <see cref="iText.Kernel.Geom.Rectangle"/>
-        /// .
+        /// <see cref="iText.Kernel.Geom.Rectangle"/>.
         /// </returns>
         public virtual PdfArray GetBBox() {
             return GetPdfObject().GetAsArray(PdfName.BBox);
@@ -166,8 +212,7 @@ namespace iText.Kernel.Pdf.Xobject {
         /// a
         /// <see cref="iText.Kernel.Pdf.PdfArray"/>
         /// , that represents
-        /// <see cref="iText.Kernel.Geom.Rectangle"/>
-        /// .
+        /// <see cref="iText.Kernel.Geom.Rectangle"/>.
         /// </param>
         /// <returns>object itself.</returns>
         public virtual iText.Kernel.Pdf.Xobject.PdfFormXObject SetBBox(PdfArray bBox) {
@@ -186,8 +231,7 @@ namespace iText.Kernel.Pdf.Xobject {
         /// </remarks>
         /// <param name="transparency">
         /// instance of
-        /// <see cref="PdfTransparencyGroup"/>
-        /// .
+        /// <see cref="PdfTransparencyGroup"/>.
         /// </param>
         /// <returns>object itself.</returns>
         /// <seealso cref="PdfTransparencyGroup"/>
@@ -214,16 +258,21 @@ namespace iText.Kernel.Pdf.Xobject {
         /// <c>PdfObject</c>
         /// behind this wrapper, you have to ensure
         /// that this object is added to the document, i.e. it has an indirect reference.
+        /// </summary>
+        /// <remarks>
+        /// To manually flush a
+        /// <c>PdfObject</c>
+        /// behind this wrapper, you have to ensure
+        /// that this object is added to the document, i.e. it has an indirect reference.
         /// Basically this means that before flushing you need to explicitly call
-        /// <see cref="iText.Kernel.Pdf.PdfObjectWrapper{T}.MakeIndirect(iText.Kernel.Pdf.PdfDocument)"/>
-        /// .
+        /// <see cref="iText.Kernel.Pdf.PdfObjectWrapper{T}.MakeIndirect(iText.Kernel.Pdf.PdfDocument)"/>.
         /// For example: wrapperInstance.makeIndirect(document).flush();
         /// Note that not every wrapper require this, only those that have such warning in documentation.
-        /// </summary>
+        /// </remarks>
         public override void Flush() {
             resources = null;
             if (GetPdfObject().Get(PdfName.BBox) == null) {
-                throw new PdfException(PdfException.FormXObjectMustHaveBbox);
+                throw new PdfException(KernelExceptionMessageConstant.FORM_XOBJECT_MUST_HAVE_BBOX);
             }
             base.Flush();
         }
@@ -246,8 +295,7 @@ namespace iText.Kernel.Pdf.Xobject {
         /// ,
         /// <see cref="iText.Kernel.Pdf.PdfName.DeviceRGBK"/>
         /// , and
-        /// <see cref="iText.Kernel.Pdf.PdfName.DeviceN"/>
-        /// .
+        /// <see cref="iText.Kernel.Pdf.PdfName.DeviceN"/>.
         /// </param>
         /// <returns>object itself.</returns>
         public virtual iText.Kernel.Pdf.Xobject.PdfFormXObject SetProcessColorModel(PdfName model) {
@@ -273,8 +321,7 @@ namespace iText.Kernel.Pdf.Xobject {
         /// ,
         /// <see cref="iText.Kernel.Pdf.PdfName.DeviceRGBK"/>
         /// , and
-        /// <see cref="iText.Kernel.Pdf.PdfName.DeviceN"/>
-        /// .
+        /// <see cref="iText.Kernel.Pdf.PdfName.DeviceN"/>.
         /// </returns>
         public virtual PdfName GetProcessColorModel() {
             return GetPdfObject().GetAsName(PdfName.PCM);

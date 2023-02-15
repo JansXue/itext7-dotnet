@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -48,6 +48,7 @@ using iText.Kernel.Utils;
 using iText.Test;
 
 namespace iText.Barcodes {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class BarcodeDataMatrixTest : ExtendedITextTest {
         public static readonly String destinationFolder = NUnit.Framework.TestContext.CurrentContext.TestDirectory
              + "/test/itext/barcodes/BarcodeDataMatrix/";
@@ -60,9 +61,6 @@ namespace iText.Barcodes {
             CreateOrClearDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.PdfException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void Barcode01Test() {
             String filename = "barcodeDataMatrix.pdf";
@@ -79,9 +77,6 @@ namespace iText.Barcodes {
                  + "cmp_" + filename, destinationFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.PdfException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void Barcode02Test() {
             String filename = "barcodeDataMatrix2.pdf";
@@ -96,9 +91,6 @@ namespace iText.Barcodes {
                  + "cmp_" + filename, destinationFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.PdfException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void Barcode03Test() {
             String filename = "barcodeDataMatrix3.pdf";
@@ -116,9 +108,6 @@ namespace iText.Barcodes {
                  + "cmp_" + filename, destinationFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.PdfException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void Barcode04Test() {
             String filename = "barcodeDataMatrix4.pdf";
@@ -136,9 +125,6 @@ namespace iText.Barcodes {
                  + "cmp_" + filename, destinationFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.PdfException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void Barcode05Test() {
             String filename = "barcodeDataMatrix5.pdf";
@@ -156,9 +142,6 @@ namespace iText.Barcodes {
                  + "cmp_" + filename, destinationFolder, "diff_"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.PdfException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void Barcode06Test() {
             String filename = "barcodeDataMatrix6.pdf";
@@ -226,41 +209,32 @@ namespace iText.Barcodes {
 
         [NUnit.Framework.Test]
         public virtual void Barcode12Test() {
-            NUnit.Framework.Assert.That(() =>  {
-                BarcodeDataMatrix barcodeDataMatrix = new BarcodeDataMatrix();
-                barcodeDataMatrix.SetWidth(18);
-                barcodeDataMatrix.SetHeight(18);
-                byte[] str = "AbcdFFghijklmnop".GetBytes();
-                barcodeDataMatrix.SetCode(str, -1, str.Length);
-            }
-            , NUnit.Framework.Throws.InstanceOf<IndexOutOfRangeException>())
-;
+            BarcodeDataMatrix barcodeDataMatrix = new BarcodeDataMatrix();
+            barcodeDataMatrix.SetWidth(18);
+            barcodeDataMatrix.SetHeight(18);
+            byte[] str = "AbcdFFghijklmnop".GetBytes();
+            Exception e = NUnit.Framework.Assert.Catch(typeof(IndexOutOfRangeException), () => barcodeDataMatrix.SetCode
+                (str, -1, str.Length));
         }
 
         [NUnit.Framework.Test]
         public virtual void Barcode13Test() {
-            NUnit.Framework.Assert.That(() =>  {
-                BarcodeDataMatrix barcodeDataMatrix = new BarcodeDataMatrix();
-                barcodeDataMatrix.SetWidth(18);
-                barcodeDataMatrix.SetHeight(18);
-                byte[] str = "AbcdFFghijklmnop".GetBytes();
-                barcodeDataMatrix.SetCode(str, 0, str.Length + 1);
-            }
-            , NUnit.Framework.Throws.InstanceOf<IndexOutOfRangeException>())
-;
+            BarcodeDataMatrix barcodeDataMatrix = new BarcodeDataMatrix();
+            barcodeDataMatrix.SetWidth(18);
+            barcodeDataMatrix.SetHeight(18);
+            byte[] str = "AbcdFFghijklmnop".GetBytes();
+            NUnit.Framework.Assert.Catch(typeof(IndexOutOfRangeException), () => barcodeDataMatrix.SetCode(str, 0, str
+                .Length + 1));
         }
 
         [NUnit.Framework.Test]
         public virtual void Barcode14Test() {
-            NUnit.Framework.Assert.That(() =>  {
-                BarcodeDataMatrix barcodeDataMatrix = new BarcodeDataMatrix();
-                barcodeDataMatrix.SetWidth(18);
-                barcodeDataMatrix.SetHeight(18);
-                byte[] str = "AbcdFFghijklmnop".GetBytes();
-                barcodeDataMatrix.SetCode(str, 0, -1);
-            }
-            , NUnit.Framework.Throws.InstanceOf<IndexOutOfRangeException>())
-;
+            BarcodeDataMatrix barcodeDataMatrix = new BarcodeDataMatrix();
+            barcodeDataMatrix.SetWidth(18);
+            barcodeDataMatrix.SetHeight(18);
+            byte[] str = "AbcdFFghijklmnop".GetBytes();
+            NUnit.Framework.Assert.Catch(typeof(IndexOutOfRangeException), () => barcodeDataMatrix.SetCode(str, 0, -1)
+                );
         }
 
         [NUnit.Framework.Test]
@@ -273,9 +247,6 @@ namespace iText.Barcodes {
             NUnit.Framework.Assert.AreEqual(BarcodeDataMatrix.DM_NO_ERROR, result);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="iText.Kernel.PdfException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void Barcode16Test() {
             String filename = "barcode16Test.pdf";

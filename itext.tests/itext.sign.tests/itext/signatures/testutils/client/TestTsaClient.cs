@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,25 +42,29 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Org.BouncyCastle.Asn1;
-using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.Math;
-using Org.BouncyCastle.Tsp;
-using Org.BouncyCastle.X509;
-using iText.IO.Util;
+using iText.Bouncycastleconnector;
+using iText.Commons.Bouncycastle;
+using iText.Commons.Bouncycastle.Cert;
+using iText.Commons.Bouncycastle.Crypto;
+using iText.Commons.Bouncycastle.Math;
+using iText.Commons.Bouncycastle.Tsp;
+using iText.Commons.Utils;
 using iText.Signatures;
 using iText.Signatures.Testutils;
 using iText.Signatures.Testutils.Builder;
 
 namespace iText.Signatures.Testutils.Client {
     public class TestTsaClient : ITSAClient {
+        private static readonly IBouncyCastleFactory BOUNCY_CASTLE_FACTORY = BouncyCastleFactoryCreator.GetFactory
+            ();
+
         private const String DIGEST_ALG = "SHA256";
 
-        private readonly ICipherParameters tsaPrivateKey;
+        private readonly IPrivateKey tsaPrivateKey;
 
-        private IList<X509Certificate> tsaCertificateChain;
+        private IList<IX509Certificate> tsaCertificateChain;
 
-        public TestTsaClient(IList<X509Certificate> tsaCertificateChain, ICipherParameters tsaPrivateKey) {
+        public TestTsaClient(IList<IX509Certificate> tsaCertificateChain, IPrivateKey tsaPrivateKey) {
             this.tsaCertificateChain = tsaCertificateChain;
             this.tsaPrivateKey = tsaPrivateKey;
         }
@@ -69,18 +73,17 @@ namespace iText.Signatures.Testutils.Client {
             return 4096;
         }
 
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
-        public virtual IDigest GetMessageDigest() {
+        public virtual IIDigest GetMessageDigest() {
             return SignTestPortUtil.GetMessageDigest(DIGEST_ALG);
         }
 
-        /// <exception cref="System.Exception"/>
         public virtual byte[] GetTimeStampToken(byte[] imprint) {
-            TimeStampRequestGenerator tsqGenerator = new TimeStampRequestGenerator();
+            ITimeStampRequestGenerator tsqGenerator = BOUNCY_CASTLE_FACTORY.CreateTimeStampRequestGenerator();
             tsqGenerator.SetCertReq(true);
-            BigInteger nonce = BigInteger.ValueOf(SystemUtil.GetTimeBasedSeed());
-            TimeStampRequest request = tsqGenerator.Generate(new DerObjectIdentifier(DigestAlgorithms.GetAllowedDigest
-                (DIGEST_ALG)), imprint, nonce);
+            IBigInteger nonce = iText.Bouncycastleconnector.BouncyCastleFactoryCreator.GetFactory().CreateBigInteger().ValueOf
+                (SystemUtil.GetTimeBasedSeed());
+            ITimeStampRequest request = tsqGenerator.Generate(BOUNCY_CASTLE_FACTORY.CreateASN1ObjectIdentifier(DigestAlgorithms
+                .GetAllowedDigest(DIGEST_ALG)), imprint, nonce);
             return new TestTimestampTokenBuilder(tsaCertificateChain, tsaPrivateKey).CreateTimeStampToken(request);
         }
     }

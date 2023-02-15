@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -46,11 +46,7 @@ using iText.IO.Font.Otf;
 namespace iText.Layout.Splitting {
     /// <summary>Interface for customizing the split character.</summary>
     public interface ISplitCharacters {
-        /// <summary>Returns <CODE>true</CODE> if the character can split a line.</summary>
-        /// <remarks>
-        /// Returns <CODE>true</CODE> if the character can split a line. The splitting implementation
-        /// is free to look ahead or look behind characters to make a decision.
-        /// </remarks>
+        /// <summary>The splitting implementation is free to look ahead or look behind characters to make a decision.</summary>
         /// <param name="glyphPos">
         /// the position of
         /// <see cref="iText.IO.Font.Otf.Glyph"/>
@@ -58,6 +54,7 @@ namespace iText.Layout.Splitting {
         /// <see cref="iText.IO.Font.Otf.GlyphLine"/>
         /// </param>
         /// <param name="text">an array of unicode char codes which represent current text</param>
+        /// <returns>true if the character can split a line.</returns>
         bool IsSplitCharacter(GlyphLine text, int glyphPos);
     }
 }

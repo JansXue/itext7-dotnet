@@ -14,6 +14,7 @@ The **iText 7 Core/Community** release contains:
 - ```sign.dll```: use this if you need support for digital signatures
 - ```styled-xml-parser.dll```: use this if you need support for SVG or html2pdf
 - ```svg.dll```: SVG support
+- ```commons.dll```: commons module
 
 The **iText 7 Community** source code is hosted on [Github][github], where you can also [download the latest releases][latest].
 
@@ -57,6 +58,6 @@ Contact [sales] for more info.
 [nuget]: https://www.nuget.org/packages/itext7
 [sales]: https://itextpdf.com/sales
 [gratis]: https://en.wikipedia.org/wiki/Gratis_versus_libre
-[rups]: https://github.com/itext/rups
+[rups]: https://github.com/itext/i7j-rups
 [pdfhtml]: https://github.com/itext/i7n-pdfhtml
 [pdfsweep]: https://github.com/itext/i7n-pdfsweep

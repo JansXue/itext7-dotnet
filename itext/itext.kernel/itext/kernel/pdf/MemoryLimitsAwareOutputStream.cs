@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,6 +44,7 @@ using System;
 using System.IO;
 using iText.IO.Util;
 using iText.Kernel;
+using iText.Kernel.Exceptions;
 
 namespace iText.Kernel.Pdf {
     /// <summary>This class implements an output stream which can be used for memory limits aware decompression of pdf streams.
@@ -77,7 +78,6 @@ namespace iText.Kernel.Pdf {
         /// the specified size, in bytes.
         /// </summary>
         /// <param name="size">the initial size.</param>
-        /// <exception cref="System.ArgumentException">if size is negative.</exception>
         public MemoryLimitsAwareOutputStream(int size)
             : base(size) {
         }
@@ -101,17 +101,20 @@ namespace iText.Kernel.Pdf {
 
         /// <summary><inheritDoc/></summary>
         public override void Write(byte[] b, int off, int len) {
+            // NOTE: in case this method is updated, the ManualCompressionTest should be run!
             if ((off < 0) || (off > b.Length) || (len < 0) || ((off + len) - b.Length > 0)) {
                 throw new IndexOutOfRangeException();
             }
             int minCapacity = (int) this.Position + len;
             if (minCapacity < 0) {
                 // overflow
-                throw new MemoryLimitsAwareException(PdfException.DuringDecompressionSingleStreamOccupiedMoreThanMaxIntegerValue
+                throw new MemoryLimitsAwareException(
+                    KernelExceptionMessageConstant.DURING_DECOMPRESSION_SINGLE_STREAM_OCCUPIED_MORE_THAN_MAX_INTEGER_VALUE
                     );
             }
             if (minCapacity > maxStreamSize) {
-                throw new MemoryLimitsAwareException(PdfException.DuringDecompressionSingleStreamOccupiedMoreMemoryThanAllowed
+                throw new MemoryLimitsAwareException(
+                    KernelExceptionMessageConstant.DURING_DECOMPRESSION_SINGLE_STREAM_OCCUPIED_MORE_MEMORY_THAN_ALLOWED
                     );
             }
             // calculate new capacity

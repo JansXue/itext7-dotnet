@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -40,18 +40,19 @@ source product.
 For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
+using System;
 using iText.Svg.Exceptions;
+using iText.Test;
 
 namespace iText.Svg.Renderers.Factories {
-    public class DefaultSvgNodeRendererFactoryTest {
+    [NUnit.Framework.Category("UnitTest")]
+    public class DefaultSvgNodeRendererFactoryTest : ExtendedITextTest {
         [NUnit.Framework.Test]
         public virtual void CreateSvgNodeRenderer() {
-            NUnit.Framework.Assert.That(() =>  {
-                ISvgNodeRendererFactory nodeRendererFactory = new DefaultSvgNodeRendererFactory(null);
-                nodeRendererFactory.CreateSvgNodeRendererForTag(null, null);
-            }
-            , NUnit.Framework.Throws.InstanceOf<SvgProcessingException>().With.Message.EqualTo(SvgLogMessageConstant.TAGPARAMETERNULL))
-;
+            ISvgNodeRendererFactory nodeRendererFactory = new DefaultSvgNodeRendererFactory();
+            Exception e = NUnit.Framework.Assert.Catch(typeof(SvgProcessingException), () => nodeRendererFactory.CreateSvgNodeRendererForTag
+                (null, null));
+            NUnit.Framework.Assert.AreEqual(SvgExceptionMessageConstant.TAG_PARAMETER_NULL, e.Message);
         }
     }
 }

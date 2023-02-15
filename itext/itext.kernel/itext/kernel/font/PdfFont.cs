@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,20 +43,23 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using System.Text;
 using iText.IO.Font;
 using iText.IO.Font.Otf;
-using iText.IO.Util;
-using iText.Kernel;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf;
 
 namespace iText.Kernel.Font {
     public abstract class PdfFont : PdfObjectWrapper<PdfDictionary> {
+        /// <summary>The upper bound value for char code.</summary>
+        /// <remarks>
+        /// The upper bound value for char code. As for simple fonts char codes are a single byte values,
+        /// it may vary from 0 to 255.
+        /// </remarks>
+        public const int SIMPLE_FONT_MAX_CHAR_CODE_VALUE = 255;
+
         protected internal FontProgram fontProgram;
 
         protected internal static readonly byte[] EMPTY_BYTES = new byte[0];
-
-        protected internal static readonly double[] DEFAULT_FONT_MATRIX = new double[] { 0.001, 0, 0, 0.001, 0, 0 };
 
         protected internal IDictionary<int, Glyph> notdefGlyphs = new Dictionary<int, Glyph>();
 
@@ -88,8 +91,7 @@ namespace iText.Kernel.Font {
         /// 
         /// <see cref="iText.IO.Font.Otf.Glyph"/>
         /// if it exists or .NOTDEF if supported, otherwise
-        /// <see langword="null"/>
-        /// .
+        /// <see langword="null"/>.
         /// </returns>
         public abstract Glyph GetGlyph(int unicode);
 
@@ -155,18 +157,37 @@ namespace iText.Kernel.Font {
         public abstract String Decode(PdfString content);
 
         /// <summary>
-        /// Decodes a given
-        /// <see cref="iText.Kernel.Pdf.PdfString"/>
-        /// containing encoded string (e.g. from content stream) into a
+        /// Decodes sequence of character codes (e.g. from content stream) into a
         /// <see cref="iText.IO.Font.Otf.GlyphLine"/>
         /// </summary>
-        /// <param name="content">the encoded string</param>
+        /// <param name="characterCodes">
+        /// the string which is interpreted as a sequence of character codes. Note, that
+        /// <see cref="iText.Kernel.Pdf.PdfString"/>
+        /// acts as a storage for char code values specific to given font, therefore
+        /// individual character codes must not be interpreted as code units of the UTF-16 encoding
+        /// </param>
         /// <returns>
         /// the
         /// <see cref="iText.IO.Font.Otf.GlyphLine"/>
         /// containing the glyphs encoded by the passed string
         /// </returns>
-        public abstract GlyphLine DecodeIntoGlyphLine(PdfString content);
+        public abstract GlyphLine DecodeIntoGlyphLine(PdfString characterCodes);
+
+        /// <summary>
+        /// Decodes sequence of character codes (e.g. from content stream) to sequence of glyphs
+        /// and appends them to the passed list.
+        /// </summary>
+        /// <param name="list">the list to the end of which decoded glyphs are to be added</param>
+        /// <param name="characterCodes">
+        /// the string which is interpreted as a sequence of character codes. Note, that
+        /// <see cref="iText.Kernel.Pdf.PdfString"/>
+        /// acts as a storage for char code values specific to given font, therefore
+        /// individual character codes must not be interpreted as code units of the UTF-16 encoding
+        /// </param>
+        /// <returns>true if all codes where successfully decoded, false otherwise</returns>
+        public virtual bool AppendDecodedCodesToGlyphsList(IList<Glyph> list, PdfString characterCodes) {
+            return false;
+        }
 
         public abstract float GetContentWidth(PdfString content);
 
@@ -175,10 +196,6 @@ namespace iText.Kernel.Font {
         public abstract void WriteText(GlyphLine text, int from, int to, PdfOutputStream stream);
 
         public abstract void WriteText(String text, PdfOutputStream stream);
-
-        public virtual double[] GetFontMatrix() {
-            return DEFAULT_FONT_MATRIX;
-        }
 
         /// <summary>Returns the width of a certain character of this font in 1000 normalized units.</summary>
         /// <param name="unicode">a certain character.</param>
@@ -193,7 +210,7 @@ namespace iText.Kernel.Font {
         /// <param name="fontSize">the font size.</param>
         /// <returns>a width in points.</returns>
         public virtual float GetWidth(int unicode, float fontSize) {
-            return GetWidth(unicode) * fontSize / FontProgram.UNITS_NORMALIZATION;
+            return FontProgram.ConvertTextSpaceToGlyphSpace(GetWidth(unicode) * fontSize);
         }
 
         /// <summary>Returns the width of a string of this font in 1000 normalized units.</summary>
@@ -231,15 +248,20 @@ namespace iText.Kernel.Font {
         /// <param name="fontSize">the font size</param>
         /// <returns>the width in points</returns>
         public virtual float GetWidth(String text, float fontSize) {
-            return GetWidth(text) * fontSize / FontProgram.UNITS_NORMALIZATION;
+            return FontProgram.ConvertTextSpaceToGlyphSpace(GetWidth(text) * fontSize);
         }
 
         /// <summary>
         /// Gets the descent of a
         /// <c>String</c>
+        /// in points.
+        /// </summary>
+        /// <remarks>
+        /// Gets the descent of a
+        /// <c>String</c>
         /// in points. The descent will always be
         /// less than or equal to zero even if all the characters have an higher descent.
-        /// </summary>
+        /// </remarks>
         /// <param name="text">
         /// the
         /// <c>String</c>
@@ -271,7 +293,7 @@ namespace iText.Kernel.Font {
                     }
                 }
             }
-            return (int)(min * fontSize / FontProgram.UNITS_NORMALIZATION);
+            return (int)FontProgram.ConvertTextSpaceToGlyphSpace(min * fontSize);
         }
 
         /// <summary>Gets the descent of a char code in points.</summary>
@@ -297,15 +319,20 @@ namespace iText.Kernel.Font {
                     min = GetFontProgram().GetFontMetrics().GetTypoDescender();
                 }
             }
-            return (int)(min * fontSize / FontProgram.UNITS_NORMALIZATION);
+            return (int)FontProgram.ConvertTextSpaceToGlyphSpace(min * fontSize);
         }
 
         /// <summary>
         /// Gets the ascent of a
         /// <c>String</c>
+        /// in points.
+        /// </summary>
+        /// <remarks>
+        /// Gets the ascent of a
+        /// <c>String</c>
         /// in points. The ascent will always be
         /// greater than or equal to zero even if all the characters have a lower ascent.
-        /// </summary>
+        /// </remarks>
         /// <param name="text">
         /// the
         /// <c>String</c>
@@ -337,7 +364,7 @@ namespace iText.Kernel.Font {
                     }
                 }
             }
-            return (int)(max * fontSize / FontProgram.UNITS_NORMALIZATION);
+            return (int)FontProgram.ConvertTextSpaceToGlyphSpace(max * fontSize);
         }
 
         /// <summary>Gets the ascent of a char code in normalized 1000 units.</summary>
@@ -363,7 +390,7 @@ namespace iText.Kernel.Font {
                     max = GetFontProgram().GetFontMetrics().GetTypoAscender();
                 }
             }
-            return (int)(max * fontSize / FontProgram.UNITS_NORMALIZATION);
+            return (int)FontProgram.ConvertTextSpaceToGlyphSpace(max * fontSize);
         }
 
         public virtual FontProgram GetFontProgram() {
@@ -378,7 +405,7 @@ namespace iText.Kernel.Font {
         /// Indicates if all the glyphs and widths for that particular
         /// encoding should be included in the document.
         /// </summary>
-        /// <returns><CODE>false</CODE> to include all the glyphs and widths.</returns>
+        /// <returns><c>false</c> to include all the glyphs and widths.</returns>
         public virtual bool IsSubset() {
             return subset;
         }
@@ -389,8 +416,10 @@ namespace iText.Kernel.Font {
         /// </summary>
         /// <remarks>
         /// Indicates if all the glyphs and widths for that particular
-        /// encoding should be included in the document. When set to <CODE>true</CODE>
-        /// only the glyphs used will be included in the font. When set to <CODE>false&lt;/CODE
+        /// encoding should be included in the document. When set to
+        /// <see langword="true"/>
+        /// only the glyphs used will be included in the font. When set to
+        /// <see langword="false"/>
         /// the full font will be included and all subset ranges will be removed.
         /// </remarks>
         /// <param name="subset">new value of property subset</param>
@@ -401,7 +430,7 @@ namespace iText.Kernel.Font {
 
         /// <summary>Adds a character range when subsetting.</summary>
         /// <remarks>
-        /// Adds a character range when subsetting. The range is an <CODE>int</CODE> array
+        /// Adds a character range when subsetting. The range is an <c>int</c> array
         /// where the first element is the start range inclusive and the second element is the
         /// end range inclusive. Several ranges are allowed in the same array.
         /// Note, #setSubset(true) will be called implicitly
@@ -459,8 +488,13 @@ namespace iText.Kernel.Font {
         /// Checks whether the
         /// <see cref="PdfFont"/>
         /// was built with corresponding fontProgram and encoding or CMAP.
-        /// Default value is false unless overridden.
         /// </summary>
+        /// <remarks>
+        /// Checks whether the
+        /// <see cref="PdfFont"/>
+        /// was built with corresponding fontProgram and encoding or CMAP.
+        /// Default value is false unless overridden.
+        /// </remarks>
         /// <param name="fontProgram">a font name or path to a font program</param>
         /// <param name="encoding">an encoding or CMAP</param>
         /// <returns>true, if the PdfFont was built with the fontProgram and encoding. Otherwise false.</returns>
@@ -477,12 +511,17 @@ namespace iText.Kernel.Font {
         /// <c>PdfObject</c>
         /// behind this wrapper, you have to ensure
         /// that this object is added to the document, i.e. it has an indirect reference.
+        /// </summary>
+        /// <remarks>
+        /// To manually flush a
+        /// <c>PdfObject</c>
+        /// behind this wrapper, you have to ensure
+        /// that this object is added to the document, i.e. it has an indirect reference.
         /// Basically this means that before flushing you need to explicitly call
-        /// <see cref="iText.Kernel.Pdf.PdfObjectWrapper{T}.MakeIndirect(iText.Kernel.Pdf.PdfDocument)"/>
-        /// .
+        /// <see cref="iText.Kernel.Pdf.PdfObjectWrapper{T}.MakeIndirect(iText.Kernel.Pdf.PdfDocument)"/>.
         /// For example: wrapperInstance.makeIndirect(document).flush();
         /// Note that not every wrapper require this, only those that have such warning in documentation.
-        /// </summary>
+        /// </remarks>
         public override void Flush() {
             base.Flush();
         }
@@ -493,18 +532,19 @@ namespace iText.Kernel.Font {
             return true;
         }
 
-        /// <summary>Adds a unique subset prefix to be added to the font name when the font is embedded and subset.</summary>
-        /// <param name="fontName"/>
-        /// <param name="isSubset"/>
-        /// <param name="isEmbedded"/>
-        /// <returns>the font name with subset prefix if isSubset and isEmbedded are true.s</returns>
+        /// <summary>Adds a unique subset prefix to be added to the font name when the font is embedded and subsetted.
+        ///     </summary>
+        /// <param name="fontName">the original font name.</param>
+        /// <param name="isSubset">denotes whether font in question is subsetted, i.e. only used symbols are kept in it.
+        ///     </param>
+        /// <param name="isEmbedded">denotes whether font in question is embedded into the PDF document.</param>
+        /// <returns>
+        /// the font name prefixed with subset if isSubset and isEmbedded are true,
+        /// otherwise original font name is returned intact.
+        /// </returns>
         protected internal static String UpdateSubsetPrefix(String fontName, bool isSubset, bool isEmbedded) {
             if (isSubset && isEmbedded) {
-                StringBuilder s = new StringBuilder(fontName.Length + 7);
-                for (int k = 0; k < 6; ++k) {
-                    s.Append((char)(JavaUtil.Random() * 26 + 'A'));
-                }
-                return s.Append('+').Append(fontName).ToString();
+                return FontUtil.AddRandomSubsetPrefixForFontName(fontName);
             }
             return fontName;
         }
@@ -513,8 +553,7 @@ namespace iText.Kernel.Font {
         /// Create
         /// <c>PdfStream</c>
         /// based on
-        /// <paramref name="fontStreamBytes"/>
-        /// .
+        /// <paramref name="fontStreamBytes"/>.
         /// </summary>
         /// <param name="fontStreamBytes">original font data, must be not null.</param>
         /// <param name="fontStreamLengths">
@@ -527,16 +566,9 @@ namespace iText.Kernel.Font {
         /// <see langword="null"/>
         /// , if there is an error reading the font.
         /// </returns>
-        /// <exception cref="iText.Kernel.PdfException">
-        /// Method will throw exception if
-        /// <paramref name="fontStreamBytes"/>
-        /// is
-        /// <see langword="null"/>
-        /// .
-        /// </exception>
         protected internal virtual PdfStream GetPdfFontStream(byte[] fontStreamBytes, int[] fontStreamLengths) {
-            if (fontStreamBytes == null) {
-                throw new PdfException(PdfException.FontEmbeddingIssue);
+            if (fontStreamBytes == null || fontStreamLengths == null) {
+                throw new PdfException(KernelExceptionMessageConstant.FONT_EMBEDDING_ISSUE);
             }
             PdfStream fontStream = new PdfStream(fontStreamBytes);
             MakeObjectIndirect(fontStream);
@@ -546,43 +578,12 @@ namespace iText.Kernel.Font {
             return fontStream;
         }
 
-        [System.ObsoleteAttribute(@"The logic has been moved to iText.IO.Font.TrueTypeFont .")]
-        protected internal static int[] CompactRanges(IList<int[]> ranges) {
-            IList<int[]> simp = new List<int[]>();
-            foreach (int[] range in ranges) {
-                for (int j = 0; j < range.Length; j += 2) {
-                    simp.Add(new int[] { Math.Max(0, Math.Min(range[j], range[j + 1])), Math.Min(0xffff, Math.Max(range[j], range
-                        [j + 1])) });
-                }
-            }
-            for (int k1 = 0; k1 < simp.Count - 1; ++k1) {
-                for (int k2 = k1 + 1; k2 < simp.Count; ++k2) {
-                    int[] r1 = simp[k1];
-                    int[] r2 = simp[k2];
-                    if (r1[0] >= r2[0] && r1[0] <= r2[1] || r1[1] >= r2[0] && r1[0] <= r2[1]) {
-                        r1[0] = Math.Min(r1[0], r2[0]);
-                        r1[1] = Math.Max(r1[1], r2[1]);
-                        simp.JRemoveAt(k2);
-                        --k2;
-                    }
-                }
-            }
-            int[] s = new int[simp.Count * 2];
-            for (int k = 0; k < simp.Count; ++k) {
-                int[] r = simp[k];
-                s[k * 2] = r[0];
-                s[k * 2 + 1] = r[1];
-            }
-            return s;
-        }
-
         /// <summary>Helper method for making an object indirect, if the object already is indirect.</summary>
         /// <remarks>
         /// Helper method for making an object indirect, if the object already is indirect.
         /// Useful for FontDescriptor and FontFile to make possible immediate flushing.
         /// If there is no PdfDocument, mark the object as
-        /// <c>MUST_BE_INDIRECT</c>
-        /// .
+        /// <c>MUST_BE_INDIRECT</c>.
         /// </remarks>
         /// <param name="obj">an object to make indirect.</param>
         /// <returns>

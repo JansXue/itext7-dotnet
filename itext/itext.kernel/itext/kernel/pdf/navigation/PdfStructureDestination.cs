@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -40,9 +40,8 @@ source product.
 For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
-using System;
 using System.Collections.Generic;
-using iText.Kernel;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Tagging;
 
@@ -100,7 +99,7 @@ namespace iText.Kernel.Pdf.Navigation {
                 .Add(right).Add(top).Add(zoom);
         }
 
-        public override PdfObject GetDestinationPage(IDictionary<String, PdfObject> names) {
+        public override PdfObject GetDestinationPage(IPdfNameTreeAccess names) {
             PdfObject firstObj = ((PdfArray)GetPdfObject()).Get(0);
             if (firstObj.IsDictionary()) {
                 PdfStructElem structElem = new PdfStructElem((PdfDictionary)firstObj);
@@ -136,7 +135,8 @@ namespace iText.Kernel.Pdf.Navigation {
 
         private iText.Kernel.Pdf.Navigation.PdfStructureDestination Add(PdfStructElem elem) {
             if (elem.GetPdfObject().GetIndirectReference() == null) {
-                throw new PdfException(PdfException.StructureElementInStructureDestinationShallBeAnIndirectObject);
+                throw new PdfException(KernelExceptionMessageConstant.STRUCTURE_ELEMENT_IN_STRUCTURE_DESTINATION_SHALL_BE_AN_INDIRECT_OBJECT
+                    );
             }
             ((PdfArray)GetPdfObject()).Add(elem.GetPdfObject());
             return this;

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,15 +41,28 @@ source product.
 For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Action;
 using iText.Kernel.Pdf.Navigation;
 
 namespace iText.Kernel.Pdf.Annot {
+    /// <summary>
+    /// A link annotation represents either a hypertext link to a destination elsewhere in the document
+    /// or an
+    /// <see cref="iText.Kernel.Pdf.Action.PdfAction"/>
+    /// to be performed.
+    /// </summary>
+    /// <remarks>
+    /// A link annotation represents either a hypertext link to a destination elsewhere in the document
+    /// or an
+    /// <see cref="iText.Kernel.Pdf.Action.PdfAction"/>
+    /// to be performed. See also ISO-320001 12.5.6.5, "Link Annotations".
+    /// </remarks>
     public class PdfLinkAnnotation : PdfAnnotation {
-        private static readonly ILog logger = LogManager.GetLogger(typeof(iText.Kernel.Pdf.Annot.PdfLinkAnnotation
+        private static readonly ILogger logger = ITextLogManager.GetLogger(typeof(iText.Kernel.Pdf.Annot.PdfLinkAnnotation
             ));
 
         /// <summary>Highlight modes.</summary>
@@ -62,13 +75,34 @@ namespace iText.Kernel.Pdf.Annot {
         public static readonly PdfName Push = PdfName.P;
 
         /// <summary>
-        /// see
-        /// <see cref="PdfAnnotation.MakeAnnotation(iText.Kernel.Pdf.PdfObject)"/>
+        /// Creates a new
+        /// <see cref="PdfLinkAnnotation"/>
+        /// instance based on
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// instance, that represents existing annotation object in the document.
         /// </summary>
+        /// <param name="pdfObject">
+        /// the
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// representing annotation object
+        /// </param>
+        /// <seealso cref="PdfAnnotation.MakeAnnotation(iText.Kernel.Pdf.PdfObject)"/>
         protected internal PdfLinkAnnotation(PdfDictionary pdfObject)
             : base(pdfObject) {
         }
 
+        /// <summary>
+        /// Creates a new
+        /// <see cref="PdfLinkAnnotation"/>
+        /// instance based on
+        /// <see cref="iText.Kernel.Geom.Rectangle"/>
+        /// instance, that define the location of the annotation on the page in default user space units.
+        /// </summary>
+        /// <param name="rect">
+        /// the
+        /// <see cref="iText.Kernel.Geom.Rectangle"/>
+        /// that define the location of the annotation
+        /// </param>
         public PdfLinkAnnotation(Rectangle rect)
             : base(rect) {
         }
@@ -77,26 +111,98 @@ namespace iText.Kernel.Pdf.Annot {
             return PdfName.Link;
         }
 
+        /// <summary>
+        /// Gets the annotation destination as
+        /// <see cref="iText.Kernel.Pdf.PdfObject"/>
+        /// instance.
+        /// </summary>
+        /// <remarks>
+        /// Gets the annotation destination as
+        /// <see cref="iText.Kernel.Pdf.PdfObject"/>
+        /// instance.
+        /// <para />
+        /// Destination shall be displayed when the annotation is activated. See also ISO-320001, Table 173.
+        /// </remarks>
+        /// <returns>
+        /// the annotation destination as
+        /// <see cref="iText.Kernel.Pdf.PdfObject"/>
+        /// instance
+        /// </returns>
         public virtual PdfObject GetDestinationObject() {
             return GetPdfObject().Get(PdfName.Dest);
         }
 
+        /// <summary>
+        /// Sets the annotation destination as
+        /// <see cref="iText.Kernel.Pdf.PdfObject"/>
+        /// instance.
+        /// </summary>
+        /// <remarks>
+        /// Sets the annotation destination as
+        /// <see cref="iText.Kernel.Pdf.PdfObject"/>
+        /// instance.
+        /// <para />
+        /// Destination shall be displayed when the annotation is activated. See also ISO-320001, Table 173.
+        /// </remarks>
+        /// <param name="destination">
+        /// the destination to be set as
+        /// <see cref="iText.Kernel.Pdf.PdfObject"/>
+        /// instance
+        /// </param>
+        /// <returns>
+        /// this
+        /// <see cref="PdfLinkAnnotation"/>
+        /// instance
+        /// </returns>
         public virtual iText.Kernel.Pdf.Annot.PdfLinkAnnotation SetDestination(PdfObject destination) {
             if (GetPdfObject().ContainsKey(PdfName.A)) {
                 GetPdfObject().Remove(PdfName.A);
-                logger.Warn(iText.IO.LogMessageConstant.DESTINATION_NOT_PERMITTED_WHEN_ACTION_IS_SET);
+                logger.LogWarning(iText.IO.Logs.IoLogMessageConstant.DESTINATION_NOT_PERMITTED_WHEN_ACTION_IS_SET);
             }
             if (destination.IsArray() && ((PdfArray)destination).Get(0).IsNumber()) {
-                LogManager.GetLogger(typeof(iText.Kernel.Pdf.Annot.PdfLinkAnnotation)).Warn(iText.IO.LogMessageConstant.INVALID_DESTINATION_TYPE
-                    );
+                ITextLogManager.GetLogger(typeof(iText.Kernel.Pdf.Annot.PdfLinkAnnotation)).LogWarning(iText.IO.Logs.IoLogMessageConstant
+                    .INVALID_DESTINATION_TYPE);
             }
             return (iText.Kernel.Pdf.Annot.PdfLinkAnnotation)Put(PdfName.Dest, destination);
         }
 
+        /// <summary>
+        /// Sets the annotation destination as
+        /// <see cref="iText.Kernel.Pdf.Navigation.PdfDestination"/>
+        /// instance.
+        /// </summary>
+        /// <remarks>
+        /// Sets the annotation destination as
+        /// <see cref="iText.Kernel.Pdf.Navigation.PdfDestination"/>
+        /// instance.
+        /// <para />
+        /// Destination shall be displayed when the annotation is activated. See also ISO-320001, Table 173.
+        /// </remarks>
+        /// <param name="destination">
+        /// the destination to be set as
+        /// <see cref="iText.Kernel.Pdf.Navigation.PdfDestination"/>
+        /// instance
+        /// </param>
+        /// <returns>
+        /// this
+        /// <see cref="PdfLinkAnnotation"/>
+        /// instance
+        /// </returns>
         public virtual iText.Kernel.Pdf.Annot.PdfLinkAnnotation SetDestination(PdfDestination destination) {
             return SetDestination(destination.GetPdfObject());
         }
 
+        /// <summary>Removes the annotation destination.</summary>
+        /// <remarks>
+        /// Removes the annotation destination.
+        /// <para />
+        /// Destination shall be displayed when the annotation is activated. See also ISO-320001, Table 173.
+        /// </remarks>
+        /// <returns>
+        /// this
+        /// <see cref="PdfLinkAnnotation"/>
+        /// instance
+        /// </returns>
         public virtual iText.Kernel.Pdf.Annot.PdfLinkAnnotation RemoveDestination() {
             GetPdfObject().Remove(PdfName.Dest);
             return this;
@@ -111,7 +217,7 @@ namespace iText.Kernel.Pdf.Annot {
         /// <returns>
         /// 
         /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
-        /// which defines the characteristics and behaviour of an action.
+        /// which defines the characteristics and behaviour of an action
         /// </returns>
         public virtual PdfDictionary GetAction() {
             return GetPdfObject().GetAsDictionary(PdfName.A);
@@ -126,12 +232,12 @@ namespace iText.Kernel.Pdf.Annot {
         /// <param name="action">
         /// 
         /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
-        /// that represents action to set to this annotation.
+        /// that represents action to set to this annotation
         /// </param>
         /// <returns>
         /// this
         /// <see cref="PdfLinkAnnotation"/>
-        /// instance.
+        /// instance
         /// </returns>
         public virtual iText.Kernel.Pdf.Annot.PdfLinkAnnotation SetAction(PdfDictionary action) {
             return (iText.Kernel.Pdf.Annot.PdfLinkAnnotation)Put(PdfName.A, action);
@@ -145,42 +251,130 @@ namespace iText.Kernel.Pdf.Annot {
         /// <param name="action">
         /// 
         /// <see cref="iText.Kernel.Pdf.Action.PdfAction"/>
-        /// to set to this annotation.
+        /// to set to this annotation
         /// </param>
         /// <returns>
         /// this
         /// <see cref="PdfLinkAnnotation"/>
-        /// instance.
+        /// instance
         /// </returns>
         public virtual iText.Kernel.Pdf.Annot.PdfLinkAnnotation SetAction(PdfAction action) {
             if (GetDestinationObject() != null) {
                 RemoveDestination();
-                logger.Warn(iText.IO.LogMessageConstant.ACTION_WAS_SET_TO_LINK_ANNOTATION_WITH_DESTINATION);
+                logger.LogWarning(iText.IO.Logs.IoLogMessageConstant.ACTION_WAS_SET_TO_LINK_ANNOTATION_WITH_DESTINATION);
             }
             return (iText.Kernel.Pdf.Annot.PdfLinkAnnotation)Put(PdfName.A, action.GetPdfObject());
         }
 
+        /// <summary>
+        /// Removes a
+        /// <see cref="iText.Kernel.Pdf.Action.PdfAction"/>
+        /// from this annotation.
+        /// </summary>
+        /// <returns>
+        /// this
+        /// <see cref="PdfLinkAnnotation"/>
+        /// instance
+        /// </returns>
         public virtual iText.Kernel.Pdf.Annot.PdfLinkAnnotation RemoveAction() {
             GetPdfObject().Remove(PdfName.A);
             return this;
         }
 
+        /// <summary>Gets the annotation highlight mode.</summary>
+        /// <remarks>
+        /// Gets the annotation highlight mode.
+        /// <para />
+        /// The annotation’s highlighting mode is the visual effect that shall be used when the mouse
+        /// button is pressed or held down inside its active area. See also ISO-320001, Table 173.
+        /// </remarks>
+        /// <returns>the name of visual effect</returns>
         public virtual PdfName GetHighlightMode() {
             return GetPdfObject().GetAsName(PdfName.H);
         }
 
+        /// <summary>Sets the annotation highlight mode.</summary>
+        /// <remarks>
+        /// Sets the annotation highlight mode.
+        /// <para />
+        /// The annotation’s highlighting mode is the visual effect that shall be used when the mouse
+        /// button is pressed or held down inside its active area. See also ISO-320001, Table 173.
+        /// </remarks>
+        /// <param name="hlMode">the name of visual effect to be set</param>
+        /// <returns>
+        /// this
+        /// <see cref="PdfLinkAnnotation"/>
+        /// instance
+        /// </returns>
         public virtual iText.Kernel.Pdf.Annot.PdfLinkAnnotation SetHighlightMode(PdfName hlMode) {
             return (iText.Kernel.Pdf.Annot.PdfLinkAnnotation)Put(PdfName.H, hlMode);
         }
 
+        /// <summary>
+        /// Gets the annotation URI action as
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>.
+        /// </summary>
+        /// <remarks>
+        /// Gets the annotation URI action as
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>.
+        /// <para />
+        /// When Web Capture (see ISO-320001 14.10, “Web Capture”) changes an annotation from a URI to a
+        /// go-to action, it uses this entry to save the data from the original URI action so that it can
+        /// be changed back in case the target page for the go-to action is subsequently deleted. See also
+        /// ISO-320001, Table 173.
+        /// </remarks>
+        /// <returns>the URI action as pdfDictionary</returns>
         public virtual PdfDictionary GetUriActionObject() {
             return GetPdfObject().GetAsDictionary(PdfName.PA);
         }
 
+        /// <summary>
+        /// Sets the annotation URI action as
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// instance.
+        /// </summary>
+        /// <remarks>
+        /// Sets the annotation URI action as
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// instance.
+        /// <para />
+        /// When Web Capture (see ISO-320001 14.10, “Web Capture”) changes an annotation from a URI to a
+        /// go-to action, it uses this entry to save the data from the original URI action so that it can
+        /// be changed back in case the target page for the go-to action is subsequently deleted. See also
+        /// ISO-320001, Table 173.
+        /// </remarks>
+        /// <param name="action">the action to be set</param>
+        /// <returns>
+        /// this
+        /// <see cref="PdfLinkAnnotation"/>
+        /// instance
+        /// </returns>
         public virtual iText.Kernel.Pdf.Annot.PdfLinkAnnotation SetUriAction(PdfDictionary action) {
             return (iText.Kernel.Pdf.Annot.PdfLinkAnnotation)Put(PdfName.PA, action);
         }
 
+        /// <summary>
+        /// Sets the annotation URI action as
+        /// <see cref="iText.Kernel.Pdf.Action.PdfAction"/>
+        /// instance.
+        /// </summary>
+        /// <remarks>
+        /// Sets the annotation URI action as
+        /// <see cref="iText.Kernel.Pdf.Action.PdfAction"/>
+        /// instance.
+        /// <para />
+        /// A URI action (see ISO-320001 12.6.4.7, “URI Actions”) formerly associated with this annotation.
+        /// When Web Capture (see ISO-320001 14.10, “Web Capture”) changes an annotation from a URI to a
+        /// go-to action, it uses this entry to save the data from the original URI action so that it can
+        /// be changed back in case the target page for the go-to action is subsequently deleted. See also
+        /// ISO-320001, Table 173.
+        /// </remarks>
+        /// <param name="action">the action to be set</param>
+        /// <returns>
+        /// this
+        /// <see cref="PdfLinkAnnotation"/>
+        /// instance
+        /// </returns>
         public virtual iText.Kernel.Pdf.Annot.PdfLinkAnnotation SetUriAction(PdfAction action) {
             return (iText.Kernel.Pdf.Annot.PdfLinkAnnotation)Put(PdfName.PA, action.GetPdfObject());
         }
@@ -204,9 +398,14 @@ namespace iText.Kernel.Pdf.Annot {
         /// Sets n quadrilaterals in default user space by passing an
         /// <see cref="iText.Kernel.Pdf.PdfArray"/>
         /// of 8 × n numbers.
+        /// </summary>
+        /// <remarks>
+        /// Sets n quadrilaterals in default user space by passing an
+        /// <see cref="iText.Kernel.Pdf.PdfArray"/>
+        /// of 8 × n numbers.
         /// Quadrilaterals are used to define regions inside annotation rectangle
         /// in which the link annotation should be activated.
-        /// </summary>
+        /// </remarks>
         /// <param name="quadPoints">
         /// an
         /// <see cref="iText.Kernel.Pdf.PdfArray"/>
@@ -225,12 +424,18 @@ namespace iText.Kernel.Pdf.Annot {
         /// BS entry specifies a border style dictionary that has more settings than the array specified for the Border
         /// entry (see
         /// <see cref="PdfAnnotation.GetBorder()"/>
+        /// ).
+        /// </summary>
+        /// <remarks>
+        /// BS entry specifies a border style dictionary that has more settings than the array specified for the Border
+        /// entry (see
+        /// <see cref="PdfAnnotation.GetBorder()"/>
         /// ). If an annotation dictionary includes the BS entry, then the Border
         /// entry is ignored. If annotation includes AP (see
         /// <see cref="PdfAnnotation.GetAppearanceDictionary()"/>
         /// ) it takes
         /// precedence over the BS entry. For more info on BS entry see ISO-320001, Table 166.
-        /// </summary>
+        /// </remarks>
         /// <returns>
         /// 
         /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
@@ -244,10 +449,15 @@ namespace iText.Kernel.Pdf.Annot {
         /// Sets border style dictionary that has more settings than the array specified for the Border entry (
         /// <see cref="PdfAnnotation.GetBorder()"/>
         /// ).
+        /// </summary>
+        /// <remarks>
+        /// Sets border style dictionary that has more settings than the array specified for the Border entry (
+        /// <see cref="PdfAnnotation.GetBorder()"/>
+        /// ).
         /// See ISO-320001, Table 166 and
         /// <see cref="GetBorderStyle()"/>
         /// for more info.
-        /// </summary>
+        /// </remarks>
         /// <param name="borderStyle">
         /// a border style dictionary specifying the line width and dash pattern that shall be used
         /// in drawing the annotation’s border.
@@ -264,23 +474,28 @@ namespace iText.Kernel.Pdf.Annot {
         /// <summary>Setter for the annotation's preset border style.</summary>
         /// <remarks>
         /// Setter for the annotation's preset border style. Possible values are
-        /// <ul>
-        /// <li>
+        /// <list type="bullet">
+        /// <item><description>
         /// <see cref="PdfAnnotation.STYLE_SOLID"/>
-        /// - A solid rectangle surrounding the annotation.</li>
-        /// <li>
+        /// - A solid rectangle surrounding the annotation.
+        /// </description></item>
+        /// <item><description>
         /// <see cref="PdfAnnotation.STYLE_DASHED"/>
-        /// - A dashed rectangle surrounding the annotation.</li>
-        /// <li>
+        /// - A dashed rectangle surrounding the annotation.
+        /// </description></item>
+        /// <item><description>
         /// <see cref="PdfAnnotation.STYLE_BEVELED"/>
-        /// - A simulated embossed rectangle that appears to be raised above the surface of the page.</li>
-        /// <li>
+        /// - A simulated embossed rectangle that appears to be raised above the surface of the page.
+        /// </description></item>
+        /// <item><description>
         /// <see cref="PdfAnnotation.STYLE_INSET"/>
-        /// - A simulated engraved rectangle that appears to be recessed below the surface of the page.</li>
-        /// <li>
+        /// - A simulated engraved rectangle that appears to be recessed below the surface of the page.
+        /// </description></item>
+        /// <item><description>
         /// <see cref="PdfAnnotation.STYLE_UNDERLINE"/>
-        /// - A single line along the bottom of the annotation rectangle.</li>
-        /// </ul>
+        /// - A single line along the bottom of the annotation rectangle.
+        /// </description></item>
+        /// </list>
         /// See also ISO-320001, Table 166.
         /// </remarks>
         /// <param name="style">The new value for the annotation's border style.</param>
@@ -299,8 +514,7 @@ namespace iText.Kernel.Pdf.Annot {
         /// Setter for the annotation's preset dashed border style. This property has affect only if
         /// <see cref="PdfAnnotation.STYLE_DASHED"/>
         /// style was used for the annotation border style (see
-        /// <see cref="SetBorderStyle(iText.Kernel.Pdf.PdfName)"/>
-        /// .
+        /// <see cref="SetBorderStyle(iText.Kernel.Pdf.PdfName)"/>.
         /// See ISO-320001 8.4.3.6, "Line Dash Pattern" for the format in which dash pattern shall be specified.
         /// </remarks>
         /// <param name="dashPattern">

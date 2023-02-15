@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,7 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Text;
-using Org.BouncyCastle.X509;
+using iText.Commons.Bouncycastle.Cert;
 using iText.Forms;
 using iText.Forms.Fields;
 using iText.IO.Image;
@@ -61,8 +61,7 @@ namespace iText.Signatures {
     /// <summary>Provides convenient methods to make a signature appearance.</summary>
     /// <remarks>
     /// Provides convenient methods to make a signature appearance. Use it in conjunction with
-    /// <see cref="PdfSigner"/>
-    /// .
+    /// <see cref="PdfSigner"/>.
     /// </remarks>
     public class PdfSignatureAppearance {
         /// <summary>Extra space at the top.</summary>
@@ -120,7 +119,7 @@ namespace iText.Signatures {
         private DateTime signDate;
 
         /// <summary>The signing certificate.</summary>
-        private X509Certificate signCertificate;
+        private IX509Certificate signCertificate;
 
         /// <summary>The image that needs to be used for a visible signature.</summary>
         private ImageData signatureGraphic = null;
@@ -195,6 +194,7 @@ namespace iText.Signatures {
         /// The page number of the signature field which
         /// this signature appearance is associated with.
         /// </param>
+        /// <returns>this instance to support fluent interface</returns>
         public virtual iText.Signatures.PdfSignatureAppearance SetPageNumber(int pageNumber) {
             this.page = pageNumber;
             SetPageRect(pageRect);
@@ -221,6 +221,7 @@ namespace iText.Signatures {
         /// The rectangle that represents the position and
         /// dimension of the signature field in the page.
         /// </param>
+        /// <returns>this instance to support fluent interface</returns>
         public virtual iText.Signatures.PdfSignatureAppearance SetPageRect(Rectangle pageRect) {
             this.pageRect = new Rectangle(pageRect);
             this.rect = new Rectangle(pageRect.GetWidth(), pageRect.GetHeight());
@@ -228,6 +229,12 @@ namespace iText.Signatures {
         }
 
         /// <summary>Get Layer 0 of the appearance.</summary>
+        /// <remarks>
+        /// Get Layer 0 of the appearance.
+        /// <para />
+        /// The size of the layer is determined by the rectangle set via
+        /// <see cref="SetPageRect(iText.Kernel.Geom.Rectangle)"/>
+        /// </remarks>
         /// <returns>layer 0</returns>
         public virtual PdfFormXObject GetLayer0() {
             if (n0 == null) {
@@ -238,6 +245,12 @@ namespace iText.Signatures {
         }
 
         /// <summary>Get Layer 2 of the appearance.</summary>
+        /// <remarks>
+        /// Get Layer 2 of the appearance.
+        /// <para />
+        /// The size of the layer is determined by the rectangle set via
+        /// <see cref="SetPageRect(iText.Kernel.Geom.Rectangle)"/>
+        /// </remarks>
         /// <returns>layer 2</returns>
         public virtual PdfFormXObject GetLayer2() {
             if (n2 == null) {
@@ -255,6 +268,7 @@ namespace iText.Signatures {
 
         /// <summary>Sets the rendering mode for this signature.</summary>
         /// <param name="renderingMode">the rendering mode</param>
+        /// <returns>this instance to support fluent interface</returns>
         public virtual iText.Signatures.PdfSignatureAppearance SetRenderingMode(PdfSignatureAppearance.RenderingMode
              renderingMode) {
             this.renderingMode = renderingMode;
@@ -269,6 +283,7 @@ namespace iText.Signatures {
 
         /// <summary>Sets the signing reason.</summary>
         /// <param name="reason">signing reason.</param>
+        /// <returns>this instance to support fluent interface</returns>
         public virtual iText.Signatures.PdfSignatureAppearance SetReason(String reason) {
             this.reason = reason;
             return this;
@@ -276,6 +291,7 @@ namespace iText.Signatures {
 
         /// <summary>Sets the caption for the signing reason.</summary>
         /// <param name="reasonCaption">A new signing reason caption</param>
+        /// <returns>this instance to support fluent interface</returns>
         public virtual iText.Signatures.PdfSignatureAppearance SetReasonCaption(String reasonCaption) {
             this.reasonCaption = reasonCaption;
             return this;
@@ -289,6 +305,7 @@ namespace iText.Signatures {
 
         /// <summary>Sets the signing location.</summary>
         /// <param name="location">A new signing location</param>
+        /// <returns>this instance to support fluent interface</returns>
         public virtual iText.Signatures.PdfSignatureAppearance SetLocation(String location) {
             this.location = location;
             return this;
@@ -296,6 +313,7 @@ namespace iText.Signatures {
 
         /// <summary>Sets the caption for the signing location.</summary>
         /// <param name="locationCaption">A new signing location caption</param>
+        /// <returns>this instance to support fluent interface</returns>
         public virtual iText.Signatures.PdfSignatureAppearance SetLocationCaption(String locationCaption) {
             this.locationCaption = locationCaption;
             return this;
@@ -309,6 +327,7 @@ namespace iText.Signatures {
 
         /// <summary>Sets the name of the application used to create the signature.</summary>
         /// <param name="signatureCreator">A new name of the application signing a document</param>
+        /// <returns>this instance to support fluent interface</returns>
         public virtual iText.Signatures.PdfSignatureAppearance SetSignatureCreator(String signatureCreator) {
             this.signatureCreator = signatureCreator;
             return this;
@@ -322,6 +341,7 @@ namespace iText.Signatures {
 
         /// <summary>Sets the signing contact.</summary>
         /// <param name="contact">A new signing contact</param>
+        /// <returns>this instance to support fluent interface</returns>
         public virtual iText.Signatures.PdfSignatureAppearance SetContact(String contact) {
             this.contact = contact;
             return this;
@@ -333,14 +353,15 @@ namespace iText.Signatures {
         /// This certificate doesn't take part in the actual signing process.
         /// </remarks>
         /// <param name="signCertificate">the certificate</param>
-        public virtual iText.Signatures.PdfSignatureAppearance SetCertificate(X509Certificate signCertificate) {
+        /// <returns>this instance to support fluent interface</returns>
+        public virtual iText.Signatures.PdfSignatureAppearance SetCertificate(IX509Certificate signCertificate) {
             this.signCertificate = signCertificate;
             return this;
         }
 
         /// <summary>Get the signing certificate.</summary>
         /// <returns>the signing certificate</returns>
-        public virtual X509Certificate GetCertificate() {
+        public virtual IX509Certificate GetCertificate() {
             return signCertificate;
         }
 
@@ -353,13 +374,15 @@ namespace iText.Signatures {
         /// <summary>Sets the Image object to render when Render is set to RenderingMode.GRAPHIC or RenderingMode.GRAPHIC_AND_DESCRIPTION.
         ///     </summary>
         /// <param name="signatureGraphic">image rendered. If null the mode is defaulted to RenderingMode.DESCRIPTION</param>
+        /// <returns>this instance to support fluent interface</returns>
         public virtual iText.Signatures.PdfSignatureAppearance SetSignatureGraphic(ImageData signatureGraphic) {
             this.signatureGraphic = signatureGraphic;
             return this;
         }
 
         /// <summary>Indicates that the existing appearances needs to be reused as layer 0.</summary>
-        /// <param name="reuseAppearance"/>
+        /// <param name="reuseAppearance">is an appearances reusing flag value to set</param>
+        /// <returns>this instance to support fluent interface</returns>
         public virtual iText.Signatures.PdfSignatureAppearance SetReuseAppearance(bool reuseAppearance) {
             this.reuseAppearance = reuseAppearance;
             return this;
@@ -374,6 +397,7 @@ namespace iText.Signatures {
 
         /// <summary>Sets the background image for the layer 2.</summary>
         /// <param name="image">the background image for the layer 2</param>
+        /// <returns>this instance to support fluent interface</returns>
         public virtual iText.Signatures.PdfSignatureAppearance SetImage(ImageData image) {
             this.image = image;
             return this;
@@ -393,6 +417,7 @@ namespace iText.Signatures {
         /// In any of the cases the image will always be centered. It's zero by default.
         /// </remarks>
         /// <param name="imageScale">the scaling to be applied to the background image</param>
+        /// <returns>this instance to support fluent interface</returns>
         public virtual iText.Signatures.PdfSignatureAppearance SetImageScale(float imageScale) {
             this.imageScale = imageScale;
             return this;
@@ -403,6 +428,7 @@ namespace iText.Signatures {
         /// the signature text identifying the signer. If null or not set
         /// a standard description will be used
         /// </param>
+        /// <returns>this instance to support fluent interface</returns>
         public virtual iText.Signatures.PdfSignatureAppearance SetLayer2Text(String text) {
             layer2Text = text;
             return this;
@@ -423,6 +449,7 @@ namespace iText.Signatures {
         /// <summary>Sets the n2 and n4 layer font.</summary>
         /// <remarks>Sets the n2 and n4 layer font. If the font size is zero, auto-fit will be used.</remarks>
         /// <param name="layer2Font">the n2 and n4 font</param>
+        /// <returns>this instance to support fluent interface</returns>
         public virtual iText.Signatures.PdfSignatureAppearance SetLayer2Font(PdfFont layer2Font) {
             this.layer2Font = layer2Font;
             return this;
@@ -430,6 +457,7 @@ namespace iText.Signatures {
 
         /// <summary>Sets the n2 and n4 layer font size.</summary>
         /// <param name="fontSize">font size</param>
+        /// <returns>this instance to support fluent interface</returns>
         public virtual iText.Signatures.PdfSignatureAppearance SetLayer2FontSize(float fontSize) {
             this.layer2FontSize = fontSize;
             return this;
@@ -443,6 +471,7 @@ namespace iText.Signatures {
 
         /// <summary>Sets the n2 and n4 layer font color.</summary>
         /// <param name="color">font color</param>
+        /// <returns>this instance to support fluent interface</returns>
         public virtual iText.Signatures.PdfSignatureAppearance SetLayer2FontColor(Color color) {
             this.layer2FontColor = color;
             return this;
@@ -461,14 +490,9 @@ namespace iText.Signatures {
         }
 
         /// <summary>Constructs appearance (top-level) for a signature.</summary>
-        /// <remarks>
-        /// Constructs appearance (top-level) for a signature.
-        /// <p>
-        /// Consult <A HREF="http://partners.adobe.com/asn/developer/pdfs/tn/PPKAppearances.pdf">PPKAppearances.pdf</A>
-        /// for further details.
-        /// </remarks>
         /// <returns>a top-level signature appearance</returns>
-        /// <exception cref="System.IO.IOException"/>
+        /// <seealso><a href="https://www.adobe.com/content/dam/acom/en/devnet/acrobat/pdfs/ppkappearances.pdf">Adobe Pdf Digital
+        /// * Signature Appearances</a></seealso>
         protected internal virtual PdfFormXObject GetAppearance() {
             PdfCanvas canvas;
             if (IsInvisible()) {
@@ -498,38 +522,15 @@ namespace iText.Signatures {
                     }
                 }
                 Rectangle rotatedRect = RotateRectangle(this.rect, document.GetPage(page).GetRotation());
-                String text;
-                if (layer2Text == null) {
-                    StringBuilder buf = new StringBuilder();
-                    buf.Append("Digitally signed by ");
-                    String name = null;
-                    CertificateInfo.X500Name x500name = CertificateInfo.GetSubjectFields((X509Certificate)signCertificate);
-                    if (x500name != null) {
-                        name = x500name.GetField("CN");
-                        if (name == null) {
-                            name = x500name.GetField("E");
-                        }
-                    }
-                    if (name == null) {
-                        name = "";
-                    }
-                    buf.Append(name).Append('\n');
-                    buf.Append("Date: ").Append(SignUtils.DateToString(signDate));
-                    if (reason != null) {
-                        buf.Append('\n').Append(reasonCaption).Append(reason);
-                    }
-                    if (location != null) {
-                        buf.Append('\n').Append(locationCaption).Append(location);
-                    }
-                    text = buf.ToString();
-                }
-                else {
-                    text = layer2Text;
+                String text = layer2Text;
+                if (null == text) {
+                    text = GenerateLayer2Text();
                 }
                 if (image != null) {
                     if (imageScale == 0) {
                         canvas = new PdfCanvas(n2, document);
-                        canvas.AddImage(image, rotatedRect.GetWidth(), 0, 0, rotatedRect.GetHeight(), 0, 0);
+                        canvas.AddImageWithTransformationMatrix(image, rotatedRect.GetWidth(), 0, 0, rotatedRect.GetHeight(), 0, 0
+                            );
                     }
                     else {
                         float usableScale = imageScale;
@@ -542,7 +543,7 @@ namespace iText.Signatures {
                         float x = (rotatedRect.GetWidth() - w) / 2;
                         float y = (rotatedRect.GetHeight() - h) / 2;
                         canvas = new PdfCanvas(n2, document);
-                        canvas.AddImage(image, w, 0, 0, h, x, y);
+                        canvas.AddImageWithTransformationMatrix(image, w, 0, 0, h, x, y);
                     }
                 }
                 PdfFont font;
@@ -576,20 +577,20 @@ namespace iText.Signatures {
                             throw new InvalidOperationException("A signature image must be present when rendering mode is graphic. Use setSignatureGraphic()"
                                 );
                         }
-                        signatureRect = new Rectangle(MARGIN, MARGIN, rotatedRect.GetWidth() - 2 * MARGIN, rotatedRect.GetHeight()
-                             - 2 * MARGIN);
+                        signatureRect = new Rectangle(MARGIN, MARGIN, rotatedRect.GetWidth() - 2 * MARGIN, 
+                                                // take all space available
+                                                rotatedRect.GetHeight() - 2 * MARGIN);
                     }
                     else {
-                        // take all space available
                         dataRect = new Rectangle(MARGIN, MARGIN, rotatedRect.GetWidth() - 2 * MARGIN, rotatedRect.GetHeight() * (1
                              - TOP_SECTION) - 2 * MARGIN);
                     }
                 }
                 switch (renderingMode) {
                     case PdfSignatureAppearance.RenderingMode.NAME_AND_DESCRIPTION: {
-                        String signedBy = CertificateInfo.GetSubjectFields((X509Certificate)signCertificate).GetField("CN");
+                        String signedBy = CertificateInfo.GetSubjectFields((IX509Certificate)signCertificate).GetField("CN");
                         if (signedBy == null) {
-                            signedBy = CertificateInfo.GetSubjectFields((X509Certificate)signCertificate).GetField("E");
+                            signedBy = CertificateInfo.GetSubjectFields((IX509Certificate)signCertificate).GetField("E");
                         }
                         if (signedBy == null) {
                             signedBy = "";
@@ -619,7 +620,7 @@ namespace iText.Signatures {
                         float x = signatureRect.GetRight() - imgWidth;
                         float y = signatureRect.GetBottom() + (signatureRect.GetHeight() - imgHeight) / 2;
                         canvas = new PdfCanvas(n2, document);
-                        canvas.AddImage(signatureGraphic, imgWidth, 0, 0, imgHeight, x, y);
+                        canvas.AddImageWithTransformationMatrix(signatureGraphic, imgWidth, 0, 0, imgHeight, x, y);
                         break;
                     }
 
@@ -640,7 +641,7 @@ namespace iText.Signatures {
                         float x_1 = signatureRect.GetLeft() + (signatureRect.GetWidth() - imgWidth_1) / 2;
                         float y_1 = signatureRect.GetBottom() + (signatureRect.GetHeight() - imgHeight_1) / 2;
                         canvas = new PdfCanvas(n2, document);
-                        canvas.AddImage(signatureGraphic, imgWidth_1, 0, 0, imgHeight_1, x_1, y_1);
+                        canvas.AddImageWithTransformationMatrix(signatureGraphic, imgWidth_1, 0, 0, imgHeight_1, x_1, y_1);
                         break;
                     }
                 }
@@ -660,7 +661,7 @@ namespace iText.Signatures {
                     if (stream != null) {
                         topLayer.GetResources().AddForm(xobj, new PdfName("n0"));
                         PdfCanvas canvas1 = new PdfCanvas(topLayer, document);
-                        canvas1.AddXObject(xobj, 1, 0, 0, 1, 0, 0);
+                        canvas1.AddXObjectWithTransformationMatrix(xobj, 1, 0, 0, 1, 0, 0);
                     }
                     else {
                         reuseAppearance = false;
@@ -672,17 +673,18 @@ namespace iText.Signatures {
                 if (!reuseAppearance) {
                     topLayer.GetResources().AddForm(n0, new PdfName("n0"));
                     PdfCanvas canvas1 = new PdfCanvas(topLayer, document);
-                    canvas1.AddXObject(n0, 1, 0, 0, 1, 0, 0);
+                    canvas1.AddXObjectWithTransformationMatrix(n0, 1, 0, 0, 1, 0, 0);
                 }
                 topLayer.GetResources().AddForm(n2, new PdfName("n2"));
                 PdfCanvas canvas1_1 = new PdfCanvas(topLayer, document);
-                canvas1_1.AddXObject(n2, 1, 0, 0, 1, 0, 0);
+                canvas1_1.AddXObjectWithTransformationMatrix(n2, 1, 0, 0, 1, 0, 0);
             }
             PdfFormXObject napp = new PdfFormXObject(rotated);
             napp.MakeIndirect(document);
             napp.GetResources().AddForm(topLayer, new PdfName("FRM"));
             canvas = new PdfCanvas(napp, document);
-            canvas.AddXObject(topLayer, 0, 0);
+            canvas.AddXObjectAt(topLayer, topLayer.GetBBox().GetAsNumber(0).FloatValue(), topLayer.GetBBox().GetAsNumber
+                (1).FloatValue());
             return napp;
         }
 
@@ -694,6 +696,7 @@ namespace iText.Signatures {
 
         /// <summary>Sets the signature date.</summary>
         /// <param name="signDate">A new signature date</param>
+        /// <returns>this instance to support fluent interface</returns>
         protected internal virtual iText.Signatures.PdfSignatureAppearance SetSignDate(DateTime signDate) {
             this.signDate = signDate;
             return this;
@@ -701,6 +704,7 @@ namespace iText.Signatures {
 
         /// <summary>Set the field name of the appearance.</summary>
         /// <param name="fieldName">name of the field</param>
+        /// <returns>this instance to support fluent interface</returns>
         protected internal virtual iText.Signatures.PdfSignatureAppearance SetFieldName(String fieldName) {
             this.fieldName = fieldName;
             return this;
@@ -726,7 +730,7 @@ namespace iText.Signatures {
             PdfCanvas canvas;
             canvas = new PdfCanvas(n2, document);
             Paragraph paragraph = new Paragraph(text).SetFont(font).SetMargin(0).SetMultipliedLeading(0.9f);
-            iText.Layout.Canvas layoutCanvas = new iText.Layout.Canvas(canvas, document, dataRect);
+            iText.Layout.Canvas layoutCanvas = new iText.Layout.Canvas(canvas, dataRect);
             paragraph.SetFontColor(layer2FontColor);
             if (layer2FontSize == 0) {
                 ApplyCopyFittingFontSize(paragraph, dataRect, layoutCanvas.GetRenderer());
@@ -758,11 +762,40 @@ namespace iText.Signatures {
             paragraph.SetFontSize(lFontSize);
         }
 
+        internal virtual String GenerateLayer2Text() {
+            StringBuilder buf = new StringBuilder();
+            buf.Append("Digitally signed by ");
+            String name = null;
+            CertificateInfo.X500Name x500name = CertificateInfo.GetSubjectFields((IX509Certificate)signCertificate);
+            if (x500name != null) {
+                name = x500name.GetField("CN");
+                if (name == null) {
+                    name = x500name.GetField("E");
+                }
+            }
+            if (name == null) {
+                name = "";
+            }
+            buf.Append(name).Append('\n');
+            buf.Append("Date: ").Append(SignUtils.DateToString(signDate));
+            if (reason != null) {
+                buf.Append('\n').Append(reasonCaption).Append(reason);
+            }
+            if (location != null) {
+                buf.Append('\n').Append(locationCaption).Append(location);
+            }
+            return buf.ToString();
+        }
+
         /// <summary>Signature rendering modes.</summary>
         public enum RenderingMode {
+            /// <summary>The rendering mode is just the description.</summary>
             DESCRIPTION,
+            /// <summary>The rendering mode is the name of the signer and the description.</summary>
             NAME_AND_DESCRIPTION,
+            /// <summary>The rendering mode is an image and the description.</summary>
             GRAPHIC_AND_DESCRIPTION,
+            /// <summary>The rendering mode is just an image.</summary>
             GRAPHIC
         }
     }

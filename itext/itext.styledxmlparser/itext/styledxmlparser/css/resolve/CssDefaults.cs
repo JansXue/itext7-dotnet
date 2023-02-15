@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,8 +42,9 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Common.Logging;
-using iText.IO.Util;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
 using iText.StyledXmlParser.Css;
 
 namespace iText.StyledXmlParser.Css.Resolve {
@@ -61,6 +62,8 @@ namespace iText.StyledXmlParser.Css.Resolve {
             defaultValues.Put(CommonCssConstants.BACKGROUND_COLOR, CommonCssConstants.TRANSPARENT);
             defaultValues.Put(CommonCssConstants.BACKGROUND_IMAGE, CommonCssConstants.NONE);
             defaultValues.Put(CommonCssConstants.BACKGROUND_POSITION, "0% 0%");
+            defaultValues.Put(CommonCssConstants.BACKGROUND_POSITION_X, "0%");
+            defaultValues.Put(CommonCssConstants.BACKGROUND_POSITION_Y, "0%");
             defaultValues.Put(CommonCssConstants.BACKGROUND_REPEAT, CommonCssConstants.REPEAT);
             defaultValues.Put(CommonCssConstants.BACKGROUND_CLIP, CommonCssConstants.BORDER_BOX);
             defaultValues.Put(CommonCssConstants.BACKGROUND_ORIGIN, CommonCssConstants.PADDING_BOX);
@@ -85,12 +88,18 @@ namespace iText.StyledXmlParser.Css.Resolve {
             defaultValues.Put(CommonCssConstants.BORDER_TOP_LEFT_RADIUS, "0");
             defaultValues.Put(CommonCssConstants.BORDER_TOP_RIGHT_RADIUS, "0");
             defaultValues.Put(CommonCssConstants.BOX_SHADOW, CommonCssConstants.NONE);
+            defaultValues.Put(CommonCssConstants.FLEX_BASIS, CommonCssConstants.AUTO);
+            defaultValues.Put(CommonCssConstants.FLEX_DIRECTION, CommonCssConstants.ROW);
+            defaultValues.Put(CommonCssConstants.FLEX_GROW, "0");
+            defaultValues.Put(CommonCssConstants.FLEX_SHRINK, "1");
+            defaultValues.Put(CommonCssConstants.FLEX_WRAP, CommonCssConstants.NOWRAP);
             defaultValues.Put(CommonCssConstants.FLOAT, CommonCssConstants.NONE);
             defaultValues.Put(CommonCssConstants.FONT_FAMILY, "times");
             defaultValues.Put(CommonCssConstants.FONT_SIZE, CommonCssConstants.MEDIUM);
             defaultValues.Put(CommonCssConstants.FONT_STYLE, CommonCssConstants.NORMAL);
             defaultValues.Put(CommonCssConstants.FONT_VARIANT, CommonCssConstants.NORMAL);
             defaultValues.Put(CommonCssConstants.FONT_WEIGHT, CommonCssConstants.NORMAL);
+            defaultValues.Put(CommonCssConstants.HEIGHT, CommonCssConstants.AUTO);
             defaultValues.Put(CommonCssConstants.HYPHENS, CommonCssConstants.MANUAL);
             defaultValues.Put(CommonCssConstants.LINE_HEIGHT, CommonCssConstants.NORMAL);
             defaultValues.Put(CommonCssConstants.LIST_STYLE_TYPE, CommonCssConstants.DISC);
@@ -115,21 +124,27 @@ namespace iText.StyledXmlParser.Css.Resolve {
             defaultValues.Put(CommonCssConstants.QUOTES, "\"\\00ab\" \"\\00bb\"");
             defaultValues.Put(CommonCssConstants.TEXT_ALIGN, CommonCssConstants.START);
             defaultValues.Put(CommonCssConstants.TEXT_DECORATION, CommonCssConstants.NONE);
+            defaultValues.Put(CommonCssConstants.TEXT_DECORATION_LINE, CommonCssConstants.NONE);
+            defaultValues.Put(CommonCssConstants.TEXT_DECORATION_STYLE, CommonCssConstants.SOLID);
+            defaultValues.Put(CommonCssConstants.TEXT_DECORATION_COLOR, CommonCssConstants.CURRENTCOLOR);
             defaultValues.Put(CommonCssConstants.TEXT_TRANSFORM, CommonCssConstants.NONE);
-            defaultValues.Put(CommonCssConstants.TEXT_DECORATION, CommonCssConstants.NONE);
             defaultValues.Put(CommonCssConstants.WHITE_SPACE, CommonCssConstants.NORMAL);
             defaultValues.Put(CommonCssConstants.WIDTH, CommonCssConstants.AUTO);
+            defaultValues.Put(CommonCssConstants.ORPHANS, "2");
+            defaultValues.Put(CommonCssConstants.WIDOWS, "2");
+            defaultValues.Put(CommonCssConstants.JUSTIFY_CONTENT, CommonCssConstants.FLEX_START);
+            defaultValues.Put(CommonCssConstants.ALIGN_ITEMS, CommonCssConstants.STRETCH);
         }
 
-        // TODO not complete
+        // Other css properties default values will be added as needed
         /// <summary>Gets the default value of a property.</summary>
         /// <param name="property">the property</param>
         /// <returns>the default value</returns>
         public static String GetDefaultValue(String property) {
             String defaultVal = defaultValues.Get(property);
             if (defaultVal == null) {
-                ILog logger = LogManager.GetLogger(typeof(CssDefaults));
-                logger.Error(MessageFormatUtil.Format(iText.StyledXmlParser.LogMessageConstant.DEFAULT_VALUE_OF_CSS_PROPERTY_UNKNOWN
+                ILogger logger = ITextLogManager.GetLogger(typeof(CssDefaults));
+                logger.LogError(MessageFormatUtil.Format(iText.StyledXmlParser.Logs.StyledXmlParserLogMessageConstant.DEFAULT_VALUE_OF_CSS_PROPERTY_UNKNOWN
                     , property));
             }
             return defaultVal;

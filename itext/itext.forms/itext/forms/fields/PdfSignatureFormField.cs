@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -60,7 +60,7 @@ namespace iText.Forms.Fields {
             : base(pdfObject) {
         }
 
-        /// <summary>Returns <code>Sig</code>, the form type for signature form fields.</summary>
+        /// <summary>Returns <c>Sig</c>, the form type for signature form fields.</summary>
         /// <returns>
         /// the form type, as a
         /// <see cref="iText.Kernel.Pdf.PdfName"/>
@@ -73,7 +73,8 @@ namespace iText.Forms.Fields {
         /// <param name="value">the signature to be contained in the signature field, or an indirect reference to it</param>
         /// <returns>the edited field</returns>
         public virtual iText.Forms.Fields.PdfSignatureFormField SetValue(PdfObject value) {
-            return (iText.Forms.Fields.PdfSignatureFormField)Put(PdfName.V, value);
+            Put(PdfName.V, value);
+            return this;
         }
 
         /// <summary>

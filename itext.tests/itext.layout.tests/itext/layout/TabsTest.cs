@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,6 +42,7 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
+using iText.Commons.Utils;
 using iText.IO.Image;
 using iText.IO.Util;
 using iText.Kernel.Colors;
@@ -56,6 +57,7 @@ using iText.Layout.Properties;
 using iText.Test;
 
 namespace iText.Layout {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class TabsTest : ExtendedITextTest {
         public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/layout/TabsTest/";
@@ -82,16 +84,14 @@ namespace iText.Layout {
              + "space anchor:\t2123123012 03\tslash anchor:\t202131224\\12\tdot anchor:\t202.32323232323232323223223223223232323232323232323232\n"
              + "space anchor:\t2012 0213133\tslash anchor:\t2024\\21312312\tdot anchor:\t131.292";
 
+        // private static final String text3 = "\t0\n\t11#2.35\n\t813.2134#558914423\n\t3.37761#098\n\t#.715\n\t972#5844.18167\n\t";
         private const String text3 = "\t0\n\t11#2.35\n\t813.2134#558914423\n\t3.37761#098\n\t#.715\n\t972#5844.18167\n\t65#1094.6177##1128\n\t65.7#463\n\t68750.25121\n\t393#19.6#418#31\n\t7#811";
 
-        // private static final String text3 = "\t0\n\t11#2.35\n\t813.2134#558914423\n\t3.37761#098\n\t#.715\n\t972#5844.18167\n\t";
         [NUnit.Framework.OneTimeSetUp]
         public static void BeforeClass() {
             CreateOrClearDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ChunkEndsAfterOrBeforeTabPosition() {
             String outFileName = destinationFolder + "chunkEndsAfterOrBeforeTabPosition.pdf";
@@ -117,8 +117,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void DefaultTabsTest() {
             String outFileName = destinationFolder + "defaultTabTest.pdf";
@@ -139,8 +137,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void SimpleTabStopsTest() {
             String fileName = "simpleTabStopsTest.pdf";
@@ -187,8 +183,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void AnchorTabStopsTest01() {
             String fileName = "anchorTabStopsTest01.pdf";
@@ -213,8 +207,6 @@ namespace iText.Layout {
                 , "diff" + outFileName));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void AnchorTabStopsTest02() {
             String fileName = "anchorTabStopsTest02.pdf";
@@ -236,8 +228,6 @@ namespace iText.Layout {
                 , "diff" + outFileName));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TablesAndTabInsideOfParagraph() {
             String testName = "tablesAndTabInsideOfParagraph.pdf";
@@ -275,8 +265,29 @@ namespace iText.Layout {
                 , testName + "_diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
+        [NUnit.Framework.Test]
+        public virtual void TabPositionAbsoluteValueTest() {
+            String outFileName = destinationFolder + "tabPositionAbsoluteValue.pdf";
+            String cmpFileName = sourceFolder + "cmp_tabPositionAbsoluteValue.pdf";
+            PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outFileName));
+            Document doc = new Document(pdfDoc);
+            doc.Add(new Paragraph("x-coordinate = 100").SetFontColor(ColorConstants.RED).SetFirstLineIndent(100).SetFontSize
+                (8));
+            doc.Add(new Paragraph("x-coordinate = 200").SetFontColor(ColorConstants.GREEN).SetFirstLineIndent(200).SetFontSize
+                (8));
+            doc.Add(new Paragraph("x-coordinate = 300").SetFontColor(ColorConstants.BLUE).SetFirstLineIndent(300).SetFontSize
+                (8));
+            Paragraph p = new Paragraph().Add("Hello, iText!").Add(new Tab()).AddTabStops(new TabStop(100)).Add("Hi, iText!"
+                ).Add(new Tab()).AddTabStops(new TabStop(200)).Add("Hello, iText!").Add(new Tab()).AddTabStops(new TabStop
+                (300)).Add("Hello, iText!");
+            doc.Add(p);
+            float[] positions = new float[] { 100, 200, 300 };
+            DrawTabStopsPositions(positions, doc, 1, 0, 120);
+            doc.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
+                ));
+        }
+
         [NUnit.Framework.Test]
         public virtual void SeveralTabsInRowTest() {
             String fileName = "severalTabsInRowTest.pdf";
@@ -310,8 +321,6 @@ namespace iText.Layout {
                 , "diff" + outFileName));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void OutOfPageBoundsTest() {
             String outFileName = destinationFolder + "outOfPageBoundsTest.pdf";
@@ -362,8 +371,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TabsInParagraphTest01() {
             String outFileName = destinationFolder + "tabsInParagraphTest01.pdf";
@@ -395,8 +402,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TabsAnchorSemicolonTest01() {
             String outFileName = destinationFolder + "tabsAnchorSemicolonTest01.pdf";
@@ -420,8 +425,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TabsAnchorSemicolonTest02() {
             String outFileName = destinationFolder + "tabsAnchorSemicolonTest02.pdf";
@@ -446,8 +449,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TabsAnchorSemicolonTest03() {
             String outFileName = destinationFolder + "tabsAnchorSemicolonTest03.pdf";
@@ -470,8 +471,6 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void FillParagraphWithTabsDifferently() {
             String outFileName = destinationFolder + "fillParagraphWithTabsDifferently.pdf";
@@ -486,12 +485,10 @@ namespace iText.Layout {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.FileNotFoundException"/>
         private Document InitDocument(String outFileName) {
             return InitDocument(outFileName, false);
         }
 
-        /// <exception cref="System.IO.FileNotFoundException"/>
         private Document InitDocument(String outFileName, bool tagged) {
             PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outFileName));
             if (tagged) {
@@ -527,9 +524,9 @@ namespace iText.Layout {
                 tabStops.Add(tabStop);
             }
             p.AddTabStops(tabStops);
-            foreach (String line in iText.IO.Util.StringUtil.Split(text, "\n")) {
-                foreach (String chunk in iText.IO.Util.StringUtil.Split(line, "\t")) {
-                    foreach (String piece in iText.IO.Util.StringUtil.Split(chunk, "#")) {
+            foreach (String line in iText.Commons.Utils.StringUtil.Split(text, "\n")) {
+                foreach (String chunk in iText.Commons.Utils.StringUtil.Split(line, "\t")) {
+                    foreach (String piece in iText.Commons.Utils.StringUtil.Split(chunk, "#")) {
                         if (!String.IsNullOrEmpty(piece)) {
                             p.Add(piece);
                         }

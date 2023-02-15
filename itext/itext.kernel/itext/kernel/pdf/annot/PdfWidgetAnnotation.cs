@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,7 +41,6 @@ source product.
 For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
-using System.Collections.Generic;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Action;
@@ -58,59 +57,24 @@ namespace iText.Kernel.Pdf.Annot {
 
         public PdfWidgetAnnotation(Rectangle rect)
             : base(rect) {
- {
-                widgetEntries.Add(PdfName.Subtype);
-                widgetEntries.Add(PdfName.Type);
-                widgetEntries.Add(PdfName.Rect);
-                widgetEntries.Add(PdfName.Contents);
-                widgetEntries.Add(PdfName.P);
-                widgetEntries.Add(PdfName.NM);
-                widgetEntries.Add(PdfName.M);
-                widgetEntries.Add(PdfName.F);
-                widgetEntries.Add(PdfName.AP);
-                widgetEntries.Add(PdfName.AS);
-                widgetEntries.Add(PdfName.Border);
-                widgetEntries.Add(PdfName.C);
-                widgetEntries.Add(PdfName.StructParent);
-                widgetEntries.Add(PdfName.OC);
-                widgetEntries.Add(PdfName.H);
-                widgetEntries.Add(PdfName.MK);
-                widgetEntries.Add(PdfName.A);
-                widgetEntries.Add(PdfName.AA);
-                widgetEntries.Add(PdfName.BS);
-            }
         }
 
         /// <summary>
-        /// see
-        /// <see cref="PdfAnnotation.MakeAnnotation(iText.Kernel.Pdf.PdfObject)"/>
+        /// Instantiates a new
+        /// <see cref="PdfWidgetAnnotation"/>
+        /// instance based on
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// instance, that represents existing annotation object in the document.
         /// </summary>
+        /// <param name="pdfObject">
+        /// the
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// representing annotation object
+        /// </param>
+        /// <seealso cref="PdfAnnotation.MakeAnnotation(iText.Kernel.Pdf.PdfObject)"/>
         protected internal PdfWidgetAnnotation(PdfDictionary pdfObject)
             : base(pdfObject) {
- {
-                widgetEntries.Add(PdfName.Subtype);
-                widgetEntries.Add(PdfName.Type);
-                widgetEntries.Add(PdfName.Rect);
-                widgetEntries.Add(PdfName.Contents);
-                widgetEntries.Add(PdfName.P);
-                widgetEntries.Add(PdfName.NM);
-                widgetEntries.Add(PdfName.M);
-                widgetEntries.Add(PdfName.F);
-                widgetEntries.Add(PdfName.AP);
-                widgetEntries.Add(PdfName.AS);
-                widgetEntries.Add(PdfName.Border);
-                widgetEntries.Add(PdfName.C);
-                widgetEntries.Add(PdfName.StructParent);
-                widgetEntries.Add(PdfName.OC);
-                widgetEntries.Add(PdfName.H);
-                widgetEntries.Add(PdfName.MK);
-                widgetEntries.Add(PdfName.A);
-                widgetEntries.Add(PdfName.AA);
-                widgetEntries.Add(PdfName.BS);
-            }
         }
-
-        private HashSet<PdfName> widgetEntries = new HashSet<PdfName>();
 
         public override PdfName GetSubtype() {
             return PdfName.Widget;
@@ -123,23 +87,28 @@ namespace iText.Kernel.Pdf.Annot {
         /// <summary>Setter for the annotation's highlighting mode.</summary>
         /// <remarks>
         /// Setter for the annotation's highlighting mode. Possible values are
-        /// <ul>
-        /// <li>
+        /// <list type="bullet">
+        /// <item><description>
         /// <see cref="PdfAnnotation.HIGHLIGHT_NONE"/>
-        /// - No highlighting.</li>
-        /// <li>
+        /// - No highlighting.
+        /// </description></item>
+        /// <item><description>
         /// <see cref="PdfAnnotation.HIGHLIGHT_INVERT"/>
-        /// - Invert the contents of the annotation rectangle.</li>
-        /// <li>
+        /// - Invert the contents of the annotation rectangle.
+        /// </description></item>
+        /// <item><description>
         /// <see cref="PdfAnnotation.HIGHLIGHT_OUTLINE"/>
-        /// - Invert the annotation's border.</li>
-        /// <li>
+        /// - Invert the annotation's border.
+        /// </description></item>
+        /// <item><description>
         /// <see cref="PdfAnnotation.HIGHLIGHT_PUSH"/>
-        /// - Display the annotation?s down appearance, if any.</li>
-        /// <li>
+        /// - Display the annotation?s down appearance, if any.
+        /// </description></item>
+        /// <item><description>
         /// <see cref="PdfAnnotation.HIGHLIGHT_TOGGLE"/>
-        /// - Same as P.</li>
-        /// </ul>
+        /// - Same as P.
+        /// </description></item>
+        /// </list>
         /// </remarks>
         /// <param name="mode">The new value for the annotation's highlighting mode.</param>
         /// <returns>The widget annotation which this method was called on.</returns>
@@ -153,18 +122,14 @@ namespace iText.Kernel.Pdf.Annot {
             return GetPdfObject().GetAsName(PdfName.H);
         }
 
-        /// <summary>This method removes all widget annotation entries from the form field  the given annotation merged with.
-        ///     </summary>
+        /// <summary>Remove widget annotation from AcroForm hierarchy.</summary>
         public virtual void ReleaseFormFieldFromWidgetAnnotation() {
-            PdfDictionary annotDict = GetPdfObject();
-            foreach (PdfName entry in widgetEntries) {
-                annotDict.Remove(entry);
-            }
-            PdfDictionary parent = annotDict.GetAsDictionary(PdfName.Parent);
-            if (parent != null && annotDict.Size() == 1) {
+            PdfDictionary annotationDictionary = GetPdfObject();
+            PdfDictionary parent = annotationDictionary.GetAsDictionary(PdfName.Parent);
+            if (parent != null) {
                 PdfArray kids = parent.GetAsArray(PdfName.Kids);
-                kids.Remove(annotDict);
-                if (kids.Size() == 0) {
+                kids.Remove(annotationDictionary);
+                if (kids.IsEmpty()) {
                     parent.Remove(PdfName.Kids);
                 }
             }
@@ -243,8 +208,7 @@ namespace iText.Kernel.Pdf.Annot {
         /// </remarks>
         /// <returns>
         /// an additional actions
-        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
-        /// .
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>.
         /// </returns>
         /// <seealso cref="GetAction()"/>
         public virtual PdfDictionary GetAdditionalAction() {
@@ -256,9 +220,16 @@ namespace iText.Kernel.Pdf.Annot {
         /// <see cref="iText.Kernel.Pdf.Action.PdfAction"/>
         /// to this annotation which will be performed in response to
         /// the specific trigger event defined by
+        /// <paramref name="key"/>.
+        /// </summary>
+        /// <remarks>
+        /// Sets an additional
+        /// <see cref="iText.Kernel.Pdf.Action.PdfAction"/>
+        /// to this annotation which will be performed in response to
+        /// the specific trigger event defined by
         /// <paramref name="key"/>
         /// . See ISO-320001 12.6.3, "Trigger Events".
-        /// </summary>
+        /// </remarks>
         /// <param name="key">
         /// a
         /// <see cref="iText.Kernel.Pdf.PdfName"/>
@@ -342,10 +313,15 @@ namespace iText.Kernel.Pdf.Annot {
         /// Sets border style dictionary that has more settings than the array specified for the Border entry (
         /// <see cref="PdfAnnotation.GetBorder()"/>
         /// ).
+        /// </summary>
+        /// <remarks>
+        /// Sets border style dictionary that has more settings than the array specified for the Border entry (
+        /// <see cref="PdfAnnotation.GetBorder()"/>
+        /// ).
         /// See ISO-320001, Table 166 and
         /// <see cref="GetBorderStyle()"/>
         /// for more info.
-        /// </summary>
+        /// </remarks>
         /// <param name="borderStyle">
         /// a border style dictionary specifying the line width and dash pattern that shall be used
         /// in drawing the annotation’s border.
@@ -362,23 +338,28 @@ namespace iText.Kernel.Pdf.Annot {
         /// <summary>Setter for the annotation's preset border style.</summary>
         /// <remarks>
         /// Setter for the annotation's preset border style. Possible values are
-        /// <ul>
-        /// <li>
+        /// <list type="bullet">
+        /// <item><description>
         /// <see cref="PdfAnnotation.STYLE_SOLID"/>
-        /// - A solid rectangle surrounding the annotation.</li>
-        /// <li>
+        /// - A solid rectangle surrounding the annotation.
+        /// </description></item>
+        /// <item><description>
         /// <see cref="PdfAnnotation.STYLE_DASHED"/>
-        /// - A dashed rectangle surrounding the annotation.</li>
-        /// <li>
+        /// - A dashed rectangle surrounding the annotation.
+        /// </description></item>
+        /// <item><description>
         /// <see cref="PdfAnnotation.STYLE_BEVELED"/>
-        /// - A simulated embossed rectangle that appears to be raised above the surface of the page.</li>
-        /// <li>
+        /// - A simulated embossed rectangle that appears to be raised above the surface of the page.
+        /// </description></item>
+        /// <item><description>
         /// <see cref="PdfAnnotation.STYLE_INSET"/>
-        /// - A simulated engraved rectangle that appears to be recessed below the surface of the page.</li>
-        /// <li>
+        /// - A simulated engraved rectangle that appears to be recessed below the surface of the page.
+        /// </description></item>
+        /// <item><description>
         /// <see cref="PdfAnnotation.STYLE_UNDERLINE"/>
-        /// - A single line along the bottom of the annotation rectangle.</li>
-        /// </ul>
+        /// - A single line along the bottom of the annotation rectangle.
+        /// </description></item>
+        /// </list>
         /// See also ISO-320001, Table 166.
         /// </remarks>
         /// <param name="style">The new value for the annotation's border style.</param>
@@ -397,8 +378,7 @@ namespace iText.Kernel.Pdf.Annot {
         /// Setter for the annotation's preset dashed border style. This property has affect only if
         /// <see cref="PdfAnnotation.STYLE_DASHED"/>
         /// style was used for the annotation border style (see
-        /// <see cref="SetBorderStyle(iText.Kernel.Pdf.PdfName)"/>
-        /// .
+        /// <see cref="SetBorderStyle(iText.Kernel.Pdf.PdfName)"/>.
         /// See ISO-320001 8.4.3.6, "Line Dash Pattern" for the format in which dash pattern shall be specified.
         /// </remarks>
         /// <param name="dashPattern">

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -47,6 +47,11 @@ namespace iText.Layout.Properties {
     /// <summary>
     /// A specialized class holding configurable properties related to an
     /// <see cref="iText.Layout.Element.IElement"/>
+    /// 's background.
+    /// </summary>
+    /// <remarks>
+    /// A specialized class holding configurable properties related to an
+    /// <see cref="iText.Layout.Element.IElement"/>
     /// 's background. This class is meant to be used as the value for the
     /// <see cref="Property.BACKGROUND"/>
     /// key in an
@@ -54,7 +59,7 @@ namespace iText.Layout.Properties {
     /// . Allows
     /// to define a background color, and positive or negative changes to the
     /// location of the edges of the background coloring.
-    /// </summary>
+    /// </remarks>
     public class Background {
         protected internal TransparentColor transparentColor;
 
@@ -65,6 +70,8 @@ namespace iText.Layout.Properties {
         protected internal float extraTop;
 
         protected internal float extraBottom;
+
+        private BackgroundBox backgroundClip = BackgroundBox.BORDER_BOX;
 
         /// <summary>Creates a background with a specified color.</summary>
         /// <param name="color">the background color</param>
@@ -123,6 +130,18 @@ namespace iText.Layout.Properties {
             this.extraBottom = extraBottom;
         }
 
+        /// <summary>Creates a background with a specified color, opacity and clip value.</summary>
+        /// <param name="color">the background color</param>
+        /// <param name="opacity">
+        /// the opacity of the background color; a float between 0 and 1, where 1 stands for fully opaque
+        /// color and 0 - for fully transparent
+        /// </param>
+        /// <param name="clip">the value to clip the background color</param>
+        public Background(Color color, float opacity, BackgroundBox clip)
+            : this(color, opacity) {
+            this.backgroundClip = clip;
+        }
+
         /// <summary>Gets the background's color.</summary>
         /// <returns>
         /// a
@@ -161,6 +180,12 @@ namespace iText.Layout.Properties {
         /// <returns>a float value</returns>
         public virtual float GetExtraBottom() {
             return extraBottom;
+        }
+
+        /// <summary>Gets background clip value.</summary>
+        /// <returns>background clip value</returns>
+        public virtual BackgroundBox GetBackgroundClip() {
+            return backgroundClip;
         }
     }
 }

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,9 +42,11 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
-using Common.Logging;
-using iText.IO.Util;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
 using iText.StyledXmlParser.Css;
 using iText.StyledXmlParser.Css.Resolve.Shorthand;
 using iText.StyledXmlParser.Css.Util;
@@ -56,28 +58,29 @@ namespace iText.StyledXmlParser.Css.Resolve.Shorthand.Impl {
     /// </summary>
     public class FontShorthandResolver : IShorthandResolver {
         /// <summary>Unsupported shorthand values.</summary>
-        private static readonly ICollection<String> UNSUPPORTED_VALUES_OF_FONT_SHORTHAND = new HashSet<String>(JavaUtil.ArraysAsList
-            (CommonCssConstants.CAPTION, CommonCssConstants.ICON, CommonCssConstants.MENU, CommonCssConstants.MESSAGE_BOX
-            , CommonCssConstants.SMALL_CAPTION, CommonCssConstants.STATUS_BAR));
+        private static readonly ICollection<String> UNSUPPORTED_VALUES_OF_FONT_SHORTHAND = JavaCollectionsUtil.UnmodifiableSet
+            (new HashSet<String>(JavaUtil.ArraysAsList(CommonCssConstants.CAPTION, CommonCssConstants.ICON, CommonCssConstants
+            .MENU, CommonCssConstants.MESSAGE_BOX, CommonCssConstants.SMALL_CAPTION, CommonCssConstants.STATUS_BAR
+            )));
 
         /// <summary>Font weight values.</summary>
-        private static readonly ICollection<String> FONT_WEIGHT_NOT_DEFAULT_VALUES = new HashSet<String>(JavaUtil.ArraysAsList
-            (CommonCssConstants.BOLD, CommonCssConstants.BOLDER, CommonCssConstants.LIGHTER, "100", "200", "300", 
-            "400", "500", "600", "700", "800", "900"));
+        private static readonly ICollection<String> FONT_WEIGHT_NOT_DEFAULT_VALUES = JavaCollectionsUtil.UnmodifiableSet
+            (new HashSet<String>(JavaUtil.ArraysAsList(CommonCssConstants.BOLD, CommonCssConstants.BOLDER, CommonCssConstants
+            .LIGHTER, "100", "200", "300", "400", "500", "600", "700", "800", "900")));
 
         /// <summary>Font size values.</summary>
-        private static readonly ICollection<String> FONT_SIZE_VALUES = new HashSet<String>(JavaUtil.ArraysAsList(CommonCssConstants
-            .MEDIUM, CommonCssConstants.XX_SMALL, CommonCssConstants.X_SMALL, CommonCssConstants.SMALL, CommonCssConstants
-            .LARGE, CommonCssConstants.X_LARGE, CommonCssConstants.XX_LARGE, CommonCssConstants.SMALLER, CommonCssConstants
-            .LARGER));
+        private static readonly ICollection<String> FONT_SIZE_VALUES = JavaCollectionsUtil.UnmodifiableSet(new HashSet
+            <String>(JavaUtil.ArraysAsList(CommonCssConstants.MEDIUM, CommonCssConstants.XX_SMALL, CommonCssConstants
+            .X_SMALL, CommonCssConstants.SMALL, CommonCssConstants.LARGE, CommonCssConstants.X_LARGE, CommonCssConstants
+            .XX_LARGE, CommonCssConstants.SMALLER, CommonCssConstants.LARGER)));
 
         /* (non-Javadoc)
         * @see com.itextpdf.styledxmlparser.css.resolve.shorthand.IShorthandResolver#resolveShorthand(java.lang.String)
         */
         public virtual IList<CssDeclaration> ResolveShorthand(String shorthandExpression) {
             if (UNSUPPORTED_VALUES_OF_FONT_SHORTHAND.Contains(shorthandExpression)) {
-                ILog logger = LogManager.GetLogger(typeof(FontShorthandResolver));
-                logger.Error(MessageFormatUtil.Format("The \"{0}\" value of CSS shorthand property \"font\" is not supported"
+                ILogger logger = ITextLogManager.GetLogger(typeof(FontShorthandResolver));
+                logger.LogError(MessageFormatUtil.Format("The \"{0}\" value of CSS shorthand property \"font\" is not supported"
                     , shorthandExpression));
             }
             if (CommonCssConstants.INITIAL.Equals(shorthandExpression) || CommonCssConstants.INHERIT.Equals(shorthandExpression
@@ -94,8 +97,10 @@ namespace iText.StyledXmlParser.Css.Resolve.Shorthand.Impl {
             String fontSizeValue = null;
             String lineHeightValue = null;
             String fontFamilyValue = null;
-            IList<String> properties = GetFontProperties(iText.IO.Util.StringUtil.ReplaceAll(shorthandExpression, "\\s*,\\s*"
-                , ","));
+            String[] props = iText.Commons.Utils.StringUtil.Split(shorthandExpression, ",");
+            String shExprFixed = String.Join(",", JavaUtil.ArraysToEnumerable(props).Select((str) => str.Trim()).ToList
+                ());
+            IList<String> properties = GetFontProperties(shExprFixed);
             foreach (String value in properties) {
                 int slashSymbolIndex = value.IndexOf('/');
                 if (CommonCssConstants.ITALIC.Equals(value) || CommonCssConstants.OBLIQUE.Equals(value)) {
@@ -115,8 +120,8 @@ namespace iText.StyledXmlParser.Css.Resolve.Shorthand.Impl {
                                 lineHeightValue = value.JSubstring(slashSymbolIndex + 1, value.Length);
                             }
                             else {
-                                if (FONT_SIZE_VALUES.Contains(value) || CssUtils.IsMetricValue(value) || CssUtils.IsNumericValue(value) ||
-                                     CssUtils.IsRelativeValue(value)) {
+                                if (FONT_SIZE_VALUES.Contains(value) || CssTypesValidationUtils.IsMetricValue(value) || CssTypesValidationUtils
+                                    .IsNumber(value) || CssTypesValidationUtils.IsRelativeValue(value)) {
                                     fontSizeValue = value;
                                 }
                                 else {

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -61,14 +61,12 @@ namespace iText.Kernel.Pdf.Annot {
         /// <param name="rect">
         /// the annotation rectangle, defining the location of the annotation on the page
         /// in default user space units. See
-        /// <see cref="PdfAnnotation.SetRectangle(iText.Kernel.Pdf.PdfArray)"/>
-        /// .
+        /// <see cref="PdfAnnotation.SetRectangle(iText.Kernel.Pdf.PdfArray)"/>.
         /// </param>
         /// <param name="line">
         /// an array of four numbers, [x1 y1 x2 y2], specifying the starting and ending coordinates
         /// of the line in default user space. See also
-        /// <see cref="GetLine()"/>
-        /// .
+        /// <see cref="GetLine()"/>.
         /// </param>
         public PdfLineAnnotation(Rectangle rect, float[] line)
             : base(rect) {
@@ -76,11 +74,20 @@ namespace iText.Kernel.Pdf.Annot {
         }
 
         /// <summary>
-        /// see
-        /// <see cref="PdfAnnotation.MakeAnnotation(iText.Kernel.Pdf.PdfObject)"/>
+        /// Instantiates a new
+        /// <see cref="PdfLineAnnotation"/>
+        /// instance based on
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// instance, that represents existing annotation object in the document.
         /// </summary>
-        protected internal PdfLineAnnotation(PdfDictionary pdfDictionary)
-            : base(pdfDictionary) {
+        /// <param name="pdfObject">
+        /// the
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// representing annotation object
+        /// </param>
+        /// <seealso cref="PdfAnnotation.MakeAnnotation(iText.Kernel.Pdf.PdfObject)"/>
+        protected internal PdfLineAnnotation(PdfDictionary pdfObject)
+            : base(pdfObject) {
         }
 
         /// <summary><inheritDoc/></summary>
@@ -131,10 +138,15 @@ namespace iText.Kernel.Pdf.Annot {
         /// Sets border style dictionary that has more settings than the array specified for the Border entry (
         /// <see cref="PdfAnnotation.GetBorder()"/>
         /// ).
+        /// </summary>
+        /// <remarks>
+        /// Sets border style dictionary that has more settings than the array specified for the Border entry (
+        /// <see cref="PdfAnnotation.GetBorder()"/>
+        /// ).
         /// See ISO-320001, Table 166 and
         /// <see cref="GetBorderStyle()"/>
         /// for more info.
-        /// </summary>
+        /// </remarks>
         /// <param name="borderStyle">
         /// a border style dictionary specifying the line width and dash pattern that shall be used
         /// in drawing the annotation’s border.
@@ -151,23 +163,28 @@ namespace iText.Kernel.Pdf.Annot {
         /// <summary>Setter for the annotation's preset border style.</summary>
         /// <remarks>
         /// Setter for the annotation's preset border style. Possible values are
-        /// <ul>
-        /// <li>
+        /// <list type="bullet">
+        /// <item><description>
         /// <see cref="PdfAnnotation.STYLE_SOLID"/>
-        /// - A solid rectangle surrounding the annotation.</li>
-        /// <li>
+        /// - A solid rectangle surrounding the annotation.
+        /// </description></item>
+        /// <item><description>
         /// <see cref="PdfAnnotation.STYLE_DASHED"/>
-        /// - A dashed rectangle surrounding the annotation.</li>
-        /// <li>
+        /// - A dashed rectangle surrounding the annotation.
+        /// </description></item>
+        /// <item><description>
         /// <see cref="PdfAnnotation.STYLE_BEVELED"/>
-        /// - A simulated embossed rectangle that appears to be raised above the surface of the page.</li>
-        /// <li>
+        /// - A simulated embossed rectangle that appears to be raised above the surface of the page.
+        /// </description></item>
+        /// <item><description>
         /// <see cref="PdfAnnotation.STYLE_INSET"/>
-        /// - A simulated engraved rectangle that appears to be recessed below the surface of the page.</li>
-        /// <li>
+        /// - A simulated engraved rectangle that appears to be recessed below the surface of the page.
+        /// </description></item>
+        /// <item><description>
         /// <see cref="PdfAnnotation.STYLE_UNDERLINE"/>
-        /// - A single line along the bottom of the annotation rectangle.</li>
-        /// </ul>
+        /// - A single line along the bottom of the annotation rectangle.
+        /// </description></item>
+        /// </list>
         /// See also ISO-320001, Table 166.
         /// </remarks>
         /// <param name="style">The new value for the annotation's border style.</param>
@@ -186,8 +203,7 @@ namespace iText.Kernel.Pdf.Annot {
         /// Setter for the annotation's preset dashed border style. This property has affect only if
         /// <see cref="PdfAnnotation.STYLE_DASHED"/>
         /// style was used for the annotation border style (see
-        /// <see cref="SetBorderStyle(iText.Kernel.Pdf.PdfName)"/>
-        /// .
+        /// <see cref="SetBorderStyle(iText.Kernel.Pdf.PdfName)"/>.
         /// See ISO-320001 8.4.3.6, "Line Dash Pattern" for the format in which dash pattern shall be specified.
         /// </remarks>
         /// <param name="dashPattern">
@@ -213,8 +229,7 @@ namespace iText.Kernel.Pdf.Annot {
         /// (see
         /// <see cref="GetLine()"/>
         /// . For possible values see
-        /// <see cref="SetLineEndingStyles(iText.Kernel.Pdf.PdfArray)"/>
-        /// .
+        /// <see cref="SetLineEndingStyles(iText.Kernel.Pdf.PdfArray)"/>.
         /// </remarks>
         /// <returns>
         /// An array of two names specifying the line ending styles that is used in drawing the line; or null if line
@@ -234,45 +249,55 @@ namespace iText.Kernel.Pdf.Annot {
         /// (see
         /// <see cref="GetLine()"/>
         /// . Possible values for styles are:
-        /// <ul>
-        /// <li>
+        /// <list type="bullet">
+        /// <item><description>
         /// <see cref="iText.Kernel.Pdf.PdfName.Square"/>
-        /// - A square filled with the annotation's interior color, if any; </li>
-        /// <li>
+        /// - A square filled with the annotation's interior color, if any;
+        /// </description></item>
+        /// <item><description>
         /// <see cref="iText.Kernel.Pdf.PdfName.Circle"/>
-        /// - A circle filled with the annotation's interior color, if any; </li>
-        /// <li>
+        /// - A circle filled with the annotation's interior color, if any;
+        /// </description></item>
+        /// <item><description>
         /// <see cref="iText.Kernel.Pdf.PdfName.Diamond"/>
-        /// - A diamond shape filled with the annotation's interior color, if any; </li>
-        /// <li>
+        /// - A diamond shape filled with the annotation's interior color, if any;
+        /// </description></item>
+        /// <item><description>
         /// <see cref="iText.Kernel.Pdf.PdfName.OpenArrow"/>
-        /// - Two short lines meeting in an acute angle to form an open arrowhead; </li>
-        /// <li>
+        /// - Two short lines meeting in an acute angle to form an open arrowhead;
+        /// </description></item>
+        /// <item><description>
         /// <see cref="iText.Kernel.Pdf.PdfName.ClosedArrow"/>
         /// - Two short lines meeting in an acute angle as in the
         /// <see cref="iText.Kernel.Pdf.PdfName.OpenArrow"/>
         /// style and
-        /// connected by a third line to form a triangular closed arrowhead filled with the annotation's interior color, if any; </li>
-        /// <li>
+        /// connected by a third line to form a triangular closed arrowhead filled with the annotation's interior color, if any;
+        /// </description></item>
+        /// <item><description>
         /// <see cref="iText.Kernel.Pdf.PdfName.None"/>
-        /// - No line ending; </li>
-        /// <li>
+        /// - No line ending;
+        /// </description></item>
+        /// <item><description>
         /// <see cref="iText.Kernel.Pdf.PdfName.Butt"/>
-        /// - A short line at the endpoint perpendicular to the line itself; </li>
-        /// <li>
+        /// - A short line at the endpoint perpendicular to the line itself;
+        /// </description></item>
+        /// <item><description>
         /// <see cref="iText.Kernel.Pdf.PdfName.ROpenArrow"/>
         /// - Two short lines in the reverse direction from
         /// <see cref="iText.Kernel.Pdf.PdfName.OpenArrow"/>
-        /// ; </li>
-        /// <li>
+        /// ;
+        /// </description></item>
+        /// <item><description>
         /// <see cref="iText.Kernel.Pdf.PdfName.RClosedArrow"/>
         /// - A triangular closed arrowhead in the reverse direction from
         /// <see cref="iText.Kernel.Pdf.PdfName.ClosedArrow"/>
-        /// ; </li>
-        /// <li>
+        /// ;
+        /// </description></item>
+        /// <item><description>
         /// <see cref="iText.Kernel.Pdf.PdfName.Slash"/>
-        /// - A short line at the endpoint approximately 30 degrees clockwise from perpendicular to the line itself; </li>
-        /// </ul>
+        /// - A short line at the endpoint approximately 30 degrees clockwise from perpendicular to the line itself;
+        /// </description></item>
+        /// </list>
         /// see also ISO-320001, Table 176 "Line ending styles".
         /// </remarks>
         /// <param name="lineEndingStyles">An array of two names specifying the line ending styles that is used in drawing the line.

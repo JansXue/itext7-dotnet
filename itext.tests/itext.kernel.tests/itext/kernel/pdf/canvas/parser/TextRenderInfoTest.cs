@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,15 +43,15 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.Text;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas.Parser.Data;
 using iText.Kernel.Pdf.Canvas.Parser.Listener;
 using iText.Test;
-using iText.Test.Attributes;
 
 namespace iText.Kernel.Pdf.Canvas.Parser {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class TextRenderInfoTest : ExtendedITextTest {
         private static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/kernel/parser/TextRenderInfoTest/";
@@ -60,7 +60,6 @@ namespace iText.Kernel.Pdf.Canvas.Parser {
 
         public const int FIRST_ELEMENT_INDEX = 0;
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TestCharacterRenderInfos() {
             PdfCanvasProcessor parser = new PdfCanvasProcessor(new TextRenderInfoTest.CharacterPositionEventListener()
@@ -77,9 +76,7 @@ namespace iText.Kernel.Pdf.Canvas.Parser {
         /// Test introduced to exclude a bug related to a Unicode quirk for
         /// Japanese. TextRenderInfo threw an AIOOBE for some characters.
         /// </remarks>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.COULD_NOT_FIND_GLYPH_WITH_CODE, Count = 2)]
         public virtual void TestUnicodeEmptyString() {
             StringBuilder sb = new StringBuilder();
             String inFile = "japanese_text.pdf";
@@ -92,7 +89,6 @@ namespace iText.Kernel.Pdf.Canvas.Parser {
             NUnit.Framework.Assert.AreEqual(origText, result);
         }
 
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void TestType3FontWidth() {
             String inFile = "type3font_text.pdf";

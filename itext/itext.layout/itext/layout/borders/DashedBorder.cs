@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,6 @@ address: sales@itextpdf.com
 */
 using System;
 using iText.Kernel.Colors;
-using iText.Kernel.Geom;
 using iText.Kernel.Pdf.Canvas;
 
 namespace iText.Layout.Borders {
@@ -93,33 +92,8 @@ namespace iText.Layout.Borders {
             if (adjustedGap > dash) {
                 adjustedGap -= dash;
             }
-            float[] startingPoints = GetStartingPointsForBorderSide(x1, y1, x2, y2, defaultSide);
-            x1 = startingPoints[0];
-            y1 = startingPoints[1];
-            x2 = startingPoints[2];
-            y2 = startingPoints[3];
-            canvas.SaveState().SetLineWidth(width).SetStrokeColor(transparentColor.GetColor());
-            transparentColor.ApplyStrokeTransparency(canvas);
-            canvas.SetLineDash(dash, adjustedGap, dash + adjustedGap / 2).MoveTo(x1, y1).LineTo(x2, y2).Stroke().RestoreState
-                ();
-        }
-
-        /// <summary><inheritDoc/></summary>
-        public override void DrawCellBorder(PdfCanvas canvas, float x1, float y1, float x2, float y2, Border.Side 
-            defaultSide) {
-            float initialGap = width * GAP_MODIFIER;
-            float dash = width * DASH_MODIFIER;
-            float dx = x2 - x1;
-            float dy = y2 - y1;
-            double borderLength = Math.Sqrt(dx * dx + dy * dy);
-            float adjustedGap = base.GetDotsGap(borderLength, initialGap + dash);
-            if (adjustedGap > dash) {
-                adjustedGap -= dash;
-            }
-            canvas.SaveState().SetStrokeColor(transparentColor.GetColor());
-            transparentColor.ApplyStrokeTransparency(canvas);
-            canvas.SetLineDash(dash, adjustedGap, dash + adjustedGap / 2).SetLineWidth(width).MoveTo(x1, y1).LineTo(x2
-                , y2).Stroke().RestoreState();
+            new FixedDashedBorder(GetColor(), width, GetOpacity(), dash, adjustedGap, dash + adjustedGap / 2).Draw(canvas
+                , x1, y1, x2, y2, defaultSide, borderWidthBefore, borderWidthAfter);
         }
 
         public override void Draw(PdfCanvas canvas, float x1, float y1, float x2, float y2, float horizontalRadius1
@@ -134,27 +108,25 @@ namespace iText.Layout.Borders {
             if (adjustedGap > dash) {
                 adjustedGap -= dash;
             }
-            canvas.SaveState().SetLineWidth(width).SetStrokeColor(transparentColor.GetColor());
-            transparentColor.ApplyStrokeTransparency(canvas);
-            canvas.SetLineDash(dash, adjustedGap, dash + adjustedGap / 2);
-            Rectangle boundingRectangle = new Rectangle(x1, y1, x2 - x1, y2 - y1);
-            float[] horizontalRadii = new float[] { horizontalRadius1, horizontalRadius2 };
-            float[] verticalRadii = new float[] { verticalRadius1, verticalRadius2 };
-            DrawDiscontinuousBorders(canvas, boundingRectangle, horizontalRadii, verticalRadii, defaultSide, borderWidthBefore
-                , borderWidthAfter);
+            new FixedDashedBorder(GetColor(), width, GetOpacity(), dash, adjustedGap, dash + adjustedGap / 2).Draw(canvas
+                , x1, y1, x2, y2, horizontalRadius1, verticalRadius1, horizontalRadius2, verticalRadius2, defaultSide, 
+                borderWidthBefore, borderWidthAfter);
         }
 
-        /// <summary>Adjusts the size of the gap between dots</summary>
-        /// <param name="distance">
-        /// the
-        /// <see cref="Border">border</see>
-        /// length
-        /// </param>
-        /// <param name="initialGap">the initial size of the gap</param>
-        /// <returns>the adjusted size of the gap</returns>
-        [System.ObsoleteAttribute(@"logic moved to super-class")]
-        protected internal override float GetDotsGap(double distance, float initialGap) {
-            return base.GetDotsGap(distance, initialGap);
+        /// <summary><inheritDoc/></summary>
+        public override void DrawCellBorder(PdfCanvas canvas, float x1, float y1, float x2, float y2, Border.Side 
+            defaultSide) {
+            float initialGap = width * GAP_MODIFIER;
+            float dash = width * DASH_MODIFIER;
+            float dx = x2 - x1;
+            float dy = y2 - y1;
+            double borderLength = Math.Sqrt(dx * dx + dy * dy);
+            float adjustedGap = base.GetDotsGap(borderLength, initialGap + dash);
+            if (adjustedGap > dash) {
+                adjustedGap -= dash;
+            }
+            new FixedDashedBorder(GetColor(), width, GetOpacity(), dash, adjustedGap, dash + adjustedGap / 2).DrawCellBorder
+                (canvas, x1, y1, x2, y2, defaultSide);
         }
     }
 }

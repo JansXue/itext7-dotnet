@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -52,6 +52,7 @@ using iText.Layout.Properties;
 using iText.Test;
 
 namespace iText.Layout.Renderer {
+    [NUnit.Framework.Category("IntegrationTest")]
     public class ImageWidthTest : ExtendedITextTest {
         private const double EPSILON = 0.01;
 
@@ -69,8 +70,6 @@ namespace iText.Layout.Renderer {
             CreateDestinationFolder(destinationFolder);
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ImageWidthTest01() {
             String outFileName = destinationFolder + "imageWidthTest01.pdf";
@@ -113,8 +112,6 @@ namespace iText.Layout.Renderer {
                 , "diff"));
         }
 
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="System.Exception"/>
         [NUnit.Framework.Test]
         public virtual void ImageWidthTest02() {
             PdfImageXObject xObject = new PdfImageXObject(ImageDataFactory.Create(imageFolder + "Desert.jpg"));

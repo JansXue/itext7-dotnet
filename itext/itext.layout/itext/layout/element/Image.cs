@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,13 +42,15 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
 using iText.IO.Image;
-using iText.Kernel;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf.Canvas.Wmf;
 using iText.Kernel.Pdf.Tagging;
 using iText.Kernel.Pdf.Tagutils;
 using iText.Kernel.Pdf.Xobject;
+using iText.Layout.Exceptions;
 using iText.Layout.Layout;
 using iText.Layout.Properties;
 using iText.Layout.Renderer;
@@ -462,14 +464,14 @@ namespace iText.Layout.Element {
             if (HasProperty(Property.AUTO_SCALE_WIDTH) && HasProperty(Property.AUTO_SCALE_HEIGHT) && autoScale && ((bool
                 )this.GetProperty<bool?>(Property.AUTO_SCALE_WIDTH) || (bool)this.GetProperty<bool?>(Property.AUTO_SCALE_HEIGHT
                 ))) {
-                ILog logger = LogManager.GetLogger(typeof(iText.Layout.Element.Image));
-                logger.Warn(iText.IO.LogMessageConstant.IMAGE_HAS_AMBIGUOUS_SCALE);
+                ILogger logger = ITextLogManager.GetLogger(typeof(iText.Layout.Element.Image));
+                logger.LogWarning(iText.IO.Logs.IoLogMessageConstant.IMAGE_HAS_AMBIGUOUS_SCALE);
             }
             SetProperty(Property.AUTO_SCALE, autoScale);
             return this;
         }
 
-        //TODO(DEVSIX-1658):Remove bugged mention
+        //TODO(DEVSIX-1659):Remove bugged mention
         /// <summary>Sets the autoscale property for the height of the image.</summary>
         /// <remarks>
         /// Sets the autoscale property for the height of the image.
@@ -512,8 +514,7 @@ namespace iText.Layout.Element {
         /// side effect that the Element's
         /// <see cref="iText.Layout.Properties.Property.POSITION"/>
         /// is changed to
-        /// <see cref="iText.Layout.Layout.LayoutPosition.FIXED">fixed</see>
-        /// .
+        /// <see cref="iText.Layout.Layout.LayoutPosition.FIXED">fixed</see>.
         /// </remarks>
         /// <param name="left">horizontal position on the page</param>
         /// <param name="bottom">vertical position on the page</param>
@@ -532,8 +533,7 @@ namespace iText.Layout.Element {
         /// page. Also has as a side effect that the Element's
         /// <see cref="iText.Layout.Properties.Property.POSITION"/>
         /// is changed to
-        /// <see cref="iText.Layout.Layout.LayoutPosition.FIXED">fixed</see>
-        /// .
+        /// <see cref="iText.Layout.Layout.LayoutPosition.FIXED">fixed</see>.
         /// </remarks>
         /// <param name="pageNumber">the page where the element must be positioned</param>
         /// <param name="left">horizontal position on the page</param>
@@ -575,8 +575,7 @@ namespace iText.Layout.Element {
 
         /// <summary>
         /// Sets the height property of the image with a
-        /// <see cref="iText.Layout.Properties.UnitValue"/>
-        /// .
+        /// <see cref="iText.Layout.Properties.UnitValue"/>.
         /// </summary>
         /// <param name="height">a value measured in points.</param>
         /// <returns>this image.</returns>
@@ -596,8 +595,7 @@ namespace iText.Layout.Element {
 
         /// <summary>
         /// Sets the max-height property of the image with a
-        /// <see cref="iText.Layout.Properties.UnitValue"/>
-        /// .
+        /// <see cref="iText.Layout.Properties.UnitValue"/>.
         /// </summary>
         /// <param name="maxHeight">a value measured in points.</param>
         /// <returns>this image.</returns>
@@ -617,8 +615,7 @@ namespace iText.Layout.Element {
 
         /// <summary>
         /// Sets the min-height property of the image with a
-        /// <see cref="iText.Layout.Properties.UnitValue"/>
-        /// .
+        /// <see cref="iText.Layout.Properties.UnitValue"/>.
         /// </summary>
         /// <param name="minHeight">a value measured in points.</param>
         /// <returns>this image.</returns>
@@ -638,8 +635,7 @@ namespace iText.Layout.Element {
 
         /// <summary>
         /// Sets the max-width property of the image with a
-        /// <see cref="iText.Layout.Properties.UnitValue"/>
-        /// .
+        /// <see cref="iText.Layout.Properties.UnitValue"/>.
         /// </summary>
         /// <param name="maxWidth">a value measured in points.</param>
         /// <returns>this image.</returns>
@@ -659,8 +655,7 @@ namespace iText.Layout.Element {
 
         /// <summary>
         /// Sets the min-width property of the image with a
-        /// <see cref="iText.Layout.Properties.UnitValue"/>
-        /// .
+        /// <see cref="iText.Layout.Properties.UnitValue"/>.
         /// </summary>
         /// <param name="minWidth">a value measured in points.</param>
         /// <returns>this image.</returns>
@@ -679,8 +674,7 @@ namespace iText.Layout.Element {
 
         /// <summary>
         /// Sets the width property of the image with a
-        /// <see cref="iText.Layout.Properties.UnitValue"/>
-        /// .
+        /// <see cref="iText.Layout.Properties.UnitValue"/>.
         /// </summary>
         /// <param name="width">
         /// a
@@ -714,11 +708,54 @@ namespace iText.Layout.Element {
                 () * (float)this.GetProperty<float?>(Property.VERTICAL_SCALING);
         }
 
+        /// <summary>Sets an object-fit mode for the image.</summary>
+        /// <param name="objectFit">
+        /// is the
+        /// <see cref="iText.Layout.Properties.ObjectFit"/>
+        /// mode
+        /// </param>
+        /// <returns>this image</returns>
+        public virtual iText.Layout.Element.Image SetObjectFit(ObjectFit objectFit) {
+            SetProperty(Property.OBJECT_FIT, objectFit);
+            return this;
+        }
+
+        /// <summary>
+        /// Retrieves the
+        /// <see cref="iText.Layout.Properties.ObjectFit"/>
+        /// mode for the image.
+        /// </summary>
+        /// <returns>
+        /// an object-fit mode for the image if it was set
+        /// and default value
+        /// <see cref="iText.Layout.Properties.ObjectFit.FILL"/>
+        /// otherwise
+        /// </returns>
+        public virtual ObjectFit GetObjectFit() {
+            if (HasProperty(Property.OBJECT_FIT)) {
+                return (ObjectFit)this.GetProperty<ObjectFit?>(Property.OBJECT_FIT);
+            }
+            else {
+                return ObjectFit.FILL;
+            }
+        }
+
         public virtual AccessibilityProperties GetAccessibilityProperties() {
             if (tagProperties == null) {
                 tagProperties = new DefaultAccessibilityProperties(StandardRoles.FIGURE);
             }
             return tagProperties;
+        }
+
+        /// <summary>Give this element a neutral role.</summary>
+        /// <remarks>
+        /// Give this element a neutral role. See also
+        /// <see cref="iText.Kernel.Pdf.Tagutils.AccessibilityProperties.SetRole(System.String)"/>.
+        /// </remarks>
+        /// <returns>this Element</returns>
+        public virtual iText.Layout.Element.Image SetNeutralRole() {
+            this.GetAccessibilityProperties().SetRole(null);
+            return this;
         }
 
         protected internal override IRenderer MakeNewRenderer() {
@@ -727,7 +764,7 @@ namespace iText.Layout.Element {
 
         private static ImageData CheckImageType(ImageData image) {
             if (image is WmfImageData) {
-                throw new PdfException(PdfException.CannotCreateLayoutImageByWmfImage);
+                throw new PdfException(LayoutExceptionMessageConstant.CANNOT_CREATE_LAYOUT_IMAGE_BY_WMF_IMAGE);
             }
             return image;
         }

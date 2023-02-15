@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,15 +45,12 @@ using iText.StyledXmlParser.Node.Impl.Jsoup.Node;
 using iText.Svg.Dummy.Factories;
 using iText.Svg.Dummy.Renderers.Impl;
 using iText.Svg.Renderers.Factories;
+using iText.Test;
 
 namespace iText.Svg.Renderers {
-    public class DefaultSvgNodeRendererFactoryDrawTest {
-        private ISvgNodeRendererFactory fact;
-
-        [NUnit.Framework.SetUp]
-        public virtual void SetUp() {
-            fact = new DefaultSvgNodeRendererFactory(new DummySvgNodeMapper());
-        }
+    [NUnit.Framework.Category("UnitTest")]
+    public class DefaultSvgNodeRendererFactoryDrawTest : ExtendedITextTest {
+        private readonly ISvgNodeRendererFactory fact = new DummySvgNodeFactory();
 
         [NUnit.Framework.Test]
         public virtual void BasicProcessedRendererTest() {

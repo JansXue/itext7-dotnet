@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,25 +43,33 @@ address: sales@itextpdf.com
 */
 using System;
 using System.IO;
-using Common.Logging;
-using Org.BouncyCastle.Math;
-using Org.BouncyCastle.Ocsp;
-using Org.BouncyCastle.X509;
+using Microsoft.Extensions.Logging;
+using iText.Bouncycastleconnector;
+using iText.Commons;
+using iText.Commons.Bouncycastle;
+using iText.Commons.Bouncycastle.Asn1.Ocsp;
+using iText.Commons.Bouncycastle.Cert;
+using iText.Commons.Bouncycastle.Cert.Ocsp;
+using iText.Commons.Bouncycastle.Math;
+using iText.Commons.Utils;
 using iText.IO.Util;
 
 namespace iText.Signatures {
     /// <summary>OcspClient implementation using BouncyCastle.</summary>
     /// <author>Paulo Soarees</author>
     public class OcspClientBouncyCastle : IOcspClient {
+        private static readonly IBouncyCastleFactory BOUNCY_CASTLE_FACTORY = BouncyCastleFactoryCreator.GetFactory
+            ();
+
         /// <summary>The Logger instance.</summary>
-        private static readonly ILog LOGGER = LogManager.GetLogger(typeof(iText.Signatures.OcspClientBouncyCastle)
-            );
+        private static readonly ILogger LOGGER = ITextLogManager.GetLogger(typeof(iText.Signatures.OcspClientBouncyCastle
+            ));
 
         private readonly OCSPVerifier verifier;
 
         /// <summary>
-        /// Create
-        /// <c>OcspClient</c>
+        /// Creates
+        /// <c>OcspClient</c>.
         /// </summary>
         /// <param name="verifier">will be used for response verification.</param>
         /// <seealso cref="OCSPVerifier"/>
@@ -78,61 +86,59 @@ namespace iText.Signatures {
         /// <param name="checkCert">to certificate to check</param>
         /// <param name="rootCert">the parent certificate</param>
         /// <param name="url">to get the verification</param>
-        public virtual BasicOcspResp GetBasicOCSPResp(X509Certificate checkCert, X509Certificate rootCert, String 
-            url) {
+        /// <returns>
+        /// 
+        /// <see cref="iText.Commons.Bouncycastle.Asn1.Ocsp.IBasicOCSPResponse"/>
+        /// an OCSP response wrapper
+        /// </returns>
+        public virtual IBasicOCSPResponse GetBasicOCSPResp(IX509Certificate checkCert, IX509Certificate rootCert, 
+            String url) {
             try {
-                OcspResp ocspResponse = GetOcspResponse(checkCert, rootCert, url);
+                IOCSPResponse ocspResponse = GetOcspResponse(checkCert, rootCert, url);
                 if (ocspResponse == null) {
                     return null;
                 }
-                if (ocspResponse.Status != Org.BouncyCastle.Asn1.Ocsp.OcspResponseStatus.Successful) {
+                if (ocspResponse.GetStatus() != BOUNCY_CASTLE_FACTORY.CreateOCSPResponseStatus().GetSuccessful()) {
                     return null;
                 }
-                BasicOcspResp basicResponse = (BasicOcspResp)ocspResponse.GetResponseObject();
+                IBasicOCSPResponse basicResponse = BOUNCY_CASTLE_FACTORY.CreateBasicOCSPResponse(ocspResponse.GetResponseObject
+                    ());
                 if (verifier != null) {
-                    verifier.IsValidResponse(basicResponse, rootCert);
+                    verifier.IsValidResponse(basicResponse, rootCert, DateTimeUtil.GetCurrentUtcTime());
                 }
                 return basicResponse;
             }
             catch (Exception ex) {
-                LOGGER.Error(ex.Message);
+                LOGGER.LogError(ex.Message);
             }
             return null;
         }
 
-        /// <summary>Gets an encoded byte array with OCSP validation.</summary>
-        /// <remarks>Gets an encoded byte array with OCSP validation. The method should not throw an exception.</remarks>
-        /// <param name="checkCert">to certificate to check</param>
-        /// <param name="rootCert">the parent certificate</param>
-        /// <param name="url">
-        /// to get the verification. It it's null it will be taken
-        /// from the check cert or from other implementation specific source
-        /// </param>
-        /// <returns>a byte array with the validation or null if the validation could not be obtained</returns>
-        public virtual byte[] GetEncoded(X509Certificate checkCert, X509Certificate rootCert, String url) {
+        /// <summary><inheritDoc/></summary>
+        public virtual byte[] GetEncoded(IX509Certificate checkCert, IX509Certificate rootCert, String url) {
             try {
-                BasicOcspResp basicResponse = GetBasicOCSPResp(checkCert, rootCert, url);
+                IBasicOCSPResponse basicResponse = GetBasicOCSPResp(checkCert, rootCert, url);
                 if (basicResponse != null) {
-                    SingleResp[] responses = basicResponse.Responses;
+                    ISingleResp[] responses = basicResponse.GetResponses();
                     if (responses.Length == 1) {
-                        SingleResp resp = responses[0];
-                        Object status = resp.GetCertStatus();
-                        if (status == CertificateStatus.Good) {
+                        ISingleResp resp = responses[0];
+                        ICertificateStatus status = resp.GetCertStatus();
+                        if (Object.Equals(status, BOUNCY_CASTLE_FACTORY.CreateCertificateStatus().GetGood())) {
                             return basicResponse.GetEncoded();
                         }
                         else {
-                            if (status is RevokedStatus) {
-                                throw new System.IO.IOException(iText.IO.LogMessageConstant.OCSP_STATUS_IS_REVOKED);
+                            if (BOUNCY_CASTLE_FACTORY.CreateRevokedStatus(status) == null) {
+                                throw new System.IO.IOException(iText.IO.Logs.IoLogMessageConstant.OCSP_STATUS_IS_UNKNOWN);
                             }
                             else {
-                                throw new System.IO.IOException(iText.IO.LogMessageConstant.OCSP_STATUS_IS_UNKNOWN);
+                                throw new System.IO.IOException(iText.IO.Logs.IoLogMessageConstant.OCSP_STATUS_IS_REVOKED);
                             }
                         }
                     }
                 }
             }
             catch (Exception ex) {
-                LOGGER.Error(ex.Message);
+                LOGGER.LogError(ex.Message);
             }
             return null;
         }
@@ -140,25 +146,34 @@ namespace iText.Signatures {
         /// <summary>Generates an OCSP request using BouncyCastle.</summary>
         /// <param name="issuerCert">certificate of the issues</param>
         /// <param name="serialNumber">serial number</param>
-        /// <returns>an OCSP request</returns>
-        /// <exception cref="Org.BouncyCastle.Ocsp.OcspException"/>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="Org.BouncyCastle.Operator.OperatorException"/>
-        /// <exception cref="Org.BouncyCastle.Security.Certificates.CertificateEncodingException"/>
-        private static OcspReq GenerateOCSPRequest(X509Certificate issuerCert, BigInteger serialNumber) {
+        /// <returns>
+        /// 
+        /// <see cref="iText.Commons.Bouncycastle.Cert.Ocsp.IOCSPReq"/>
+        /// an OCSP request wrapper
+        /// </returns>
+        private static IOCSPReq GenerateOCSPRequest(IX509Certificate issuerCert, IBigInteger serialNumber) {
             //Add provider BC
             // Generate the id for the certificate we are looking for
-            CertificateID id = SignUtils.GenerateCertificateId(issuerCert, serialNumber, Org.BouncyCastle.Ocsp.CertificateID.HashSha1
-                );
+            ICertificateID id = SignUtils.GenerateCertificateId(issuerCert, serialNumber, BOUNCY_CASTLE_FACTORY.CreateCertificateID
+                ().GetHashSha1());
             // basic request generation with nonce
             return SignUtils.GenerateOcspRequestWithNonce(id);
         }
 
-        /// <exception cref="Org.BouncyCastle.Security.GeneralSecurityException"/>
-        /// <exception cref="Org.BouncyCastle.Ocsp.OcspException"/>
-        /// <exception cref="System.IO.IOException"/>
-        /// <exception cref="Org.BouncyCastle.Operator.OperatorException"/>
-        private OcspResp GetOcspResponse(X509Certificate checkCert, X509Certificate rootCert, String url) {
+        /// <summary>Gets an OCSP response object using BouncyCastle.</summary>
+        /// <param name="checkCert">to certificate to check</param>
+        /// <param name="rootCert">the parent certificate</param>
+        /// <param name="url">
+        /// to get the verification. If it's null it will be taken
+        /// from the check cert or from other implementation specific source
+        /// </param>
+        /// <returns>
+        /// 
+        /// <see cref="iText.Commons.Bouncycastle.Asn1.Ocsp.IOCSPResponse"/>
+        /// an OCSP response wrapper
+        /// </returns>
+        internal virtual IOCSPResponse GetOcspResponse(IX509Certificate checkCert, IX509Certificate rootCert, String
+             url) {
             if (checkCert == null || rootCert == null) {
                 return null;
             }
@@ -168,12 +183,12 @@ namespace iText.Signatures {
             if (url == null) {
                 return null;
             }
-            LOGGER.Info("Getting OCSP from " + url);
-            OcspReq request = GenerateOCSPRequest(rootCert, checkCert.SerialNumber);
+            LOGGER.LogInformation("Getting OCSP from " + url);
+            IOCSPReq request = GenerateOCSPRequest(rootCert, checkCert.GetSerialNumber());
             byte[] array = request.GetEncoded();
             Uri urlt = new Uri(url);
             Stream @in = SignUtils.GetHttpResponseForOcspRequest(array, urlt);
-            return new OcspResp(StreamUtil.InputStreamToArray(@in));
+            return BOUNCY_CASTLE_FACTORY.CreateOCSPResponse(StreamUtil.InputStreamToArray(@in));
         }
     }
 }

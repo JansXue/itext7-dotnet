@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,8 +45,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using iText.IO.Util;
-using iText.Kernel;
+using iText.Commons.Utils;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas.Parser;
 using iText.Kernel.Pdf.Canvas.Parser.Data;
@@ -62,6 +62,7 @@ namespace iText.Kernel.Utils {
 
         protected internal String rootTag;
 
+        // key - page dictionary; value - a mapping of mcids to text in them
         protected internal IDictionary<PdfDictionary, IDictionary<int, String>> parsedTags = new Dictionary<PdfDictionary
             , IDictionary<int, String>>();
 
@@ -69,12 +70,10 @@ namespace iText.Kernel.Utils {
         /// Constructs a
         /// <see cref="TaggedPdfReaderTool"/>
         /// via a given
-        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
-        /// .
+        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>.
         /// </summary>
         /// <param name="document">the document to read tag structure from</param>
         public TaggedPdfReaderTool(PdfDocument document) {
-            // key - page dictionary; value - a mapping of mcids to text in them
             this.document = document;
         }
 
@@ -88,7 +87,6 @@ namespace iText.Kernel.Utils {
 
         /// <summary>Converts the current tag structure into an XML file with default encoding (UTF-8).</summary>
         /// <param name="os">the output stream to save XML file to</param>
-        /// <exception cref="System.IO.IOException"/>
         public virtual void ConvertToXml(Stream os) {
             ConvertToXml(os, "UTF-8");
         }
@@ -96,7 +94,6 @@ namespace iText.Kernel.Utils {
         /// <summary>Converts the current tag structure into an XML file with provided encoding.</summary>
         /// <param name="os">the output stream to save XML file to</param>
         /// <param name="charset">the charset of the resultant XML file</param>
-        /// <exception cref="System.IO.IOException"/>
         public virtual void ConvertToXml(Stream os, String charset) {
             @out = new StreamWriter(os, EncodingUtil.GetEncoding(charset));
             if (rootTag != null) {
@@ -105,7 +102,7 @@ namespace iText.Kernel.Utils {
             // get the StructTreeRoot from the document
             PdfStructTreeRoot structTreeRoot = document.GetStructTreeRoot();
             if (structTreeRoot == null) {
-                throw new PdfException(PdfException.DocumentDoesntContainStructTreeRoot);
+                throw new PdfException(KernelExceptionMessageConstant.DOCUMENT_DOES_NOT_CONTAIN_STRUCT_TREE_ROOT);
             }
             // Inspect the child or children of the StructTreeRoot
             InspectKids(structTreeRoot.GetKids());
@@ -147,7 +144,7 @@ namespace iText.Kernel.Utils {
                     PdfString alt = (structElemKid).GetAlt();
                     if (alt != null) {
                         @out.Write("<alt><![CDATA[");
-                        @out.Write(iText.IO.Util.StringUtil.ReplaceAll(alt.GetValue(), "[\\000]*", ""));
+                        @out.Write(iText.Commons.Utils.StringUtil.ReplaceAll(alt.GetValue(), "[\\000]*", ""));
                         @out.Write("]]></alt>" + Environment.NewLine);
                     }
                     InspectKids(structElemKid.GetKids());
@@ -165,7 +162,7 @@ namespace iText.Kernel.Utils {
                 }
             }
             catch (System.IO.IOException e) {
-                throw new iText.IO.IOException(iText.IO.IOException.UnknownIOException, e);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.UnknownIOException, e);
             }
         }
 
@@ -190,7 +187,7 @@ namespace iText.Kernel.Utils {
                     }
                 }
                 catch (System.IO.IOException e) {
-                    throw new iText.IO.IOException(iText.IO.IOException.UnknownIOException, e);
+                    throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.UnknownIOException, e);
                 }
             }
         }
@@ -224,7 +221,7 @@ namespace iText.Kernel.Utils {
                 @out.Write(EscapeXML(tagContent, true));
             }
             catch (System.IO.IOException e) {
-                throw new iText.IO.IOException(iText.IO.IOException.UnknownIOException, e);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.UnknownIOException, e);
             }
         }
 
@@ -259,7 +256,7 @@ namespace iText.Kernel.Utils {
         /// Escapes a string with the appropriated XML codes.
         /// </summary>
         /// <param name="s">the string to be escaped</param>
-        /// <param name="onlyASCII">codes above 127 will always be escaped with &amp;#nn; if <CODE>true</CODE></param>
+        /// <param name="onlyASCII">codes above 127 will always be escaped with &amp;#nn; if <c>true</c></param>
         /// <returns>the escaped string</returns>
         protected internal static String EscapeXML(String s, bool onlyASCII) {
             char[] cc = s.ToCharArray();

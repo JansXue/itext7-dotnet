@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -48,8 +48,7 @@ using System.Text;
 namespace iText.Layout.Hyphenation {
     /// <summary>
     /// An object that iterates over the
-    /// <see cref="TernaryTree"/>
-    /// .
+    /// <see cref="TernaryTree"/>.
     /// </summary>
     internal class TernaryTreeIterator : IEnumerator {
         /// <summary>current node index</summary>
@@ -83,6 +82,11 @@ namespace iText.Layout.Hyphenation {
                 this.child = c;
             }
 
+            /// <summary>Construct item.</summary>
+            /// <param name="i">
+            /// an
+            /// <see cref="Item"/>
+            /// </param>
             public Item(TernaryTreeIterator _enclosing, TernaryTreeIterator.Item i) {
                 this._enclosing = _enclosing;
                 this.parent = i.parent;
@@ -172,9 +176,9 @@ namespace iText.Layout.Hyphenation {
                         res = tt.hi[i.parent];
                         ns.Push(new TernaryTreeIterator.Item(this, i));
                         if (ks.Length > 0) {
+                            // pop
                             ks.Length = ks.Length - 1;
                         }
-                        // pop
                         climb = false;
                         break;
                     }

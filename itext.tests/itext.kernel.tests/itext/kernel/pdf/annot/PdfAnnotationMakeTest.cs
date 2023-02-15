@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,9 +42,11 @@ address: sales@itextpdf.com
 */
 using System.IO;
 using iText.Kernel.Pdf;
+using iText.Test;
 
 namespace iText.Kernel.Pdf.Annot {
-    public class PdfAnnotationMakeTest {
+    [NUnit.Framework.Category("UnitTest")]
+    public class PdfAnnotationMakeTest : ExtendedITextTest {
         [NUnit.Framework.Test]
         public virtual void MakePdfAnnotationTest() {
             PdfDictionary @object = new PdfDictionary();

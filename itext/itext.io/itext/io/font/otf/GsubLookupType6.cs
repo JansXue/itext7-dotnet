@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -47,13 +47,11 @@ using iText.IO.Font.Otf.Lookuptype6;
 namespace iText.IO.Font.Otf {
     /// <summary>LookupType 6: Chaining Contextual Substitution Subtable</summary>
     public class GsubLookupType6 : GsubLookupType5 {
-        /// <exception cref="System.IO.IOException"/>
         protected internal GsubLookupType6(OpenTypeFontTableReader openReader, int lookupFlag, int[] subTableLocations
             )
             : base(openReader, lookupFlag, subTableLocations) {
         }
 
-        /// <exception cref="System.IO.IOException"/>
         protected internal override void ReadSubTableFormat1(int subTableLocation) {
             IDictionary<int, IList<ContextualSubstRule>> substMap = new Dictionary<int, IList<ContextualSubstRule>>();
             int coverageOffset = openReader.rf.ReadUnsignedShort();
@@ -83,7 +81,6 @@ namespace iText.IO.Font.Otf {
             subTables.Add(new SubTableLookup6Format1(openReader, lookupFlag, substMap));
         }
 
-        /// <exception cref="System.IO.IOException"/>
         protected internal override void ReadSubTableFormat2(int subTableLocation) {
             int coverageOffset = openReader.rf.ReadUnsignedShort();
             int backtrackClassDefOffset = openReader.rf.ReadUnsignedShort();
@@ -132,7 +129,6 @@ namespace iText.IO.Font.Otf {
             subTables.Add(t);
         }
 
-        /// <exception cref="System.IO.IOException"/>
         protected internal override void ReadSubTableFormat3(int subTableLocation) {
             int backtrackGlyphCount = openReader.rf.ReadUnsignedShort();
             int[] backtrackCoverageOffsets = openReader.ReadUShortArray(backtrackGlyphCount, subTableLocation);

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,7 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-using iText.Kernel;
+using iText.Barcodes.Exceptions;
 using iText.Kernel.Colors;
 using iText.Kernel.Font;
 using iText.Kernel.Geom;
@@ -51,20 +51,53 @@ using iText.Kernel.Pdf.Canvas;
 
 namespace iText.Barcodes {
     public class BarcodeCodabar : Barcode1D {
-        /// <summary>The index chars to <CODE>BARS</CODE>.</summary>
+        /// <summary>The index chars to <c>BARS</c>.</summary>
         private const String CHARS = "0123456789-$:/.+ABCD";
 
         private const int START_STOP_IDX = 16;
 
         /// <summary>The bars to generate the code.</summary>
-        private static readonly byte[][] BARS = new byte[][] { new byte[] { 0, 0, 0, 0, 0, 1, 1 }, new byte[] { 0, 
-            0, 0, 0, 1, 1, 0 }, new byte[] { 0, 0, 0, 1, 0, 0, 1 }, new byte[] { 1, 1, 0, 0, 0, 0, 0 }, new byte[]
-             { 0, 0, 1, 0, 0, 1, 0 }, new byte[] { 1, 0, 0, 0, 0, 1, 0 }, new byte[] { 0, 1, 0, 0, 0, 0, 1 }, new 
-            byte[] { 0, 1, 0, 0, 1, 0, 0 }, new byte[] { 0, 1, 1, 0, 0, 0, 0 }, new byte[] { 1, 0, 0, 1, 0, 0, 0 }
-            , new byte[] { 0, 0, 0, 1, 1, 0, 0 }, new byte[] { 0, 0, 1, 1, 0, 0, 0 }, new byte[] { 1, 0, 0, 0, 1, 
-            0, 1 }, new byte[] { 1, 0, 1, 0, 0, 0, 1 }, new byte[] { 1, 0, 1, 0, 1, 0, 0 }, new byte[] { 0, 0, 1, 
-            0, 1, 0, 1 }, new byte[] { 0, 0, 1, 1, 0, 1, 0 }, new byte[] { 0, 1, 0, 1, 0, 0, 1 }, new byte[] { 0, 
-            0, 0, 1, 0, 1, 1 }, new byte[] { 0, 0, 0, 1, 1, 1, 0 } };
+        private static readonly byte[][] BARS = new byte[][] { 
+                // 0
+                new byte[] { 0, 0, 0, 0, 0, 1, 1 }, 
+                // 1
+                new byte[] { 0, 0, 0, 0, 1, 1, 0 }, 
+                // 2
+                new byte[] { 0, 0, 0, 1, 0, 0, 1 }, 
+                // 3
+                new byte[] { 1, 1, 0, 0, 0, 0, 0 }, 
+                // 4
+                new byte[] { 0, 0, 1, 0, 0, 1, 0 }, 
+                // 5
+                new byte[] { 1, 0, 0, 0, 0, 1, 0 }, 
+                // 6
+                new byte[] { 0, 1, 0, 0, 0, 0, 1 }, 
+                // 7
+                new byte[] { 0, 1, 0, 0, 1, 0, 0 }, 
+                // 8
+                new byte[] { 0, 1, 1, 0, 0, 0, 0 }, 
+                // 9
+                new byte[] { 1, 0, 0, 1, 0, 0, 0 }, 
+                // -
+                new byte[] { 0, 0, 0, 1, 1, 0, 0 }, 
+                // $
+                new byte[] { 0, 0, 1, 1, 0, 0, 0 }, 
+                // :
+                new byte[] { 1, 0, 0, 0, 1, 0, 1 }, 
+                // /
+                new byte[] { 1, 0, 1, 0, 0, 0, 1 }, 
+                // .
+                new byte[] { 1, 0, 1, 0, 1, 0, 0 }, 
+                // +
+                new byte[] { 0, 0, 1, 0, 1, 0, 1 }, 
+                // a
+                new byte[] { 0, 0, 1, 1, 0, 1, 0 }, 
+                // b
+                new byte[] { 0, 1, 0, 1, 0, 0, 1 }, 
+                // c
+                new byte[] { 0, 0, 0, 1, 0, 1, 1 }, 
+                // d
+                new byte[] { 0, 0, 0, 1, 1, 1, 0 } };
 
         /// <summary>Creates a new BarcodeCodabar.</summary>
         /// <remarks>
@@ -73,8 +106,7 @@ namespace iText.Barcodes {
         /// <see cref="iText.Kernel.Pdf.PdfDocument.GetDefaultFont()"/>
         /// will be implicitly called.
         /// If you want to use this barcode in PDF/A documents, please consider using
-        /// <see cref="BarcodeCodabar(iText.Kernel.Pdf.PdfDocument, iText.Kernel.Font.PdfFont)"/>
-        /// .
+        /// <see cref="BarcodeCodabar(iText.Kernel.Pdf.PdfDocument, iText.Kernel.Font.PdfFont)"/>.
         /// </remarks>
         /// <param name="document">The document to which the barcode will be added</param>
         public BarcodeCodabar(PdfDocument document)
@@ -86,26 +118,6 @@ namespace iText.Barcodes {
         /// <param name="font">The font to use</param>
         public BarcodeCodabar(PdfDocument document, PdfFont font)
             : base(document) {
-            // 0
-            // 1
-            // 2
-            // 3
-            // 4
-            // 5
-            // 6
-            // 7
-            // 8
-            // 9
-            // -
-            // $
-            // :
-            // /
-            // .
-            // +
-            // a
-            // b
-            // c
-            // d
             this.x = 0.8f;
             this.n = 2;
             this.font = font;
@@ -125,19 +137,22 @@ namespace iText.Barcodes {
             text = text.ToUpperInvariant();
             int len = text.Length;
             if (len < 2) {
-                throw new ArgumentException(PdfException.CodabarMustHaveAtLeastStartAndStopCharacter);
+                throw new ArgumentException(BarcodeExceptionMessageConstant.CODABAR_MUST_HAVE_AT_LEAST_START_AND_STOP_CHARACTER
+                    );
             }
             if (CHARS.IndexOf(text[0]) < START_STOP_IDX || CHARS.IndexOf(text[len - 1]) < START_STOP_IDX) {
-                throw new ArgumentException(PdfException.CodabarMustHaveOneAbcdAsStartStopCharacter);
+                throw new ArgumentException(BarcodeExceptionMessageConstant.CODABAR_MUST_HAVE_ONE_ABCD_AS_START_STOP_CHARACTER
+                    );
             }
             byte[] bars = new byte[text.Length * 8 - 1];
             for (int k = 0; k < len; ++k) {
                 int idx = CHARS.IndexOf(text[k]);
                 if (idx >= START_STOP_IDX && k > 0 && k < len - 1) {
-                    throw new ArgumentException(PdfException.InCodabarStartStopCharactersAreOnlyAllowedAtTheExtremes);
+                    throw new ArgumentException(BarcodeExceptionMessageConstant.IN_CODABAR_START_STOP_CHARACTERS_ARE_ONLY_ALLOWED_AT_THE_EXTREMES
+                        );
                 }
                 if (idx < 0) {
-                    throw new ArgumentException(PdfException.IllegalCharacterInCodabarBarcode);
+                    throw new ArgumentException(BarcodeExceptionMessageConstant.ILLEGAL_CHARACTER_IN_CODABAR_BARCODE);
                 }
                 Array.Copy(BARS[idx], 0, bars, k * 8, 7);
             }
@@ -202,44 +217,44 @@ namespace iText.Barcodes {
             return new Rectangle(fullWidth, fullHeight);
         }
 
-        /// <summary>Places the barcode in a <CODE>PdfCanvas</CODE>.</summary>
+        /// <summary>Places the barcode in a <c>PdfCanvas</c>.</summary>
         /// <remarks>
-        /// Places the barcode in a <CODE>PdfCanvas</CODE>. The
+        /// Places the barcode in a <c>PdfCanvas</c>. The
         /// barcode is always placed at coordinates (0, 0). Use the
-        /// translation matrix to move it elsewhere.<p>
+        /// translation matrix to move it elsewhere.<para />
         /// The bars and text are written in the following colors:
         /// <br />
-        /// <TABLE BORDER=1 SUMMARY="barcode properties">
-        /// <TR>
-        /// <TH><P><CODE>barColor</CODE></TH>
-        /// <TH><P><CODE>textColor</CODE></TH>
-        /// <TH><P>Result</TH>
-        /// </TR>
-        /// <TR>
-        /// <TD><P><CODE>null</CODE></TD>
-        /// <TD><P><CODE>null</CODE></TD>
-        /// <TD><P>bars and text painted with current fill color</TD>
-        /// </TR>
-        /// <TR>
-        /// <TD><P><CODE>barColor</CODE></TD>
-        /// <TD><P><CODE>null</CODE></TD>
-        /// <TD><P>bars and text painted with <CODE>barColor</CODE></TD>
-        /// </TR>
-        /// <TR>
-        /// <TD><P><CODE>null</CODE></TD>
-        /// <TD><P><CODE>textColor</CODE></TD>
-        /// <TD><P>bars painted with current color<br />text painted with <CODE>textColor</CODE></TD>
-        /// </TR>
-        /// <TR>
-        /// <TD><P><CODE>barColor</CODE></TD>
-        /// <TD><P><CODE>textColor</CODE></TD>
-        /// <TD><P>bars painted with <CODE>barColor</CODE><br />text painted with <CODE>textColor</CODE></TD>
-        /// </TR>
-        /// </TABLE>
+        /// <table border="1" summary="barcode properties">
+        /// <tr>
+        /// <th><c>barColor</c></th>
+        /// <th><c>textColor</c></th>
+        /// <th>Result</th>
+        /// </tr>
+        /// <tr>
+        /// <td><c>null</c></td>
+        /// <td><c>null</c></td>
+        /// <td>bars and text painted with current fill color</td>
+        /// </tr>
+        /// <tr>
+        /// <td><c>barColor</c></td>
+        /// <td><c>null</c></td>
+        /// <td>bars and text painted with <c>barColor</c></td>
+        /// </tr>
+        /// <tr>
+        /// <td><c>null</c></td>
+        /// <td><c>textColor</c></td>
+        /// <td>bars painted with current color<br />text painted with <c>textColor</c></td>
+        /// </tr>
+        /// <tr>
+        /// <td><c>barColor</c></td>
+        /// <td><c>textColor</c></td>
+        /// <td>bars painted with <c>barColor</c><br />text painted with <c>textColor</c></td>
+        /// </tr>
+        /// </table>
         /// </remarks>
-        /// <param name="canvas">the <CODE>PdfCanvas</CODE> where the barcode will be placed</param>
-        /// <param name="barColor">the color of the bars. It can be <CODE>null</CODE></param>
-        /// <param name="textColor">the color of the text. It can be <CODE>null</CODE></param>
+        /// <param name="canvas">the <c>PdfCanvas</c> where the barcode will be placed</param>
+        /// <param name="barColor">the color of the bars. It can be <c>null</c></param>
+        /// <param name="textColor">the color of the text. It can be <c>null</c></param>
         /// <returns>the dimensions the barcode occupies</returns>
         public override Rectangle PlaceBarcode(PdfCanvas canvas, Color barColor, Color textColor) {
             String fullCode = code;

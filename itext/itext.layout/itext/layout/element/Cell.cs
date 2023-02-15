@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,8 +43,9 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Common.Logging;
-using iText.IO.Util;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
 using iText.Kernel.Pdf.Tagging;
 using iText.Kernel.Pdf.Tagutils;
 using iText.Layout;
@@ -57,8 +58,13 @@ namespace iText.Layout.Element {
     /// A
     /// <see cref="Cell"/>
     /// is one piece of data in an enclosing grid, the
-    /// <see cref="Table"/>
-    /// .
+    /// <see cref="Table"/>.
+    /// </summary>
+    /// <remarks>
+    /// A
+    /// <see cref="Cell"/>
+    /// is one piece of data in an enclosing grid, the
+    /// <see cref="Table"/>.
     /// This object is a
     /// <see cref="BlockElement{T}"/>
     /// , giving it a number of visual layout
@@ -68,9 +74,8 @@ namespace iText.Layout.Element {
     /// <see cref="BlockElement{T}"/>
     /// objects or images. Other types of layout
     /// elements must be wrapped in a
-    /// <see cref="BlockElement{T}"/>
-    /// .
-    /// </summary>
+    /// <see cref="BlockElement{T}"/>.
+    /// </remarks>
     public class Cell : BlockElement<iText.Layout.Element.Cell> {
         private static readonly Border DEFAULT_BORDER = new SolidBorder(0.5f);
 
@@ -116,8 +121,8 @@ namespace iText.Layout.Element {
                     cellRenderer = (CellRenderer)renderer;
                 }
                 else {
-                    ILog logger = LogManager.GetLogger(typeof(Table));
-                    logger.Error("Invalid renderer for Table: must be inherited from TableRenderer");
+                    ILogger logger = ITextLogManager.GetLogger(typeof(Table));
+                    logger.LogError("Invalid renderer for Table: must be inherited from TableRenderer");
                 }
             }
             //cellRenderer could be null in case invalid type (see logger message above)
@@ -238,6 +243,15 @@ namespace iText.Layout.Element {
             return new CellRenderer(this);
         }
 
+        /// <summary>Updates cell indexes.</summary>
+        /// <param name="row">the number of the row to update</param>
+        /// <param name="col">the number of the col to update</param>
+        /// <param name="numberOfColumns">to evaluate new colspan</param>
+        /// <returns>
+        /// this
+        /// <see cref="Cell"/>
+        /// with updated fields
+        /// </returns>
         protected internal virtual iText.Layout.Element.Cell UpdateCellIndexes(int row, int col, int numberOfColumns
             ) {
             this.row = row;

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,8 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
 using iText.IO.Util;
 
 namespace iText.IO.Source {
@@ -142,11 +143,11 @@ namespace iText.IO.Source {
                     }
                 }
                 if (double.IsNaN(d)) {
-                    ILog logger = LogManager.GetLogger(typeof(ByteUtils));
-                    logger.Error(iText.IO.LogMessageConstant.ATTEMPT_PROCESS_NAN);
+                    ILogger logger = ITextLogManager.GetLogger(typeof(ByteUtils));
+                    logger.LogError(iText.IO.Logs.IoLogMessageConstant.ATTEMPT_PROCESS_NAN);
                     d = 0;
                 }
-                byte[] result = DecimalFormatUtil.FormatNumber(d, "0.######").GetBytes(iText.IO.Util.EncodingUtil.ISO_8859_1
+                byte[] result = DecimalFormatUtil.FormatNumber(d, "0.######").GetBytes(iText.Commons.Utils.EncodingUtil.ISO_8859_1
                     );
                 if (buffer != null) {
                     buffer.Prepend(result);
@@ -235,8 +236,8 @@ namespace iText.IO.Source {
                     }
                     int fracLen = 0;
                     if (v % 100 != 0) {
-                        fracLen = 2;
                         //fracLen include '.'
+                        fracLen = 2;
                         if (v % 10 != 0) {
                             fracLen++;
                         }
@@ -248,8 +249,8 @@ namespace iText.IO.Source {
                         v /= 100;
                     }
                     buf = buffer != null ? buffer : new ByteBuffer(intLen + fracLen + (negative ? 1 : 0));
+                    //-1 because fracLen include '.'
                     for (int i = 0; i < fracLen - 1; i++) {
-                        //-1 because fracLen include '.'
                         buf.Prepend(bytes[v % 10]);
                         v /= 10;
                     }
@@ -273,8 +274,8 @@ namespace iText.IO.Source {
                     }
                     else {
                         if (double.IsNaN(d)) {
-                            ILog logger = LogManager.GetLogger(typeof(ByteUtils));
-                            logger.Error(iText.IO.LogMessageConstant.ATTEMPT_PROCESS_NAN);
+                            ILogger logger = ITextLogManager.GetLogger(typeof(ByteUtils));
+                            logger.LogError(iText.IO.Logs.IoLogMessageConstant.ATTEMPT_PROCESS_NAN);
                             // in java NaN casted to long results in 0, but in .NET it results in long.MIN_VALUE
                             d = 0;
                         }

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-    Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2023 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -155,7 +155,6 @@ namespace iText.IO.Font.Otf
 					needsActualText = true;
 					break;
 				}
-				// TODO zero glyph is a special case. Unicode might be special
 				toUnicodeMapResult.Append(TextUtil.ConvertFromUtf32(currentGlyph.GetUnicode()));
 			}
 			return needsActualText || !toUnicodeMapResult.ToString().Equals(glyphLinePart.actualText
