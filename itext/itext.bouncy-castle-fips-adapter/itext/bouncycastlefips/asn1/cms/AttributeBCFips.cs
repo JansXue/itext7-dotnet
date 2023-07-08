@@ -1,7 +1,7 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
 This program is offered under a commercial and under the AGPL license.
 For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
@@ -29,7 +29,7 @@ namespace iText.Bouncycastlefips.Asn1.Cms {
     /// Wrapper class for
     /// <see cref="Org.BouncyCastle.Asn1.Cms.Attribute"/>.
     /// </summary>
-    public class AttributeBCFips : ASN1EncodableBCFips, IAttribute {
+    public class AttributeBCFips : Asn1EncodableBCFips, IAttribute {
         /// <summary>
         /// Creates new wrapper instance for
         /// <see cref="Org.BouncyCastle.Asn1.Cms.Attribute"/>.
@@ -53,8 +53,8 @@ namespace iText.Bouncycastlefips.Asn1.Cms {
         }
 
         /// <summary><inheritDoc/></summary>
-        public virtual IASN1Set GetAttrValues() {
-            return new ASN1SetBCFips(GetAttribute().AttrValues);
+        public virtual IAsn1Set GetAttrValues() {
+            return new Asn1SetBCFips(GetAttribute().AttrValues);
         }
     }
 }

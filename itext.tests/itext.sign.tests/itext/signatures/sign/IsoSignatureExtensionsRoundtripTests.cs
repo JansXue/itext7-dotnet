@@ -1,25 +1,25 @@
 /*
-This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+    This file is part of the iText (R) project.
+    Copyright (c) 1998-2023 Apryse Group NV
+    Authors: Apryse Software.
 
-This program is offered under a commercial and under the AGPL license.
-For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
+    This program is offered under a commercial and under the AGPL license.
+    For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
 
-AGPL licensing:
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+    AGPL licensing:
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Affero General Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
 
-You should have received a copy of the GNU Affero General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
-*/
+    You should have received a copy of the GNU Affero General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -29,6 +29,7 @@ using iText.Bouncycastleconnector;
 using iText.Commons.Bouncycastle;
 using iText.Commons.Bouncycastle.Cert;
 using iText.Commons.Bouncycastle.Crypto;
+using iText.Commons.Bouncycastle.Security;
 using iText.Commons.Utils;
 using iText.Kernel.Exceptions;
 using iText.Kernel.Geom;
@@ -40,7 +41,7 @@ using Org.BouncyCastle.Asn1.Nist;
 using Org.BouncyCastle.Security;
 
 namespace iText.Signatures.Sign {
-    [NUnit.Framework.Category("IntegrationTest")]
+    [NUnit.Framework.Category("BouncyCastleIntegrationTest")]
     public class IsoSignatureExtensionsRoundtripTests : ITextTest {
         private static readonly IBouncyCastleFactory BOUNCY_CASTLE_FACTORY = BouncyCastleFactoryCreator.GetFactory
             ();
@@ -59,6 +60,7 @@ namespace iText.Signatures.Sign {
         
         [NUnit.Framework.OneTimeSetUp]
         public static void Before() {
+            NUnit.Framework.Assume.That(!BOUNCY_CASTLE_FACTORY.IsInApprovedOnlyMode());
             CreateOrClearDestinationFolder(DESTINATION_FOLDER);
         }
 
@@ -66,7 +68,7 @@ namespace iText.Signatures.Sign {
         public virtual void TestEd25519() {
             if ("BCFIPS".Equals(BOUNCY_CASTLE_FACTORY.GetProviderName())) {
                 // algorithm identifier in key not recognised
-                NUnit.Framework.Assert.Catch(typeof(KeyException), () => DoRoundTrip("ed25519", DigestAlgorithms.SHA512, EdECObjectIdentifiers.id_Ed25519));
+                NUnit.Framework.Assert.Catch(typeof(AbstractGeneralSecurityException), () => DoRoundTrip("ed25519", DigestAlgorithms.SHA512, EdECObjectIdentifiers.id_Ed25519));
             } else {
                 DoRoundTrip("ed25519", DigestAlgorithms.SHA512, EdECObjectIdentifiers.id_Ed25519);
             }
@@ -78,7 +80,7 @@ namespace iText.Signatures.Sign {
                 DoRoundTrip("ed448", DigestAlgorithms.SHAKE256, EdECObjectIdentifiers.id_Ed448);
             } else {
                 // SHAKE256 is currently not supported in BCFIPS
-                NUnit.Framework.Assert.Catch(typeof(KeyException), () => DoRoundTrip("ed448", DigestAlgorithms.SHAKE256, EdECObjectIdentifiers.id_Ed448));
+                NUnit.Framework.Assert.Catch(typeof(AbstractGeneralSecurityException), () => DoRoundTrip("ed448", DigestAlgorithms.SHAKE256, EdECObjectIdentifiers.id_Ed448));
             }
         }
 
@@ -123,31 +125,23 @@ namespace iText.Signatures.Sign {
                 NUnit.Framework.Assert.Catch(typeof(SecurityUtilityException), () => DoRoundTrip("dsa", DigestAlgorithms.SHA3_256, NistObjectIdentifiers.IdDsaWithSha3_256));
             }
         }
-        
+
         [NUnit.Framework.Test]
         public virtual void TestEd25519ForceSha512WhenSigning() {
-            if ("BCFIPS".Equals(BOUNCY_CASTLE_FACTORY.GetProviderName())) {
-                // algorithm identifier in key not recognised
-                NUnit.Framework.Assert.Catch(typeof(KeyException), () => DoSign("ed25519", DigestAlgorithms.SHA1, new MemoryStream()));
-            } else {
-                Exception e = NUnit.Framework.Assert.Catch(typeof(PdfException), () => DoSign("ed25519", DigestAlgorithms.
-                    SHA1, new MemoryStream()));
-                NUnit.Framework.Assert.AreEqual("Ed25519 requires the document to be digested using SHA-512, not SHA1", e.
-                    Message);
-            }
+            Exception e = NUnit.Framework.Assert.Catch(typeof(PdfException),
+                () => DoSign("ed25519", DigestAlgorithms.SHA1, new MemoryStream()));
+            NUnit.Framework.Assert.AreEqual("Ed25519 requires the document to be digested using SHA-512, not SHA1",
+                e.Message);
         }
 
         [NUnit.Framework.Test]
         public virtual void TestEd448ForceShake256WhenSigning() {
-            if ("BC".Equals(BOUNCY_CASTLE_FACTORY.GetProviderName())) {
-                Exception e = NUnit.Framework.Assert.Catch(typeof(PdfException), () => DoSign("ed448", DigestAlgorithms.SHA1, new MemoryStream()));
-                NUnit.Framework.Assert.AreEqual("Ed448 requires the document to be digested using 512-bit SHAKE256, not SHA1", e.Message);
-            } else {
-                // SHAKE256 is currently not supported in BCFIPS
-                NUnit.Framework.Assert.Catch(typeof(KeyException), () => DoSign("ed448", DigestAlgorithms.SHA1, new MemoryStream()));
-            }
+            Exception e = NUnit.Framework.Assert.Catch(typeof(PdfException),
+                () => DoSign("ed448", DigestAlgorithms.SHA1, new MemoryStream()));
+            NUnit.Framework.Assert.AreEqual(
+                "Ed448 requires the document to be digested using 512-bit SHAKE256, not SHA1", e.Message);
         }
-        
+
         [NUnit.Framework.Test]
         public virtual void TestEd25519ForceSha512WhenValidating() {
             // file contains an Ed25519 signature where the document digest is computed using SHA-1
@@ -178,7 +172,7 @@ namespace iText.Signatures.Sign {
             MemoryStream baos = new MemoryStream();
             if ("BCFIPS".Equals(BOUNCY_CASTLE_FACTORY.GetProviderName())) {
                 // algorithm identifier in key not recognised
-                NUnit.Framework.Assert.Catch(typeof(KeyException), () => DoSign("ed25519", DigestAlgorithms.SHA512, baos));
+                NUnit.Framework.Assert.Catch(typeof(AbstractGeneralSecurityException), () => DoSign("ed25519", DigestAlgorithms.SHA512, baos));
             } else {
                 DoSign("ed25519", DigestAlgorithms.SHA512, baos);
                 CheckIsoExtensions(baos.ToArray(), JavaCollectionsUtil.Singleton(32002));
@@ -193,7 +187,7 @@ namespace iText.Signatures.Sign {
                 CheckIsoExtensions(baos.ToArray(), JavaUtil.ArraysAsList(32002, 32001));
             } else {
                 // SHAKE256 is currently not supported in BCFIPS
-                NUnit.Framework.Assert.Catch(typeof(KeyException), () => DoSign("ed448", DigestAlgorithms.SHAKE256, baos));
+                NUnit.Framework.Assert.Catch(typeof(AbstractGeneralSecurityException), () => DoSign("ed448", DigestAlgorithms.SHAKE256, baos));
             }
         }
         
@@ -258,7 +252,7 @@ namespace iText.Signatures.Sign {
             PdfSigner signer = new PdfSigner(new PdfReader(SOURCE_FILE), os, new StampingProperties());
             signer.SetFieldName(SIGNATURE_FIELD);
             signer.GetSignatureAppearance().SetPageRect(new Rectangle(50, 650, 200, 100)).SetReason("Test").SetLocation
-                ("TestCity").SetLayer2Text("Approval test signature.\nCreated by iText7.");
+                ("TestCity").SetLayer2Text("Approval test signature.\nCreated by iText.");
             signer.SignDetached(pks, signChain, null, null, null, 0, PdfSigner.CryptoStandard.CMS);
         }
         

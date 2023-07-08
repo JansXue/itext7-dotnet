@@ -1,7 +1,7 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
 This program is offered under a commercial and under the AGPL license.
 For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
@@ -62,6 +62,7 @@ namespace iText.Forms.Fields {
         /// </param>
         /// <returns>this builder</returns>
         public virtual iText.Forms.Fields.ChoiceFormFieldBuilder SetOptions(PdfArray options) {
+            VerifyOptions(options);
             this.options = options;
             return this;
         }
@@ -117,14 +118,14 @@ namespace iText.Forms.Fields {
             PdfChoiceFormField field;
             PdfWidgetAnnotation annotation = null;
             if (GetWidgetRectangle() == null) {
-                field = new PdfChoiceFormField(GetDocument());
+                field = PdfFormCreator.CreateChoiceFormField(GetDocument());
             }
             else {
                 annotation = new PdfWidgetAnnotation(GetWidgetRectangle());
                 if (null != GetConformanceLevel()) {
                     annotation.SetFlag(PdfAnnotation.PRINT);
                 }
-                field = new PdfChoiceFormField(annotation, GetDocument());
+                field = PdfFormCreator.CreateChoiceFormField(annotation, GetDocument());
             }
             field.pdfAConformanceLevel = GetConformanceLevel();
             field.SetFieldFlags(flags);
@@ -143,8 +144,8 @@ namespace iText.Forms.Fields {
                 if (annotation != null) {
                     PdfFormXObject xObject = new PdfFormXObject(new Rectangle(0, 0, GetWidgetRectangle().GetWidth(), GetWidgetRectangle
                         ().GetHeight()));
-                    field.GetFirstFormAnnotation().DrawChoiceAppearance(GetWidgetRectangle(), field.fontSize, optionsArrayString
-                        , xObject, 0);
+                    TextAndChoiceLegacyDrawer.DrawChoiceAppearance(field.GetFirstFormAnnotation(), GetWidgetRectangle(), field
+                        .fontSize, optionsArrayString, xObject, 0);
                     annotation.SetNormalAppearance(xObject.GetPdfObject());
                     SetPageToField(field);
                 }
@@ -175,6 +176,25 @@ namespace iText.Forms.Fields {
                 array.Add(subArray);
             }
             return array;
+        }
+
+        private static void VerifyOptions(PdfArray options) {
+            foreach (PdfObject option in options) {
+                if (option.IsArray()) {
+                    PdfArray optionsArray = ((PdfArray)option);
+                    if (optionsArray.Size() != 2) {
+                        throw new ArgumentException(FormsExceptionMessageConstant.INNER_ARRAY_SHALL_HAVE_TWO_ELEMENTS);
+                    }
+                    if (!optionsArray.Get(0).IsString() || !optionsArray.Get(1).IsString()) {
+                        throw new ArgumentException(FormsExceptionMessageConstant.OPTION_ELEMENT_MUST_BE_STRING_OR_ARRAY);
+                    }
+                }
+                else {
+                    if (!option.IsString()) {
+                        throw new ArgumentException(FormsExceptionMessageConstant.OPTION_ELEMENT_MUST_BE_STRING_OR_ARRAY);
+                    }
+                }
+            }
         }
 
         /// <summary>

@@ -1,7 +1,7 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
 This program is offered under a commercial and under the AGPL license.
 For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
@@ -49,10 +49,10 @@ namespace iText.Commons.Bouncycastle.Tsp {
         /// </summary>
         /// <returns>
         /// 
-        /// <see cref="iText.Commons.Bouncycastle.Asn1.Tsp.ITSTInfo"/>
+        /// <see cref="iText.Commons.Bouncycastle.Asn1.Tsp.ITstInfo"/>
         /// TSTInfo wrapper.
         /// </returns>
-        ITSTInfo ToASN1Structure();
+        ITstInfo ToASN1Structure();
 
         /// <summary>
         /// Calls actual

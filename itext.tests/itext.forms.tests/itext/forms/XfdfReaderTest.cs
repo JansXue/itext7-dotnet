@@ -1,44 +1,24 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License version 3
-as published by the Free Software Foundation with the addition of the
-following permission added to Section 15 as permitted in Section 7(a):
-FOR ANY PART OF THE COVERED WORK IN WHICH THE COPYRIGHT IS OWNED BY
-ITEXT GROUP. ITEXT GROUP DISCLAIMS THE WARRANTY OF NON INFRINGEMENT
-OF THIRD PARTY RIGHTS
+This program is offered under a commercial and under the AGPL license.
+For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
 
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Affero General Public License for more details.
+AGPL licensing:
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
 You should have received a copy of the GNU Affero General Public License
-along with this program; if not, see http://www.gnu.org/licenses or write to
-the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-Boston, MA, 02110-1301 USA, or download the license from the following URL:
-http://itextpdf.com/terms-of-use/
-
-The interactive user interfaces in modified source and object code versions
-of this program must display Appropriate Legal Notices, as required under
-Section 5 of the GNU Affero General Public License.
-
-In accordance with Section 7(b) of the GNU Affero General Public License,
-a covered work must retain the producer line in every PDF that is created
-or manipulated using iText.
-
-You can be released from the requirements of the license by purchasing
-a commercial license. Buying such a license is mandatory as soon as you
-develop commercial activities involving the iText software without
-disclosing the source code of your own applications.
-These activities include: offering paid services to customers as an ASP,
-serving PDFs on the fly in a web application, shipping iText with a closed
-source product.
-
-For more information, please contact iText Software Corp. at this
-address: sales@itextpdf.com
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 using System;
 using System.IO;
@@ -179,7 +159,6 @@ namespace iText.Forms {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.Logs.IoLogMessageConstant.XFDF_UNSUPPORTED_ANNOTATION_ATTRIBUTE)]
         public virtual void XfdfAnnotationHighlightedText() {
             PdfDocument pdfDocument = new PdfDocument(new PdfReader(new FileStream(sourceFolder + "xfdfAnnotationHighlightedText.pdf"
                 , FileMode.Open, FileAccess.Read)), new PdfWriter(new FileStream(destinationFolder + "xfdfAnnotationHighlightedText.pdf"
@@ -539,7 +518,6 @@ namespace iText.Forms {
 
         [NUnit.Framework.Test]
         [LogMessage(iText.IO.Logs.IoLogMessageConstant.XFDF_HREF_ATTRIBUTE_AND_PDF_DOCUMENT_NAME_ARE_DIFFERENT)]
-        [LogMessage(iText.IO.Logs.IoLogMessageConstant.XFDF_UNSUPPORTED_ANNOTATION_ATTRIBUTE)]
         public virtual void XfdfAnnotationReplaceText() {
             //TODO DEVSIX-3215 Support annots
             PdfDocument pdfDocument = new PdfDocument(new PdfReader(new FileStream(sourceFolder + "xfdfAnnotationReplaceText.pdf"
@@ -557,7 +535,7 @@ namespace iText.Forms {
 
         [NUnit.Framework.Test]
         [LogMessage(iText.IO.Logs.IoLogMessageConstant.XFDF_HREF_ATTRIBUTE_AND_PDF_DOCUMENT_NAME_ARE_DIFFERENT)]
-        [LogMessage(iText.IO.Logs.IoLogMessageConstant.XFDF_UNSUPPORTED_ANNOTATION_ATTRIBUTE, Count = 5)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.XFDF_UNSUPPORTED_ANNOTATION_ATTRIBUTE, Count = 2)]
         [LogMessage(iText.IO.Logs.IoLogMessageConstant.XFDF_ANNOTATION_IS_NOT_SUPPORTED)]
         public virtual void XfdfAnnotationArrow() {
             PdfDocument pdfDocument = new PdfDocument(new PdfReader(new FileStream(sourceFolder + "xfdfAnnotationArrow.pdf"
@@ -576,7 +554,7 @@ namespace iText.Forms {
         [NUnit.Framework.Test]
         [LogMessage(iText.IO.Logs.IoLogMessageConstant.XFDF_HREF_ATTRIBUTE_AND_PDF_DOCUMENT_NAME_ARE_DIFFERENT)]
         public virtual void XfdfAnnotationCallout() {
-            //TODO DEVSIX-3215 Support annots
+            //TODO DEVSIX-7600 Support callout annotations
             PdfDocument pdfDocument = new PdfDocument(new PdfReader(new FileStream(sourceFolder + "xfdfAnnotationCallout.pdf"
                 , FileMode.Open, FileAccess.Read)), new PdfWriter(new FileStream(destinationFolder + "xfdfAnnotationCallout.pdf"
                 , FileMode.Create)));
@@ -592,7 +570,6 @@ namespace iText.Forms {
 
         [NUnit.Framework.Test]
         [LogMessage(iText.IO.Logs.IoLogMessageConstant.XFDF_HREF_ATTRIBUTE_AND_PDF_DOCUMENT_NAME_ARE_DIFFERENT)]
-        [LogMessage(iText.IO.Logs.IoLogMessageConstant.XFDF_UNSUPPORTED_ANNOTATION_ATTRIBUTE, Count = 3)]
         public virtual void XfdfAnnotationCloud() {
             //TODO DEVSIX-3215 Support annots
             PdfDocument pdfDocument = new PdfDocument(new PdfReader(new FileStream(sourceFolder + "xfdfAnnotationCloud.pdf"
@@ -610,7 +587,6 @@ namespace iText.Forms {
 
         [NUnit.Framework.Test]
         [LogMessage(iText.IO.Logs.IoLogMessageConstant.XFDF_HREF_ATTRIBUTE_AND_PDF_DOCUMENT_NAME_ARE_DIFFERENT)]
-        [LogMessage(iText.IO.Logs.IoLogMessageConstant.XFDF_UNSUPPORTED_ANNOTATION_ATTRIBUTE, Count = 3)]
         public virtual void XfdfAnnotationCloudNested() {
             //TODO DEVSIX-3215 Support annots
             PdfDocument pdfDocument = new PdfDocument(new PdfReader(new FileStream(sourceFolder + "xfdfAnnotationCloudNested.pdf"
@@ -711,7 +687,6 @@ namespace iText.Forms {
 
         [NUnit.Framework.Test]
         [LogMessage(iText.IO.Logs.IoLogMessageConstant.XFDF_HREF_ATTRIBUTE_AND_PDF_DOCUMENT_NAME_ARE_DIFFERENT)]
-        [LogMessage(iText.IO.Logs.IoLogMessageConstant.XFDF_UNSUPPORTED_ANNOTATION_ATTRIBUTE, Count = 4)]
         public virtual void XfdfAnnotationAttrTitle() {
             //TODO DEVSIX-3215 Support annots
             PdfDocument pdfDocument = new PdfDocument(new PdfReader(new FileStream(sourceFolder + "xfdfAnnotationAttrTitle.pdf"
@@ -878,6 +853,69 @@ namespace iText.Forms {
             pdfDocument.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destinationFolder + "xfdfDropDown.pdf", sourceFolder
                  + "cmp_xfdfDropDown.pdf", destinationFolder, "diff_"));
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.XFDF_NO_F_OBJECT_TO_COMPARE)]
+        public virtual void XfdfBorderStyleAttributesTest() {
+            using (PdfDocument document = new PdfDocument(new PdfReader(sourceFolder + "xfdfAnnotationsTemplate.pdf"), 
+                new PdfWriter(new FileStream(destinationFolder + "xfdfBorderStyleAttributes.pdf", FileMode.Create)))) {
+                String xfdfFilename = sourceFolder + "xfdfBorderStyleAttributes.xfdf";
+                XfdfObjectFactory factory = new XfdfObjectFactory();
+                XfdfObject xfdfObject = factory.CreateXfdfObject(new FileStream(xfdfFilename, FileMode.Open, FileAccess.Read
+                    ));
+                xfdfObject.MergeToPdf(document, sourceFolder + "xfdfAnnotationsTemplate.pdf");
+            }
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destinationFolder + "xfdfBorderStyleAttributes.pdf"
+                , sourceFolder + "cmp_xfdfBorderStyleAttributes.pdf", destinationFolder, "diff_"));
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.XFDF_NO_F_OBJECT_TO_COMPARE)]
+        public virtual void XfdfAnnotationAttributesTest() {
+            //TODO DEVSIX-7600 update xfdf and cmp files after supporting all the annotation types mentioned in xfdf spec
+            using (PdfDocument document = new PdfDocument(new PdfReader(sourceFolder + "xfdfAnnotationsTemplate.pdf"), 
+                new PdfWriter(new FileStream(destinationFolder + "xfdfAnnotationAttributes.pdf", FileMode.Create)))) {
+                String xfdfFilename = sourceFolder + "xfdfAnnotationAttributes.xfdf";
+                XfdfObjectFactory factory = new XfdfObjectFactory();
+                XfdfObject xfdfObject = factory.CreateXfdfObject(new FileStream(xfdfFilename, FileMode.Open, FileAccess.Read
+                    ));
+                xfdfObject.MergeToPdf(document, sourceFolder + "xfdfAnnotationsTemplate.pdf");
+            }
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destinationFolder + "xfdfAnnotationAttributes.pdf"
+                , sourceFolder + "cmp_xfdfAnnotationAttributes.pdf", destinationFolder, "diff_"));
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.XFDF_NO_F_OBJECT_TO_COMPARE)]
+        public virtual void XfdfOnlyRequiredAnnotationAttributesTest() {
+            //TODO DEVSIX-7600 update xfdf and src files after supporting all the annotation types mentioned in xfdf spec
+            using (PdfDocument document = new PdfDocument(new PdfReader(sourceFolder + "xfdfAnnotationsTemplate.pdf"), 
+                new PdfWriter(new FileStream(destinationFolder + "xfdfOnlyRequiredAnnotationAttributes.pdf", FileMode.Create
+                )))) {
+                String xfdfFilename = sourceFolder + "xfdfOnlyRequiredAnnotationAttributes.xfdf";
+                XfdfObjectFactory factory = new XfdfObjectFactory();
+                XfdfObject xfdfObject = factory.CreateXfdfObject(new FileStream(xfdfFilename, FileMode.Open, FileAccess.Read
+                    ));
+                xfdfObject.MergeToPdf(document, sourceFolder + "xfdfAnnotationsTemplate.pdf");
+            }
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destinationFolder + "xfdfOnlyRequiredAnnotationAttributes.pdf"
+                , sourceFolder + "cmp_xfdfOnlyRequiredAnnotationAttributes.pdf", destinationFolder, "diff_"));
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.XFDF_NO_F_OBJECT_TO_COMPARE)]
+        public virtual void XfdfInReplyToTest() {
+            using (PdfDocument document = new PdfDocument(new PdfReader(sourceFolder + "xfdfAnnotationHighlightedText.pdf"
+                ), new PdfWriter(new FileStream(destinationFolder + "xfdfInReplyTo.pdf", FileMode.Create)))) {
+                String xfdfFilename = sourceFolder + "xfdfInReplyTo.xfdf";
+                XfdfObjectFactory factory = new XfdfObjectFactory();
+                XfdfObject xfdfObject = factory.CreateXfdfObject(new FileStream(xfdfFilename, FileMode.Open, FileAccess.Read
+                    ));
+                xfdfObject.MergeToPdf(document, sourceFolder + "xfdfAnnotationHighlightedText.pdf");
+            }
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destinationFolder + "xfdfInReplyTo.pdf", 
+                sourceFolder + "cmp_xfdfInReplyTo.pdf", destinationFolder, "diff_"));
         }
     }
 }

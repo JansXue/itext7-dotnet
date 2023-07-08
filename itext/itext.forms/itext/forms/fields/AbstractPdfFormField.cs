@@ -1,45 +1,24 @@
 /*
-
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: Bruno Lowagie, Paulo Soares, et al.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License version 3
-as published by the Free Software Foundation with the addition of the
-following permission added to Section 15 as permitted in Section 7(a):
-FOR ANY PART OF THE COVERED WORK IN WHICH THE COPYRIGHT IS OWNED BY
-ITEXT GROUP. ITEXT GROUP DISCLAIMS THE WARRANTY OF NON INFRINGEMENT
-OF THIRD PARTY RIGHTS
+This program is offered under a commercial and under the AGPL license.
+For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
 
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Affero General Public License for more details.
+AGPL licensing:
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
 You should have received a copy of the GNU Affero General Public License
-along with this program; if not, see http://www.gnu.org/licenses or write to
-the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-Boston, MA, 02110-1301 USA, or download the license from the following URL:
-http://itextpdf.com/terms-of-use/
-
-The interactive user interfaces in modified source and object code versions
-of this program must display Appropriate Legal Notices, as required under
-Section 5 of the GNU Affero General Public License.
-
-In accordance with Section 7(b) of the GNU Affero General Public License,
-a covered work must retain the producer line in every PDF that is created
-or manipulated using iText.
-
-You can be released from the requirements of the license by purchasing
-a commercial license. Buying such a license is mandatory as soon as you
-develop commercial activities involving the iText software without
-disclosing the source code of your own applications.
-These activities include: offering paid services to customers as an ASP,
-serving PDFs on the fly in a web application, shipping iText with a closed
-source product.
-
-For more information, please contact iText Software Corp. at this
-address: sales@itextpdf.com
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 using System;
 using System.Collections.Generic;
@@ -66,10 +45,13 @@ namespace iText.Forms.Fields {
     /// </remarks>
     public abstract class AbstractPdfFormField : PdfObjectWrapper<PdfDictionary> {
         /// <summary>Size of text in form fields when font size is not explicitly set.</summary>
-        internal const int DEFAULT_FONT_SIZE = 12;
+        public const int DEFAULT_FONT_SIZE = 12;
 
         /// <summary>Minimal size of text in form fields.</summary>
-        internal const int MIN_FONT_SIZE = 4;
+        public const int MIN_FONT_SIZE = 4;
+
+        private static readonly PdfName[] TERMINAL_FIELDS = new PdfName[] { PdfName.Btn, PdfName.Tx, PdfName.Ch, PdfName
+            .Sig };
 
         /// <summary>Index of font value in default appearance element.</summary>
         private const int DA_FONT = 0;
@@ -79,8 +61,6 @@ namespace iText.Forms.Fields {
 
         /// <summary>Index of color value in default appearance element.</summary>
         private const int DA_COLOR = 2;
-
-        private static readonly ICollection<PdfName> formFieldKeys = new HashSet<PdfName>();
 
         protected internal PdfFont font;
 
@@ -92,6 +72,9 @@ namespace iText.Forms.Fields {
 
         /// <summary>Parent form field.</summary>
         protected internal PdfFormField parent;
+
+        /// <summary>Indicates if the form field appearance stream regeneration is enabled.</summary>
+        private bool enableFieldRegeneration = true;
 
         /// <summary>
         /// Creates a form field as a wrapper object around a
@@ -167,9 +150,12 @@ namespace iText.Forms.Fields {
             }
             PdfString name = GetPdfObject().GetAsString(PdfName.T);
             if (name != null) {
-                name = new PdfString(parentName + name.ToUnicodeString(), PdfEncodings.UNICODE_BIG);
+                return new PdfString(parentName + name.ToUnicodeString(), PdfEncodings.UNICODE_BIG);
             }
-            return name;
+            if (IsTerminalFormField()) {
+                return new PdfString(parentName, PdfEncodings.UNICODE_BIG);
+            }
+            return null;
         }
 
         /// <summary>
@@ -232,6 +218,61 @@ namespace iText.Forms.Fields {
         /// <returns>whether or not the regeneration was successful.</returns>
         public abstract bool RegenerateField();
 
+        /// <summary>This method disables regeneration of the field and its children appearance stream.</summary>
+        /// <remarks>
+        /// This method disables regeneration of the field and its children appearance stream. So all of its children
+        /// in the hierarchy will also not be regenerated.
+        /// <para />
+        /// Note that after this method is called field will be regenerated
+        /// only during
+        /// <see cref="EnableFieldRegeneration()"/>
+        /// call.
+        /// </remarks>
+        public virtual void DisableFieldRegeneration() {
+            this.enableFieldRegeneration = false;
+            if (this is PdfFormField) {
+                foreach (iText.Forms.Fields.AbstractPdfFormField child in ((PdfFormField)this).GetChildFields()) {
+                    child.DisableFieldRegeneration();
+                }
+            }
+        }
+
+        /// <summary>This method enables regeneration of the field appearance stream.</summary>
+        /// <remarks>
+        /// This method enables regeneration of the field appearance stream. Please note that this method enables
+        /// regeneration for the children of the field. Also, appearance will be regenerated during this method call.
+        /// <para />
+        /// Should be called after
+        /// <see cref="DisableFieldRegeneration()"/>
+        /// method call.
+        /// </remarks>
+        public virtual void EnableFieldRegeneration() {
+            this.enableFieldRegeneration = true;
+            if (this is PdfFormField) {
+                foreach (iText.Forms.Fields.AbstractPdfFormField child in ((PdfFormField)this).GetAllChildFields()) {
+                    child.enableFieldRegeneration = true;
+                }
+            }
+            RegenerateField();
+        }
+
+        /// <summary>This method disables regeneration of the current field appearance stream.</summary>
+        public virtual void DisableCurrentFieldRegeneration() {
+            this.enableFieldRegeneration = false;
+        }
+
+        /// <summary>This method enables regeneration of the current field appearance stream and regenerates it.</summary>
+        public virtual void EnableCurrentFieldRegeneration() {
+            this.enableFieldRegeneration = true;
+            RegenerateField();
+        }
+
+        /// <summary>This method checks if field appearance stream regeneration is enabled.</summary>
+        /// <returns>true if regeneration is enabled for this field (and all of its ancestors), false otherwise.</returns>
+        public virtual bool IsFieldRegenerationEnabled() {
+            return this.enableFieldRegeneration;
+        }
+
         /// <summary>Sets the text color and does not regenerate appearance stream.</summary>
         /// <param name="color">the new value for the Color.</param>
         /// <returns>the edited field.</returns>
@@ -285,17 +326,10 @@ namespace iText.Forms.Fields {
         /// if the wrapper is used.
         /// </remarks>
         public virtual void Release() {
-            UnsetForbidRelease();
+            if (!GetPdfObject().IsModified()) {
+                UnsetForbidRelease();
+            }
             GetPdfObject().Release();
-        }
-
-        /// <summary><inheritDoc/></summary>
-        /// <returns>
-        /// 
-        /// <inheritDoc/>
-        /// </returns>
-        protected override bool IsWrappedObjectMustBeIndirect() {
-            return true;
         }
 
         /// <summary>
@@ -308,8 +342,17 @@ namespace iText.Forms.Fields {
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
         /// that owns that form field.
         /// </returns>
-        protected internal virtual PdfDocument GetDocument() {
+        public virtual PdfDocument GetDocument() {
             return GetPdfObject().GetIndirectReference().GetDocument();
+        }
+
+        /// <summary><inheritDoc/></summary>
+        /// <returns>
+        /// 
+        /// <inheritDoc/>
+        /// </returns>
+        protected override bool IsWrappedObjectMustBeIndirect() {
+            return true;
         }
 
         /// <summary>Sets the text color and regenerates appearance stream.</summary>
@@ -402,6 +445,18 @@ namespace iText.Forms.Fields {
             UpdateFontAndFontSize(font, fontSize);
             RegenerateField();
             return this;
+        }
+
+        public virtual bool IsTerminalFormField() {
+            if (GetPdfObject() == null || GetPdfObject().Get(PdfName.FT) == null) {
+                return false;
+            }
+            foreach (PdfName terminalField in TERMINAL_FIELDS) {
+                if (terminalField.Equals(GetPdfObject().Get(PdfName.FT))) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         internal virtual void UpdateFontAndFontSize(PdfFont font, float fontSize) {
@@ -518,6 +573,23 @@ namespace iText.Forms.Fields {
                 }
             }
             return null;
+        }
+
+        /// <summary>Indicate whether some other object is "equal to" this one.</summary>
+        /// <remarks>Indicate whether some other object is "equal to" this one. Compares wrapped objects.</remarks>
+        public override bool Equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || GetType() != o.GetType()) {
+                return false;
+            }
+            return GetPdfObject() == ((iText.Forms.Fields.AbstractPdfFormField)o).GetPdfObject();
+        }
+
+        /// <summary>Generate a hash code for this object.</summary>
+        public override int GetHashCode() {
+            return GetPdfObject().GetHashCode();
         }
     }
 }

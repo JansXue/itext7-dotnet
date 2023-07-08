@@ -1,7 +1,7 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
 This program is offered under a commercial and under the AGPL license.
 For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
@@ -33,6 +33,8 @@ namespace iText.Commons.Actions.Data {
             NUnit.Framework.Assert.AreEqual(CommonsProductData.COMMONS_PRODUCT_NAME, commonsProductData.GetProductName
                 ());
             NUnit.Framework.Assert.AreEqual(CommonsProductData.COMMONS_VERSION, commonsProductData.GetVersion());
+            NUnit.Framework.Assert.AreEqual(CommonsProductData.MINIMAL_COMPATIBLE_LICENSEKEY_VERSION, commonsProductData
+                .GetMinCompatibleLicensingModuleVersion());
             NUnit.Framework.Assert.AreEqual(CommonsProductData.COMMONS_COPYRIGHT_SINCE, commonsProductData.GetSinceCopyrightYear
                 ());
             NUnit.Framework.Assert.AreEqual(CommonsProductData.COMMONS_COPYRIGHT_TO, commonsProductData.GetToCopyrightYear

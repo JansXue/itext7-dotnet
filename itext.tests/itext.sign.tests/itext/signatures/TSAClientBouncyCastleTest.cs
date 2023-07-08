@@ -1,7 +1,7 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
 This program is offered under a commercial and under the AGPL license.
 For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
@@ -122,7 +122,7 @@ namespace iText.Signatures {
             int tokenSizeEstimate = 4096;
             TSAClientBouncyCastle tsaClientBouncyCastle = new TSAClientBouncyCastle(url, userName, password, tokenSizeEstimate
                 , digestAlgorithm);
-            IIDigest digest = tsaClientBouncyCastle.GetMessageDigest();
+            IDigest digest = tsaClientBouncyCastle.GetMessageDigest();
             NUnit.Framework.Assert.IsNotNull(digest);
             NUnit.Framework.Assert.AreEqual(digestAlgorithm, digest.GetAlgorithmName());
         }

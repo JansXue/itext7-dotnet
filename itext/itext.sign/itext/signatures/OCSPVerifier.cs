@@ -1,45 +1,24 @@
 /*
-
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: Bruno Lowagie, Paulo Soares, et al.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License version 3
-as published by the Free Software Foundation with the addition of the
-following permission added to Section 15 as permitted in Section 7(a):
-FOR ANY PART OF THE COVERED WORK IN WHICH THE COPYRIGHT IS OWNED BY
-ITEXT GROUP. ITEXT GROUP DISCLAIMS THE WARRANTY OF NON INFRINGEMENT
-OF THIRD PARTY RIGHTS
+This program is offered under a commercial and under the AGPL license.
+For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
 
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Affero General Public License for more details.
+AGPL licensing:
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
 You should have received a copy of the GNU Affero General Public License
-along with this program; if not, see http://www.gnu.org/licenses or write to
-the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-Boston, MA, 02110-1301 USA, or download the license from the following URL:
-http://itextpdf.com/terms-of-use/
-
-The interactive user interfaces in modified source and object code versions
-of this program must display Appropriate Legal Notices, as required under
-Section 5 of the GNU Affero General Public License.
-
-In accordance with Section 7(b) of the GNU Affero General Public License,
-a covered work must retain the producer line in every PDF that is created
-or manipulated using iText.
-
-You can be released from the requirements of the license by purchasing
-a commercial license. Buying such a license is mandatory as soon as you
-develop commercial activities involving the iText software without
-disclosing the source code of your own applications.
-These activities include: offering paid services to customers as an ASP,
-serving PDFs on the fly in a web application, shipping iText with a closed
-source product.
-
-For more information, please contact iText Software Corp. at this
-address: sales@itextpdf.com
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 using System;
 using System.Collections;
@@ -72,19 +51,19 @@ namespace iText.Signatures {
 
         /// <summary>
         /// The list of
-        /// <see cref="iText.Commons.Bouncycastle.Asn1.Ocsp.IBasicOCSPResponse"/>
+        /// <see cref="iText.Commons.Bouncycastle.Asn1.Ocsp.IBasicOcspResponse"/>
         /// OCSP response wrappers.
         /// </summary>
-        protected internal IList<IBasicOCSPResponse> ocsps;
+        protected internal IList<IBasicOcspResponse> ocsps;
 
         /// <summary>Creates an OCSPVerifier instance.</summary>
         /// <param name="verifier">the next verifier in the chain</param>
         /// <param name="ocsps">
         /// a list of
-        /// <see cref="iText.Commons.Bouncycastle.Asn1.Ocsp.IBasicOCSPResponse"/>
+        /// <see cref="iText.Commons.Bouncycastle.Asn1.Ocsp.IBasicOcspResponse"/>
         /// OCSP response wrappers
         /// </param>
-        public OCSPVerifier(CertificateVerifier verifier, IList<IBasicOCSPResponse> ocsps)
+        public OCSPVerifier(CertificateVerifier verifier, IList<IBasicOcspResponse> ocsps)
             : base(verifier) {
             this.ocsps = ocsps;
         }
@@ -109,7 +88,7 @@ namespace iText.Signatures {
             int validOCSPsFound = 0;
             // first check in the list of OCSP responses that was provided
             if (ocsps != null) {
-                foreach (IBasicOCSPResponse ocspResp in ocsps) {
+                foreach (IBasicOcspResponse ocspResp in ocsps) {
                     if (Verify(ocspResp, signCert, issuerCert, signDate)) {
                         validOCSPsFound++;
                     }
@@ -139,7 +118,7 @@ namespace iText.Signatures {
         /// <summary>Verifies a certificate against a single OCSP response</summary>
         /// <param name="ocspResp">
         /// 
-        /// <see cref="iText.Commons.Bouncycastle.Asn1.Ocsp.IBasicOCSPResponse"/>
+        /// <see cref="iText.Commons.Bouncycastle.Asn1.Ocsp.IBasicOcspResponse"/>
         /// the OCSP response wrapper
         /// </param>
         /// <param name="signCert">the certificate that needs to be checked</param>
@@ -153,14 +132,14 @@ namespace iText.Signatures {
         /// <see langword="true"/>
         /// , in case successful check, otherwise false.
         /// </returns>
-        public virtual bool Verify(IBasicOCSPResponse ocspResp, IX509Certificate signCert, IX509Certificate issuerCert
+        public virtual bool Verify(IBasicOcspResponse ocspResp, IX509Certificate signCert, IX509Certificate issuerCert
             , DateTime signDate) {
             if (ocspResp == null) {
                 return false;
             }
             // Getting the responses
-            ISingleResp[] resp = ocspResp.GetResponses();
-            foreach (ISingleResp iSingleResp in resp) {
+            ISingleResponse[] resp = ocspResp.GetResponses();
+            foreach (ISingleResponse iSingleResp in resp) {
                 // check if the serial number corresponds
                 if (!signCert.GetSerialNumber().Equals(iSingleResp.GetCertID().GetSerialNumber())) {
                     continue;
@@ -179,7 +158,7 @@ namespace iText.Signatures {
                     throw iText.Bouncycastleconnector.BouncyCastleFactoryCreator.GetFactory().CreateGeneralSecurityException(e
                         .Message);
                 }
-                catch (AbstractOCSPException) {
+                catch (AbstractOcspException) {
                     continue;
                 }
                 catch (AbstractOperatorCreationException) {
@@ -221,13 +200,13 @@ namespace iText.Signatures {
         /// </summary>
         /// <param name="ocspResp">
         /// 
-        /// <see cref="iText.Commons.Bouncycastle.Asn1.Ocsp.IBasicOCSPResponse"/>
+        /// <see cref="iText.Commons.Bouncycastle.Asn1.Ocsp.IBasicOcspResponse"/>
         /// the OCSP response wrapper
         /// </param>
         /// <param name="issuerCert">the issuer certificate. This certificate is considered trusted and valid by this method.
         ///     </param>
         /// <param name="signDate">sign date</param>
-        public virtual void IsValidResponse(IBasicOCSPResponse ocspResp, IX509Certificate issuerCert, DateTime signDate
+        public virtual void IsValidResponse(IBasicOcspResponse ocspResp, IX509Certificate issuerCert, DateTime signDate
             ) {
             // OCSP response might be signed by the issuer certificate or
             // the Authorized OCSP responder certificate containing the id-kp-OCSPSigning extended key usage extension
@@ -330,12 +309,12 @@ namespace iText.Signatures {
         /// <summary>Checks if an OCSP response is genuine</summary>
         /// <param name="ocspResp">
         /// 
-        /// <see cref="iText.Commons.Bouncycastle.Asn1.Ocsp.IBasicOCSPResponse"/>
+        /// <see cref="iText.Commons.Bouncycastle.Asn1.Ocsp.IBasicOcspResponse"/>
         /// the OCSP response wrapper
         /// </param>
         /// <param name="responderCert">the responder certificate</param>
         /// <returns>true if the OCSP response verifies against the responder certificate</returns>
-        public virtual bool IsSignatureValid(IBasicOCSPResponse ocspResp, IX509Certificate responderCert) {
+        public virtual bool IsSignatureValid(IBasicOcspResponse ocspResp, IX509Certificate responderCert) {
             try {
                 return SignUtils.IsSignatureValid(ocspResp, responderCert);
             }
@@ -352,20 +331,20 @@ namespace iText.Signatures {
         /// <param name="issuerCert">the issuer certificate</param>
         /// <returns>
         /// 
-        /// <see cref="iText.Commons.Bouncycastle.Asn1.Ocsp.IBasicOCSPResponse"/>
+        /// <see cref="iText.Commons.Bouncycastle.Asn1.Ocsp.IBasicOcspResponse"/>
         /// an OCSP response wrapper
         /// </returns>
-        public virtual IBasicOCSPResponse GetOcspResponse(IX509Certificate signCert, IX509Certificate issuerCert) {
+        public virtual IBasicOcspResponse GetOcspResponse(IX509Certificate signCert, IX509Certificate issuerCert) {
             if (signCert == null && issuerCert == null) {
                 return null;
             }
             OcspClientBouncyCastle ocsp = new OcspClientBouncyCastle(null);
-            IBasicOCSPResponse ocspResp = ocsp.GetBasicOCSPResp(signCert, issuerCert, null);
+            IBasicOcspResponse ocspResp = ocsp.GetBasicOCSPResp(signCert, issuerCert, null);
             if (ocspResp == null) {
                 return null;
             }
-            ISingleResp[] resps = ocspResp.GetResponses();
-            foreach (ISingleResp resp in resps) {
+            ISingleResponse[] resps = ocspResp.GetResponses();
+            foreach (ISingleResponse resp in resps) {
                 Object status = resp.GetCertStatus();
                 if (Object.Equals(status, BOUNCY_CASTLE_FACTORY.CreateCertificateStatus().GetGood())) {
                     return ocspResp;

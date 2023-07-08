@@ -1,44 +1,24 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License version 3
-as published by the Free Software Foundation with the addition of the
-following permission added to Section 15 as permitted in Section 7(a):
-FOR ANY PART OF THE COVERED WORK IN WHICH THE COPYRIGHT IS OWNED BY
-ITEXT GROUP. ITEXT GROUP DISCLAIMS THE WARRANTY OF NON INFRINGEMENT
-OF THIRD PARTY RIGHTS
+This program is offered under a commercial and under the AGPL license.
+For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
 
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Affero General Public License for more details.
+AGPL licensing:
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
 You should have received a copy of the GNU Affero General Public License
-along with this program; if not, see http://www.gnu.org/licenses or write to
-the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-Boston, MA, 02110-1301 USA, or download the license from the following URL:
-http://itextpdf.com/terms-of-use/
-
-The interactive user interfaces in modified source and object code versions
-of this program must display Appropriate Legal Notices, as required under
-Section 5 of the GNU Affero General Public License.
-
-In accordance with Section 7(b) of the GNU Affero General Public License,
-a covered work must retain the producer line in every PDF that is created
-or manipulated using iText.
-
-You can be released from the requirements of the license by purchasing
-a commercial license. Buying such a license is mandatory as soon as you
-develop commercial activities involving the iText software without
-disclosing the source code of your own applications.
-These activities include: offering paid services to customers as an ASP,
-serving PDFs on the fly in a web application, shipping iText with a closed
-source product.
-
-For more information, please contact iText Software Corp. at this
-address: sales@itextpdf.com
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 using System;
 using System.Collections.Generic;
@@ -243,6 +223,13 @@ namespace iText.Layout.Renderer {
 
         internal static LayoutArea AdjustResultOccupiedAreaForFloatAndClear(IRenderer renderer, IList<Rectangle> floatRendererAreas
             , Rectangle parentBBox, float clearHeightCorrection, bool marginsCollapsingEnabled) {
+            return AdjustResultOccupiedAreaForFloatAndClear(renderer, floatRendererAreas, parentBBox, clearHeightCorrection
+                , 0, marginsCollapsingEnabled);
+        }
+
+        internal static LayoutArea AdjustResultOccupiedAreaForFloatAndClear(IRenderer renderer, IList<Rectangle> floatRendererAreas
+            , Rectangle parentBBox, float clearHeightCorrection, float bfcHeightCorrection, bool marginsCollapsingEnabled
+            ) {
             LayoutArea occupiedArea = renderer.GetOccupiedArea();
             LayoutArea editedArea = occupiedArea;
             if (IsRendererFloating(renderer)) {
@@ -254,9 +241,15 @@ namespace iText.Layout.Renderer {
                 editedArea.GetBBox().SetHeight(0);
             }
             else {
-                if (clearHeightCorrection > 0 && !marginsCollapsingEnabled) {
+                if (clearHeightCorrection > AbstractRenderer.EPS && !marginsCollapsingEnabled) {
                     editedArea = occupiedArea.Clone();
                     editedArea.GetBBox().IncreaseHeight(clearHeightCorrection);
+                }
+                else {
+                    if (bfcHeightCorrection > AbstractRenderer.EPS) {
+                        editedArea = occupiedArea.Clone();
+                        editedArea.GetBBox().IncreaseHeight(bfcHeightCorrection);
+                    }
                 }
             }
             return editedArea;
@@ -303,36 +296,50 @@ namespace iText.Layout.Renderer {
             if (clearPropertyValue == null || floatRendererAreas.IsEmpty()) {
                 return clearHeightCorrection;
             }
-            float currY;
-            if (floatRendererAreas[floatRendererAreas.Count - 1].GetTop() < parentBBox.GetTop()) {
-                currY = floatRendererAreas[floatRendererAreas.Count - 1].GetTop();
-            }
-            else {
-                currY = parentBBox.GetTop();
-            }
+            float currY = Math.Min(floatRendererAreas[floatRendererAreas.Count - 1].GetTop(), parentBBox.GetTop());
             IList<Rectangle> boxesAtYLevel = GetBoxesAtYLevel(floatRendererAreas, currY);
             Rectangle[] lastLeftAndRightBoxes = FindLastLeftAndRightBoxes(parentBBox, boxesAtYLevel);
-            float lowestFloatBottom = float.MaxValue;
             bool isBoth = clearPropertyValue.Equals(ClearPropertyValue.BOTH);
-            if ((clearPropertyValue.Equals(ClearPropertyValue.LEFT) || isBoth) && lastLeftAndRightBoxes[0] != null) {
-                foreach (Rectangle floatBox in floatRendererAreas) {
-                    if (floatBox.GetBottom() < lowestFloatBottom && floatBox.GetLeft() <= lastLeftAndRightBoxes[0].GetLeft()) {
-                        lowestFloatBottom = floatBox.GetBottom();
-                    }
-                }
-            }
-            if ((clearPropertyValue.Equals(ClearPropertyValue.RIGHT) || isBoth) && lastLeftAndRightBoxes[1] != null) {
-                foreach (Rectangle floatBox in floatRendererAreas) {
-                    if (floatBox.GetBottom() < lowestFloatBottom && floatBox.GetRight() >= lastLeftAndRightBoxes[1].GetRight()
-                        ) {
-                        lowestFloatBottom = floatBox.GetBottom();
-                    }
-                }
-            }
+            float lowestFloatBottom = CalculateLowestFloatBottom(clearPropertyValue.Equals(ClearPropertyValue.LEFT) ||
+                 isBoth, clearPropertyValue.Equals(ClearPropertyValue.RIGHT) || isBoth, float.MaxValue, lastLeftAndRightBoxes
+                , floatRendererAreas);
             if (lowestFloatBottom < float.MaxValue) {
                 clearHeightCorrection = parentBBox.GetTop() - lowestFloatBottom + AbstractRenderer.EPS;
             }
             return clearHeightCorrection;
+        }
+
+        internal static float AdjustBlockFormattingContextLayoutBox(BlockRenderer renderer, IList<Rectangle> floatRendererAreas
+            , Rectangle parentBBox, float blockWidth, float clearHeightCorrection) {
+            if (floatRendererAreas.IsEmpty() || !BlockFormattingContextUtil.IsRendererCreateBfc(renderer) && !(renderer
+                 is FlexContainerRenderer)) {
+                return 0;
+            }
+            float currY = Math.Min(floatRendererAreas[floatRendererAreas.Count - 1].GetTop(), parentBBox.GetTop() - clearHeightCorrection
+                );
+            IList<Rectangle> boxesAtYLevel = GetBoxesAtYLevel(floatRendererAreas, currY);
+            Rectangle[] lastLeftAndRightBoxes = FindLastLeftAndRightBoxes(parentBBox, boxesAtYLevel);
+            if (lastLeftAndRightBoxes[0] == null && lastLeftAndRightBoxes[1] == null) {
+                return 0;
+            }
+            float leftX = lastLeftAndRightBoxes[0] == null ? parentBBox.GetLeft() : lastLeftAndRightBoxes[0].GetRight(
+                );
+            float rightX = lastLeftAndRightBoxes[1] == null ? parentBBox.GetRight() : lastLeftAndRightBoxes[1].GetLeft
+                ();
+            if (Math.Max(blockWidth, renderer.GetMinMaxWidth().GetMinWidth()) <= rightX - leftX) {
+                float width = Math.Max(0, leftX - parentBBox.GetLeft()) + Math.Max(0, parentBBox.GetRight() - rightX);
+                parentBBox.SetX(Math.Max(parentBBox.GetX(), leftX));
+                parentBBox.DecreaseWidth(width);
+                return 0;
+            }
+            float lowestFloatBottom = CalculateLowestFloatBottom(true, true, float.MaxValue, lastLeftAndRightBoxes, floatRendererAreas
+                );
+            if (lowestFloatBottom < float.MaxValue) {
+                float adjustedHeightDelta = parentBBox.GetTop() - lowestFloatBottom + AbstractRenderer.EPS;
+                parentBBox.DecreaseHeight(adjustedHeightDelta);
+                return adjustedHeightDelta;
+            }
+            return 0;
         }
 
         internal static void ApplyClearance(Rectangle layoutBox, MarginsCollapseHandler marginsCollapseHandler, float
@@ -430,6 +437,26 @@ namespace iText.Layout.Renderer {
                 }
             }
             return yLevelBoxes;
+        }
+
+        private static float CalculateLowestFloatBottom(bool isLeftOrBoth, bool isRightOrBoth, float lowestFloatBottom
+            , Rectangle[] lastLeftAndRightBoxes, IList<Rectangle> floatRendererAreas) {
+            if (isLeftOrBoth && lastLeftAndRightBoxes[0] != null) {
+                foreach (Rectangle floatBox in floatRendererAreas) {
+                    if (floatBox.GetBottom() < lowestFloatBottom && floatBox.GetLeft() <= lastLeftAndRightBoxes[0].GetLeft()) {
+                        lowestFloatBottom = floatBox.GetBottom();
+                    }
+                }
+            }
+            if (isRightOrBoth && lastLeftAndRightBoxes[1] != null) {
+                foreach (Rectangle floatBox in floatRendererAreas) {
+                    if (floatBox.GetBottom() < lowestFloatBottom && floatBox.GetRight() >= lastLeftAndRightBoxes[1].GetRight()
+                        ) {
+                        lowestFloatBottom = floatBox.GetBottom();
+                    }
+                }
+            }
+            return lowestFloatBottom;
         }
     }
 }

@@ -1,7 +1,7 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
 This program is offered under a commercial and under the AGPL license.
 For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
@@ -32,6 +32,7 @@ using iText.Commons.Bouncycastle;
 using iText.Commons.Utils;
 
 namespace iText.Bouncycastleconnector {
+    // Android-Conversion-Skip-Line (BC FIPS isn't supported on Android)
     /// <summary>
     /// This class provides the ability to create
     /// <see cref="iText.Commons.Bouncycastle.IBouncyCastleFactory"/>
@@ -123,5 +124,6 @@ namespace iText.Bouncycastleconnector {
             factories.Put("bouncy-castle", () => new BouncyCastleFactory());
             factories.Put("bouncy-castle-fips", () => new BouncyCastleFipsFactory());
         }
+        // Android-Conversion-Skip-Line (BC FIPS isn't supported on Android)
     }
 }

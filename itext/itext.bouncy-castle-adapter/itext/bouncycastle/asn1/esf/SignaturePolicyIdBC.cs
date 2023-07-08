@@ -1,7 +1,7 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
 This program is offered under a commercial and under the AGPL license.
 For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
@@ -30,7 +30,7 @@ namespace iText.Bouncycastle.Asn1.Esf {
     /// Wrapper class for
     /// <see cref="Org.BouncyCastle.Asn1.Esf.SignaturePolicyId"/>.
     /// </summary>
-    public class SignaturePolicyIdBC : ASN1EncodableBC, ISignaturePolicyId {
+    public class SignaturePolicyIdBC : Asn1EncodableBC, ISignaturePolicyId {
         /// <summary>
         /// Creates new wrapper instance for
         /// <see cref="Org.BouncyCastle.Asn1.Esf.SignaturePolicyId"/>.
@@ -51,9 +51,9 @@ namespace iText.Bouncycastle.Asn1.Esf {
         /// <param name="objectIdentifier">ASN1ObjectIdentifier wrapper</param>
         /// <param name="algAndValue">OtherHashAlgAndValue wrapper</param>
         /// <param name="policyQualifiers">SigPolicyQualifierInfo array</param>
-        public SignaturePolicyIdBC(IASN1ObjectIdentifier objectIdentifier, IOtherHashAlgAndValue algAndValue, params 
+        public SignaturePolicyIdBC(IDerObjectIdentifier objectIdentifier, IOtherHashAlgAndValue algAndValue, params 
             SigPolicyQualifierInfo[] policyQualifiers)
-            : this(new SignaturePolicyId(((ASN1ObjectIdentifierBC)objectIdentifier).GetASN1ObjectIdentifier(), ((OtherHashAlgAndValueBC
+            : this(new SignaturePolicyId(((DerObjectIdentifierBC)objectIdentifier).GetDerObjectIdentifier(), ((OtherHashAlgAndValueBC
                 )algAndValue).GetOtherHashAlgAndValue(), policyQualifiers)) {
         }
 
@@ -63,8 +63,8 @@ namespace iText.Bouncycastle.Asn1.Esf {
         /// </summary>
         /// <param name="objectIdentifier">ASN1ObjectIdentifier wrapper</param>
         /// <param name="algAndValue">OtherHashAlgAndValue wrapper</param>
-        public SignaturePolicyIdBC(IASN1ObjectIdentifier objectIdentifier, IOtherHashAlgAndValue algAndValue)
-            : this(new SignaturePolicyId(((ASN1ObjectIdentifierBC)objectIdentifier).GetASN1ObjectIdentifier(), ((OtherHashAlgAndValueBC
+        public SignaturePolicyIdBC(IDerObjectIdentifier objectIdentifier, IOtherHashAlgAndValue algAndValue)
+            : this(new SignaturePolicyId(((DerObjectIdentifierBC)objectIdentifier).GetDerObjectIdentifier(), ((OtherHashAlgAndValueBC
                 )algAndValue).GetOtherHashAlgAndValue())) {
         }
 

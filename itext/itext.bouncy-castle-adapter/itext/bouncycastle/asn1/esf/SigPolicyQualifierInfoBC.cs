@@ -1,7 +1,7 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
 This program is offered under a commercial and under the AGPL license.
 For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
@@ -30,7 +30,7 @@ namespace iText.Bouncycastle.Asn1.Esf {
     /// Wrapper class for
     /// <see cref="Org.BouncyCastle.Asn1.Esf.SigPolicyQualifierInfo"/>.
     /// </summary>
-    public class SigPolicyQualifierInfoBC : ASN1EncodableBC, ISigPolicyQualifierInfo {
+    public class SigPolicyQualifierInfoBC : Asn1EncodableBC, ISigPolicyQualifierInfo {
         /// <summary>
         /// Creates new wrapper instance for
         /// <see cref="Org.BouncyCastle.Asn1.Esf.SigPolicyQualifierInfo"/>.
@@ -50,9 +50,9 @@ namespace iText.Bouncycastle.Asn1.Esf {
         /// </summary>
         /// <param name="objectIdentifier">ASN1ObjectIdentifier wrapper</param>
         /// <param name="string">DERIA5String wrapper</param>
-        public SigPolicyQualifierInfoBC(IASN1ObjectIdentifier objectIdentifier, IDERIA5String @string)
-            : this(new SigPolicyQualifierInfo(((ASN1ObjectIdentifierBC)objectIdentifier).GetASN1ObjectIdentifier(), ((
-                DERIA5StringBC)@string).GetDerIA5String())) {
+        public SigPolicyQualifierInfoBC(IDerObjectIdentifier objectIdentifier, IDerIA5String @string)
+            : this(new SigPolicyQualifierInfo(((DerObjectIdentifierBC)objectIdentifier).GetDerObjectIdentifier(), ((DerIA5StringBC
+                )@string).GetDerIA5String())) {
         }
 
         /// <summary>Gets actual org.bouncycastle object being wrapped.</summary>

@@ -1,45 +1,24 @@
 /*
-
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: Bruno Lowagie, Paulo Soares, et al.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License version 3
-as published by the Free Software Foundation with the addition of the
-following permission added to Section 15 as permitted in Section 7(a):
-FOR ANY PART OF THE COVERED WORK IN WHICH THE COPYRIGHT IS OWNED BY
-ITEXT GROUP. ITEXT GROUP DISCLAIMS THE WARRANTY OF NON INFRINGEMENT
-OF THIRD PARTY RIGHTS
+This program is offered under a commercial and under the AGPL license.
+For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
 
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Affero General Public License for more details.
+AGPL licensing:
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
 You should have received a copy of the GNU Affero General Public License
-along with this program; if not, see http://www.gnu.org/licenses or write to
-the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-Boston, MA, 02110-1301 USA, or download the license from the following URL:
-http://itextpdf.com/terms-of-use/
-
-The interactive user interfaces in modified source and object code versions
-of this program must display Appropriate Legal Notices, as required under
-Section 5 of the GNU Affero General Public License.
-
-In accordance with Section 7(b) of the GNU Affero General Public License,
-a covered work must retain the producer line in every PDF that is created
-or manipulated using iText.
-
-You can be released from the requirements of the license by purchasing
-a commercial license. Buying such a license is mandatory as soon as you
-develop commercial activities involving the iText software without
-disclosing the source code of your own applications.
-These activities include: offering paid services to customers as an ASP,
-serving PDFs on the fly in a web application, shipping iText with a closed
-source product.
-
-For more information, please contact iText Software Corp. at this
-address: sales@itextpdf.com
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 using System;
 using System.Collections.Generic;
@@ -299,7 +278,7 @@ namespace iText.Signatures {
         /// <summary>Gets a new signature field name that doesn't clash with any existing name.</summary>
         /// <returns>A new signature field name.</returns>
         public virtual String GetNewSigFieldName() {
-            PdfAcroForm acroForm = PdfAcroForm.GetAcroForm(document, true);
+            PdfAcroForm acroForm = PdfFormCreator.GetAcroForm(document, true);
             String name = "Signature";
             int step = 1;
             while (acroForm.GetField(name + step) != null) {
@@ -316,12 +295,9 @@ namespace iText.Signatures {
         /// <param name="fieldName">The name indicating the field to be signed.</param>
         public virtual void SetFieldName(String fieldName) {
             if (fieldName != null) {
-                if (fieldName.IndexOf('.') >= 0) {
-                    throw new ArgumentException(SignExceptionMessageConstant.FIELD_NAMES_CANNOT_CONTAIN_A_DOT);
-                }
-                PdfAcroForm acroForm = PdfAcroForm.GetAcroForm(document, true);
-                if (acroForm.GetField(fieldName) != null) {
-                    PdfFormField field = acroForm.GetField(fieldName);
+                PdfAcroForm acroForm = PdfFormCreator.GetAcroForm(document, true);
+                PdfFormField field = acroForm.GetField(fieldName);
+                if (field != null) {
                     if (!PdfName.Sig.Equals(field.GetFormType())) {
                         throw new ArgumentException(SignExceptionMessageConstant.FIELD_TYPE_IS_NOT_A_SIGNATURE_FIELD_TYPE);
                     }
@@ -334,6 +310,13 @@ namespace iText.Signatures {
                         PdfWidgetAnnotation widget = widgets[0];
                         appearance.SetPageRect(GetWidgetRectangle(widget));
                         appearance.SetPageNumber(GetWidgetPageNumber(widget));
+                    }
+                }
+                else {
+                    // Do not allow dots for new fields
+                    // For existing fields dots are allowed because there it might be fully qualified name
+                    if (fieldName.IndexOf('.') >= 0) {
+                        throw new ArgumentException(SignExceptionMessageConstant.FIELD_NAMES_CANNOT_CONTAIN_A_DOT);
                     }
                 }
                 this.fieldName = fieldName;
@@ -512,7 +495,8 @@ namespace iText.Signatures {
             }
             byte[] sh = sgn.GetAuthenticatedAttributeBytes(hash, sigtype, ocspList, crlBytes);
             byte[] extSignature = externalSignature.Sign(sh);
-            sgn.SetExternalSignatureValue(extSignature, null, externalSignature.GetSignatureAlgorithmName());
+            sgn.SetExternalSignatureValue(extSignature, null, externalSignature.GetSignatureAlgorithmName(), externalSignature
+                .GetSignatureMechanismParameters());
             byte[] encodedSig = sgn.GetEncodedPKCS7(hash, sigtype, tsaClient, ocspList, crlBytes);
             if (estimatedSize < encodedSig.Length) {
                 throw new System.IO.IOException("Not enough space");
@@ -594,7 +578,7 @@ namespace iText.Signatures {
             exc.Put(PdfName.Contents, contentEstimated * 2 + 2);
             PreClose(exc);
             Stream data = GetRangeStream();
-            IIDigest messageDigest = tsa.GetMessageDigest();
+            IDigest messageDigest = tsa.GetMessageDigest();
             byte[] buf = new byte[4096];
             int n;
             while ((n = data.Read(buf)) > 0) {
@@ -722,7 +706,7 @@ namespace iText.Signatures {
                 throw new PdfException(SignExceptionMessageConstant.DOCUMENT_ALREADY_PRE_CLOSED);
             }
             preClosed = true;
-            PdfAcroForm acroForm = PdfAcroForm.GetAcroForm(document, true);
+            PdfAcroForm acroForm = PdfFormCreator.GetAcroForm(document, true);
             SignatureUtil sgnUtil = new SignatureUtil(document);
             String name = GetFieldName();
             bool fieldExist = sgnUtil.DoesSignatureFieldExist(name);
@@ -1083,7 +1067,7 @@ namespace iText.Signatures {
             if (catalogPerms != null) {
                 urSignature = catalogPerms.GetAsDictionary(PdfName.UR3);
             }
-            PdfAcroForm acroForm = PdfAcroForm.GetAcroForm(document, false);
+            PdfAcroForm acroForm = PdfFormCreator.GetAcroForm(document, false);
             if (acroForm != null) {
                 foreach (KeyValuePair<String, PdfFormField> entry in acroForm.GetAllFormFields()) {
                     PdfDictionary fieldDict = entry.Value.GetPdfObject();

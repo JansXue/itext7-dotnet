@@ -1,7 +1,7 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
 This program is offered under a commercial and under the AGPL license.
 For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
@@ -47,7 +47,7 @@ namespace iText.Forms.Fields {
             String cmpPdf = SOURCE_FOLDER + "cmp_addFormXObjectToPushButton.pdf";
             PdfDocument pdfDoc = new PdfDocument(new PdfReader(SOURCE_FOLDER + "addFormXObjectToPushButton.pdf"), new 
                 PdfWriter(outPdf));
-            PdfAcroForm form = PdfAcroForm.GetAcroForm(pdfDoc, true);
+            PdfAcroForm form = PdfFormCreator.GetAcroForm(pdfDoc, true);
             PdfPage page = pdfDoc.GetPage(2);
             PdfFormXObject xObject = page.CopyAsFormXObject(pdfDoc);
             ((PdfButtonFormField)form.GetField("pushButton")).SetImageAsForm(xObject);

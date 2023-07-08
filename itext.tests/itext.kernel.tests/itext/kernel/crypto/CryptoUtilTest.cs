@@ -1,7 +1,7 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
 This program is offered under a commercial and under the AGPL license.
 For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
@@ -37,14 +37,14 @@ namespace iText.Kernel.Crypto {
         [NUnit.Framework.Test]
         public virtual void CreateBerStreamTest() {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            IASN1OutputStream stream = CryptoUtil.CreateAsn1OutputStream(baos, FACTORY.CreateASN1Encoding().GetBer());
+            IDerOutputStream stream = CryptoUtil.CreateAsn1OutputStream(baos, FACTORY.CreateASN1Encoding().GetBer());
             NUnit.Framework.Assert.IsNotNull(stream);
         }
 
         [NUnit.Framework.Test]
         public virtual void CreateDerStreamTest() {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            IASN1OutputStream stream = CryptoUtil.CreateAsn1OutputStream(baos, FACTORY.CreateASN1Encoding().GetDer());
+            IDerOutputStream stream = CryptoUtil.CreateAsn1OutputStream(baos, FACTORY.CreateASN1Encoding().GetDer());
             NUnit.Framework.Assert.IsNotNull(stream);
         }
 

@@ -1,46 +1,27 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License version 3
-as published by the Free Software Foundation with the addition of the
-following permission added to Section 15 as permitted in Section 7(a):
-FOR ANY PART OF THE COVERED WORK IN WHICH THE COPYRIGHT IS OWNED BY
-ITEXT GROUP. ITEXT GROUP DISCLAIMS THE WARRANTY OF NON INFRINGEMENT
-OF THIRD PARTY RIGHTS
+This program is offered under a commercial and under the AGPL license.
+For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
 
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Affero General Public License for more details.
+AGPL licensing:
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
 You should have received a copy of the GNU Affero General Public License
-along with this program; if not, see http://www.gnu.org/licenses or write to
-the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-Boston, MA, 02110-1301 USA, or download the license from the following URL:
-http://itextpdf.com/terms-of-use/
-
-The interactive user interfaces in modified source and object code versions
-of this program must display Appropriate Legal Notices, as required under
-Section 5 of the GNU Affero General Public License.
-
-In accordance with Section 7(b) of the GNU Affero General Public License,
-a covered work must retain the producer line in every PDF that is created
-or manipulated using iText.
-
-You can be released from the requirements of the license by purchasing
-a commercial license. Buying such a license is mandatory as soon as you
-develop commercial activities involving the iText software without
-disclosing the source code of your own applications.
-These activities include: offering paid services to customers as an ASP,
-serving PDFs on the fly in a web application, shipping iText with a closed
-source product.
-
-For more information, please contact iText Software Corp. at this
-address: sales@itextpdf.com
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 using System;
+using iText.Forms.Fields;
 using iText.IO.Source;
 using iText.Kernel.Pdf;
 using iText.Kernel.Utils;
@@ -62,7 +43,7 @@ namespace iText.Forms {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 32)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 14)]
         public virtual void CopyFieldsTest01() {
             String srcFilename1 = sourceFolder + "appearances1.pdf";
             String srcFilename2 = sourceFolder + "fieldsOn2-sPage.pdf";
@@ -133,7 +114,7 @@ namespace iText.Forms {
             PdfPageFormCopier formCopier = new PdfPageFormCopier();
             srcDoc.CopyPagesTo(1, srcDoc.GetNumberOfPages(), destDoc, formCopier);
             srcDoc.CopyPagesTo(1, srcDoc.GetNumberOfPages(), destDoc, formCopier);
-            PdfAcroForm form = PdfAcroForm.GetAcroForm(destDoc, false);
+            PdfAcroForm form = PdfFormCreator.GetAcroForm(destDoc, false);
             NUnit.Framework.Assert.AreEqual(1, form.GetFields().Size());
             NUnit.Framework.Assert.IsNotNull(form.GetField("Name1"));
             destDoc.Close();
@@ -152,7 +133,7 @@ namespace iText.Forms {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 12)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 9)]
         public virtual void CopyMultipleSubfieldsTest01() {
             String srcFilename = sourceFolder + "copyMultipleSubfieldsTest01.pdf";
             String destFilename = destinationFolder + "copyMultipleSubfieldsTest01.pdf";
@@ -163,7 +144,7 @@ namespace iText.Forms {
             for (int i = 0; i < 4; ++i) {
                 srcDoc.CopyPagesTo(1, 1, destDoc, pdfPageFormCopier);
             }
-            PdfAcroForm acroForm = PdfAcroForm.GetAcroForm(destDoc, false);
+            PdfAcroForm acroForm = PdfFormCreator.GetAcroForm(destDoc, false);
             acroForm.GetField("text_1").SetValue("Text 1!");
             acroForm.GetField("text_2").SetValue("Text 2!");
             acroForm.GetField("text.3").SetValue("Text 3!");
@@ -186,7 +167,7 @@ namespace iText.Forms {
             for (int i = 0; i < 3; ++i) {
                 srcDoc.CopyPagesTo(1, 1, destDoc, pdfPageFormCopier);
             }
-            PdfAcroForm acroForm = PdfAcroForm.GetAcroForm(destDoc, false);
+            PdfAcroForm acroForm = PdfFormCreator.GetAcroForm(destDoc, false);
             acroForm.GetField("text.3").SetValue("Text 3!");
             destDoc.Close();
             srcDoc.Close();
@@ -206,7 +187,7 @@ namespace iText.Forms {
             for (int i = 0; i < 3; ++i) {
                 srcDoc.CopyPagesTo(1, 1, destDoc, pdfPageFormCopier);
             }
-            PdfAcroForm acroForm = PdfAcroForm.GetAcroForm(destDoc, false);
+            PdfAcroForm acroForm = PdfFormCreator.GetAcroForm(destDoc, false);
             acroForm.GetField("text_1").SetValue("Text 1!");
             destDoc.Close();
             srcDoc.Close();
@@ -215,7 +196,7 @@ namespace iText.Forms {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 12)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 9)]
         public virtual void CopyMultipleSubfieldsSmartModeTest01() {
             String srcFilename = sourceFolder + "copyMultipleSubfieldsSmartModeTest01.pdf";
             String destFilename = destinationFolder + "copyMultipleSubfieldsSmartModeTest01.pdf";
@@ -226,7 +207,7 @@ namespace iText.Forms {
             for (int i = 0; i < 4; ++i) {
                 srcDoc.CopyPagesTo(1, 1, destDoc, pdfPageFormCopier);
             }
-            PdfAcroForm acroForm = PdfAcroForm.GetAcroForm(destDoc, false);
+            PdfAcroForm acroForm = PdfFormCreator.GetAcroForm(destDoc, false);
             acroForm.GetField("text_1").SetValue("Text 1!");
             acroForm.GetField("text_2").SetValue("Text 2!");
             acroForm.GetField("text.3").SetValue("Text 3!");
@@ -238,7 +219,7 @@ namespace iText.Forms {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 13)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 14)]
         public virtual void CopyFieldsTest06() {
             String srcFilename = sourceFolder + "datasheet.pdf";
             String destFilename = destinationFolder + "copyFields06.pdf";
@@ -256,7 +237,7 @@ namespace iText.Forms {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 32)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 14)]
         public virtual void CopyFieldsTest07() {
             String srcFilename = sourceFolder + "datasheet.pdf";
             String destFilename = destinationFolder + "copyFields07.pdf";
@@ -274,7 +255,7 @@ namespace iText.Forms {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 32)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 14)]
         public virtual void CopyFieldsTest08() {
             String srcFilename1 = sourceFolder + "appearances1.pdf";
             String srcFilename2 = sourceFolder + "fieldsOn2-sPage.pdf";
@@ -296,9 +277,6 @@ namespace iText.Forms {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 64)]
-        //TODO DEVSIX-6345 Equal form fields full names
-        [NUnit.Framework.Ignore("DEVSIX-6345")]
         public virtual void CopyFieldsTest09() {
             String srcFilename = sourceFolder + "datasheet.pdf";
             String destFilename = destinationFolder + "copyFields09.pdf";
@@ -372,7 +350,6 @@ namespace iText.Forms {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 1)]
         public virtual void CopyFieldsTest13() {
             String srcFilename = sourceFolder + "copyFields13.pdf";
             String destFilename = destinationFolder + "copyFields13.pdf";
@@ -382,7 +359,7 @@ namespace iText.Forms {
             for (int i = 0; i < 1; ++i) {
                 srcDoc.CopyPagesTo(1, 1, destDoc, pdfPageFormCopier);
             }
-            PdfAcroForm acroForm = PdfAcroForm.GetAcroForm(destDoc, false);
+            PdfAcroForm acroForm = PdfFormCreator.GetAcroForm(destDoc, false);
             acroForm.GetField("text").SetValue("Text!");
             destDoc.Close();
             srcDoc.Close();
@@ -416,9 +393,8 @@ namespace iText.Forms {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 51)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 45)]
         public virtual void CopyAndEditTextFields() {
-            //TODO: update after DEVSIX-2354
             String srcFileName = sourceFolder + "checkPdfFormCopy_Source.pdf";
             String destFilename = destinationFolder + "copyAndEditTextFields.pdf";
             String cmpFileName = sourceFolder + "cmp_copyAndEditTextFields.pdf";
@@ -428,7 +404,7 @@ namespace iText.Forms {
             for (int i = 0; i < 4; i++) {
                 srcDoc.CopyPagesTo(1, 1, destDoc, pdfPageFormCopier);
             }
-            PdfAcroForm acroForm = PdfAcroForm.GetAcroForm(destDoc, false);
+            PdfAcroForm acroForm = PdfFormCreator.GetAcroForm(destDoc, false);
             acroForm.GetField("text_1").SetValue("text_1");
             acroForm.GetField("NumberField_text.2").SetValue("-100.00");
             acroForm.GetField("NumberField_text.2_1").SetValue("3.00");
@@ -441,9 +417,8 @@ namespace iText.Forms {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 51)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 45)]
         public virtual void CopyAndEditCheckboxes() {
-            //TODO: update after DEVSIX-2354
             String srcFileName = sourceFolder + "checkPdfFormCopy_Source.pdf";
             String destFilename = destinationFolder + "copyAndEditCheckboxes.pdf";
             String cmpFileName = sourceFolder + "cmp_copyAndEditCheckboxes.pdf";
@@ -453,7 +428,7 @@ namespace iText.Forms {
             for (int i = 0; i < 4; i++) {
                 srcDoc.CopyPagesTo(1, 1, destDoc, pdfPageFormCopier);
             }
-            PdfAcroForm acroForm = PdfAcroForm.GetAcroForm(destDoc, false);
+            PdfAcroForm acroForm = PdfFormCreator.GetAcroForm(destDoc, false);
             acroForm.GetField("CheckBox_1").SetValue("On");
             acroForm.GetField("Check Box.2").SetValue("Off");
             acroForm.GetField("CheckBox4.1#1").SetValue("Off");
@@ -464,9 +439,8 @@ namespace iText.Forms {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 51)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 45)]
         public virtual void CopyAndEditRadioButtons() {
-            //TODO: update after DEVSIX-2354
             String srcFileName = sourceFolder + "checkPdfFormCopy_Source.pdf";
             String destFilename = destinationFolder + "copyAndEditRadioButtons.pdf";
             String cmpFileName = sourceFolder + "cmp_copyAndEditRadioButtons.pdf";
@@ -476,7 +450,7 @@ namespace iText.Forms {
             for (int i = 0; i < 4; i++) {
                 srcDoc.CopyPagesTo(1, 1, destDoc, pdfPageFormCopier);
             }
-            PdfAcroForm acroForm = PdfAcroForm.GetAcroForm(destDoc, false);
+            PdfAcroForm acroForm = PdfFormCreator.GetAcroForm(destDoc, false);
             acroForm.GetField("Group.4").SetValue("Choice_3!<>3.3.3");
             destDoc.Close();
             srcDoc.Close();
@@ -494,7 +468,7 @@ namespace iText.Forms {
                 using (PdfDocument resultPdfDocument = new PdfDocument(writer)) {
                     using (PdfReader reader1 = new PdfReader(srcFileName1)) {
                         using (PdfDocument sourceDoc1 = new PdfDocument(reader1)) {
-                            PdfAcroForm.GetAcroForm(resultPdfDocument, true);
+                            PdfFormCreator.GetAcroForm(resultPdfDocument, true);
                             PdfPageFormCopier formCopier = new PdfPageFormCopier();
                             sourceDoc1.CopyPagesTo(1, sourceDoc1.GetNumberOfPages(), resultPdfDocument, formCopier);
                             sourceDoc1.CopyPagesTo(1, sourceDoc1.GetNumberOfPages(), resultPdfDocument, formCopier);
@@ -507,7 +481,7 @@ namespace iText.Forms {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 2)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 1)]
         public virtual void MergeMergedFieldAndTwoWidgetsTest() {
             String srcFileName1 = sourceFolder + "fieldMergedWithWidget.pdf";
             String srcFileName2 = sourceFolder + "fieldTwoWidgets.pdf";
@@ -519,7 +493,7 @@ namespace iText.Forms {
                         using (PdfDocument sourceDoc1 = new PdfDocument(reader1)) {
                             using (PdfReader reader2 = new PdfReader(srcFileName2)) {
                                 using (PdfDocument sourceDoc2 = new PdfDocument(reader2)) {
-                                    PdfAcroForm.GetAcroForm(resultPdfDocument, true);
+                                    PdfFormCreator.GetAcroForm(resultPdfDocument, true);
                                     PdfPageFormCopier formCopier = new PdfPageFormCopier();
                                     sourceDoc1.CopyPagesTo(1, sourceDoc1.GetNumberOfPages(), resultPdfDocument, formCopier);
                                     sourceDoc2.CopyPagesTo(1, sourceDoc2.GetNumberOfPages(), resultPdfDocument, formCopier);
@@ -546,7 +520,7 @@ namespace iText.Forms {
                         using (PdfDocument sourceDoc1 = new PdfDocument(reader1)) {
                             using (PdfReader reader2 = new PdfReader(srcFileName2)) {
                                 using (PdfDocument sourceDoc2 = new PdfDocument(reader2)) {
-                                    PdfAcroForm.GetAcroForm(resultPdfDocument, true);
+                                    PdfFormCreator.GetAcroForm(resultPdfDocument, true);
                                     PdfPageFormCopier formCopier = new PdfPageFormCopier();
                                     sourceDoc2.CopyPagesTo(1, sourceDoc2.GetNumberOfPages(), resultPdfDocument, formCopier);
                                     sourceDoc1.CopyPagesTo(1, sourceDoc1.GetNumberOfPages(), resultPdfDocument, formCopier);
@@ -561,6 +535,7 @@ namespace iText.Forms {
         }
 
         [NUnit.Framework.Test]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD)]
         public virtual void MergeTwoWidgetsAndTwoWidgetsTest() {
             String srcFileName2 = sourceFolder + "fieldTwoWidgets.pdf";
             String destFilename = destinationFolder + "mergeTwoWidgetsAndTwoWidgetsTest.pdf";
@@ -569,12 +544,29 @@ namespace iText.Forms {
                 using (PdfDocument resultPdfDocument = new PdfDocument(writer)) {
                     using (PdfReader reader2 = new PdfReader(srcFileName2)) {
                         using (PdfDocument sourceDoc2 = new PdfDocument(reader2)) {
-                            PdfAcroForm.GetAcroForm(resultPdfDocument, true);
+                            PdfFormCreator.GetAcroForm(resultPdfDocument, true);
                             PdfPageFormCopier formCopier = new PdfPageFormCopier();
                             sourceDoc2.CopyPagesTo(1, sourceDoc2.GetNumberOfPages(), resultPdfDocument, formCopier);
                             sourceDoc2.CopyPagesTo(1, sourceDoc2.GetNumberOfPages(), resultPdfDocument, formCopier);
                         }
                     }
+                }
+            }
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destFilename, cmpFileName, destinationFolder
+                , "diff_"));
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 2)]
+        public virtual void ComplexFieldsHierarchyTest() {
+            String srcFileName = sourceFolder + "complexFieldsHierarchyTest.pdf";
+            String destFilename = destinationFolder + "complexFieldsHierarchyTest.pdf";
+            String cmpFileName = sourceFolder + "cmp_complexFieldsHierarchyTest.pdf";
+            using (PdfDocument pdfDocMerged = new PdfDocument(new PdfReader(srcFileName), new PdfWriter(destFilename))
+                ) {
+                using (PdfDocument pdfDoc = new PdfDocument(new PdfReader(srcFileName))) {
+                    pdfDoc.CopyPagesTo(1, pdfDoc.GetNumberOfPages(), pdfDocMerged, new PdfPageFormCopier());
+                    pdfDoc.CopyPagesTo(1, pdfDoc.GetNumberOfPages(), pdfDocMerged, new PdfPageFormCopier());
                 }
             }
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destFilename, cmpFileName, destinationFolder

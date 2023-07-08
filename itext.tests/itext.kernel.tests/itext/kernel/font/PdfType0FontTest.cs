@@ -1,7 +1,7 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
 This program is offered under a commercial and under the AGPL license.
 For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
@@ -102,6 +102,37 @@ namespace iText.Kernel.Font {
             NUnit.Framework.Assert.AreEqual("UniGB-UTF16-V", PdfType0Font.GetUniMapFromOrdering("GB1", false));
             NUnit.Framework.Assert.AreEqual("Identity-H", PdfType0Font.GetUniMapFromOrdering("Identity", true));
             NUnit.Framework.Assert.AreEqual("Identity-V", PdfType0Font.GetUniMapFromOrdering("Identity", false));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void DescendantCidFontWithoutOrderingTest() {
+            PdfDictionary fontDict = new PdfDictionary();
+            PdfArray descendantFonts = new PdfArray();
+            PdfDictionary descendantFont = new PdfDictionary();
+            descendantFont.Put(PdfName.CIDSystemInfo, new PdfDictionary());
+            descendantFonts.Add(descendantFont);
+            fontDict.Put(PdfName.DescendantFonts, descendantFonts);
+            Exception e = NUnit.Framework.Assert.Catch(typeof(PdfException), () => new PdfType0Font(fontDict));
+            NUnit.Framework.Assert.AreEqual(KernelExceptionMessageConstant.ORDERING_SHOULD_BE_DETERMINED, e.Message);
+        }
+
+        private static IList<Glyph> ConstructGlyphListFromString(String text, PdfFont font) {
+            IList<Glyph> glyphList = new List<Glyph>(text.Length);
+            char[] chars = text.ToCharArray();
+            foreach (char letter in chars) {
+                glyphList.Add(font.GetGlyph(letter));
+            }
+            return glyphList;
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ConvertToBytesNoEncoderTest() {
+            byte[] expected = "十锊埋伏".GetBytes(System.Text.Encoding.BigEndianUnicode);
+            PdfFont font = PdfFontFactory.CreateFont("STSong-Light", "UniGB-UCS2-H", PdfFontFactory.EmbeddingStrategy.
+                PREFER_NOT_EMBEDDED);
+            GlyphLine line = new GlyphLine(ConstructGlyphListFromString("\u5341\u950a\u57cb\u4f0f", font));
+            byte[] result = font.ConvertToBytes(line);
+            NUnit.Framework.Assert.AreEqual(expected, result);
         }
     }
 }

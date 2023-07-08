@@ -1,7 +1,7 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
 This program is offered under a commercial and under the AGPL license.
 For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
@@ -22,7 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 using System;
 using Org.BouncyCastle.Ocsp;
-using iText.Bouncycastle.Asn1.X500;
+using iText.Bouncycastle.Asn1.X509;
 using iText.Commons.Bouncycastle.Asn1.X500;
 using iText.Commons.Bouncycastle.Cert.Ocsp;
 using iText.Commons.Utils;
@@ -57,7 +57,7 @@ namespace iText.Bouncycastle.Cert.Ocsp {
         /// <see cref="Org.BouncyCastle.Ocsp.RespID"/>
         /// </param>
         public RespIDBC(IX500Name x500Name)
-            : this(new RespID(((X500NameBC)x500Name).GetX500Name())) {
+            : this(new RespID(((X509NameBC)x500Name).GetX509Name())) {
         }
 
         /// <summary>Gets actual org.bouncycastle object being wrapped.</summary>

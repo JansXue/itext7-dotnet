@@ -1,7 +1,7 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
 This program is offered under a commercial and under the AGPL license.
 For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
@@ -23,6 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 using System;
 using System.Collections.Generic;
 using System.IO;
+using iText.Forms.Fields.Properties;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Annot;
@@ -48,8 +49,8 @@ namespace iText.Forms.Fields {
         [NUnit.Framework.Test]
         public virtual void SetGetCheckType() {
             CheckBoxFormFieldBuilder builder = new CheckBoxFormFieldBuilder(DUMMY_DOCUMENT, DUMMY_NAME);
-            builder.SetCheckType(55);
-            NUnit.Framework.Assert.AreEqual(55, builder.GetCheckType());
+            builder.SetCheckType(CheckBoxType.DIAMOND);
+            NUnit.Framework.Assert.AreEqual(CheckBoxType.DIAMOND, builder.GetCheckType());
         }
 
         [NUnit.Framework.Test]

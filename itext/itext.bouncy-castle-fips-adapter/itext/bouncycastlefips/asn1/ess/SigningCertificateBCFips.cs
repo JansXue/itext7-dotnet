@@ -1,7 +1,7 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
 This program is offered under a commercial and under the AGPL license.
 For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
@@ -29,7 +29,7 @@ namespace iText.Bouncycastlefips.Asn1.Ess {
     /// Wrapper class for
     /// <see cref="Org.BouncyCastle.Asn1.Ess.SigningCertificate"/>.
     /// </summary>
-    public class SigningCertificateBCFips : ASN1EncodableBCFips, ISigningCertificate {
+    public class SigningCertificateBCFips : Asn1EncodableBCFips, ISigningCertificate {
         /// <summary>
         /// Creates new wrapper instance for
         /// <see cref="Org.BouncyCastle.Asn1.Ess.SigningCertificate"/>.
@@ -53,9 +53,9 @@ namespace iText.Bouncycastlefips.Asn1.Ess {
         }
 
         /// <summary><inheritDoc/></summary>
-        public virtual IESSCertID[] GetCerts() {
+        public virtual IEssCertID[] GetCerts() {
             EssCertID[] certs = GetSigningCertificate().GetCerts();
-            IESSCertID[] certsBCFips = new IESSCertID[certs.Length];
+            IEssCertID[] certsBCFips = new IEssCertID[certs.Length];
             for (int i = 0; i < certsBCFips.Length; i++) {
                 certsBCFips[i] = new ESSCertIDBCFips(certs[i]);
             }

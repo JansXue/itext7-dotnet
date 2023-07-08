@@ -1,7 +1,7 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
 This program is offered under a commercial and under the AGPL license.
 For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
@@ -72,9 +72,9 @@ namespace iText.Bouncycastle.Asn1.Cms {
         }
 
         /// <summary><inheritDoc/></summary>
-        public virtual IAttribute Get(IASN1ObjectIdentifier oid) {
-            ASN1ObjectIdentifierBC asn1ObjectIdentifier = (ASN1ObjectIdentifierBC)oid;
-            return new AttributeBC(attributeTable[asn1ObjectIdentifier.GetASN1ObjectIdentifier()]);
+        public virtual IAttribute Get(IDerObjectIdentifier oid) {
+            DerObjectIdentifierBC asn1ObjectIdentifier = (DerObjectIdentifierBC)oid;
+            return new AttributeBC(attributeTable[asn1ObjectIdentifier.GetDerObjectIdentifier()]);
         }
 
         /// <summary>Indicates whether some other object is "equal to" this one.</summary>

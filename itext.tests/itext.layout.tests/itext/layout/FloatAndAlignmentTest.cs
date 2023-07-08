@@ -1,44 +1,24 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License version 3
-as published by the Free Software Foundation with the addition of the
-following permission added to Section 15 as permitted in Section 7(a):
-FOR ANY PART OF THE COVERED WORK IN WHICH THE COPYRIGHT IS OWNED BY
-ITEXT GROUP. ITEXT GROUP DISCLAIMS THE WARRANTY OF NON INFRINGEMENT
-OF THIRD PARTY RIGHTS
+This program is offered under a commercial and under the AGPL license.
+For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
 
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Affero General Public License for more details.
+AGPL licensing:
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
 You should have received a copy of the GNU Affero General Public License
-along with this program; if not, see http://www.gnu.org/licenses or write to
-the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-Boston, MA, 02110-1301 USA, or download the license from the following URL:
-http://itextpdf.com/terms-of-use/
-
-The interactive user interfaces in modified source and object code versions
-of this program must display Appropriate Legal Notices, as required under
-Section 5 of the GNU Affero General Public License.
-
-In accordance with Section 7(b) of the GNU Affero General Public License,
-a covered work must retain the producer line in every PDF that is created
-or manipulated using iText.
-
-You can be released from the requirements of the license by purchasing
-a commercial license. Buying such a license is mandatory as soon as you
-develop commercial activities involving the iText software without
-disclosing the source code of your own applications.
-These activities include: offering paid services to customers as an ASP,
-serving PDFs on the fly in a web application, shipping iText with a closed
-source product.
-
-For more information, please contact iText Software Corp. at this
-address: sales@itextpdf.com
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 using System;
 using iText.Kernel.Colors;
@@ -48,6 +28,7 @@ using iText.Kernel.Utils;
 using iText.Layout.Borders;
 using iText.Layout.Element;
 using iText.Layout.Properties;
+using iText.Layout.Renderer;
 using iText.Test;
 
 namespace iText.Layout {
@@ -600,6 +581,85 @@ namespace iText.Layout {
             document.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
                 ));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void FloatPositioningOutsideBlocksTest() {
+            String testName = "floatPositioningOutsideBlocks";
+            String outFileName = destinationFolder + testName + ".pdf";
+            String cmpFileName = sourceFolder + "cmp_" + testName + ".pdf";
+            using (Document document = new Document(new PdfDocument(new PdfWriter(outFileName)))) {
+                Div floatLeft = new Div().SetBorder(new SolidBorder(ColorConstants.GREEN, 3)).SetBackgroundColor(ColorConstants
+                    .GREEN, 0.3f).SetWidth(100).SetHeight(100);
+                floatLeft.SetProperty(Property.FLOAT, FloatPropertyValue.LEFT);
+                floatLeft.Add(new Paragraph("float left"));
+                Div floatRight = new Div().SetBorder(new SolidBorder(ColorConstants.YELLOW, 3)).SetBackgroundColor(ColorConstants
+                    .YELLOW, 0.3f).SetWidth(100).SetHeight(100);
+                floatRight.SetProperty(Property.FLOAT, FloatPropertyValue.RIGHT);
+                floatRight.Add(new Paragraph("float right"));
+                Div divWithBfc = new Div().SetBorder(new SolidBorder(ColorConstants.BLUE, 3)).SetBackgroundColor(ColorConstants
+                    .BLUE, 0.3f).SetHeight(100);
+                divWithBfc.SetProperty(Property.OVERFLOW_X, OverflowPropertyValue.HIDDEN);
+                divWithBfc.Add(new Paragraph("div with own block formatting context"));
+                Div wideDivWithBfc = new Div().SetBorder(new SolidBorder(ColorConstants.CYAN, 3)).SetBackgroundColor(ColorConstants
+                    .CYAN, 0.3f).SetWidth(UnitValue.CreatePercentValue(100));
+                wideDivWithBfc.SetProperty(Property.OVERFLOW_X, OverflowPropertyValue.HIDDEN);
+                wideDivWithBfc.Add(new Paragraph("wide div with own block formatting context"));
+                Div divWithoutBfc = new Div().SetBorder(new SolidBorder(ColorConstants.PINK, 3)).SetBackgroundColor(ColorConstants
+                    .PINK, 0.3f).SetHeight(100);
+                divWithoutBfc.Add(new Paragraph("div without own block formatting context"));
+                document.Add(floatLeft);
+                document.Add(divWithBfc);
+                document.Add(floatRight);
+                document.Add(divWithBfc);
+                document.Add(floatLeft);
+                document.Add(floatRight);
+                document.Add(divWithBfc);
+                document.Add(floatLeft);
+                document.Add(floatRight);
+                document.Add(divWithoutBfc);
+                document.Add(floatLeft);
+                document.Add(floatRight);
+                document.Add(wideDivWithBfc);
+                document.Add(new Paragraph("Plain text after wide div"));
+            }
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
+                , "diff01_"));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void FloatPositioningOutsideFlexContainerTest() {
+            String testName = "floatPositioningOutsideFlexContainer";
+            String outFileName = destinationFolder + testName + ".pdf";
+            String cmpFileName = sourceFolder + "cmp_" + testName + ".pdf";
+            using (Document document = new Document(new PdfDocument(new PdfWriter(outFileName)))) {
+                Div floatLeft = new Div().SetBorder(new SolidBorder(ColorConstants.GREEN, 1)).SetBackgroundColor(ColorConstants
+                    .GREEN, 0.3f).SetWidth(100).SetHeight(100);
+                floatLeft.SetProperty(Property.FLOAT, FloatPropertyValue.LEFT);
+                floatLeft.Add(new Paragraph("float left"));
+                Div floatRight = new Div().SetBorder(new SolidBorder(ColorConstants.YELLOW, 1)).SetBackgroundColor(ColorConstants
+                    .YELLOW, 0.3f).SetWidth(100).SetHeight(100);
+                floatRight.SetProperty(Property.FLOAT, FloatPropertyValue.RIGHT);
+                floatRight.Add(new Paragraph("float right"));
+                Div flexContainer = new Div().SetBorder(new SolidBorder(ColorConstants.BLUE, 1)).SetBackgroundColor(ColorConstants
+                    .BLUE, 0.3f);
+                flexContainer.SetNextRenderer(new FlexContainerRenderer(flexContainer));
+                flexContainer.Add(new Paragraph("flex container"));
+                Div flexContainer2 = new Div().SetBorder(new SolidBorder(ColorConstants.PINK, 1)).SetBackgroundColor(ColorConstants
+                    .PINK, 0.1f).SetWidth(UnitValue.CreatePercentValue(100));
+                flexContainer2.SetNextRenderer(new FlexContainerRenderer(flexContainer2));
+                flexContainer2.Add(new Paragraph("flex container with 100% width"));
+                document.Add(flexContainer);
+                document.Add(floatLeft);
+                document.Add(floatRight);
+                document.Add(flexContainer);
+                document.Add(floatLeft);
+                document.Add(floatRight);
+                document.Add(flexContainer2);
+                document.Add(new Paragraph("Plain text after wide flex container"));
+            }
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
+                , "diff01_"));
         }
 
         private Div CreateParentDiv(HorizontalAlignment? horizontalAlignment, ClearPropertyValue? clearPropertyValue

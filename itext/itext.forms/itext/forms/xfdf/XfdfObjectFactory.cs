@@ -1,44 +1,24 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License version 3
-as published by the Free Software Foundation with the addition of the
-following permission added to Section 15 as permitted in Section 7(a):
-FOR ANY PART OF THE COVERED WORK IN WHICH THE COPYRIGHT IS OWNED BY
-ITEXT GROUP. ITEXT GROUP DISCLAIMS THE WARRANTY OF NON INFRINGEMENT
-OF THIRD PARTY RIGHTS
+This program is offered under a commercial and under the AGPL license.
+For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
 
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Affero General Public License for more details.
+AGPL licensing:
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
 You should have received a copy of the GNU Affero General Public License
-along with this program; if not, see http://www.gnu.org/licenses or write to
-the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-Boston, MA, 02110-1301 USA, or download the license from the following URL:
-http://itextpdf.com/terms-of-use/
-
-The interactive user interfaces in modified source and object code versions
-of this program must display Appropriate Legal Notices, as required under
-Section 5 of the GNU Affero General Public License.
-
-In accordance with Section 7(b) of the GNU Affero General Public License,
-a covered work must retain the producer line in every PDF that is created
-or manipulated using iText.
-
-You can be released from the requirements of the license by purchasing
-a commercial license. Buying such a license is mandatory as soon as you
-develop commercial activities involving the iText software without
-disclosing the source code of your own applications.
-These activities include: offering paid services to customers as an ASP,
-serving PDFs on the fly in a web application, shipping iText with a closed
-source product.
-
-For more information, please contact iText Software Corp. at this
-address: sales@itextpdf.com
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 using System;
 using System.Collections.Generic;
@@ -48,12 +28,13 @@ using Microsoft.Extensions.Logging;
 using iText.Commons;
 using iText.Commons.Utils;
 using iText.Forms;
+using iText.Forms.Fields;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Annot;
 
 namespace iText.Forms.Xfdf {
     public class XfdfObjectFactory {
-        private static ILogger logger = ITextLogManager.GetLogger(typeof(XfdfObjectFactory));
+        private static readonly ILogger logger = ITextLogManager.GetLogger(typeof(XfdfObjectFactory));
 
         /// <summary>Extracts data from pdf document acroform and annotations into XfdfObject.</summary>
         /// <remarks>
@@ -64,10 +45,10 @@ namespace iText.Forms.Xfdf {
         /// <param name="filename">The name od pdf document for data extraction.</param>
         /// <returns>XfdfObject containing data from pdf forms and annotations.</returns>
         public virtual XfdfObject CreateXfdfObject(PdfDocument document, String filename) {
-            PdfAcroForm form = PdfAcroForm.GetAcroForm(document, false);
+            PdfAcroForm form = PdfFormCreator.GetAcroForm(document, false);
             XfdfObject resultXfdf = new XfdfObject();
             FieldsObject xfdfFields = new FieldsObject();
-            if (form != null && form.GetDirectFormFields() != null && !form.GetDirectFormFields().IsEmpty()) {
+            if (form != null && form.GetRootFormFields() != null && !form.GetRootFormFields().IsEmpty()) {
                 foreach (String fieldName in form.GetAllFormFields().Keys) {
                     String delims = ".";
                     StringTokenizer st = new StringTokenizer(fieldName, delims);
@@ -175,7 +156,10 @@ namespace iText.Forms.Xfdf {
                  || XfdfConstants.UNDERLINE.EqualsIgnoreCase(nodeName) || XfdfConstants.STRIKEOUT.EqualsIgnoreCase(nodeName
                 ) || XfdfConstants.SQUIGGLY.EqualsIgnoreCase(nodeName) || XfdfConstants.CIRCLE.EqualsIgnoreCase(nodeName
                 ) || XfdfConstants.SQUARE.EqualsIgnoreCase(nodeName) || XfdfConstants.POLYLINE.EqualsIgnoreCase(nodeName
-                ) || XfdfConstants.POLYGON.EqualsIgnoreCase(nodeName) || XfdfConstants.LINE.EqualsIgnoreCase(nodeName);
+                ) || XfdfConstants.POLYGON.EqualsIgnoreCase(nodeName) || XfdfConstants.STAMP.EqualsIgnoreCase(nodeName
+                ) || XfdfConstants.LINE
+                        //               XfdfConstants.FREETEXT.equalsIgnoreCase(nodeName) ||
+                        .EqualsIgnoreCase(nodeName);
         }
 
         private void ReadAnnotsList(XmlNode node, AnnotsObject annotsObject) {
@@ -197,12 +181,13 @@ namespace iText.Forms.Xfdf {
                 for (int i = 0; i < attributes.Count; i++) {
                     AddAnnotObjectAttribute(annotObject, attributes.Item(i));
                 }
-                VisitAnnotationInnerNodes(annotObject, currentNode);
+                VisitAnnotationInnerNodes(annotObject, currentNode, annotsObject);
                 annotsObject.AddAnnot(annotObject);
             }
         }
 
-        private void VisitAnnotationInnerNodes(AnnotObject annotObject, XmlNode annotNode) {
+        private void VisitAnnotationInnerNodes(AnnotObject annotObject, XmlNode annotNode, AnnotsObject annotsObject
+            ) {
             XmlNodeList children = annotNode.ChildNodes;
             for (int temp = 0; temp < children.Count; temp++) {
                 XmlNode node = children.Item(temp);
@@ -218,6 +203,9 @@ namespace iText.Forms.Xfdf {
                     }
                     if (XfdfConstants.VERTICES.EqualsIgnoreCase(node.Name)) {
                         VisitVerticesSubelement(node, annotObject);
+                    }
+                    if (IsAnnotationSubtype(node.Name) && IsAnnotSupported(node.Name)) {
+                        VisitAnnotationNode(node, annotsObject);
                     }
                 }
             }
@@ -294,7 +282,17 @@ namespace iText.Forms.Xfdf {
                     case XfdfConstants.REPLY_TYPE:
                     case XfdfConstants.OPEN:
                     case XfdfConstants.COORDS:
-                    case XfdfConstants.FRINGE: {
+                    case XfdfConstants.INTENT:
+                    case XfdfConstants.INTERIOR_COLOR:
+                    case XfdfConstants.HEAD:
+                    case XfdfConstants.TAIL:
+                    case XfdfConstants.FRINGE:
+                    case XfdfConstants.ROTATION:
+                    case XfdfConstants.JUSTIFICATION:
+                    case XfdfConstants.WIDTH:
+                    case XfdfConstants.DASHES:
+                    case XfdfConstants.STYLE:
+                    case XfdfConstants.INTENSITY: {
                         //required
                         annotObject.AddAttribute(new AttributeObject(attributeName, attributeNode.Value));
                         break;
@@ -471,18 +469,25 @@ namespace iText.Forms.Xfdf {
             annot.AddAttribute(XfdfConstants.SUBJECT, pdfMarkupAnnotation.GetSubject());
         }
 
-        private static void AddBorderStyleAttributes(AnnotObject annotObject, PdfNumber width, PdfString dashes, PdfString
+        private static void AddBorderStyleAttributes(AnnotObject annotObject, PdfNumber width, PdfArray dashes, PdfName
              style) {
             annotObject.AddAttribute(XfdfConstants.WIDTH, width);
-            annotObject.AddAttribute(XfdfConstants.DASHES, dashes);
-            annotObject.AddAttribute(XfdfConstants.STYLE, style);
+            annotObject.AddAttribute(XfdfConstants.DASHES, XfdfObjectUtils.ConvertDashesFromArray(dashes));
+            annotObject.AddAttribute(XfdfConstants.STYLE, XfdfObjectUtils.GetStyleFullValue(style));
         }
 
         private static void CreateTextMarkupAnnotation(PdfAnnotation pdfAnnotation, AnnotObject annot, int pageNumber
             ) {
             PdfTextMarkupAnnotation pdfTextMarkupAnnotation = (PdfTextMarkupAnnotation)pdfAnnotation;
-            annot.AddAttribute(new AttributeObject(XfdfConstants.COORDS, XfdfObjectUtils.ConvertQuadPointsToCoordsString
-                (pdfTextMarkupAnnotation.GetQuadPoints().ToFloatArray())));
+            if (pdfTextMarkupAnnotation.GetQuadPoints() != null) {
+                annot.AddAttribute(new AttributeObject(XfdfConstants.COORDS, XfdfObjectUtils.ConvertQuadPointsToCoordsString
+                    (pdfTextMarkupAnnotation.GetQuadPoints().ToFloatArray())));
+            }
+            if (PdfTextMarkupAnnotation.MarkupUnderline.Equals(pdfTextMarkupAnnotation.GetSubtype()) && pdfTextMarkupAnnotation
+                .GetIntent() != null) {
+                annot.AddAttribute(new AttributeObject(XfdfConstants.INTENT, pdfTextMarkupAnnotation.GetIntent().GetValue(
+                    )));
+            }
             if (pdfTextMarkupAnnotation.GetContents() != null) {
                 annot.SetContents(pdfTextMarkupAnnotation.GetContents());
             }
@@ -515,13 +520,15 @@ namespace iText.Forms.Xfdf {
             PdfCircleAnnotation pdfCircleAnnotation = (PdfCircleAnnotation)pdfAnnotation;
             PdfDictionary bs = pdfCircleAnnotation.GetBorderStyle();
             if (bs != null) {
-                AddBorderStyleAttributes(annot, bs.GetAsNumber(PdfName.W), bs.GetAsString(PdfName.Dashed), bs.GetAsString(
-                    PdfName.Style));
+                AddBorderStyleAttributes(annot, bs.GetAsNumber(PdfName.W), bs.GetAsArray(PdfName.D), bs.GetAsName(PdfName.
+                    S));
             }
             if (pdfCircleAnnotation.GetBorderEffect() != null) {
-                //TODO DEVSIX-4133 map intensity to border effect dictionary's I key
-                //annot.addAttribute(new AttributeObject("intensity", pdfCircleAnnotation.getBorderEffect().getAsString()));
-                annot.AddAttribute(XfdfConstants.STYLE, pdfCircleAnnotation.GetBorderEffect().GetAsString(PdfName.Style));
+                annot.AddAttribute(XfdfConstants.INTENSITY, pdfCircleAnnotation.GetBorderEffect().GetAsNumber(PdfName.I));
+                if (annot.GetAttribute(XfdfConstants.STYLE) == null) {
+                    annot.AddAttribute(XfdfConstants.STYLE, XfdfObjectUtils.GetStyleFullValue(pdfCircleAnnotation.GetBorderEffect
+                        ().GetAsName(PdfName.S)));
+                }
             }
             if (pdfCircleAnnotation.GetInteriorColor() != null && pdfCircleAnnotation.GetInteriorColor().GetColorValue
                 () != null) {
@@ -529,7 +536,7 @@ namespace iText.Forms.Xfdf {
                     pdfCircleAnnotation.GetInteriorColor().GetColorValue())));
             }
             if (pdfCircleAnnotation.GetRectangleDifferences() != null) {
-                annot.AddAttribute(new AttributeObject("fringe", XfdfObjectUtils.ConvertFringeToString(pdfCircleAnnotation
+                annot.AddAttribute(new AttributeObject(XfdfConstants.FRINGE, XfdfObjectUtils.ConvertFringeToString(pdfCircleAnnotation
                     .GetRectangleDifferences().ToFloatArray())));
             }
             annot.SetContents(pdfAnnotation.GetContents());
@@ -542,13 +549,15 @@ namespace iText.Forms.Xfdf {
             PdfSquareAnnotation pdfSquareAnnotation = (PdfSquareAnnotation)pdfAnnotation;
             PdfDictionary bs = pdfSquareAnnotation.GetBorderStyle();
             if (bs != null) {
-                AddBorderStyleAttributes(annot, bs.GetAsNumber(PdfName.W), bs.GetAsString(PdfName.Dashed), bs.GetAsString(
-                    PdfName.Style));
+                AddBorderStyleAttributes(annot, bs.GetAsNumber(PdfName.W), bs.GetAsArray(PdfName.D), bs.GetAsName(PdfName.
+                    S));
             }
             if (pdfSquareAnnotation.GetBorderEffect() != null) {
-                //TODO DEVSIX-4133 map intensity to border effect dictionary's I key
-                //annot.addAttribute(new AttributeObject("intensity", pdfCircleAnnotation.getBorderEffect().getAsString()));
-                annot.AddAttribute(XfdfConstants.STYLE, pdfSquareAnnotation.GetBorderEffect().GetAsString(PdfName.Style));
+                annot.AddAttribute(XfdfConstants.INTENSITY, pdfSquareAnnotation.GetBorderEffect().GetAsNumber(PdfName.I));
+                if (annot.GetAttribute(XfdfConstants.STYLE) == null) {
+                    annot.AddAttribute(XfdfConstants.STYLE, XfdfObjectUtils.GetStyleFullValue(pdfSquareAnnotation.GetBorderEffect
+                        ().GetAsName(PdfName.S)));
+                }
             }
             if (pdfSquareAnnotation.GetInteriorColor() != null && pdfSquareAnnotation.GetInteriorColor().GetColorValue
                 () != null) {
@@ -556,7 +565,7 @@ namespace iText.Forms.Xfdf {
                     pdfSquareAnnotation.GetInteriorColor().GetColorValue())));
             }
             if (pdfSquareAnnotation.GetRectangleDifferences() != null) {
-                annot.AddAttribute(new AttributeObject("fringe", XfdfObjectUtils.ConvertFringeToString(pdfSquareAnnotation
+                annot.AddAttribute(new AttributeObject(XfdfConstants.FRINGE, XfdfObjectUtils.ConvertFringeToString(pdfSquareAnnotation
                     .GetRectangleDifferences().ToFloatArray())));
             }
             annot.SetContents(pdfAnnotation.GetContents());
@@ -568,7 +577,9 @@ namespace iText.Forms.Xfdf {
         private static void CreateStampAnnotation(PdfAnnotation pdfAnnotation, AnnotObject annot, int pageNumber) {
             PdfStampAnnotation pdfStampAnnotation = (PdfStampAnnotation)pdfAnnotation;
             annot.AddAttribute(XfdfConstants.ICON, pdfStampAnnotation.GetIconName());
-            //How to add rotation? iText doesn't support ratotion attribute in PdfStampAnnotation
+            if (pdfStampAnnotation.GetRotation() != null) {
+                annot.AddAttribute(XfdfConstants.ROTATION, pdfStampAnnotation.GetRotation().IntValue());
+            }
             if (pdfStampAnnotation.GetContents() != null) {
                 annot.SetContents(pdfStampAnnotation.GetContents());
             }
@@ -596,13 +607,14 @@ namespace iText.Forms.Xfdf {
             PdfFreeTextAnnotation pdfFreeTextAnnotation = (PdfFreeTextAnnotation)pdfAnnotation;
             PdfDictionary bs = pdfFreeTextAnnotation.GetBorderStyle();
             if (bs != null) {
-                AddBorderStyleAttributes(annot, bs.GetAsNumber(PdfName.W), bs.GetAsString(PdfName.Dashed), bs.GetAsString(
-                    PdfName.Style));
+                AddBorderStyleAttributes(annot, bs.GetAsNumber(PdfName.W), bs.GetAsArray(PdfName.D), bs.GetAsName(PdfName.
+                    S));
             }
-            //TODO DEVSIX-4134 add rotation optional attribute
-            //annot.addAttribute(new AttributeObject("rotation", pdfFreeTextAnnotation.));
-            annot.AddAttribute(new AttributeObject(XfdfConstants.JUSTIFICATION, pdfFreeTextAnnotation.GetJustification
-                ().ToString()));
+            if (pdfFreeTextAnnotation.GetRotation() != null) {
+                annot.AddAttribute(XfdfConstants.ROTATION, pdfFreeTextAnnotation.GetRotation().IntValue());
+            }
+            annot.AddAttribute(new AttributeObject(XfdfConstants.JUSTIFICATION, XfdfObjectUtils.ConvertJustificationFromIntegerToString
+                ((pdfFreeTextAnnotation.GetJustification()))));
             if (pdfFreeTextAnnotation.GetIntent() != null) {
                 annot.AddAttribute(new AttributeObject(XfdfConstants.INTENT, pdfFreeTextAnnotation.GetIntent().GetValue())
                     );
@@ -658,8 +670,8 @@ namespace iText.Forms.Xfdf {
             }
             PdfDictionary bs = pdfLineAnnotation.GetBorderStyle();
             if (bs != null) {
-                AddBorderStyleAttributes(annot, bs.GetAsNumber(PdfName.W), bs.GetAsString(PdfName.Dashed), bs.GetAsString(
-                    PdfName.Style));
+                AddBorderStyleAttributes(annot, bs.GetAsNumber(PdfName.W), bs.GetAsArray(PdfName.D), bs.GetAsName(PdfName.
+                    S));
             }
             annot.SetContents(pdfAnnotation.GetContents());
             if (pdfLineAnnotation.GetPopup() != null) {
@@ -669,6 +681,17 @@ namespace iText.Forms.Xfdf {
 
         private static void CreateLinkAnnotation(PdfAnnotation pdfAnnotation, AnnotObject annot) {
             PdfLinkAnnotation pdfLinkAnnotation = (PdfLinkAnnotation)pdfAnnotation;
+            if (pdfLinkAnnotation.GetBorderStyle() != null) {
+                annot.AddAttribute(XfdfConstants.STYLE, pdfLinkAnnotation.GetBorderStyle().GetAsString(PdfName.S));
+            }
+            if (pdfLinkAnnotation.GetHighlightMode() != null) {
+                annot.AddAttribute(XfdfConstants.HIGHLIGHT, XfdfObjectUtils.GetHighlightFullValue(pdfLinkAnnotation.GetHighlightMode
+                    ()));
+            }
+            if (pdfLinkAnnotation.GetQuadPoints() != null) {
+                annot.AddAttribute(new AttributeObject(XfdfConstants.COORDS, XfdfObjectUtils.ConvertQuadPointsToCoordsString
+                    (pdfLinkAnnotation.GetQuadPoints().ToFloatArray())));
+            }
             if (pdfLinkAnnotation.GetContents() != null) {
                 annot.SetContents(pdfLinkAnnotation.GetContents());
             }
@@ -764,14 +787,16 @@ namespace iText.Forms.Xfdf {
             PdfPolyGeomAnnotation pdfPolyGeomAnnotation = (PdfPolyGeomAnnotation)pdfAnnotation;
             PdfDictionary bs = pdfPolyGeomAnnotation.GetBorderStyle();
             if (bs != null) {
-                AddBorderStyleAttributes(annot, bs.GetAsNumber(PdfName.W), bs.GetAsString(PdfName.Dashed), bs.GetAsString(
-                    PdfName.Style));
+                AddBorderStyleAttributes(annot, bs.GetAsNumber(PdfName.W), bs.GetAsArray(PdfName.D), bs.GetAsName(PdfName.
+                    S));
             }
             if (pdfPolyGeomAnnotation.GetBorderEffect() != null) {
-                //TODO DEVSIX-4133 map intensity to border effect dictionary's I key
-                //annot.addAttribute(new AttributeObject("intensity", pdfCircleAnnotation.getBorderEffect().getAsString()));
-                annot.AddAttribute(XfdfConstants.STYLE, pdfPolyGeomAnnotation.GetBorderEffect().GetAsString(PdfName.Style)
+                annot.AddAttribute(XfdfConstants.INTENSITY, pdfPolyGeomAnnotation.GetBorderEffect().GetAsNumber(PdfName.I)
                     );
+                if (annot.GetAttribute(XfdfConstants.STYLE) == null) {
+                    annot.AddAttribute(XfdfConstants.STYLE, XfdfObjectUtils.GetStyleFullValue(pdfPolyGeomAnnotation.GetBorderEffect
+                        ().GetAsName(PdfName.S)));
+                }
             }
             if (pdfPolyGeomAnnotation.GetInteriorColor() != null) {
                 annot.AddAttribute(new AttributeObject(XfdfConstants.INTERIOR_COLOR, XfdfObjectUtils.ConvertColorToString(

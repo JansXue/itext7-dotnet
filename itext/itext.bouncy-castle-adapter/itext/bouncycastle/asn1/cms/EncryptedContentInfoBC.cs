@@ -1,7 +1,7 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
 This program is offered under a commercial and under the AGPL license.
 For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
@@ -32,7 +32,7 @@ namespace iText.Bouncycastle.Asn1.Cms {
     /// Wrapper class for
     /// <see cref="Org.BouncyCastle.Asn1.Cms.EncryptedContentInfo"/>.
     /// </summary>
-    public class EncryptedContentInfoBC : ASN1EncodableBC, IEncryptedContentInfo {
+    public class EncryptedContentInfoBC : Asn1EncodableBC, IEncryptedContentInfo {
         /// <summary>
         /// Creates new wrapper instance for
         /// <see cref="Org.BouncyCastle.Asn1.Cms.EncryptedContentInfo"/>.
@@ -53,10 +53,10 @@ namespace iText.Bouncycastle.Asn1.Cms {
         /// <param name="data">ASN1ObjectIdentifier wrapper</param>
         /// <param name="algorithmIdentifier">AlgorithmIdentifier wrapper</param>
         /// <param name="octetString">ASN1OctetString wrapper</param>
-        public EncryptedContentInfoBC(IASN1ObjectIdentifier data, IAlgorithmIdentifier algorithmIdentifier, IASN1OctetString
+        public EncryptedContentInfoBC(IDerObjectIdentifier data, IAlgorithmIdentifier algorithmIdentifier, IAsn1OctetString
              octetString)
-            : base(new EncryptedContentInfo(((ASN1ObjectIdentifierBC)data).GetASN1ObjectIdentifier(), ((AlgorithmIdentifierBC
-                )algorithmIdentifier).GetAlgorithmIdentifier(), ((ASN1OctetStringBC)octetString).GetASN1OctetString())
+            : base(new EncryptedContentInfo(((DerObjectIdentifierBC)data).GetDerObjectIdentifier(), ((AlgorithmIdentifierBC
+                )algorithmIdentifier).GetAlgorithmIdentifier(), ((Asn1OctetStringBC)octetString).GetAsn1OctetString())
                 ) {
         }
 

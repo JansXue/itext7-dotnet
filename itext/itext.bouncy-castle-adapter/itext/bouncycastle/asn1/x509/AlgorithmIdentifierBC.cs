@@ -1,7 +1,7 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
 This program is offered under a commercial and under the AGPL license.
 For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
@@ -30,7 +30,7 @@ namespace iText.Bouncycastle.Asn1.X509 {
     /// Wrapper class for
     /// <see cref="Org.BouncyCastle.Asn1.X509.AlgorithmIdentifier"/>.
     /// </summary>
-    public class AlgorithmIdentifierBC : ASN1EncodableBC, IAlgorithmIdentifier {
+    public class AlgorithmIdentifierBC : Asn1EncodableBC, IAlgorithmIdentifier {
         /// <summary>
         /// Creates new wrapper instance for
         /// <see cref="Org.BouncyCastle.Asn1.X509.AlgorithmIdentifier"/>.
@@ -54,8 +54,13 @@ namespace iText.Bouncycastle.Asn1.X509 {
         }
 
         /// <summary><inheritDoc/></summary>
-        public virtual IASN1ObjectIdentifier GetAlgorithm() {
-            return new ASN1ObjectIdentifierBC(GetAlgorithmIdentifier().Algorithm);
+        public virtual IDerObjectIdentifier GetAlgorithm() {
+            return new DerObjectIdentifierBC(GetAlgorithmIdentifier().Algorithm);
+        }
+
+        /// <summary><inheritDoc/></summary>
+        public virtual IAsn1Encodable GetParameters() {
+            return new Asn1EncodableBC(GetAlgorithmIdentifier().Parameters);
         }
     }
 }

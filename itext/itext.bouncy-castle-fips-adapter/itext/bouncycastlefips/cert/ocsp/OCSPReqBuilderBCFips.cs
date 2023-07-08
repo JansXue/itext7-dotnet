@@ -1,25 +1,25 @@
 /*
-This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+    This file is part of the iText (R) project.
+    Copyright (c) 1998-2023 Apryse Group NV
+    Authors: Apryse Software.
 
-This program is offered under a commercial and under the AGPL license.
-For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
+    This program is offered under a commercial and under the AGPL license.
+    For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
 
-AGPL licensing:
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+    AGPL licensing:
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Affero General Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
 
-You should have received a copy of the GNU Affero General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
-*/
+    You should have received a copy of the GNU Affero General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 using System;
 using System.Collections;
 using iText.Bouncycastlefips.Asn1.X509;
@@ -34,7 +34,7 @@ namespace iText.Bouncycastlefips.Cert.Ocsp {
     /// <summary>
     /// Wrapper class for OCSPReqBuilder"/>.
     /// </summary>
-    public class OCSPReqBuilderBCFips : IOCSPReqBuilder {
+    public class OCSPReqBuilderBCFips : IOcspReqGenerator {
         private IList list = new ArrayList();
         private GeneralName requestorName = null;
         private X509Extensions requestExtensions;
@@ -76,29 +76,29 @@ namespace iText.Bouncycastlefips.Cert.Ocsp {
         }
         
         /// <summary><inheritDoc/></summary>
-        public virtual IOCSPReqBuilder SetRequestExtensions(IExtensions extensions) {
-            requestExtensions = ((ExtensionsBCFips)extensions).GetX509Extensions();
+        public virtual IOcspReqGenerator SetRequestExtensions(IX509Extensions extensions) {
+            requestExtensions = ((X509ExtensionsBCFips)extensions).GetX509Extensions();
             return this;
         }
 
         /// <summary><inheritDoc/></summary>
-        public virtual IOCSPReqBuilder AddRequest(ICertificateID certificateID) {
-            list.Add(new Request(((CertificateIDBCFips)certificateID).GetCertificateID(), null));
+        public virtual IOcspReqGenerator AddRequest(ICertID certificateID) {
+            list.Add(new Request(((CertIDBCFips)certificateID).GetCertificateID(), null));
             return this;
         }
 
         /// <summary><inheritDoc/></summary>
-        public virtual IOCSPReq Build() {
+        public virtual IOcspRequest Build() {
             Asn1EncodableVector requests = new Asn1EncodableVector();
             foreach (Request reqObj in list) {
                 try {
                     requests.Add(reqObj);
                 } catch (Exception e) {
-                    throw new OCSPExceptionBCFips("exception creating Request");
+                    throw new OcspExceptionBCFips("exception creating Request");
                 }
             }
             TbsRequest tbsReq = new TbsRequest(requestorName, new DerSequence(requests), requestExtensions);
-            return new OCSPReqBCFips(new OcspRequest(tbsReq, null));
+            return new OcspRequestBCFips(new OcspRequest(tbsReq, null));
         }
 
         /// <summary>Indicates whether some other object is "equal to" this one.</summary>

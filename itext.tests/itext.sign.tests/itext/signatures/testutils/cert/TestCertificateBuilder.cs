@@ -1,45 +1,25 @@
 /*
-This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+    This file is part of the iText (R) project.
+    Copyright (c) 1998-2023 Apryse Group NV
+    Authors: Apryse Software.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License version 3
-as published by the Free Software Foundation with the addition of the
-following permission added to Section 15 as permitted in Section 7(a):
-FOR ANY PART OF THE COVERED WORK IN WHICH THE COPYRIGHT IS OWNED BY
-ITEXT GROUP. ITEXT GROUP DISCLAIMS THE WARRANTY OF NON INFRINGEMENT
-OF THIRD PARTY RIGHTS
+    This program is offered under a commercial and under the AGPL license.
+    For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
 
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Affero General Public License for more details.
-You should have received a copy of the GNU Affero General Public License
-along with this program; if not, see http://www.gnu.org/licenses or write to
-the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-Boston, MA, 02110-1301 USA, or download the license from the following URL:
-http://itextpdf.com/terms-of-use/
+    AGPL licensing:
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-The interactive user interfaces in modified source and object code versions
-of this program must display Appropriate Legal Notices, as required under
-Section 5 of the GNU Affero General Public License.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
 
-In accordance with Section 7(b) of the GNU Affero General Public License,
-a covered work must retain the producer line in every PDF that is created
-or manipulated using iText.
-
-You can be released from the requirements of the license by purchasing
-a commercial license. Buying such a license is mandatory as soon as you
-develop commercial activities involving the iText software without
-disclosing the source code of your own applications.
-These activities include: offering paid services to customers as an ASP,
-serving PDFs on the fly in a web application, shipping iText with a closed
-source product.
-
-For more information, please contact iText Software Corp. at this
-address: sales@itextpdf.com
-*/
+    You should have received a copy of the GNU Affero General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 using System;
 using iText.Bouncycastleconnector;
 using iText.Commons.Bouncycastle;
@@ -47,7 +27,6 @@ using iText.Commons.Bouncycastle.Asn1;
 using iText.Commons.Bouncycastle.Asn1.X500;
 using iText.Commons.Bouncycastle.Asn1.X509;
 using iText.Commons.Bouncycastle.Cert;
-using iText.Commons.Bouncycastle.Cert.Jcajce;
 using iText.Commons.Bouncycastle.Crypto;
 using iText.Commons.Bouncycastle.Math;
 using iText.Commons.Bouncycastle.Operator;
@@ -94,7 +73,7 @@ namespace iText.Signatures.Testutils.Cert {
             IX500Name subjectDnName = FACTORY.CreateX500Name(subjectDN);
             IBigInteger certSerialNumber = FACTORY.CreateBigInteger(Convert.ToString(SystemUtil.GetTimeBasedSeed())); // Using the current timestamp as the certificate serial number
             IContentSigner contentSigner = FACTORY.CreateContentSigner(signatureAlgorithm, signingKey);
-            IJcaX509v3CertificateBuilder certBuilder = FACTORY.CreateJcaX509v3CertificateBuilder(signingCert,
+            IX509V3CertificateGenerator certBuilder = FACTORY.CreateJcaX509v3CertificateBuilder(signingCert,
                 certSerialNumber, startDate, endDate, subjectDnName, publicKey);
 
             // TODO generalize extensions setting
@@ -125,8 +104,8 @@ namespace iText.Signatures.Testutils.Cert {
             return certBuilder.Build(contentSigner);
         }
 
-        private static void AddExtension(IASN1ObjectIdentifier extensionOID, bool critical, IASN1Encodable extensionValue, 
-            IJcaX509v3CertificateBuilder certBuilder) {
+        private static void AddExtension(IDerObjectIdentifier extensionOID, bool critical, IAsn1Encodable extensionValue, 
+            IX509V3CertificateGenerator certBuilder) {
             certBuilder.AddExtension(extensionOID, critical, extensionValue);
         }
     }

@@ -1,7 +1,7 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
 This program is offered under a commercial and under the AGPL license.
 For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
@@ -33,7 +33,7 @@ namespace iText.Kernel.Actions.Data {
     public sealed class ITextCoreProductData {
         private const String CORE_PUBLIC_PRODUCT_NAME = "Core";
 
-        private const String CORE_VERSION = "8.0.0-SNAPSHOT";
+        private const String CORE_VERSION = "8.0.1-SNAPSHOT";
 
         private const int CORE_COPYRIGHT_SINCE = 2000;
 

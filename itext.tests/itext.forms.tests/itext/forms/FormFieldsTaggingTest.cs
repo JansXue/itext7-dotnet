@@ -1,44 +1,24 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License version 3
-as published by the Free Software Foundation with the addition of the
-following permission added to Section 15 as permitted in Section 7(a):
-FOR ANY PART OF THE COVERED WORK IN WHICH THE COPYRIGHT IS OWNED BY
-ITEXT GROUP. ITEXT GROUP DISCLAIMS THE WARRANTY OF NON INFRINGEMENT
-OF THIRD PARTY RIGHTS
+This program is offered under a commercial and under the AGPL license.
+For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
 
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Affero General Public License for more details.
+AGPL licensing:
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
 You should have received a copy of the GNU Affero General Public License
-along with this program; if not, see http://www.gnu.org/licenses or write to
-the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-Boston, MA, 02110-1301 USA, or download the license from the following URL:
-http://itextpdf.com/terms-of-use/
-
-The interactive user interfaces in modified source and object code versions
-of this program must display Appropriate Legal Notices, as required under
-Section 5 of the GNU Affero General Public License.
-
-In accordance with Section 7(b) of the GNU Affero General Public License,
-a covered work must retain the producer line in every PDF that is created
-or manipulated using iText.
-
-You can be released from the requirements of the license by purchasing
-a commercial license. Buying such a license is mandatory as soon as you
-develop commercial activities involving the iText software without
-disclosing the source code of your own applications.
-These activities include: offering paid services to customers as an ASP,
-serving PDFs on the fly in a web application, shipping iText with a closed
-source product.
-
-For more information, please contact iText Software Corp. at this
-address: sales@itextpdf.com
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 using System;
 using iText.Forms.Fields;
@@ -48,6 +28,7 @@ using iText.Kernel.Pdf.Tagging;
 using iText.Kernel.Pdf.Tagutils;
 using iText.Kernel.Utils;
 using iText.Test;
+using iText.Test.Attributes;
 
 namespace iText.Forms {
     [NUnit.Framework.Category("IntegrationTest")]
@@ -71,7 +52,7 @@ namespace iText.Forms {
             PdfWriter writer = new PdfWriter(outFileName);
             PdfDocument pdfDoc = new PdfDocument(writer);
             pdfDoc.SetTagged();
-            PdfAcroForm form = PdfAcroForm.GetAcroForm(pdfDoc, true);
+            PdfAcroForm form = PdfFormCreator.GetAcroForm(pdfDoc, true);
             AddFormFieldsToDocument(pdfDoc, form);
             pdfDoc.Close();
             CompareOutput(outFileName, cmpFileName);
@@ -85,7 +66,7 @@ namespace iText.Forms {
             PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outFileName));
             pdfDoc.SetTagged();
             pdfDoc.InitializeOutlines();
-            PdfAcroForm acroForm = PdfAcroForm.GetAcroForm(pdfDoc, true);
+            PdfAcroForm acroForm = PdfFormCreator.GetAcroForm(pdfDoc, true);
             acroForm.AddField(new CheckBoxFormFieldBuilder(pdfDoc, "TestCheck").SetWidgetRectangle(new Rectangle(36, 560
                 , 20, 20)).CreateCheckBox().SetValue("1", true));
             PdfDocument docToCopyFrom = new PdfDocument(new PdfReader(sourceFolder + "cmp_taggedPdfWithForms07.pdf"));
@@ -101,7 +82,7 @@ namespace iText.Forms {
             String cmpFileName = sourceFolder + "cmp_taggedPdfWithForms03.pdf";
             PdfDocument pdfDoc = new PdfDocument(new PdfReader(sourceFolder + "cmp_taggedPdfWithForms01.pdf"), new PdfWriter
                 (outFileName));
-            PdfAcroForm acroForm = PdfAcroForm.GetAcroForm(pdfDoc, false);
+            PdfAcroForm acroForm = PdfFormCreator.GetAcroForm(pdfDoc, false);
             acroForm.FlattenFields();
             pdfDoc.Close();
             CompareOutput(outFileName, cmpFileName);
@@ -114,7 +95,7 @@ namespace iText.Forms {
             String cmpFileName = sourceFolder + "cmp_taggedPdfWithForms04.pdf";
             PdfDocument pdfDoc = new PdfDocument(new PdfReader(sourceFolder + "cmp_taggedPdfWithForms01.pdf"), new PdfWriter
                 (outFileName));
-            PdfAcroForm acroForm = PdfAcroForm.GetAcroForm(pdfDoc, false);
+            PdfAcroForm acroForm = PdfFormCreator.GetAcroForm(pdfDoc, false);
             acroForm.RemoveField("TestCheck");
             acroForm.RemoveField("push");
             pdfDoc.Close();
@@ -128,7 +109,7 @@ namespace iText.Forms {
             String cmpFileName = sourceFolder + "cmp_taggedPdfWithForms05.pdf";
             PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outFileName));
             pdfDoc.SetTagged();
-            PdfAcroForm form = PdfAcroForm.GetAcroForm(pdfDoc, true);
+            PdfAcroForm form = PdfFormCreator.GetAcroForm(pdfDoc, true);
             AddFormFieldsToDocument(pdfDoc, form);
             form.FlattenFields();
             pdfDoc.Close();
@@ -142,7 +123,7 @@ namespace iText.Forms {
             String cmpFileName = sourceFolder + "cmp_taggedPdfWithForms06.pdf";
             PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outFileName));
             pdfDoc.SetTagged();
-            PdfAcroForm form = PdfAcroForm.GetAcroForm(pdfDoc, true);
+            PdfAcroForm form = PdfFormCreator.GetAcroForm(pdfDoc, true);
             AddFormFieldsToDocument(pdfDoc, form);
             form.RemoveField("TestCheck");
             form.RemoveField("push");
@@ -160,9 +141,10 @@ namespace iText.Forms {
             PdfDocument pdfDoc = new PdfDocument(reader, writer);
             // Original document is already tagged, so there is no need to mark it as tagged again
             //        pdfDoc.setTagged();
-            PdfAcroForm acroForm = PdfAcroForm.GetAcroForm(pdfDoc, true);
+            PdfAcroForm acroForm = PdfFormCreator.GetAcroForm(pdfDoc, true);
             PdfButtonFormField pushButton = new PushButtonFormFieldBuilder(pdfDoc, "push").SetWidgetRectangle(new Rectangle
                 (36, 650, 40, 20)).SetCaption("Capcha").CreatePushButton();
+            pushButton.SetFontSize(12f);
             TagTreePointer tagPointer = pdfDoc.GetTagStructureContext().GetAutoTaggingPointer();
             tagPointer.MoveToKid(StandardRoles.DIV);
             acroForm.AddField(pushButton);
@@ -170,13 +152,60 @@ namespace iText.Forms {
             CompareOutput(outFileName, cmpFileName);
         }
 
+        [NUnit.Framework.Test]
+        public virtual void MergeFieldTaggingTest08() {
+            String outFileName = destinationFolder + "mergeFieldTaggingTest08.pdf";
+            String cmpFileName = sourceFolder + "cmp_mergeFieldTaggingTest08.pdf";
+            String srcFileName = sourceFolder + "mergeFieldTaggingTest08.pdf";
+            using (PdfDocument pdfDoc = new PdfDocument(new PdfReader(srcFileName), new PdfWriter(outFileName))) {
+                pdfDoc.SetTagged();
+                PdfAcroForm form = PdfFormCreator.GetAcroForm(pdfDoc, true);
+                AddFormFieldsToDocument(pdfDoc, form);
+            }
+            CompareOutput(outFileName, cmpFileName);
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void MergeFieldTaggingTest09() {
+            String outFileName = destinationFolder + "mergeFieldTaggingTest09.pdf";
+            String cmpFileName = sourceFolder + "cmp_mergeFieldTaggingTest09.pdf";
+            using (PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outFileName))) {
+                pdfDoc.SetTagged();
+                PdfAcroForm form = PdfFormCreator.GetAcroForm(pdfDoc, true);
+                AddFormFieldsToDocument(pdfDoc, form);
+                AddFormFieldsToDocument(pdfDoc, form);
+            }
+            CompareOutput(outFileName, cmpFileName);
+            CompareOutput(outFileName, sourceFolder + "cmp_mergeFieldTaggingTest08.pdf");
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 2)]
+        public virtual void FormFieldTaggingTest10() {
+            String outFileName = destinationFolder + "taggedPdfWithForms10.pdf";
+            String cmpFileName = sourceFolder + "cmp_taggedPdfWithForms10.pdf";
+            PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outFileName));
+            pdfDoc.SetTagged();
+            pdfDoc.InitializeOutlines();
+            PdfAcroForm acroForm = PdfAcroForm.GetAcroForm(pdfDoc, true);
+            acroForm.AddField(new CheckBoxFormFieldBuilder(pdfDoc, "TestCheck").SetWidgetRectangle(new Rectangle(36, 560
+                , 20, 20)).CreateCheckBox().SetValue("1", true));
+            PdfDocument docToCopyFrom = new PdfDocument(new PdfReader(sourceFolder + "cmp_taggedPdfWithForms07.pdf"));
+            docToCopyFrom.CopyPagesTo(1, docToCopyFrom.GetNumberOfPages(), pdfDoc, new PdfPageFormCopier());
+            docToCopyFrom.CopyPagesTo(1, docToCopyFrom.GetNumberOfPages(), pdfDoc, new PdfPageFormCopier());
+            pdfDoc.Close();
+            CompareOutput(outFileName, cmpFileName);
+        }
+
         private void AddFormFieldsToDocument(PdfDocument pdfDoc, PdfAcroForm acroForm) {
             Rectangle rect = new Rectangle(36, 700, 20, 20);
             Rectangle rect1 = new Rectangle(36, 680, 20, 20);
-            PdfButtonFormField group = new RadioFormFieldBuilder(pdfDoc, "TestGroup").CreateRadioGroup();
+            String formFieldName = "TestGroup";
+            RadioFormFieldBuilder builder = new RadioFormFieldBuilder(pdfDoc, formFieldName);
+            PdfButtonFormField group = builder.CreateRadioGroup();
             group.SetValue("1", true);
-            new RadioFormFieldBuilder(pdfDoc).SetWidgetRectangle(rect).CreateRadioButton(group, "1");
-            new RadioFormFieldBuilder(pdfDoc).SetWidgetRectangle(rect1).CreateRadioButton(group, "2");
+            group.AddKid(builder.CreateRadioButton("1", rect));
+            group.AddKid(builder.CreateRadioButton("2", rect1));
             acroForm.AddField(group);
             PdfButtonFormField pushButton = new PushButtonFormFieldBuilder(pdfDoc, "push").SetWidgetRectangle(new Rectangle
                 (36, 650, 40, 20)).SetCaption("Capcha").CreatePushButton();

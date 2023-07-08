@@ -1,7 +1,7 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
 This program is offered under a commercial and under the AGPL license.
 For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
@@ -25,6 +25,8 @@ using System;
 namespace iText.Kernel.Exceptions {
     /// <summary>Class that bundles all the error message templates as constants.</summary>
     public sealed class KernelExceptionMessageConstant {
+        public const String ALGORITHM_IS_NOT_SUPPORTED = "Algorithm {0} is not supported.";
+
         public const String AMOUNT_OF_BYTES_LESS_THAN_ZERO = "Amount of bytes in the PDF document cannot be less than zero";
 
         public const String ANNOTATION_SHALL_HAVE_REFERENCE_TO_PAGE = "Annotation shall have reference to page.";
@@ -35,6 +37,8 @@ namespace iText.Kernel.Exceptions {
 
         public const String BAD_USER_PASSWORD = "Bad user password. Password is not provided or wrong password provided. Correct password should be passed "
              + "to PdfReader constructor with properties. See ReaderProperties#setPassword() method.";
+
+        public const String BAD_PASSWORD_HASH = "Password hash exceeds 48 bytes and extra bytes are not 0";
 
         public const String CANNOT_ADD_KID_TO_THE_FLUSHED_ELEMENT = "Cannot add kid to the flushed element.";
 
@@ -380,6 +384,8 @@ namespace iText.Kernel.Exceptions {
         public const String OPERATOR_EI_NOT_FOUND_AFTER_END_OF_IMAGE_DATA = "Operator EI not found after the end "
              + "of image data.";
 
+        public const String ORDERING_SHOULD_BE_DETERMINED = "Ordering should be determined for CIDFont of Type0 font.";
+
         public const String PAGE_CANNOT_BE_ADDED_TO_DOCUMENT_BECAUSE_IT_BELONGS_TO_ANOTHER_DOCUMENT = "The passed page belongs to document {0} (page {1} of the document) and therefore cannot be added "
              + "to this document ({2}).";
 
@@ -494,15 +500,9 @@ namespace iText.Kernel.Exceptions {
 
         public const String UNEXPECTED_CHARACTER_FOUND_AFTER_ID_IN_INLINE_IMAGE = "Unexpected character {0} " + "found after ID in inline image.";
 
-        [Obsolete]
-        public const String UNEXPECTED_CLOSE_BRACKET = "Unexpected close bracket.";
-
         public const String UNEXPECTED_COLOR_SPACE = "Unexpected ColorSpace: {0}.";
 
         public const String UNEXPECTED_END_OF_FILE = "Unexpected end of file.";
-
-        [Obsolete]
-        public const String UNEXPECTED_GT_GT = "unexpected >>.";
 
         public const String UNEXPECTED_TOKEN = "unexpected {0} was encountered.";
 
@@ -598,6 +598,8 @@ namespace iText.Kernel.Exceptions {
         public const String FUCTIONFACTORY_INVALID_OBJECT_TYPE_TYPE4 = "Invalid object type, a function type 4 requires a stream object";
 
         public const String FUCTIONFACTORY_INVALID_OBJECT_TYPE_TYPE0 = "Invalid object type, a function type 0 requires a stream object";
+
+        public const String UNSUPPORTED_SECURITY_HANDLER = "Failed to open the document. Security handler {0} is not supported";
 
         private KernelExceptionMessageConstant() {
         }

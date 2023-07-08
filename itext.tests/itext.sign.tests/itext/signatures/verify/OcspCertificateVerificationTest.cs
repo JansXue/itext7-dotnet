@@ -1,7 +1,7 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
 This program is offered under a commercial and under the AGPL license.
 For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
@@ -66,21 +66,21 @@ namespace iText.Signatures.Verify {
 
         [NUnit.Framework.Test]
         public virtual void KeyStoreWithRootOcspCertificateTest() {
-            IBasicOCSPResponse response = GetOcspResponse();
+            IBasicOcspResponse response = GetOcspResponse();
             NUnit.Framework.Assert.IsTrue(CertificateVerification.VerifyOcspCertificates(response, PemFileHelper.InitStore
                 (rootOcspCert)));
         }
 
         [NUnit.Framework.Test]
         public virtual void KeyStoreWithSignOcspCertificateTest() {
-            IBasicOCSPResponse response = GetOcspResponse();
+            IBasicOcspResponse response = GetOcspResponse();
             NUnit.Framework.Assert.IsFalse(CertificateVerification.VerifyOcspCertificates(response, PemFileHelper.InitStore
                 (signOcspCert)));
         }
 
         [NUnit.Framework.Test]
         public virtual void KeyStoreWithNotOcspAndOcspCertificatesTest() {
-            IBasicOCSPResponse response = GetOcspResponse();
+            IBasicOcspResponse response = GetOcspResponse();
             NUnit.Framework.Assert.IsTrue(CertificateVerification.VerifyOcspCertificates(response, PemFileHelper.InitStore
                 (notOcspAndOcspCert)));
         }
@@ -92,12 +92,12 @@ namespace iText.Signatures.Verify {
                 (signOcspCert)));
         }
 
-        private static IBasicOCSPResponse GetOcspResponse() {
+        private static IBasicOcspResponse GetOcspResponse() {
             TestOcspClient testClient = new TestOcspClient();
             IPrivateKey key = PemFileHelper.ReadFirstKey(rootOcspCert, password);
             testClient.AddBuilderForCertIssuer(rootCert, key);
             byte[] ocspResponseBytes = testClient.GetEncoded(checkCert, rootCert, ocspServiceUrl);
-            IASN1Primitive var2 = FACTORY.CreateASN1Primitive(ocspResponseBytes);
+            IAsn1Object var2 = FACTORY.CreateASN1Primitive(ocspResponseBytes);
             return FACTORY.CreateBasicOCSPResponse(var2);
         }
     }

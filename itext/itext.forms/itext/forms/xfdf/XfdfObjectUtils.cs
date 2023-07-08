@@ -1,44 +1,24 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License version 3
-as published by the Free Software Foundation with the addition of the
-following permission added to Section 15 as permitted in Section 7(a):
-FOR ANY PART OF THE COVERED WORK IN WHICH THE COPYRIGHT IS OWNED BY
-ITEXT GROUP. ITEXT GROUP DISCLAIMS THE WARRANTY OF NON INFRINGEMENT
-OF THIRD PARTY RIGHTS
+This program is offered under a commercial and under the AGPL license.
+For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
 
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Affero General Public License for more details.
+AGPL licensing:
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
 You should have received a copy of the GNU Affero General Public License
-along with this program; if not, see http://www.gnu.org/licenses or write to
-the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-Boston, MA, 02110-1301 USA, or download the license from the following URL:
-http://itextpdf.com/terms-of-use/
-
-The interactive user interfaces in modified source and object code versions
-of this program must display Appropriate Legal Notices, as required under
-Section 5 of the GNU Affero General Public License.
-
-In accordance with Section 7(b) of the GNU Affero General Public License,
-a covered work must retain the producer line in every PDF that is created
-or manipulated using iText.
-
-You can be released from the requirements of the license by purchasing
-a commercial license. Buying such a license is mandatory as soon as you
-develop commercial activities involving the iText software without
-disclosing the source code of your own applications.
-These activities include: offering paid services to customers as an ASP,
-serving PDFs on the fly in a web application, shipping iText with a closed
-source product.
-
-For more information, please contact iText Software Corp. at this
-address: sales@itextpdf.com
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 using System;
 using System.Collections.Generic;
@@ -60,13 +40,14 @@ namespace iText.Forms.Xfdf {
         /// Converts a string containing 2 or 4 float values into a
         /// <see cref="iText.Kernel.Geom.Rectangle"/>.
         /// </summary>
-        /// <remarks>
-        /// Converts a string containing 2 or 4 float values into a
-        /// <see cref="iText.Kernel.Geom.Rectangle"/>.
-        /// If only two coordinates are present, they should represent
+        /// <param name="rectString">
+        /// the annotation rectangle, defining the location of the annotation on the page
+        /// in default user space units. The value is four comma separated real numbers
+        /// which may be positive or negative: (xLeft, yBottom, xRight, yTop). If only two coordinates
+        /// are present, they should represent
         /// <see cref="iText.Kernel.Geom.Rectangle"/>
         /// width and height.
-        /// </remarks>
+        /// </param>
         internal static Rectangle ConvertRectFromString(String rectString) {
             String delims = ",";
             StringTokenizer st = new StringTokenizer(rectString, delims);
@@ -80,9 +61,11 @@ namespace iText.Forms.Xfdf {
             }
             else {
                 if (coordsList.Count == 4) {
-                    return new Rectangle(float.Parse(coordsList[0], System.Globalization.CultureInfo.InvariantCulture), float.Parse
-                        (coordsList[1], System.Globalization.CultureInfo.InvariantCulture), float.Parse(coordsList[2], System.Globalization.CultureInfo.InvariantCulture
-                        ), float.Parse(coordsList[3], System.Globalization.CultureInfo.InvariantCulture));
+                    float xLeft = float.Parse(coordsList[0], System.Globalization.CultureInfo.InvariantCulture);
+                    float yBottom = float.Parse(coordsList[1], System.Globalization.CultureInfo.InvariantCulture);
+                    float width = float.Parse(coordsList[2], System.Globalization.CultureInfo.InvariantCulture) - xLeft;
+                    float height = float.Parse(coordsList[3], System.Globalization.CultureInfo.InvariantCulture) - yBottom;
+                    return new Rectangle(xLeft, yBottom, width, height);
                 }
             }
             return null;
@@ -94,19 +77,138 @@ namespace iText.Forms.Xfdf {
         /// If the number of floats in the string is not equal to 4, returns and PdfArray with empty values.
         /// </remarks>
         internal static PdfArray ConvertFringeFromString(String fringeString) {
-            String delims = ",";
-            StringTokenizer st = new StringTokenizer(fringeString, delims);
-            IList<String> fringeList = new List<String>();
-            while (st.HasMoreTokens()) {
-                fringeList.Add(st.NextToken());
-            }
+            String[] fringeList = iText.Commons.Utils.StringUtil.Split(fringeString, ",");
             float[] fringe = new float[4];
-            if (fringeList.Count == 4) {
+            if (fringeList.Length == 4) {
                 for (int i = 0; i < 4; i++) {
                     fringe[i] = float.Parse(fringeList[i], System.Globalization.CultureInfo.InvariantCulture);
                 }
             }
             return new PdfArray(fringe);
+        }
+
+        /// <summary>
+        /// Converts a string containing float values into a PdfArray, representing a pattern of dashes and gaps to be used
+        /// in drawing a dashed border.
+        /// </summary>
+        internal static PdfArray ConvertDashesFromString(String dashesString) {
+            String[] dashesList = iText.Commons.Utils.StringUtil.Split(dashesString, ",");
+            float[] dashes = new float[dashesList.Length];
+            for (int i = 0; i < dashesList.Length; i++) {
+                dashes[i] = float.Parse(dashesList[i], System.Globalization.CultureInfo.InvariantCulture);
+            }
+            return new PdfArray(dashes);
+        }
+
+        /// <summary>
+        /// Converts a PdfArray, representing a pattern of dashes and gaps to be used in drawing a dashed border,
+        /// into a string containing float values.
+        /// </summary>
+        internal static PdfString ConvertDashesFromArray(PdfArray dashesArray) {
+            if (dashesArray == null) {
+                return null;
+            }
+            String delims = ",";
+            StringBuilder dashes = new StringBuilder();
+            for (int i = 0; i < dashesArray.Size() - 1; i++) {
+                dashes.Append(ConvertFloatToString(((PdfNumber)dashesArray.Get(i)).FloatValue())).Append(delims);
+            }
+            dashes.Append(ConvertFloatToString(((PdfNumber)dashesArray.Get(dashesArray.Size() - 1)).FloatValue()));
+            return new PdfString(dashes.ToString());
+        }
+
+        /// <summary>
+        /// Converts a string containing justification value into an integer value representing a code specifying
+        /// the form of quadding (justification).
+        /// </summary>
+        internal static int ConvertJustificationFromStringToInteger(String attributeValue) {
+            if ("centered".EqualsIgnoreCase(attributeValue)) {
+                return PdfFreeTextAnnotation.CENTERED;
+            }
+            if ("right".EqualsIgnoreCase(attributeValue)) {
+                return PdfFreeTextAnnotation.RIGHT_JUSTIFIED;
+            }
+            return PdfFreeTextAnnotation.LEFT_JUSTIFIED;
+        }
+
+        /// <summary>
+        /// Converts an integer value representing a code specifying the form of quadding (justification) into a string
+        /// containing justification value.
+        /// </summary>
+        internal static String ConvertJustificationFromIntegerToString(int justification) {
+            if (PdfFreeTextAnnotation.CENTERED == justification) {
+                return "centered";
+            }
+            if (PdfFreeTextAnnotation.RIGHT_JUSTIFIED == justification) {
+                return "right";
+            }
+            return "left";
+        }
+
+        /// <summary>Converts H key value in the link annotation dictionary to Highlight value of xfdf link annotation attribute.
+        ///     </summary>
+        internal static PdfName GetHighlightFullValue(PdfName highlightMode) {
+            if (highlightMode == null) {
+                return null;
+            }
+            switch (highlightMode.ToString().Substring(1)) {
+                case "N": {
+                    return new PdfName("None");
+                }
+
+                case "I": {
+                    return new PdfName("Invert");
+                }
+
+                case "O": {
+                    return new PdfName("Outline");
+                }
+
+                case "P": {
+                    return new PdfName("Push");
+                }
+
+                default: {
+                    return null;
+                }
+            }
+        }
+
+        /// <summary>Converts style (S key value) in the pdf annotation dictionary to style value of xfdf annotation attribute.
+        ///     </summary>
+        internal static PdfName GetStyleFullValue(PdfName style) {
+            if (style == null) {
+                return null;
+            }
+            switch (style.ToString().Substring(1)) {
+                case "S": {
+                    return new PdfName("solid");
+                }
+
+                case "D": {
+                    return new PdfName("dash");
+                }
+
+                case "B": {
+                    return new PdfName("bevelled");
+                }
+
+                case "I": {
+                    return new PdfName("inset");
+                }
+
+                case "U": {
+                    return new PdfName("underline");
+                }
+
+                case "C": {
+                    return new PdfName("cloudy");
+                }
+
+                default: {
+                    return null;
+                }
+            }
         }
 
         /// <summary>Converts a Rectangle to a string containing 4 float values.</summary>
@@ -121,10 +223,10 @@ namespace iText.Forms.Xfdf {
                 );
         }
 
-        /// <summary>Converts a string containing 4 float values into a float array, representing quadPoints.</summary>
+        /// <summary>Converts a string containing 8*n float values into a float array, representing quadPoints.</summary>
         /// <remarks>
-        /// Converts a string containing 4 float values into a float array, representing quadPoints.
-        /// If the number of floats in the string is not equal to 8, returns an empty float array.
+        /// Converts a string containing 8*n float values into a float array, representing quadPoints.
+        /// If the number of floats in the string is not a multiple of 8, returns an empty float array.
         /// </remarks>
         internal static float[] ConvertQuadPointsFromCoordsString(String coordsString) {
             String delims = ",";
@@ -133,9 +235,9 @@ namespace iText.Forms.Xfdf {
             while (st.HasMoreTokens()) {
                 quadPointsList.Add(st.NextToken());
             }
-            if (quadPointsList.Count == 8) {
-                float[] quadPoints = new float[8];
-                for (int i = 0; i < 8; i++) {
+            if (quadPointsList.Count % 8 == 0) {
+                float[] quadPoints = new float[quadPointsList.Count];
+                for (int i = 0; i < quadPointsList.Count; i++) {
                     quadPoints[i] = float.Parse(quadPointsList[i], System.Globalization.CultureInfo.InvariantCulture);
                 }
                 return quadPoints;
@@ -143,18 +245,13 @@ namespace iText.Forms.Xfdf {
             return new float[0];
         }
 
-        /// <summary>Converts a float array, representing quadPoints into a string containing 8 float values.</summary>
+        /// <summary>Converts a float array, representing quadPoints into a string containing 8*n float values.</summary>
         internal static String ConvertQuadPointsToCoordsString(float[] quadPoints) {
-            StringBuilder stb = new StringBuilder(FloatToPaddedString(quadPoints[0]));
-            for (int i = 1; i < 8; i++) {
-                stb.Append(", ").Append(FloatToPaddedString(quadPoints[i]));
+            StringBuilder stb = new StringBuilder(ConvertFloatToString(quadPoints[0]));
+            for (int i = 1; i < quadPoints.Length; i++) {
+                stb.Append(", ").Append(ConvertFloatToString(quadPoints[i]));
             }
             return stb.ToString();
-        }
-
-        private static String FloatToPaddedString(float number) {
-            return iText.Commons.Utils.JavaUtil.GetStringForBytes(ByteUtils.GetIsoBytes(number), System.Text.Encoding.
-                UTF8);
         }
 
         /// <summary>
@@ -274,7 +371,7 @@ namespace iText.Forms.Xfdf {
             String colorString = colorHexString.Substring(colorHexString.IndexOf('#') + 1);
             if (colorString.Length == 6) {
                 for (int i = 0; i < 3; i++) {
-                    result[i] = Convert.ToInt32(colorString.JSubstring(i * 2, 2 + i * 2), 16);
+                    result[i] = Convert.ToInt32(colorString.JSubstring(i * 2, 2 + i * 2), 16) / 255f;
                 }
             }
             return result;
@@ -286,9 +383,9 @@ namespace iText.Forms.Xfdf {
                 return null;
             }
             StringBuilder stb = new StringBuilder();
-            stb.Append(vertices[0]);
+            stb.Append(ConvertFloatToString(vertices[0]));
             for (int i = 1; i < vertices.Length; i++) {
-                stb.Append(", ").Append(vertices[i]);
+                stb.Append(", ").Append(ConvertFloatToString(vertices[i]));
             }
             return stb.ToString();
         }
@@ -303,9 +400,9 @@ namespace iText.Forms.Xfdf {
                 return null;
             }
             StringBuilder stb = new StringBuilder();
-            stb.Append(fringeArray[0]);
+            stb.Append(ConvertFloatToString(fringeArray[0]));
             for (int i = 1; i < 4; i++) {
-                stb.Append(", ").Append(fringeArray[i]);
+                stb.Append(", ").Append(ConvertFloatToString(fringeArray[i]));
             }
             return stb.ToString();
         }
@@ -334,7 +431,7 @@ namespace iText.Forms.Xfdf {
         /// <param name="line">an array of 4 floats representing the line (x_1, y_1, x_2, y_2)</param>
         internal static String ConvertLineStartToString(float[] line) {
             if (line.Length == 4) {
-                return line[0] + "," + line[1];
+                return ConvertFloatToString(line[0]) + "," + ConvertFloatToString(line[1]);
             }
             return null;
         }
@@ -348,7 +445,7 @@ namespace iText.Forms.Xfdf {
         /// <param name="line">an array of 4 floats representing the line (x_1, y_1, x_2, y_2)</param>
         internal static String ConvertLineEndToString(float[] line) {
             if (line.Length == 4) {
-                return line[2] + "," + line[3];
+                return ConvertFloatToString(line[2]) + "," + ConvertFloatToString(line[3]);
             }
             return null;
         }

@@ -1,7 +1,7 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
 This program is offered under a commercial and under the AGPL license.
 For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
@@ -29,7 +29,7 @@ namespace iText.Bouncycastle.Asn1.X509 {
     /// Wrapper class for
     /// <see cref="Org.BouncyCastle.Asn1.X509.GeneralName"/>.
     /// </summary>
-    public class GeneralNameBC : ASN1EncodableBC, IGeneralName {
+    public class GeneralNameBC : Asn1EncodableBC, IGeneralName {
         private static readonly iText.Bouncycastle.Asn1.X509.GeneralNameBC INSTANCE = new iText.Bouncycastle.Asn1.X509.GeneralNameBC
             (null);
 

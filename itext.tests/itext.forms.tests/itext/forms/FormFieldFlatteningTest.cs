@@ -1,44 +1,24 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License version 3
-as published by the Free Software Foundation with the addition of the
-following permission added to Section 15 as permitted in Section 7(a):
-FOR ANY PART OF THE COVERED WORK IN WHICH THE COPYRIGHT IS OWNED BY
-ITEXT GROUP. ITEXT GROUP DISCLAIMS THE WARRANTY OF NON INFRINGEMENT
-OF THIRD PARTY RIGHTS
+This program is offered under a commercial and under the AGPL license.
+For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
 
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Affero General Public License for more details.
+AGPL licensing:
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
 You should have received a copy of the GNU Affero General Public License
-along with this program; if not, see http://www.gnu.org/licenses or write to
-the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-Boston, MA, 02110-1301 USA, or download the license from the following URL:
-http://itextpdf.com/terms-of-use/
-
-The interactive user interfaces in modified source and object code versions
-of this program must display Appropriate Legal Notices, as required under
-Section 5 of the GNU Affero General Public License.
-
-In accordance with Section 7(b) of the GNU Affero General Public License,
-a covered work must retain the producer line in every PDF that is created
-or manipulated using iText.
-
-You can be released from the requirements of the license by purchasing
-a commercial license. Buying such a license is mandatory as soon as you
-develop commercial activities involving the iText software without
-disclosing the source code of your own applications.
-These activities include: offering paid services to customers as an ASP,
-serving PDFs on the fly in a web application, shipping iText with a closed
-source product.
-
-For more information, please contact iText Software Corp. at this
-address: sales@itextpdf.com
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 using System;
 using System.IO;
@@ -47,6 +27,7 @@ using iText.Forms.Logs;
 using iText.Kernel.Colors;
 using iText.Kernel.Pdf;
 using iText.Kernel.Utils;
+using iText.Layout.Properties;
 using iText.Test;
 using iText.Test.Attributes;
 
@@ -69,7 +50,7 @@ namespace iText.Forms {
             String outPdfName = destinationFolder + "flattenedFormField.pdf";
             PdfDocument pdfDoc = new PdfDocument(new PdfReader(sourceFolder + "formFieldFile.pdf"), new PdfWriter(outPdfName
                 ));
-            PdfAcroForm form = PdfAcroForm.GetAcroForm(pdfDoc, false);
+            PdfAcroForm form = PdfFormCreator.GetAcroForm(pdfDoc, false);
             NUnit.Framework.Assert.AreEqual(0, form.GetFieldsForFlattening().Count);
             form.PartialFormFlattening("radioName");
             form.PartialFormFlattening("Text1");
@@ -81,7 +62,7 @@ namespace iText.Forms {
             form.FlattenFields();
             pdfDoc.Close();
             PdfDocument outPdfDoc = new PdfDocument(new PdfReader(outPdfName));
-            PdfAcroForm outPdfForm = PdfAcroForm.GetAcroForm(outPdfDoc, false);
+            PdfAcroForm outPdfForm = PdfFormCreator.GetAcroForm(outPdfDoc, false);
             NUnit.Framework.Assert.AreEqual(2, outPdfForm.GetAllFormFields().Count);
             outPdfDoc.Close();
         }
@@ -106,7 +87,7 @@ namespace iText.Forms {
             String dest = destinationFolder + "multiLineFormFieldClippingTest_flattened.pdf";
             String cmp = sourceFolder + "cmp_multiLineFormFieldClippingTest_flattened.pdf";
             PdfDocument doc = new PdfDocument(new PdfReader(src), new PdfWriter(dest));
-            PdfAcroForm form = PdfAcroForm.GetAcroForm(doc, true);
+            PdfAcroForm form = PdfFormCreator.GetAcroForm(doc, true);
             form.GetField("Text1").SetValue("Tall letters: T I J L R E F");
             form.FlattenFields();
             doc.Close();
@@ -152,7 +133,7 @@ namespace iText.Forms {
             PdfReader reader = new PdfReader(sourceFolder + srcFile);
             PdfWriter writer = new PdfWriter(destinationFolder + outFile);
             PdfDocument document = new PdfDocument(reader, writer);
-            PdfAcroForm.GetAcroForm(document, false).FlattenFields();
+            PdfFormCreator.GetAcroForm(document, false).FlattenFields();
             document.Close();
             CompareTool compareTool = new CompareTool();
             String errorMessage = compareTool.CompareByContent(destinationFolder + outFile, sourceFolder + "cmp_" + outFile
@@ -178,7 +159,7 @@ namespace iText.Forms {
             String dest = destinationFolder + testName + ".pdf";
             String cmp = sourceFolder + "cmp_" + testName + ".pdf";
             PdfDocument doc = new PdfDocument(new PdfReader(src), new PdfWriter(dest));
-            PdfAcroForm form = PdfAcroForm.GetAcroForm(doc, true);
+            PdfAcroForm form = PdfFormCreator.GetAcroForm(doc, true);
             foreach (PdfFormField field in form.GetAllFormFields().Values) {
                 if (field is PdfTextFormField) {
                     String newValue;
@@ -190,22 +171,22 @@ namespace iText.Forms {
                     else {
                         newValue = "HELLO!";
                     }
-                    int? justification = field.GetJustification();
-                    if (null == justification || 0 == (int)justification) {
+                    TextAlignment? justification = field.GetJustification();
+                    if (null == justification || justification == TextAlignment.LEFT) {
                         // reddish
                         foreach (PdfFormAnnotation annot in field.GetChildFormAnnotations()) {
                             annot.SetBackgroundColor(new DeviceRgb(255, 200, 200));
                         }
                     }
                     else {
-                        if (1 == (int)justification) {
+                        if (justification == TextAlignment.CENTER) {
                             // greenish
                             foreach (PdfFormAnnotation annot in field.GetChildFormAnnotations()) {
                                 annot.SetBackgroundColor(new DeviceRgb(200, 255, 200));
                             }
                         }
                         else {
-                            if (2 == (int)justification) {
+                            if (justification == TextAlignment.RIGHT) {
                                 // blueish
                                 foreach (PdfFormAnnotation annot in field.GetChildFormAnnotations()) {
                                     annot.SetBackgroundColor(new DeviceRgb(200, 200, 255));
@@ -222,10 +203,9 @@ namespace iText.Forms {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 5)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, Count = 4)]
         public virtual void FlattenReadOnly() {
             //Logging is expected since there are duplicate field names
-            //isReadOnly should be true after DEVSIX-2156
             PdfWriter writer = new PdfWriter(new MemoryStream());
             PdfDocument pdfDoc = new PdfDocument(writer);
             PdfReader reader = new PdfReader(sourceFolder + "readOnlyForm.pdf");
@@ -236,13 +216,13 @@ namespace iText.Forms {
             pdfInnerDoc = new PdfDocument(reader);
             pdfInnerDoc.CopyPagesTo(1, pdfInnerDoc.GetNumberOfPages(), pdfDoc, new PdfPageFormCopier());
             pdfInnerDoc.Close();
-            PdfAcroForm form = PdfAcroForm.GetAcroForm(pdfDoc, false);
+            PdfAcroForm form = PdfFormCreator.GetAcroForm(pdfDoc, false);
             bool isReadOnly = true;
             foreach (PdfFormField field in form.GetAllFormFields().Values) {
                 isReadOnly = (isReadOnly && field.IsReadOnly());
             }
             pdfDoc.Close();
-            NUnit.Framework.Assert.IsFalse(isReadOnly);
+            NUnit.Framework.Assert.IsTrue(isReadOnly);
         }
 
         [NUnit.Framework.Test]

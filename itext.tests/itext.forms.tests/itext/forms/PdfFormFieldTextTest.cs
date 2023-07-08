@@ -1,7 +1,7 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
 This program is offered under a commercial and under the AGPL license.
 For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
@@ -25,6 +25,7 @@ using System.Collections.Generic;
 using iText.Forms.Fields;
 using iText.IO.Font;
 using iText.Kernel.Font;
+using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using iText.Kernel.Utils;
 using iText.Test;
@@ -51,7 +52,7 @@ namespace iText.Forms {
             String inPdf = sourceFolder + "fillFormWithAutosizeSource.pdf";
             String cmpPdf = sourceFolder + "cmp_fillFormWithAutosizeTest.pdf";
             PdfDocument pdfDoc = new PdfDocument(new PdfReader(inPdf), new PdfWriter(outPdf));
-            PdfAcroForm form = PdfAcroForm.GetAcroForm(pdfDoc, false);
+            PdfAcroForm form = PdfFormCreator.GetAcroForm(pdfDoc, false);
             IDictionary<String, PdfFormField> fields = form.GetAllFormFields();
             fields.Get("First field").SetValue("name name name ");
             fields.Get("Second field").SetValue("surname surname surname surname surname surname");
@@ -64,7 +65,7 @@ namespace iText.Forms {
         public virtual void DefaultAppearanceExtractionForNotMergedFieldsTest() {
             PdfDocument doc = new PdfDocument(new PdfReader(sourceFolder + "sourceDAExtractionTest.pdf"), new PdfWriter
                 (destinationFolder + "defaultAppearanceExtractionTest.pdf"));
-            PdfAcroForm form = PdfAcroForm.GetAcroForm(doc, false);
+            PdfAcroForm form = PdfFormCreator.GetAcroForm(doc, false);
             form.GetField("First field").SetValue("Your name");
             form.GetField("Text1").SetValue("Your surname");
             doc.Close();
@@ -83,11 +84,11 @@ namespace iText.Forms {
                  + filename));
             PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "NotoSans-Regular.ttf", PdfEncodings.IDENTITY_H);
             font.SetSubset(false);
-            PdfAcroForm form = PdfAcroForm.GetAcroForm(pdfDoc, false);
+            PdfAcroForm form = PdfFormCreator.GetAcroForm(pdfDoc, false);
             form.GetField("description").SetValue(TEXT, font, 12f);
             pdfDoc.Close();
             PdfDocument document = new PdfDocument(new PdfReader(destinationFolder + filename));
-            PdfDictionary actualDocumentFonts = PdfAcroForm.GetAcroForm(document, false).GetPdfObject().GetAsDictionary
+            PdfDictionary actualDocumentFonts = PdfFormCreator.GetAcroForm(document, false).GetPdfObject().GetAsDictionary
                 (PdfName.DR).GetAsDictionary(PdfName.Font);
             // Note that we know the structure of the expected pdf file
             PdfString expectedFieldsDAFont = new PdfString("/F2 12 Tf");
@@ -110,7 +111,7 @@ namespace iText.Forms {
                 (destinationFolder + filename));
             PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "NotoSans-Regular.ttf", PdfEncodings.IDENTITY_H);
             font.SetSubset(false);
-            PdfAcroForm form = PdfAcroForm.GetAcroForm(pdfDoc, false);
+            PdfAcroForm form = PdfFormCreator.GetAcroForm(pdfDoc, false);
             form.GetField("description").SetFont(font);
             form.GetField("description").SetValue(TEXT);
             pdfDoc.Close();
@@ -120,7 +121,7 @@ namespace iText.Forms {
             PdfString expectedFieldsDAFont = new PdfString("/F3 12 Tf");
             PdfObject actualAcroFormDAFont = document.GetCatalog().GetPdfObject().GetAsDictionary(PdfName.AcroForm).Get
                 (PdfName.DA);
-            PdfDictionary actualDocumentFonts = PdfAcroForm.GetAcroForm(document, false).GetPdfObject().GetAsDictionary
+            PdfDictionary actualDocumentFonts = PdfFormCreator.GetAcroForm(document, false).GetPdfObject().GetAsDictionary
                 (PdfName.DR).GetAsDictionary(PdfName.Font);
             PdfObject actualFieldDAFont = document.GetCatalog().GetPdfObject().GetAsDictionary(PdfName.AcroForm).GetAsArray
                 (PdfName.Fields).GetAsDictionary(0).Get(PdfName.DA);
@@ -136,6 +137,25 @@ namespace iText.Forms {
                 );
             document.Close();
             ExtendedITextTest.PrintOutputPdfNameAndDir(destinationFolder + filename);
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void LineEndingsTest() {
+            String destFilename = destinationFolder + "lineEndingsTest.pdf";
+            String cmpFilename = sourceFolder + "cmp_lineEndingsTest.pdf";
+            using (PdfDocument pdfDoc = new PdfDocument(new PdfWriter(destFilename))) {
+                PdfAcroForm form = PdfFormCreator.GetAcroForm(pdfDoc, true);
+                PdfTextFormField field = new TextFormFieldBuilder(pdfDoc, "single").SetWidgetRectangle(new Rectangle(50, 700
+                    , 500, 120)).CreateText();
+                field.SetValue("Line 1\nLine 2\rLine 3\r\nLine 4");
+                form.AddField(field);
+                PdfTextFormField field2 = new TextFormFieldBuilder(pdfDoc, "multi").SetWidgetRectangle(new Rectangle(50, 500
+                    , 500, 120)).CreateMultilineText();
+                field2.SetValue("Line 1\nLine 2\rLine 3\r\nLine 4");
+                form.AddField(field2);
+            }
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destFilename, cmpFilename, destinationFolder
+                , "diff_"));
         }
     }
 }

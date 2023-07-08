@@ -1,7 +1,7 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
 This program is offered under a commercial and under the AGPL license.
 For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
@@ -33,14 +33,17 @@ namespace iText.Commons.Actions.Data {
 
         internal const String COMMONS_PRODUCT_NAME = "commons";
 
-        internal const String COMMONS_VERSION = "8.0.0-SNAPSHOT";
+        internal const String COMMONS_VERSION = "8.0.1-SNAPSHOT";
+
+        internal const String MINIMAL_COMPATIBLE_LICENSEKEY_VERSION = "4.1.0";
 
         internal const int COMMONS_COPYRIGHT_SINCE = 2000;
 
         internal const int COMMONS_COPYRIGHT_TO = 2023;
 
         private static readonly ProductData COMMONS_PRODUCT_DATA = new ProductData(COMMONS_PUBLIC_PRODUCT_NAME, COMMONS_PRODUCT_NAME
-            , COMMONS_VERSION, COMMONS_COPYRIGHT_SINCE, COMMONS_COPYRIGHT_TO);
+            , COMMONS_VERSION, MINIMAL_COMPATIBLE_LICENSEKEY_VERSION, COMMONS_COPYRIGHT_SINCE, COMMONS_COPYRIGHT_TO
+            );
 
         private CommonsProductData() {
         }

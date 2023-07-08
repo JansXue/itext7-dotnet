@@ -1,7 +1,7 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
 This program is offered under a commercial and under the AGPL license.
 For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
@@ -80,7 +80,7 @@ namespace iText.Signatures {
                 );
             signer.cryptoDictionary = new PdfSignature();
             signer.appearance.SetPageRect(new Rectangle(100, 100, 0, 0));
-            PdfAcroForm acroForm = PdfAcroForm.GetAcroForm(signer.document, true);
+            PdfAcroForm acroForm = PdfFormCreator.GetAcroForm(signer.document, true);
             signer.CreateNewSignatureFormField(acroForm, signer.fieldName);
             PdfFormField formField = acroForm.GetField(signer.fieldName);
             PdfDictionary formFieldDictionary = formField.GetPdfObject();
@@ -98,7 +98,7 @@ namespace iText.Signatures {
             signer.appearance.SetPageRect(new Rectangle(100, 100, 10, 10));
             PdfSigFieldLock fieldLock = new PdfSigFieldLock();
             signer.fieldLock = fieldLock;
-            PdfAcroForm acroForm = PdfAcroForm.GetAcroForm(signer.document, true);
+            PdfAcroForm acroForm = PdfFormCreator.GetAcroForm(signer.document, true);
             NUnit.Framework.Assert.AreEqual(fieldLock, signer.CreateNewSignatureFormField(acroForm, signer.fieldName));
             PdfFormField formField = acroForm.GetField(signer.fieldName);
             PdfDictionary formFieldDictionary = formField.GetPdfObject();
@@ -158,7 +158,7 @@ namespace iText.Signatures {
             signer.cryptoDictionary = new PdfSignature();
             signer.appearance.SetPageRect(new Rectangle(100, 100, 0, 0));
             widgetAnnotation = (PdfWidgetAnnotation)signer.document.GetPage(1).GetAnnotations()[0];
-            PdfAcroForm acroForm = PdfAcroForm.GetAcroForm(signer.document, true);
+            PdfAcroForm acroForm = PdfFormCreator.GetAcroForm(signer.document, true);
             PdfFormField formField = new PdfSignerUnitTest.ExtendedPdfSignatureFormField(widgetAnnotation, signer.document
                 );
             formField.SetFieldName(signer.fieldName);
@@ -187,7 +187,7 @@ namespace iText.Signatures {
             signer.fieldLock = fieldLock;
             signer.appearance.SetPageRect(new Rectangle(100, 100, 10, 10));
             widgetAnnotation = (PdfWidgetAnnotation)signer.document.GetPage(1).GetAnnotations()[0];
-            PdfAcroForm acroForm = PdfAcroForm.GetAcroForm(signer.document, true);
+            PdfAcroForm acroForm = PdfFormCreator.GetAcroForm(signer.document, true);
             PdfFormField formField = new PdfSignerUnitTest.ExtendedPdfSignatureFormField(widgetAnnotation, signer.document
                 );
             formField.SetFieldName(signer.fieldName);
@@ -209,6 +209,7 @@ namespace iText.Signatures {
             NUnit.Framework.Assert.IsNull(signer.temporaryOS);
         }
 
+        // Android-Conversion-Skip-Block-Start (TODO DEVSIX-7372 investigate why a few tests related to PdfA in PdfSignerUnitTest were cut)
         [NUnit.Framework.Test]
         public virtual void InitPdfaDocumentTest() {
             PdfSigner signer = new PdfSigner(new PdfReader(new MemoryStream(CreateSimplePdfaDocument())), new ByteArrayOutputStream
@@ -310,6 +311,7 @@ namespace iText.Signatures {
             NUnit.Framework.Assert.AreEqual(fieldLock, signer.GetFieldLockDict());
         }
 
+        // Android-Conversion-Skip-Block-End
         [NUnit.Framework.Test]
         public virtual void SetFieldNameNullForDefaultSignerTest() {
             PdfReader reader = new PdfReader(new MemoryStream(CreateSimpleDocument()));
@@ -369,7 +371,7 @@ namespace iText.Signatures {
             PdfDocument pdfDocument = new PdfDocument(new PdfWriter(outputStream));
             PdfFormField formField = new NonTerminalFormFieldBuilder(pdfDocument, "test_field").CreateNonTerminalFormField
                 ();
-            PdfAcroForm acroForm = PdfAcroForm.GetAcroForm(pdfDocument, true);
+            PdfAcroForm acroForm = PdfFormCreator.GetAcroForm(pdfDocument, true);
             acroForm.AddField(formField);
             pdfDocument.Close();
             return outputStream.ToArray();
@@ -380,7 +382,7 @@ namespace iText.Signatures {
             PdfDocument pdfDocument = new PdfDocument(new PdfWriter(outputStream));
             PdfFormField formField = new SignatureFormFieldBuilder(pdfDocument, fieldName).CreateSignature().SetValue(
                 fieldValue);
-            PdfAcroForm acroForm = PdfAcroForm.GetAcroForm(pdfDocument, true);
+            PdfAcroForm acroForm = PdfFormCreator.GetAcroForm(pdfDocument, true);
             acroForm.AddField(formField);
             pdfDocument.Close();
             return outputStream.ToArray();
@@ -390,7 +392,7 @@ namespace iText.Signatures {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             PdfDocument pdfDocument = new PdfDocument(new PdfWriter(outputStream));
             PdfFormField formField = new SignatureFormFieldBuilder(pdfDocument, fieldName).CreateSignature();
-            PdfAcroForm acroForm = PdfAcroForm.GetAcroForm(pdfDocument, true);
+            PdfAcroForm acroForm = PdfFormCreator.GetAcroForm(pdfDocument, true);
             acroForm.AddField(formField);
             pdfDocument.Close();
             return outputStream.ToArray();
@@ -421,6 +423,7 @@ namespace iText.Signatures {
             return outputStream.ToArray();
         }
 
+        // Android-Conversion-Skip-Block-Start (TODO DEVSIX-7372 investigate why a few tests related to PdfA in PdfSignerUnitTest were cut)
         private static byte[] CreateSimplePdfaDocument() {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             PdfWriter writer = new PdfWriter(outputStream);
@@ -436,6 +439,7 @@ namespace iText.Signatures {
             return outputStream.ToArray();
         }
 
+        // Android-Conversion-Skip-Block-End
         internal class ExtendedPdfSignatureFormField : PdfSignatureFormField {
             public ExtendedPdfSignatureFormField(PdfWidgetAnnotation widgetAnnotation, PdfDocument document)
                 : base(widgetAnnotation, document) {

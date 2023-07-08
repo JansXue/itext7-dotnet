@@ -1,7 +1,7 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
 This program is offered under a commercial and under the AGPL license.
 For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
@@ -21,6 +21,7 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 using System;
+using iText.Forms.Fields.Properties;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Annot;
 
@@ -28,7 +29,7 @@ namespace iText.Forms.Fields {
     /// <summary>Builder for checkbox form field.</summary>
     public class CheckBoxFormFieldBuilder : TerminalFormFieldBuilder<iText.Forms.Fields.CheckBoxFormFieldBuilder
         > {
-        private int checkType = PdfFormField.TYPE_CROSS;
+        private CheckBoxType checkType = CheckBoxType.CROSS;
 
         /// <summary>
         /// Creates builder for
@@ -43,18 +44,18 @@ namespace iText.Forms.Fields {
 
         /// <summary>Gets check type for checkbox form field.</summary>
         /// <returns>check type to be set for checkbox form field</returns>
-        public virtual int GetCheckType() {
+        public virtual CheckBoxType GetCheckType() {
             return checkType;
         }
 
         /// <summary>Sets check type for checkbox form field.</summary>
         /// <remarks>
         /// Sets check type for checkbox form field. Default value is
-        /// <see cref="PdfFormField.TYPE_CROSS"/>.
+        /// <see cref="iText.Forms.Fields.Properties.CheckBoxType.CROSS"/>.
         /// </remarks>
         /// <param name="checkType">check type to be set for checkbox form field</param>
         /// <returns>this builder</returns>
-        public virtual iText.Forms.Fields.CheckBoxFormFieldBuilder SetCheckType(int checkType) {
+        public virtual iText.Forms.Fields.CheckBoxFormFieldBuilder SetCheckType(CheckBoxType checkType) {
             this.checkType = checkType;
             return this;
         }
@@ -68,7 +69,7 @@ namespace iText.Forms.Fields {
         public virtual PdfButtonFormField CreateCheckBox() {
             PdfButtonFormField check;
             if (GetWidgetRectangle() == null) {
-                check = new PdfButtonFormField(GetDocument());
+                check = PdfFormCreator.CreateButtonFormField(GetDocument());
             }
             else {
                 PdfWidgetAnnotation annotation = new PdfWidgetAnnotation(GetWidgetRectangle());
@@ -76,21 +77,16 @@ namespace iText.Forms.Fields {
                 if (GetConformanceLevel() != null) {
                     annotation.SetFlag(PdfAnnotation.PRINT);
                 }
-                check = new PdfButtonFormField(annotation, GetDocument());
+                check = PdfFormCreator.CreateButtonFormField(annotation, GetDocument());
             }
             check.pdfAConformanceLevel = GetConformanceLevel();
             check.SetCheckType(checkType);
             check.SetFieldName(GetFormFieldName());
+            // the default behavior is to automatically calculate the fontsize
+            check.SetFontSize(0);
             check.Put(PdfName.V, new PdfName(PdfFormAnnotation.OFF_STATE_VALUE));
             if (GetWidgetRectangle() != null) {
-                if (GetConformanceLevel() == null) {
-                    check.GetFirstFormAnnotation().DrawCheckAppearance(GetWidgetRectangle().GetWidth(), GetWidgetRectangle().GetHeight
-                        (), PdfFormAnnotation.ON_STATE_VALUE);
-                }
-                else {
-                    check.GetFirstFormAnnotation().DrawPdfA2CheckAppearance(GetWidgetRectangle().GetWidth(), GetWidgetRectangle
-                        ().GetHeight(), PdfFormAnnotation.ON_STATE_VALUE, checkType);
-                }
+                check.GetFirstFormAnnotation().DrawCheckBoxAndSaveAppearance(PdfFormAnnotation.ON_STATE_VALUE);
                 SetPageToField(check);
             }
             return check;

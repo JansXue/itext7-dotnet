@@ -1,45 +1,24 @@
 /*
-
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: Bruno Lowagie, Paulo Soares, et al.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License version 3
-as published by the Free Software Foundation with the addition of the
-following permission added to Section 15 as permitted in Section 7(a):
-FOR ANY PART OF THE COVERED WORK IN WHICH THE COPYRIGHT IS OWNED BY
-ITEXT GROUP. ITEXT GROUP DISCLAIMS THE WARRANTY OF NON INFRINGEMENT
-OF THIRD PARTY RIGHTS
+This program is offered under a commercial and under the AGPL license.
+For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
 
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Affero General Public License for more details.
+AGPL licensing:
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
 You should have received a copy of the GNU Affero General Public License
-along with this program; if not, see http://www.gnu.org/licenses or write to
-the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-Boston, MA, 02110-1301 USA, or download the license from the following URL:
-http://itextpdf.com/terms-of-use/
-
-The interactive user interfaces in modified source and object code versions
-of this program must display Appropriate Legal Notices, as required under
-Section 5 of the GNU Affero General Public License.
-
-In accordance with Section 7(b) of the GNU Affero General Public License,
-a covered work must retain the producer line in every PDF that is created
-or manipulated using iText.
-
-You can be released from the requirements of the license by purchasing
-a commercial license. Buying such a license is mandatory as soon as you
-develop commercial activities involving the iText software without
-disclosing the source code of your own applications.
-These activities include: offering paid services to customers as an ASP,
-serving PDFs on the fly in a web application, shipping iText with a closed
-source product.
-
-For more information, please contact iText Software Corp. at this
-address: sales@itextpdf.com
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 using System;
 using System.IO;
@@ -205,8 +184,10 @@ namespace iText.Kernel.Crypto.Securityhandler {
                     }
                 }
                 isPdf2 = encryptionDictionary.GetAsNumber(PdfName.R).GetValue() == 6;
-                byte[] oValue = GetIsoBytes(encryptionDictionary.GetAsString(PdfName.O));
-                byte[] uValue = GetIsoBytes(encryptionDictionary.GetAsString(PdfName.U));
+                //truncate user and owner passwords to 48 bytes where the first 32 bytes
+                //are a hash value, next 8 bytes are validation salt and final 8 bytes are the key salt
+                byte[] oValue = TruncateArray(GetIsoBytes(encryptionDictionary.GetAsString(PdfName.O)));
+                byte[] uValue = TruncateArray(GetIsoBytes(encryptionDictionary.GetAsString(PdfName.U)));
                 byte[] oeValue = GetIsoBytes(encryptionDictionary.GetAsString(PdfName.OE));
                 byte[] ueValue = GetIsoBytes(encryptionDictionary.GetAsString(PdfName.UE));
                 byte[] perms = GetIsoBytes(encryptionDictionary.GetAsString(PdfName.Perms));
@@ -262,7 +243,7 @@ namespace iText.Kernel.Crypto.Securityhandler {
         }
 
         private byte[] ComputeHash(byte[] password, byte[] salt, int saltOffset, int saltLen, byte[] userKey) {
-            IIDigest mdSha256 = iText.Bouncycastleconnector.BouncyCastleFactoryCreator.GetFactory().CreateIDigest("SHA-256"
+            IDigest mdSha256 = iText.Bouncycastleconnector.BouncyCastleFactoryCreator.GetFactory().CreateIDigest("SHA-256"
                 );
             mdSha256.Update(password);
             mdSha256.Update(salt, saltOffset, saltLen);
@@ -272,9 +253,9 @@ namespace iText.Kernel.Crypto.Securityhandler {
             byte[] k = mdSha256.Digest();
             if (isPdf2) {
                 // See 7.6.4.3.3 "Algorithm 2.B"
-                IIDigest mdSha384 = iText.Bouncycastleconnector.BouncyCastleFactoryCreator.GetFactory().CreateIDigest("SHA-384"
+                IDigest mdSha384 = iText.Bouncycastleconnector.BouncyCastleFactoryCreator.GetFactory().CreateIDigest("SHA-384"
                     );
-                IIDigest mdSha512 = iText.Bouncycastleconnector.BouncyCastleFactoryCreator.GetFactory().CreateIDigest("SHA-512"
+                IDigest mdSha512 = iText.Bouncycastleconnector.BouncyCastleFactoryCreator.GetFactory().CreateIDigest("SHA-512"
                     );
                 int userKeyLen = userKey != null ? userKey.Length : 0;
                 int passAndUserKeyLen = password.Length + userKeyLen;
@@ -298,7 +279,7 @@ namespace iText.Kernel.Crypto.Securityhandler {
                         (k, 16, 32));
                     byte[] e = cipher.ProcessBlock(k1, 0, k1.Length);
                     // c)
-                    IIDigest md = null;
+                    IDigest md = null;
                     IBigInteger i_1 = iText.Bouncycastleconnector.BouncyCastleFactoryCreator.GetFactory().CreateBigInteger(1, 
                         JavaUtil.ArraysCopyOf(e, 16));
                     int remainder = i_1.Remainder(iText.Bouncycastleconnector.BouncyCastleFactoryCreator.GetFactory().CreateBigInteger().ValueOf
@@ -343,6 +324,20 @@ namespace iText.Kernel.Crypto.Securityhandler {
                 }
             }
             return true;
+        }
+
+        private byte[] TruncateArray(byte[] array) {
+            if (array.Length == 48) {
+                return array;
+            }
+            for (int i = 48; i < array.Length; ++i) {
+                if (array[i] != 0) {
+                    throw new PdfException(KernelExceptionMessageConstant.BAD_PASSWORD_HASH);
+                }
+            }
+            byte[] truncated = new byte[48];
+            Array.Copy(array, 0, truncated, 0, 48);
+            return truncated;
         }
     }
 }

@@ -1,25 +1,25 @@
 /*
-This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+    This file is part of the iText (R) project.
+    Copyright (c) 1998-2023 Apryse Group NV
+    Authors: Apryse Software.
 
-This program is offered under a commercial and under the AGPL license.
-For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
+    This program is offered under a commercial and under the AGPL license.
+    For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
 
-AGPL licensing:
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+    AGPL licensing:
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Affero General Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
 
-You should have received a copy of the GNU Affero General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
-*/
+    You should have received a copy of the GNU Affero General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 using System;
 using Org.BouncyCastle.Ocsp;
 using iText.Bouncycastle.Asn1.X509;
@@ -32,7 +32,7 @@ namespace iText.Bouncycastle.Cert.Ocsp {
     /// Wrapper class for
     /// <see cref="Org.BouncyCastle.Ocsp.OcspReqGenerator"/>.
     /// </summary>
-    public class OCSPReqBuilderBC : IOCSPReqBuilder {
+    public class OCSPReqBuilderBC : IOcspReqGenerator {
         private readonly OcspReqGenerator reqBuilder;
 
         /// <summary>
@@ -58,23 +58,23 @@ namespace iText.Bouncycastle.Cert.Ocsp {
         }
 
         /// <summary><inheritDoc/></summary>
-        public virtual IOCSPReqBuilder SetRequestExtensions(IExtensions extensions) {
-            reqBuilder.SetRequestExtensions(((ExtensionsBC)extensions).GetX509Extensions());
+        public virtual IOcspReqGenerator SetRequestExtensions(IX509Extensions extensions) {
+            reqBuilder.SetRequestExtensions(((X509ExtensionsBC)extensions).GetX509Extensions());
             return this;
         }
 
         /// <summary><inheritDoc/></summary>
-        public virtual IOCSPReqBuilder AddRequest(ICertificateID certificateID) {
-            reqBuilder.AddRequest(new CertificateID(((CertificateIDBC)certificateID).GetCertificateID()));
+        public virtual IOcspReqGenerator AddRequest(ICertID certificateID) {
+            reqBuilder.AddRequest(new CertificateID(((CertIDBC)certificateID).GetCertID()));
             return this;
         }
 
         /// <summary><inheritDoc/></summary>
-        public virtual IOCSPReq Build() {
+        public virtual IOcspRequest Build() {
             try {
-                return new OCSPReqBC(reqBuilder.Generate());
+                return new OcspReqBC(reqBuilder.Generate());
             } catch (OcspException e) {
-                throw new OCSPExceptionBC(e);
+                throw new OcspExceptionBC(e);
             }
         }
 

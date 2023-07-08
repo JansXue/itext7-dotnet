@@ -1,25 +1,25 @@
 /*
-This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+    This file is part of the iText (R) project.
+    Copyright (c) 1998-2023 Apryse Group NV
+    Authors: Apryse Software.
 
-This program is offered under a commercial and under the AGPL license.
-For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
+    This program is offered under a commercial and under the AGPL license.
+    For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
 
-AGPL licensing:
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+    AGPL licensing:
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Affero General Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
 
-You should have received a copy of the GNU Affero General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
-*/
+    You should have received a copy of the GNU Affero General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 using System;
 using Org.BouncyCastle.Tsp;
 using iText.Bouncycastle.Asn1;
@@ -70,9 +70,9 @@ namespace iText.Bouncycastle.Tsp {
         }
 
         /// <summary><inheritDoc/></summary>
-        public virtual ITimeStampRequest Generate(IASN1ObjectIdentifier objectIdentifier, byte[] imprint, IBigInteger
+        public virtual ITimeStampRequest Generate(IDerObjectIdentifier objectIdentifier, byte[] imprint, IBigInteger
              nonce) {
-            return new TimeStampRequestBC(requestGenerator.Generate(((ASN1ObjectIdentifierBC)objectIdentifier).GetASN1ObjectIdentifier
+            return new TimeStampRequestBC(requestGenerator.Generate(((DerObjectIdentifierBC)objectIdentifier).GetDerObjectIdentifier
                 (), imprint, ((BigIntegerBC) nonce).GetBigInteger()));
         }
 

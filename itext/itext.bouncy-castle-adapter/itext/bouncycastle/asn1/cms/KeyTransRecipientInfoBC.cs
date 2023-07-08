@@ -1,7 +1,7 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
 This program is offered under a commercial and under the AGPL license.
 For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
@@ -32,7 +32,7 @@ namespace iText.Bouncycastle.Asn1.Cms {
     /// Wrapper class for
     /// <see cref="Org.BouncyCastle.Asn1.Cms.KeyTransRecipientInfo"/>.
     /// </summary>
-    public class KeyTransRecipientInfoBC : ASN1EncodableBC, IKeyTransRecipientInfo {
+    public class KeyTransRecipientInfoBC : Asn1EncodableBC, IKeyTransRecipientInfo {
         /// <summary>
         /// Creates new wrapper instance for
         /// <see cref="Org.BouncyCastle.Asn1.Cms.KeyTransRecipientInfo"/>.
@@ -54,10 +54,10 @@ namespace iText.Bouncycastle.Asn1.Cms {
         /// <param name="algorithmIdentifier">AlgorithmIdentifier wrapper</param>
         /// <param name="octetString">ASN1OctetString wrapper</param>
         public KeyTransRecipientInfoBC(IRecipientIdentifier recipientIdentifier, IAlgorithmIdentifier algorithmIdentifier
-            , IASN1OctetString octetString)
+            , IAsn1OctetString octetString)
             : base(new KeyTransRecipientInfo(((RecipientIdentifierBC)recipientIdentifier).GetRecipientIdentifier(), ((
-                AlgorithmIdentifierBC)algorithmIdentifier).GetAlgorithmIdentifier(), ((ASN1OctetStringBC)octetString).
-                GetASN1OctetString())) {
+                AlgorithmIdentifierBC)algorithmIdentifier).GetAlgorithmIdentifier(), ((Asn1OctetStringBC)octetString).
+                GetAsn1OctetString())) {
         }
 
         /// <summary>Gets actual org.bouncycastle object being wrapped.</summary>

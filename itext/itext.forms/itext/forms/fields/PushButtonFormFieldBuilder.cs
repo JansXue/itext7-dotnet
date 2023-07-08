@@ -1,7 +1,7 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
 This program is offered under a commercial and under the AGPL license.
 For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
@@ -24,7 +24,6 @@ using System;
 using iText.Kernel.Colors;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Annot;
-using iText.Kernel.Pdf.Xobject;
 
 namespace iText.Forms.Fields {
     /// <summary>Builder for push button form field.</summary>
@@ -67,11 +66,11 @@ namespace iText.Forms.Fields {
             PdfButtonFormField field;
             PdfWidgetAnnotation annotation = null;
             if (GetWidgetRectangle() == null) {
-                field = new PdfButtonFormField(GetDocument());
+                field = PdfFormCreator.CreateButtonFormField(GetDocument());
             }
             else {
                 annotation = new PdfWidgetAnnotation(GetWidgetRectangle());
-                field = new PdfButtonFormField(annotation, GetDocument());
+                field = PdfFormCreator.CreateButtonFormField(annotation, GetDocument());
                 if (null != GetConformanceLevel()) {
                     annotation.SetFlag(PdfAnnotation.PRINT);
                 }
@@ -82,17 +81,11 @@ namespace iText.Forms.Fields {
             field.text = caption;
             if (annotation != null) {
                 field.GetFirstFormAnnotation().backgroundColor = ColorConstants.LIGHT_GRAY;
-                PdfFormXObject xObject = field.GetFirstFormAnnotation().DrawPushButtonAppearance(GetWidgetRectangle().GetWidth
-                    (), GetWidgetRectangle().GetHeight(), caption, GetDocument().GetDefaultFont(), AbstractPdfFormField.DEFAULT_FONT_SIZE
-                    );
-                annotation.SetNormalAppearance(xObject.GetPdfObject());
+                field.GetFirstFormAnnotation().DrawPushButtonFieldAndSaveAppearance();
                 PdfDictionary mk = new PdfDictionary();
                 mk.Put(PdfName.CA, new PdfString(caption));
                 mk.Put(PdfName.BG, new PdfArray(field.GetFirstFormAnnotation().backgroundColor.GetColorValue()));
                 annotation.SetAppearanceCharacteristics(mk);
-                if (GetConformanceLevel() != null) {
-                    PdfFormAnnotation.CreatePushButtonAppearanceState(annotation.GetPdfObject());
-                }
                 SetPageToField(field);
             }
             return field;

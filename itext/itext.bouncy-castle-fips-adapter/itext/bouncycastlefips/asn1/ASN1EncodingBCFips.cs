@@ -1,7 +1,7 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2023 iText Group NV
-Authors: iText Software.
+Copyright (c) 1998-2023 Apryse Group NV
+Authors: Apryse Software.
 
 This program is offered under a commercial and under the AGPL license.
 For commercial licensing, contact us at https://itextpdf.com/sales.  For AGPL licensing, see below.
@@ -30,7 +30,7 @@ namespace iText.Bouncycastlefips.Asn1 {
     /// Wrapper class for
     /// <see cref="Org.BouncyCastle.Asn1.Asn1Encodable"/>.
     /// </summary>
-    public class ASN1EncodingBCFips : IASN1Encoding {
+    public class ASN1EncodingBCFips : IAsn1Encoding {
         private static readonly iText.Bouncycastlefips.Asn1.ASN1EncodingBCFips INSTANCE = new iText.Bouncycastlefips.Asn1.ASN1EncodingBCFips
             (null);
 
